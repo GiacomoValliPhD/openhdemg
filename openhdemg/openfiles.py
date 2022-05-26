@@ -60,7 +60,7 @@ def THREED_mat_to_list(variable_name, mat_file, transpose_=False):
 
 # Here we create a df containing the binary representation of the MU firing over time
 def Create_binary_firings(EMG_LENGTH, NUMBER_OF_MUS, MUPULSES):
-    if type(MUPULSES) == list: # skip the step if I don't have the MUPULSES (is nan)
+    if isinstance(MUPULSES, list): # skip the step if I don't have the MUPULSES (is nan)
         # create an empty df containing zeros
         binary_MUs_firing = pd.DataFrame(np.zeros((EMG_LENGTH, NUMBER_OF_MUS)))
         # Loop through the columns (MUs) and isolate the data of interest
