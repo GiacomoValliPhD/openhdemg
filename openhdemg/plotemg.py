@@ -28,7 +28,7 @@ def plot_emgsig(emgfile, channels, timeinseconds=True):
             fig = plt.figure(f"Channel n.{channels}", figsize=(20/2.54, 15/2.54))
             ax = sns.lineplot(x=x_axis, y=emgsig[channels])
             ax.set_ylabel("Ch {}".format(channels)) # Useful because if the channe is empty it won't show the channel number
-            ax.set_xlabel("Time" if timeinseconds else "Samples")
+            ax.set_xlabel("Time (s)" if timeinseconds else "Samples")
             
             showgoodlayout()
 
@@ -78,14 +78,14 @@ def plot_refsig(emgfile, timeinseconds=True):
         fig = plt.figure("Reference signal", figsize=(20/2.54, 15/2.54))
         ax = sns.lineplot(x=x_axis, y=refsig[0])
         ax.set_ylabel("% MViF")
-        ax.set_xlabel("Time" if timeinseconds else "Samples")
+        ax.set_xlabel("Time (s)" if timeinseconds else "Samples")
             
         showgoodlayout()
     
     else:
        print("REF_SIGNAL is probably absent or it is not contained in a dataframe") 
 
-def plot_ipts(emgfile, linewidths=0.5, timeinseconds=True, order=False):
+def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addrefsig=True):
     # Check to have the reference signal in a pandas dataframe
     if isinstance(emgfile["MUPULSES"], list):
         mupulses = emgfile["MUPULSES"]
@@ -100,30 +100,38 @@ def plot_ipts(emgfile, linewidths=0.5, timeinseconds=True, order=False):
             mupulses = [n/emgfile["FSAMP"] for i, n in enumerate(emgfile["MUPULSES"])]
 
         # Sort the mupulses based on order of recruitment. If True mupulses are sorted in ascending order
-        if order:
+        if order and emgfile["NUMBER_OF_MUS"] > 1:
             mupulses = sorted(mupulses, key=min, reverse=False)
         
         # Create colors list for the firings and plot them
         colors1 = ['C{}'.format(i) for i in range(emgfile["NUMBER_OF_MUS"])]
 
-        # Plot ref signal and mupulses if both are available, otherwise only mupulses
-        if isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
-            ax2 = plt.plot(emgfile["REF_SIGNAL"], color="0.4")
+        fig = plt.figure("MUs pulses", figsize=(20/2.54, 15/2.54))
 
+        # Plot ref signal and mupulses if both are available, otherwise only mupulses
+        if isinstance(emgfile["REF_SIGNAL"], pd.DataFrame) and addrefsig:
             # Assign 90% of the space in the plot to linelengths and 8% to lineoffsets, 2% free
             linelengths = (max(emgfile["REF_SIGNAL"][0]) * 0.9) / emgfile["NUMBER_OF_MUS"]
             lineoffsets = linelengths + (max(emgfile["REF_SIGNAL"][0]) * 0.08) / emgfile["NUMBER_OF_MUS"]
+            
+            if emgfile["NUMBER_OF_MUS"] == 1:
+                lineoffsets = linelengths/2
+            
             ax1 = plt.eventplot(mupulses, linewidths=linewidths, linelengths=linelengths, lineoffsets=lineoffsets, colors=colors1)
+            ax2 = plt.plot(emgfile["REF_SIGNAL"], color="0.4")
+            
+            plt.ylabel("% MViF")
 
         else:    
-            ax1 = plt.eventplot(mupulses, linewidths=linewidths, colors=colors1)
+            ax1 = plt.eventplot(mupulses, linewidths=linewidths, linelengths=0.9, lineoffsets=1, colors=colors1)
+            plt.ylabel("MUs")
         
-        
+        plt.xlabel("Time (s)" if timeinseconds else "Samples")
 
         showgoodlayout()
 
     else:
-       print("IPTS is probably absent or it is not contained in a dataframe")
+       print("MUPULSES is probably absent or it is not contained in a dataframe")
 
 
 
@@ -135,15 +143,15 @@ if __name__ == "__main__":
     import numpy as np
 
     # Test DEMUSE file
-    #file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
-    file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_only1MU_testfile.mat") # Test it on a contraction with a single MU
+    file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
+    #file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_only1MU_testfile.mat") # Test it on a contraction with a single MU
     emgfile = emg_from_demuse(file=file_toOpen)
 
     """ # Test OTB file
     file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
-    emgfile = emg_from_otb(file=file_toOpen, refsig=[True, "filtered"])
-     """
+    emgfile = emg_from_otb(file=file_toOpen, refsig=[True, "filtered"]) """
+    
 
     #plot_emgsig(emgfile=emgfile, channels=[*range(0, 12)]) # We need the "*" to unpack the results of range and build a list - *range(0, 12)
     #plot_refsig(emgfile=emgfile)
-    plot_ipts(emgfile=emgfile, order=True)
+    plot_mupulses(emgfile=emgfile, order=True, addrefsig=True)
