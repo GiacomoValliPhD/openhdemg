@@ -2,13 +2,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 
-def showgoodlayout():
-    sns.despine()
-    plt.tight_layout()
-    plt.show()
-
-def showfullydespinedlayout():
-    sns.despine(top=True, bottom=True, left=True, right=True)
+def showgoodlayout(despined= False):
+    if despined == False:
+        sns.despine()
+    elif despined == True:
+        sns.despine(top=True, bottom=True, left=True, right=True)
+    
     plt.tight_layout()
     plt.show()
 
@@ -18,8 +17,8 @@ def plot_emgsig(emgfile, channels, timeinseconds=True):
         # Transpose it for quick plotting by column
         emgsig = emgfile["RAW_SIGNAL"].transpose()
 
-        # Here I produce an x axis in seconds or samples
-        if timeinseconds == True:
+        # Here we produce an x axis in seconds or samples
+        if timeinseconds:
             x_axis = emgsig.index / emgfile["FSAMP"]
         else:
             x_axis = emgsig.index
@@ -29,6 +28,7 @@ def plot_emgsig(emgfile, channels, timeinseconds=True):
             fig = plt.figure(f"Channel n.{channels}", figsize=(20/2.54, 15/2.54))
             ax = sns.lineplot(x=x_axis, y=emgsig[channels])
             ax.set_ylabel("Ch {}".format(channels)) # Useful because if the channe is empty it won't show the channel number
+            ax.set_xlabel("Time" if timeinseconds else "Samples")
             
             showgoodlayout()
 
@@ -56,7 +56,7 @@ def plot_emgsig(emgfile, channels, timeinseconds=True):
                     ax.set(yticklabels=[])
                     ax.tick_params(left=False)
 
-            showfullydespinedlayout()
+            showgoodlayout(despined= True)
         
         else:
             print("Error: while calling the plot_emgsig function, you should pass an integer or a list in channels= ")
@@ -64,9 +64,66 @@ def plot_emgsig(emgfile, channels, timeinseconds=True):
     else:
         print("RAW_SIGNAL is probably absent or it is not contained in a dataframe")
 
+def plot_refsig(emgfile, timeinseconds=True):
+    # Check to have the reference signal in a pandas dataframe
+    if isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
+        refsig = emgfile["REF_SIGNAL"]
 
+        # Here we produce an x axis in seconds or samples
+        if timeinseconds:
+            x_axis = refsig.index / emgfile["FSAMP"]
+        else:
+            x_axis = refsig.index
 
+        fig = plt.figure("Reference signal", figsize=(20/2.54, 15/2.54))
+        ax = sns.lineplot(x=x_axis, y=refsig[0])
+        ax.set_ylabel("% MViF")
+        ax.set_xlabel("Time" if timeinseconds else "Samples")
+            
+        showgoodlayout()
+    
+    else:
+       print("REF_SIGNAL is probably absent or it is not contained in a dataframe") 
 
+def plot_ipts(emgfile, linewidths=0.5, timeinseconds=True, order=False):
+    # Check to have the reference signal in a pandas dataframe
+    if isinstance(emgfile["MUPULSES"], list):
+        mupulses = emgfile["MUPULSES"]
+
+        # Convert x axes in seconds if timeinseconds==True (always check if the reference signal is present)
+        # This has to be done both for the reference signal and the mupulses, for the mupulses
+        # we need to convert the point of firing from samples to seconds
+        if timeinseconds:
+            if isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
+                emgfile["REF_SIGNAL"].index = emgfile["REF_SIGNAL"].index/emgfile["FSAMP"]
+            
+            mupulses = [n/emgfile["FSAMP"] for i, n in enumerate(emgfile["MUPULSES"])]
+
+        # Sort the mupulses based on order of recruitment. If True mupulses are sorted in ascending order
+        if order:
+            mupulses = sorted(mupulses, key=min, reverse=False)
+        
+        # Create colors list for the firings and plot them
+        colors1 = ['C{}'.format(i) for i in range(emgfile["NUMBER_OF_MUS"])]
+
+        # Plot ref signal and mupulses if both are available, otherwise only mupulses
+        if isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
+            ax2 = plt.plot(emgfile["REF_SIGNAL"], color="0.4")
+
+            # Assign 90% of the space in the plot to linelengths and 8% to lineoffsets, 2% free
+            linelengths = (max(emgfile["REF_SIGNAL"][0]) * 0.9) / emgfile["NUMBER_OF_MUS"]
+            lineoffsets = linelengths + (max(emgfile["REF_SIGNAL"][0]) * 0.08) / emgfile["NUMBER_OF_MUS"]
+            ax1 = plt.eventplot(mupulses, linewidths=linewidths, linelengths=linelengths, lineoffsets=lineoffsets, colors=colors1)
+
+        else:    
+            ax1 = plt.eventplot(mupulses, linewidths=linewidths, colors=colors1)
+        
+        
+
+        showgoodlayout()
+
+    else:
+       print("IPTS is probably absent or it is not contained in a dataframe")
 
 
 
@@ -77,8 +134,16 @@ if __name__ == "__main__":
     from analysis import basic_mus_properties
     import numpy as np
 
-    file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
+    # Test DEMUSE file
+    #file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
+    file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_only1MU_testfile.mat") # Test it on a contraction with a single MU
     emgfile = emg_from_demuse(file=file_toOpen)
-    
 
-    plot_emgsig(emgfile=emgfile, channels=[*range(0, 12)]) # We need the "*" to unpack the results of range and build a list - *range(0, 12)
+    """ # Test OTB file
+    file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
+    emgfile = emg_from_otb(file=file_toOpen, refsig=[True, "filtered"])
+     """
+
+    #plot_emgsig(emgfile=emgfile, channels=[*range(0, 12)]) # We need the "*" to unpack the results of range and build a list - *range(0, 12)
+    #plot_refsig(emgfile=emgfile)
+    plot_ipts(emgfile=emgfile, order=True)
