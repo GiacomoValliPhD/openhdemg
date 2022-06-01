@@ -12,10 +12,20 @@ from otbelectrodes import *
 # The output can be transposed to suit the user necessity
 def oned_mat_to_pd(variable_name, mat_file, transpose_=False):
     if variable_name in mat_file.keys():
-        if transpose_== True:
-            mat = pd.DataFrame(mat_file[variable_name]).transpose()
+        
+        # Catch the case for the PNR of a single MU which is a float value that cannot be directly added to a dataframe
+        if isinstance(mat_file[variable_name], float):
+            res = {0:mat_file[variable_name]}
+            if transpose_== True:
+                mat = pd.DataFrame(res, index=[0]).transpose()
+            else:
+                mat = pd.DataFrame(res, index=[0])
+        
         else:
-            mat = pd.DataFrame(mat_file[variable_name])
+            if transpose_== True:
+                mat = pd.DataFrame(mat_file[variable_name]).transpose()
+            else:
+                mat = pd.DataFrame(mat_file[variable_name])
         
         return mat
 
@@ -29,6 +39,10 @@ def oned_mat_to_pd(variable_name, mat_file, transpose_=False):
 # For the basic user this will allow to make the script work properly even if he/she omits to pass transpose while calling the function
 def twod_mat_to_pd(variable_name, mat_file, transpose_=True):
     if variable_name in mat_file.keys():
+        # Catch the exception of a single MU that would create an alrerady transposed dataframe
+        if len(mat_file["IPTs"].shape) == 1:
+            transpose_= False
+
         if transpose_== True:
             mat = pd.DataFrame(mat_file[variable_name]).transpose()
         else:
@@ -66,11 +80,20 @@ def create_binary_firings(EMG_LENGTH, NUMBER_OF_MUS, MUPULSES):
         # Loop through the columns (MUs) and isolate the data of interest
         for i in range(NUMBER_OF_MUS):
             this_mu_binary_firing = binary_MUs_firing[i]
-            this_mu_pulses = pd.DataFrame(MUPULSES[i])
-            # Loop through the rows (time) and assign 1 if the MU is firing
-            for position in range(len(this_mu_pulses)):
-                firing_point = int(this_mu_pulses.iloc[position])
-                this_mu_binary_firing.iloc[firing_point] = 1
+            
+            # Catch the exception of a single MU
+            if NUMBER_OF_MUS != 1:
+                this_mu_pulses = pd.DataFrame(MUPULSES[i])
+                # Loop through the rows (time) and assign 1 if the MU is firing
+                for position in range(len(this_mu_pulses)):
+                    firing_point = int(this_mu_pulses.iloc[position])
+                    this_mu_binary_firing.iloc[firing_point] = 1
+            else:
+                this_mu_pulses = MUPULSES
+                for position in range(len(this_mu_pulses)):
+                    firing_point = int(this_mu_pulses[position])
+                    this_mu_binary_firing.iloc[firing_point] = 1
+            
             # Merge the work done with the original df of zeros
             binary_MUs_firing[i] = this_mu_binary_firing
         
@@ -322,10 +345,11 @@ def emg_from_otb (file, refsig=[True, "filtered"]):
 if __name__ == "__main__":
     import os, sys
     
-    # Test OTB file
+    """ # Test OTB file
     file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
-    emgfile = emg_from_otb(file=file_toOpen, refsig=[True, "filtered"])
+    emgfile = emg_from_otb(file=file_toOpen, refsig=[True, "filtered"]) """
 
    # Test DEMUSE file
-    """ file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
-    emgfile = emg_from_demuse(file=file_toOpen) """
+    #file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
+    file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_only1MU_testfile.mat") # Test it on a contraction with a single MU
+    emgfile = emg_from_demuse(file=file_toOpen)
