@@ -54,9 +54,15 @@ def basic_mus_properties(emgfile,
     toappend = []
     # Loop all the MUs
     for i in range(NUMBER_OF_MUS):
-        # Detect the first and last firing of the MU
-        mup_rec = MUPULSES[i][0]
-        mup_derec = MUPULSES[i][-1]
+        if NUMBER_OF_MUS > 1:
+            # Detect the first and last firing of the MU and manage the esception of a single MU
+            mup_rec = MUPULSES[i][0]
+            mup_derec = MUPULSES[i][-1]
+        else:
+            # Detect the first and last firing of the MU and manage the esception of a single MU
+            mup_rec = MUPULSES[0]
+            mup_derec = MUPULSES[-1]
+
         # Calculate absolute and relative RT and DERT
         abs_RT = ((float(REF_SIGNAL.iloc[mup_rec]) * float(inputMVC)) / 100) * 9.81
         abs_DERT = ((float(REF_SIGNAL.iloc[mup_derec]) * float(inputMVC)) / 100) * 9.81
@@ -74,7 +80,7 @@ def basic_mus_properties(emgfile,
     toappend = []
     # Loop all the MUs
     for i in range(NUMBER_OF_MUS):
-        mup = pd.DataFrame(MUPULSES[i])
+        mup = pd.DataFrame(MUPULSES[i]) if NUMBER_OF_MUS > 1 else pd.DataFrame(MUPULSES) # Manage exception of a single MU
         # Calculate the delta (difference) between the firings and istantaneous discharge rate (idr)
         idr = FSAMP / mup.diff()
         # Then divide FSAMP for the average delta between the firings in the interval specified in "n_firings_RecDerec"
@@ -111,7 +117,7 @@ def basic_mus_properties(emgfile,
     toappend = []
     # Loop all the MUs
     for i in range(NUMBER_OF_MUS):
-        mup = pd.DataFrame(MUPULSES[i])
+        mup = pd.DataFrame(MUPULSES[i]) if NUMBER_OF_MUS > 1 else pd.DataFrame(MUPULSES) # Manage exception of a single MU
         # Calculate the delta (difference) between the firings and istantaneous discharge rate (idr)
         idr = FSAMP / mup.diff()
         # Add to the idr df the corresponding position of the ref signal
@@ -142,4 +148,19 @@ def basic_mus_properties(emgfile,
 
     return exportable_df
     
+
+
+
+###########################################################################################################################################################
+###########################################################################################################################################################
+###########################################################################################################################################################
+# Test part
+if __name__ == "__main__":
+    import os, sys
+    from openfiles import emg_from_demuse, emg_from_otb
     
+    file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_only1MU_testfile.mat") # Test it on a contraction with a single MU
+
+    emgfile = emg_from_demuse(file=file_toOpen)
+
+    df_basic_MUs_properties = basic_mus_properties(emgfile = emgfile)
