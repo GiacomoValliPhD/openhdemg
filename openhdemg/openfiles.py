@@ -10,7 +10,7 @@ from otbelectrodes import *
 # In most cases we will use pandas dataframe (df), the most used data structure (and library) for data management in Python
 # Here we convert Matlab arrays (1 dimensional structures) into a df
 # The output can be transposed to suit the user necessity
-def ONED_mat_to_pd(variable_name, mat_file, transpose_=False):
+def oned_mat_to_pd(variable_name, mat_file, transpose_=False):
     if variable_name in mat_file.keys():
         
         # Catch the case for the PNR of a single MU which is a float value that cannot be directly added to a dataframe
@@ -37,7 +37,7 @@ def ONED_mat_to_pd(variable_name, mat_file, transpose_=False):
 # Here we convert Matlab matrixes (2 dimensional structures) into a df
 # The code is exactly the same as above (ONED_mat_to_pd), however, the basic transpose state is different.
 # For the basic user this will allow to make the script work properly even if he/she omits to pass transpose while calling the function
-def TWOD_mat_to_pd(variable_name, mat_file, transpose_=True):
+def twod_mat_to_pd(variable_name, mat_file, transpose_=True):
     if variable_name in mat_file.keys():
         # Catch the exception of a single MU that would create an alrerady transposed dataframe
         if len(mat_file["IPTs"].shape) == 1:
@@ -58,7 +58,7 @@ def TWOD_mat_to_pd(variable_name, mat_file, transpose_=True):
 # Here we convert Matlab Cell arrays (3 dimensional structures) into a Python list
 # In this case, the list was preferred to a df beause it is easier to store nested data in lists than df
 # The output can be transposed to suit the user necessity
-def THREED_mat_to_list(variable_name, mat_file, transpose_=False):
+def threed_mat_to_list(variable_name, mat_file, transpose_=False):
     if variable_name in mat_file.keys():
         if transpose_== True:
             mat = list(map(list, zip(*mat_file[variable_name])))
@@ -73,8 +73,8 @@ def THREED_mat_to_list(variable_name, mat_file, transpose_=False):
         return np.nan
 
 # Here we create a df containing the binary representation of the MU firing over time
-def Create_binary_firings(EMG_LENGTH, NUMBER_OF_MUS, MUPULSES):
-    if type(MUPULSES) == list: # skip the step if I don't have the MUPULSES (is nan)
+def create_binary_firings(EMG_LENGTH, NUMBER_OF_MUS, MUPULSES):
+    if isinstance(MUPULSES, list): # skip the step if I don't have the MUPULSES (is nan)
         # create an empty df containing zeros
         binary_MUs_firing = pd.DataFrame(np.zeros((EMG_LENGTH, NUMBER_OF_MUS)))
         # Loop through the columns (MUs) and isolate the data of interest
@@ -102,7 +102,7 @@ def Create_binary_firings(EMG_LENGTH, NUMBER_OF_MUS, MUPULSES):
     else:
         return np.nan
 
-def Raw_SIG_from_DEMUSE(variable_name, mat_file, transpose_=False):
+def raw_sig_from_demuse(variable_name, mat_file, transpose_=False):
     if variable_name in mat_file.keys():
         if transpose_== True:
             mat = mat_file[variable_name].ravel(order='F') # ‘F’ means to index the elements in column-major
@@ -130,10 +130,10 @@ def emg_from_demuse (file):
     print("\n--------------------------------\nAvailable dict keys are:\n\n{}\n".format(mat_file.keys()))
 
     # Second: collect the necessary variables in pandas dataframe (df) or list (for matlab cell arrays)   -variable_name must be a string (i.e., "name")
-    REF_SIGNAL = ONED_mat_to_pd(variable_name="ref_signal", mat_file=mat_file, transpose_=False)
-    PNR = ONED_mat_to_pd(variable_name="PNR", mat_file=mat_file, transpose_=False)
-    IPTS = TWOD_mat_to_pd(variable_name="IPTs", mat_file=mat_file, transpose_=True)
-    MUPULSES = THREED_mat_to_list(variable_name="MUPulses", mat_file=mat_file, transpose_=False)
+    REF_SIGNAL = oned_mat_to_pd(variable_name="ref_signal", mat_file=mat_file, transpose_=False)
+    PNR = oned_mat_to_pd(variable_name="PNR", mat_file=mat_file, transpose_=False)
+    IPTS = twod_mat_to_pd(variable_name="IPTs", mat_file=mat_file, transpose_=True)
+    MUPULSES = threed_mat_to_list(variable_name="MUPulses", mat_file=mat_file, transpose_=False)
     
     # Third: collect the necessary values in variables
     FSAMP = int(mat_file["fsamp"])                                      # Sampling frequency
@@ -141,10 +141,10 @@ def emg_from_demuse (file):
     EMG_LENGTH, NUMBER_OF_MUS = IPTS.shape                              # File length and number of MUs
 
     # Create a df with the binary representation of firing times, if necessary for other appliactions. Not used here
-    BINARY_MUS_FIRING = Create_binary_firings(EMG_LENGTH, NUMBER_OF_MUS, MUPULSES)
+    BINARY_MUS_FIRING = create_binary_firings(EMG_LENGTH, NUMBER_OF_MUS, MUPULSES)
 
     # Fourth: obtain the raw EMG signal
-    RAW_SIGNAL = Raw_SIG_from_DEMUSE(variable_name="SIG", mat_file=mat_file, transpose_=False)
+    RAW_SIGNAL = raw_sig_from_demuse(variable_name="SIG", mat_file=mat_file, transpose_=False)
 
     # Use this to know what data you have or don't have
     SOURCE = "DEMUSE"
@@ -177,7 +177,7 @@ def emg_from_demuse (file):
 # That would make it easier to use them later on
 
 # The user can decide if he/she wants the filtered or unfiltered reference signal
-def get_OTB_refsignal(df, refsig):
+def get_otb_refsignal(df, refsig):
     assert refsig[0] in [True, False], f"refsig[0] must be true or false. {refsig[0]} was passed instead."
     assert refsig[1] in ['filtered', 'unfiltered'], f"refsig[1] must be filtered or unfiltered. {refsig[1]} was passed instead."
 
@@ -224,7 +224,7 @@ def get_OTB_refsignal(df, refsig):
 
         return np.nan
 
-def get_OTB_decomposition(df):
+def get_otb_decomposition(df):
     # Extract the IPTS and rename columns progressively
     IPTS = df.filter(regex='Source for decomposition')
     IPTS.columns = np.arange(len(IPTS.columns)) #IPTS = IPTS.rename(columns={x:y for x,y in zip(IPTS.columns,range(0,len(IPTS.columns)))})
@@ -241,7 +241,7 @@ def get_OTB_decomposition(df):
 
     return IPTS, BINARY_MUS_FIRING
 
-def get_OTB_mupulses(binarymusfiring, numberofMUs):
+def get_otb_mupulses(binarymusfiring, numberofMUs):
     # Create empty list of lists to fill with ndarrays containing the mupulses (point of firing)
     MUPULSES = [ [] for _ in range(numberofMUs) ]
 
@@ -256,7 +256,7 @@ def get_OTB_mupulses(binarymusfiring, numberofMUs):
     
     return MUPULSES
 
-def get_OTB_IED(df):
+def get_otb_ied(df):
     for matrix in OTBelectrodes_ied.keys():
         # Check the matrix used in the columns name (in the df obtained from OTBiolab+)
         if matrix in str(df.columns):
@@ -264,7 +264,7 @@ def get_OTB_IED(df):
 
             return IED # we don't need break since return ends the function
 
-def get_OTB_rawsignal(df):
+def get_otb_rawsignal(df):
     # Drop all the known columns different from the raw EMG signal.
     # This is a workaround since the OTBiolab+ software does not export a unique name for the raw EMG signal
     pattern = 'Source for decomposition|Decomposition of|acquired data|performed path'
@@ -308,14 +308,14 @@ def emg_from_otb (file, refsig=[True, "filtered"]):
     In OTBioLab+ the "performed path" refers to the filtered signal, the "acquired data" to the unfiltered signal
     If False, the ref signal will be nan
     """
-    REF_SIGNAL = get_OTB_refsignal(df=df, refsig=refsig)
+    REF_SIGNAL = get_otb_refsignal(df=df, refsig=refsig)
     PNR = np.nan
-    IPTS, BINARY_MUS_FIRING = get_OTB_decomposition(df=df)
+    IPTS, BINARY_MUS_FIRING = get_otb_decomposition(df=df)
     EMG_LENGTH, NUMBER_OF_MUS = IPTS.shape
-    MUPULSES = get_OTB_mupulses(binarymusfiring=BINARY_MUS_FIRING, numberofMUs=NUMBER_OF_MUS)
+    MUPULSES = get_otb_mupulses(binarymusfiring=BINARY_MUS_FIRING, numberofMUs=NUMBER_OF_MUS)
     FSAMP = int(mat_file["SamplingFrequency"])
-    IED = get_OTB_IED(df=df)
-    RAW_SIGNAL = get_OTB_rawsignal(df)
+    IED = get_otb_ied(df=df)
+    RAW_SIGNAL = get_otb_rawsignal(df)
 
     # Use this to know what data you have or don't have
     SOURCE = "OTB"
