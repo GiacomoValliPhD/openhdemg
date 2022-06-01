@@ -133,6 +133,57 @@ def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addr
     else:
        print("MUPULSES is probably absent or it is not contained in a dataframe")
 
+def plot_ipts(emgfile, munumber, timeinseconds=True):
+    # Check to have the raw EMG signal in a pandas dataframe
+    if isinstance(emgfile["IPTS"], pd.DataFrame):
+        ipts = emgfile["IPTS"]
+
+        # Here we produce an x axis in seconds or samples
+        if timeinseconds:
+            x_axis = ipts.index / emgfile["FSAMP"]
+        else:
+            x_axis = ipts.index
+
+        # Check if we have a single MU or a list of MUs to plot
+        if isinstance(munumber, int):
+            fig = plt.figure(f"Motor unit n.{munumber}", figsize=(20/2.54, 15/2.54))
+            ax = sns.lineplot(x=x_axis, y=ipts[munumber])
+            ax.set_ylabel("MU {}".format(munumber)) # Useful because if the MU is empty it won't show the channel number
+            ax.set_xlabel("Time (s)" if timeinseconds else "Samples")
+            
+            showgoodlayout()
+
+        elif isinstance(munumber, list):
+            """ 
+            A list can be passed in input as a manually-written list or with:
+            munumber=[*range(0, 12)]
+            We need the "*" operator to unpack the results of range and build a list 
+            """
+            figname = "Motor unit n.{}".format(munumber)
+            fig, axes = plt.subplots(len(munumber), 1, figsize=(20/2.54, 15/2.54), num=figname)
+
+            # Plot all the MUs in the subplots
+            for count, thisMU in enumerate(munumber):
+                ax = sns.lineplot(x=x_axis, y=ipts[thisMU], ax=axes[count])
+                ax.set_ylabel(thisMU)
+                
+                # Remove all the unnecessary for nice and clear plotting
+                if thisMU != munumber[-1]:
+                    ax.xaxis.set_visible(False)
+                    ax.set(yticklabels=[])
+                    ax.tick_params(left=False)
+
+                else:
+                    ax.set(yticklabels=[])
+                    ax.tick_params(left=False)
+
+            showgoodlayout(despined= True)
+        
+        else:
+            print("Error: while calling the plot_ipts function, you should pass an integer or a list in channels= ")
+        
+    else:
+        print("IPTS is probably absent or it is not contained in a dataframe")
 
 
 
@@ -154,4 +205,5 @@ if __name__ == "__main__":
 
     #plot_emgsig(emgfile=emgfile, channels=[*range(0, 12)]) # We need the "*" to unpack the results of range and build a list - *range(0, 12)
     #plot_refsig(emgfile=emgfile)
-    plot_mupulses(emgfile=emgfile, order=True, addrefsig=True)
+    #plot_mupulses(emgfile=emgfile, order=True, addrefsig=True)
+    plot_ipts(emgfile=emgfile, munumber=[*range(4, 6)]) # We need the "*" to unpack the results of range and build a list - *range(0, 12)
