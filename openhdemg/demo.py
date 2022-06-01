@@ -27,10 +27,12 @@ from analysis import basic_mus_properties
 """ 
 Permanently changes the pandas visualisation settings to display all the results
 """
+""" 
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.width', None)
-pd.set_option('display.max_colwidth', None)
+pd.set_option('display.max_colwidth', None) 
+"""
 
 """ 
 Step 1: open the decomposed EMG file. This should be a Matlab (.mat) file coming from the softwares DEMUSE and OTBioLab+
@@ -47,7 +49,8 @@ There are at least two ways to open a file:
 
 import os, sys
 
-file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
+#file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
+file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_only1MU_testfile.mat") # Test it on a contraction with a single MU
 
 
 """ 
@@ -78,7 +81,7 @@ Read the the documentation to understand the input parameters.
 df_basic_MUs_properties = basic_mus_properties(emgfile = emgfile, 
                                                 n_firings_RecDerec = 4, # Can be omitted. If not specified n_firings_RecDerec = 4
                                                 n_firings_steady = 10   # Can be omitted. If not specified n_firings_steady (start/end) = 10
-                                                ) 
+                                                )
 
 
 
@@ -97,7 +100,7 @@ emgfile = emg_from_otb(file=file_toOpen, refsig=[True, "filtered"])
 df_basic_MUs_properties = basic_mus_properties(emgfile = emgfile, 
                                                 n_firings_RecDerec = 4, # Can be omitted. If not specified n_firings_RecDerec = 4
                                                 n_firings_steady = 10   # Can be omitted. If not specified n_firings_steady (start/end) = 10
-                                                ) 
+                                                )
 
 
 
