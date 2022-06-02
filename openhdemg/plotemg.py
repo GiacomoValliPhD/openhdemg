@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 
+from analysis import compute_idr
+
 def showgoodlayout(despined= False):
     if despined == False:
         sns.despine()
@@ -131,7 +133,7 @@ def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addr
         showgoodlayout()
 
     else:
-       print("MUPULSES is probably absent or it is not contained in a dataframe")
+       print("MUPULSES is probably absent or it is not contained in a list")
 
 def plot_ipts(emgfile, munumber, timeinseconds=True):
     # Check to have the raw EMG signal in a pandas dataframe
@@ -180,10 +182,65 @@ def plot_ipts(emgfile, munumber, timeinseconds=True):
             showgoodlayout(despined= True)
         
         else:
-            print("Error: while calling the plot_ipts function, you should pass an integer or a list in channels= ")
+            print("Error: while calling the plot_ipts function, you should pass an integer or a list in munumber= ")
         
     else:
         print("IPTS is probably absent or it is not contained in a dataframe")
+
+def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True):
+    # Compute the instantaneous discharge rate (IDR) from the MUPULSES
+    idr = compute_idr(emgfile = emgfile)
+
+    # Check if we have a single MU or a list of MUs to plot
+    if isinstance(munumber, int):
+        fig = plt.figure(f"Motor unit n.{munumber}", figsize=(20/2.54, 15/2.54))
+        ax = sns.scatterplot(x=idr[munumber]["timesec" if timeinseconds else "mupulses"], y= idr[munumber]["idr"])
+
+        """ if addrefsig:
+            if isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
+                if timeinseconds:
+                    emgfile["REF_SIGNAL"].index = emgfile["REF_SIGNAL"].index/emgfile["FSAMP"]
+
+            else:
+                print("REF_SIGNAL is absent or it is not contained in a dataframe")
+
+            plt.plot(emgfile["REF_SIGNAL"], color="0.4") """
+
+        ax.set_ylabel("MU {}".format(munumber)) # Useful because if the MU is empty it won't show the channel number
+        ax.set_xlabel("Time (s)" if timeinseconds else "Samples")
+        
+        showgoodlayout()
+    
+    elif isinstance(munumber, list):
+        """ 
+        A list can be passed in input as a manually-written list or with:
+        munumber=[*range(0, 12)]
+        We need the "*" operator to unpack the results of range and build a list 
+        """
+        figname = "Motor unit n.{}".format(munumber)
+        fig, axes = plt.subplots(len(munumber), 1, figsize=(20/2.54, 15/2.54), num=figname)
+        # Plot all the MUs in the subplots
+        for count, thisMU in enumerate(munumber):
+            ax = sns.scatterplot(x=idr[thisMU]["timesec" if timeinseconds else "mupulses"], y=idr[thisMU]["idr"], ax=axes[count])
+            ax.set_ylabel(thisMU)
+            
+            # Remove all the unnecessary for nice and clear plotting
+            if thisMU != munumber[-1]:
+                ax.xaxis.set_visible(False)
+                ax.set(yticklabels=[])
+                ax.tick_params(left=False)
+            else:
+                ax.set(yticklabels=[])
+                ax.tick_params(left=False)
+        
+        showgoodlayout(despined= True)
+    
+    else:
+            print("Error: while calling the plot_idr function, you should pass an integer or a list in munumber= ")
+        
+    ax = sns.scatterplot(x=idr[4][0], y= idr[4][1])
+
+    showgoodlayout()
 
 
 
@@ -206,4 +263,5 @@ if __name__ == "__main__":
     #plot_emgsig(emgfile=emgfile, channels=[*range(0, 12)]) # We need the "*" to unpack the results of range and build a list - *range(0, 12)
     #plot_refsig(emgfile=emgfile)
     #plot_mupulses(emgfile=emgfile, order=True, addrefsig=True)
-    plot_ipts(emgfile=emgfile, munumber=[*range(4, 6)]) # We need the "*" to unpack the results of range and build a list - *range(0, 12)
+    #plot_ipts(emgfile=emgfile, munumber=[*range(4, 6)]) # We need the "*" to unpack the results of range and build a list - *range(0, 12)
+    plot_idr(emgfile=emgfile, munumber=4)

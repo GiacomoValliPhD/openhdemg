@@ -147,7 +147,50 @@ def basic_mus_properties(emgfile,
     print("\n--------------------------------\nFinal dataframe containing basic MUs properties:\n\n{}".format(exportable_df))
 
     return exportable_df
+
+
+
+
+
+def compute_idr(emgfile):
+    # Compute the instantaneous discharge rate (IDR) from the MUPULSES
+    if isinstance(emgfile["MUPULSES"], list):
+        mupulses = emgfile["MUPULSES"]
+
+        # Empty dict to fill with dataframes containing the MUPULSES in [0] and idr in [1]
+        idr = {x: np.nan ** 2 for x in range(emgfile["NUMBER_OF_MUS"])}
+
+        for mu in range(emgfile["NUMBER_OF_MUS"]):
+            # Manage the exception of a single MU
+            # Put the mupulses of the MU in the loop in a df
+            df = pd.DataFrame(emgfile["MUPULSES"][mu] if emgfile["NUMBER_OF_MUS"] > 1 else emgfile["MUPULSES"])
+            # Calculate time in seconds and add it in column 1
+            df[1] = df[0] / emgfile["FSAMP"]
+            # Calculate the delta (difference) between the firings and istantaneous discharge rate (idr), add it in column 2
+            df[2] = emgfile["FSAMP"] / df[0].diff()
+            
+            df.rename(columns = {0:"mupulses", 1:"timesec", 2:"idr"}, inplace = True)
+            
+            # Add the idr to the idr dict
+            idr[mu] = (df)
+            
+            """ 
+            idr[mu]
+                     0         1
+            0     3193       NaN
+            1     3735  3.778598
+            2     4110  5.461333
+            3     4462  5.818182
+            4     4757  6.942373
+            ..     ...       ...
+            169  57860  5.056790
+            170  58256  5.171717 
+            """
+
+        return idr
     
+    else:
+        print("MUPULSES is probably absent or it is not contained in a list")
 
 
 
@@ -159,8 +202,11 @@ if __name__ == "__main__":
     import os, sys
     from openfiles import emg_from_demuse, emg_from_otb
     
-    file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_only1MU_testfile.mat") # Test it on a contraction with a single MU
+    file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
+    #file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_only1MU_testfile.mat") # Test it on a contraction with a single MU
 
     emgfile = emg_from_demuse(file=file_toOpen)
 
     df_basic_MUs_properties = basic_mus_properties(emgfile = emgfile)
+
+    #idr = compute_idr(emgfile = emgfile)
