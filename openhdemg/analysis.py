@@ -2,6 +2,85 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+def showselect(emgfile, title=""):
+    """
+    This function is used to select a part of the recording (based on the reference signal)
+    It returns the start and the end of the selection.
+
+    The area can be selected with any letter or number in the keyboard, wrong points can be removed
+    by pressing the right mouse button. Once finished, press enter to continue.
+    """
+    # Extract the variables of interest from the EMG file
+    REF_SIGNAL = emgfile["REF_SIGNAL"]
+
+    # Show the signal for the selection
+    plt.figure(num="Fig_ginput")
+    plt.plot(REF_SIGNAL[0])
+    plt.xlabel("Samples")
+    plt.ylabel("%MViF")
+    plt.title(title, fontweight ="bold")
+    ginput_res = plt.ginput(n=-1, timeout=0, mouse_add=None)
+    # Sort the input range of the steady-state
+    if ginput_res[0][0] < ginput_res[1][0]:
+        start_ = round(ginput_res[0][0])
+        end_ = round(ginput_res[1][0])
+    else:
+        start_ = round(ginput_res[1][0])
+        end_ = round(ginput_res[0][0])
+    
+    return start_, end_
+
+
+def resize_emgfile(emgfile, area=None):
+    """
+    This function resizes all the emgfile (temporarily) to compute the various parameters only in
+    the area of interest.
+
+    It returns the new (resized) emgfile and the start and end of the selection (can be used for code automation)
+
+    If the resizing area is already known, it can be passed (in samples, as a list (e.g., [120,2560])) as
+    input to area. If area == None, then the user can select the area of interest manually.
+    """
+    # Identify the area of interest
+    if isinstance(area, list) and len(area) == 2:
+        start_ = area[0]
+        end_ = area[1]
+    
+    else:
+        # Visualise and select the steady-state
+        start_, end_ = showselect(emgfile, title="Select the start/end area to consider then press enter")
+    
+    # Create the object to store the resized emgfile
+    rs_emgfile = emgfile
+    """
+    Need to be resized: ==>
+    emgfile =   {
+                "SOURCE" : SOURCE,
+                ==> "RAW_SIGNAL" : RAW_SIGNAL, 
+                ==> "REF_SIGNAL" : REF_SIGNAL, 
+                "PNR" : PNR, 
+                ==> "IPTS" : IPTS, 
+                ==> "MUPULSES" : MUPULSES, 
+                "FSAMP" : FSAMP, 
+                "IED" : IED, 
+                ==> "EMG_LENGTH" : EMG_LENGTH, 
+                "NUMBER_OF_MUS" : NUMBER_OF_MUS, 
+                ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
+                }
+    """
+    # REMOVE TRANSPOSE ONCE YOU MODIFY THE OPENFILES FILE
+    rs_emgfile["RAW_SIGNAL"] = emgfile["RAW_SIGNAL"].transpose().iloc[start_ : end_].transpose()
+    rs_emgfile["REF_SIGNAL"] = emgfile["REF_SIGNAL"].iloc[start_ : end_]
+    rs_emgfile["IPTS"] = emgfile["IPTS"].iloc[start_ : end_]
+    rs_emgfile["EMG_LENGTH"] = int(len(emgfile["IPTS"].index))
+    rs_emgfile["BINARY_MUS_FIRING"] = emgfile["BINARY_MUS_FIRING"].iloc[start_ : end_]
+    for i in range(emgfile["NUMBER_OF_MUS"]):
+        # Here I need to mask the array based on a filter and return the values in an array with []
+        rs_emgfile["MUPULSES"][i] = emgfile["MUPULSES"][i][(emgfile["MUPULSES"][i] >= start_) & (emgfile["MUPULSES"][i] < end_)]
+   
+    return rs_emgfile, start_, end_
+
+
 def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
     """
     This function can calculate the recruitment/derecruitment thresholds in absolute and relative therms
@@ -30,7 +109,6 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
     assert type_ in ["abs_rel", "rel", "abs"], f"event_ must be one of the following strings: abs_rel, rel, abs. {event_} was passed instead."
     if not isinstance(mvif, (float, int)):
         raise Exception(f"mvif must be one of the following types: float, int. {type(mvif)} was passed instead.")
-
 
     if type_ != "rel" and mvif == 0:
         # Ask the user to input MViF
@@ -161,19 +239,7 @@ def compute_dr(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10, event_="r
     # Calculate DR at all, start and end steady-state and all contraction
     if event_ == "steady" or event_ == "rec_derec_steady":
         # Visualise and select the steady-state
-        plt.figure(num="Fig_ginput")
-        plt.plot(REF_SIGNAL[0])
-        plt.xlabel("Samples")
-        plt.ylabel("%MViF")
-        plt.title("Select start/end of the steady-state phase then press enter", fontweight ="bold")
-        ginput_res = plt.ginput(n=-1, timeout=0, mouse_add=None)
-        # Sort the input range of the steady-state
-        if ginput_res[0][0] < ginput_res[1][0]:
-            start_steady = round(ginput_res[0][0])
-            end_steady = round(ginput_res[1][0])
-        else:
-            start_steady = round(ginput_res[1][0])
-            end_steady = round(ginput_res[0][0])
+        start_steady, end_steady = showselect(emgfile, title="Select start/end of the steady-state phase then press enter")
 
         # Now calculate the DR in the specified range
         # Loop all the MUs
@@ -324,6 +390,10 @@ def basic_mus_properties(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10,
 
 
 def compute_idr(emgfile):
+    """
+    This function computes the instantaneous discharge rate (IDR) from the MUPULSES
+    The IDR is very useful for plotting and visualisation of the MUs behaviour
+    """
     # Compute the instantaneous discharge rate (IDR) from the MUPULSES
     if isinstance(emgfile["MUPULSES"], list):
         mupulses = emgfile["MUPULSES"]
@@ -347,7 +417,7 @@ def compute_idr(emgfile):
             
             """ 
             idr is a dict with a key for every MU
-            idr[mu]
+            idr[mu] is a DataFrame
                  mupulses    timesec       idr
             0        3956   1.931641       NaN
             1        4398   2.147461  4.633484
@@ -382,15 +452,10 @@ if __name__ == "__main__":
 
     emgfile = emg_from_demuse(file=file_toOpen)
 
-    #df_basic_MUs_properties = basic_mus_properties(emgfile = emgfile)
-
-    df_dr = compute_dr(emgfile = emgfile, n_firings_steady=100000, event_="steady")
-    print(df_dr)
-    df_dr = compute_dr(emgfile = emgfile, n_firings_steady=250, event_="steady")
-    print(df_dr)
+    df_basic_MUs_properties = basic_mus_properties(emgfile = emgfile)
 
     #idr = compute_idr(emgfile = emgfile)
 
-# To do: test the dr function with the variables
-# Control idr and describe
+
 # Select area of the contraction
+# Transpose the refsig while loading matfile and remove transpose from refsig in resize_emgfile
