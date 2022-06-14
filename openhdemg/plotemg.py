@@ -14,10 +14,19 @@ def showgoodlayout(despined= False):
     plt.show()
 
 def plot_emgsig(emgfile, channels, timeinseconds=True):
+    """ 
+    This function plots the raw EMG. It can plot a single or multiple channels.
+    
+    A list of channels can be passed in input as a manually-written list or with:
+    channels=[*range(0, 12)]
+    We need the "*" operator to unpack the results of range and build a list.
+
+    The x-axes can be shown in seconds or samples.
+    """
     # Check to have the raw EMG signal in a pandas dataframe
     if isinstance(emgfile["RAW_SIGNAL"], pd.DataFrame):
         # Transpose it for quick plotting by column
-        emgsig = emgfile["RAW_SIGNAL"].transpose()
+        emgsig = emgfile["RAW_SIGNAL"]
 
         # Here we produce an x axis in seconds or samples
         if timeinseconds:
@@ -61,7 +70,7 @@ def plot_emgsig(emgfile, channels, timeinseconds=True):
             showgoodlayout(despined= True)
         
         else:
-            print("Error: while calling the plot_emgsig function, you should pass an integer or a list in channels= ")
+            print("Error: while calling the plot_emgsig function, you should pass an integer or a list to channels= ")
         
     else:
         print("RAW_SIGNAL is probably absent or it is not contained in a dataframe")
@@ -237,13 +246,13 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True):
     
     else:
             print("Error: while calling the plot_idr function, you should pass an integer or a list in munumber= ")
-        
-    ax = sns.scatterplot(x=idr[4][0], y= idr[4][1])
-
-    showgoodlayout()
 
 
 
+###########################################################################################################################################################
+###########################################################################################################################################################
+###########################################################################################################################################################
+# Test part
 if __name__ == "__main__":
     import os, sys
     from openfiles import emg_from_demuse, emg_from_otb
@@ -264,4 +273,5 @@ if __name__ == "__main__":
     #plot_refsig(emgfile=emgfile)
     #plot_mupulses(emgfile=emgfile, order=True, addrefsig=True)
     #plot_ipts(emgfile=emgfile, munumber=[*range(4, 6)]) # We need the "*" to unpack the results of range and build a list - *range(0, 12)
-    plot_idr(emgfile=emgfile, munumber=4)
+    plot_idr(emgfile=emgfile, munumber=2, timeinseconds=True)
+    

@@ -68,8 +68,7 @@ def resize_emgfile(emgfile, area=None):
                 ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
                 }
     """
-    # REMOVE TRANSPOSE ONCE YOU MODIFY THE OPENFILES FILE
-    rs_emgfile["RAW_SIGNAL"] = emgfile["RAW_SIGNAL"].transpose().iloc[start_ : end_].transpose()
+    rs_emgfile["RAW_SIGNAL"] = emgfile["RAW_SIGNAL"].iloc[start_ : end_]
     rs_emgfile["REF_SIGNAL"] = emgfile["REF_SIGNAL"].iloc[start_ : end_]
     rs_emgfile["IPTS"] = emgfile["IPTS"].iloc[start_ : end_]
     rs_emgfile["EMG_LENGTH"] = int(len(emgfile["IPTS"].index))
@@ -455,7 +454,3 @@ if __name__ == "__main__":
     df_basic_MUs_properties = basic_mus_properties(emgfile = emgfile)
 
     #idr = compute_idr(emgfile = emgfile)
-
-
-# Select area of the contraction
-# Transpose the refsig while loading matfile and remove transpose from refsig in resize_emgfile

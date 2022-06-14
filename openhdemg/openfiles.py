@@ -144,7 +144,7 @@ def emg_from_demuse (file):
     BINARY_MUS_FIRING = create_binary_firings(EMG_LENGTH, NUMBER_OF_MUS, MUPULSES)
 
     # Fourth: obtain the raw EMG signal
-    RAW_SIGNAL = raw_sig_from_demuse(variable_name="SIG", mat_file=mat_file, transpose_=False)
+    RAW_SIGNAL = raw_sig_from_demuse(variable_name="SIG", mat_file=mat_file, transpose_=True)
 
     # Use this to know what data you have or don't have
     SOURCE = "DEMUSE"
@@ -279,7 +279,7 @@ def get_otb_rawsignal(df):
     
     if len(emg_df.columns) == expectedchannels:
         emg_df.columns = np.arange(len(emg_df.columns))
-        RAW_SIGNAL = emg_df.transpose()
+        RAW_SIGNAL = emg_df
 
         return RAW_SIGNAL
 
@@ -301,7 +301,7 @@ def emg_from_otb (file, refsig=[True, "filtered"]):
 
     # Second: Simplify (rename) columns description and extract all the parameters in a pandas dataframe
     df = pd.DataFrame(mat_file["Data"], columns=mat_file["Description"])
-    print(df.head())
+    #print(df.head())
     """ 
     REF_SIGNAL is expected to be expressed as % of the MViF
     Remember to specify if you have it and if you want to import the filtered or the unfiltered signal (depending on what you expoorted from OTBioLab+)
@@ -345,11 +345,11 @@ def emg_from_otb (file, refsig=[True, "filtered"]):
 if __name__ == "__main__":
     import os, sys
     
-    """ # Test OTB file
+    # Test OTB file
     file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
-    emgfile = emg_from_otb(file=file_toOpen, refsig=[True, "filtered"]) """
+    emgfile = emg_from_otb(file=file_toOpen, refsig=[True, "filtered"])
 
-   # Test DEMUSE file
+    """ # Test DEMUSE file
     #file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
     file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_only1MU_testfile.mat") # Test it on a contraction with a single MU
-    emgfile = emg_from_demuse(file=file_toOpen)
+    emgfile = emg_from_demuse(file=file_toOpen) """
