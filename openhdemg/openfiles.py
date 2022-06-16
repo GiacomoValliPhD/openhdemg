@@ -3,13 +3,17 @@ import pandas as pd
 import numpy as np
 from otbelectrodes import *
 
+"""
+Of this library, only few functions will be useful to the final user. Therefore, only some of them should imported as:
 
-# ---------------------- Define classes and functions used in the DEMUSE openfile function -------------------------
+from openfiles import emg_from_otb, emg_from_demuse
+"""
+
+# -------------------------- Define functions used in the DEMUSE openfile function -----------------------------
 #
-# As different Matlab file structures exist, a different processing is necessary to use them in Python
-# In most cases we will use pandas dataframe (df), the most used data structure (and library) for data management in Python
-# Here we convert Matlab arrays (1 dimensional structures) into a df
-# The output can be transposed to suit the user necessity
+# As different Matlab file structures exist, a different processing is necessary to use them in Python.
+# In most cases we will use pandas dataframe (df), the most used data structure (and library) for data management in Python.
+# Here we convert Matlab arrays (1 dimensional structures) into a df. The output can be transposed to suit the user necessity.
 def oned_mat_to_pd(variable_name, mat_file, transpose_=False):
     if variable_name in mat_file.keys():
         
@@ -34,7 +38,7 @@ def oned_mat_to_pd(variable_name, mat_file, transpose_=False):
 
         return np.nan
 
-# Here we convert Matlab matrixes (2 dimensional structures) into a df
+# Here we convert Matlab matrixes (2 dimensional structures) into a df.
 # The code is exactly the same as above (ONED_mat_to_pd), however, the basic transpose state is different.
 # For the basic user this will allow to make the script work properly even if he/she omits to pass transpose while calling the function
 def twod_mat_to_pd(variable_name, mat_file, transpose_=True):
@@ -123,6 +127,18 @@ def raw_sig_from_demuse(variable_name, mat_file, transpose_=False):
 
 
 def emg_from_demuse (file):
+    """
+    This function is used to import the .mat file used in DEMUSE as a dictionary of Python objects (mainly pandas dataframes).
+
+    The only necessary input is the file path (including file extension .mat).
+
+    It returns a dictionary containing the following: "SOURCE", "RAW_SIGNAL", "REF_SIGNAL", "PNR",
+    "IPTS", "MUPULSES", "FSAMP", "IED", "EMG_LENGTH", "NUMBER_OF_MUS", "BINARY_MUS_FIRING".
+
+    The returned file is called emgfile for convention.
+
+    Note: the demuse file contains 65 raw EMG channels (1 empty) instead of 64 (as for OTB matrix standards).
+    """
     mat_file = loadmat(file, simplify_cells=True)
 
     # Parse .mat obtained from DEMUSE to see the available variables
@@ -171,7 +187,7 @@ def emg_from_demuse (file):
 
 
 
-# ---------------------- Define classes and functions used in the OTB openfile function -------------------------
+# -------------------------- Define functions used in the OTB openfile function -----------------------------
 #
 # Here we extract and convert variables as those extracted for the .mat file coming from the DEMUSE softwary.
 # That would make it easier to use them later on
@@ -293,6 +309,16 @@ def get_otb_rawsignal(df):
 
 
 def emg_from_otb (file, refsig=[True, "filtered"]):
+    """
+    This function is used to import the .mat file exportable by the OTBiolab+ software as a dictionary of Python objects (mainly pandas dataframes).
+
+    The only necessary input is the file path (including file extension .mat).
+
+    It returns a dictionary containing the following: "SOURCE", "RAW_SIGNAL", "REF_SIGNAL", "PNR",
+    "IPTS", "MUPULSES", "FSAMP", "IED", "EMG_LENGTH", "NUMBER_OF_MUS", "BINARY_MUS_FIRING".
+
+    The returned file is called emgfile for convention.
+    """
     mat_file = loadmat(file, simplify_cells=True)
 
     # Parse .mat obtained from DEMUSE to see the available variables

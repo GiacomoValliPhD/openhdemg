@@ -4,11 +4,18 @@ import matplotlib.pyplot as plt
 
 def showselect(emgfile, title=""):
     """
-    This function is used to select a part of the recording (based on the reference signal)
-    It returns the start and the end of the selection.
+    This function is used to select a part of the recording (based on the reference signal).
+    
+    The first argument should be the emgfile.
+
+    Additionally, a title of the plot can be passed in title="Do this".
 
     The area can be selected with any letter or number in the keyboard, wrong points can be removed
     by pressing the right mouse button. Once finished, press enter to continue.
+
+    It returns the start and the end point of the selection.
+
+    Suggested names for the returned objects: start_, end_
     """
     # Extract the variables of interest from the EMG file
     REF_SIGNAL = emgfile["REF_SIGNAL"]
@@ -36,10 +43,14 @@ def resize_emgfile(emgfile, area=None):
     This function resizes all the emgfile (temporarily) to compute the various parameters only in
     the area of interest.
 
-    It returns the new (resized) emgfile and the start and end of the selection (can be used for code automation)
+    The first argument should be the emgfile.
 
     If the resizing area is already known, it can be passed (in samples, as a list (e.g., [120,2560])) as
     input to area. If area == None, then the user can select the area of interest manually.
+
+    It returns the new (resized) emgfile and the start and end of the selection (can be used for code automation).
+
+    Suggested names for the returned objects: rs_emgfile, start_, end_
     """
     # Identify the area of interest
     if isinstance(area, list) and len(area) == 2:
@@ -82,21 +93,23 @@ def resize_emgfile(emgfile, area=None):
 
 def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
     """
-    This function can calculate the recruitment/derecruitment thresholds in absolute and relative therms
+    This function calculates the recruitment/derecruitment thresholds in absolute and relative therms.
 
-    Input parameters for event_ are: "rt", "dert", "rt_dert"
-    type="rt_dert" means that both recruitment and derecruitment tresholds will be calculated
-    type="rt" means that only recruitment tresholds will be calculated
-    type="dert" means that only derecruitment tresholds will be calculated
+    The first argument should be the emgfile.
 
-    Input parameters for type_ are: "abs", "rel", "abs_rel"
-    type="abs_rel" means that both absolute and relative tresholds will be calculated
-    type="rel" means that only relative tresholds will be calculated
-    type="abs" means that only absolute tresholds will be calculated
+    Input parameters for event_ are: "rt", "dert", "rt_dert".
+    type="rt_dert" means that both recruitment and derecruitment tresholds will be calculated.
+    type="rt" means that only recruitment tresholds will be calculated.
+    type="dert" means that only derecruitment tresholds will be calculated.
 
-    if mvif is 0, ask the user to input mvif, otherwise use the value passed
+    Input parameters for type_ are: "abs", "rel", "abs_rel".
+    type="abs_rel" means that both absolute and relative tresholds will be calculated.
+    type="rel" means that only relative tresholds will be calculated.
+    type="abs" means that only absolute tresholds will be calculated.
 
-    The function returns a DataFrame containing the requested thresholds
+    if mvif is 0, ask the user to input mvif, otherwise use the value passed.
+
+    The function returns a DataFrame containing the requested thresholds.
     """
     # Extract the variables of interest from the EMG file
     NUMBER_OF_MUS = emgfile["NUMBER_OF_MUS"]
@@ -177,23 +190,28 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
 
 def compute_dr(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10, event_="rec_derec_steady"):
     """
-    This function can calculate the discharge rate at recruitment, derecruitment and during the steady-state phase
+    This function can calculate the discharge rate at recruitment, derecruitment and during the steady-state phase.
 
-    The user will need to select the start and end of the steady-state phase manually
+    The first argument should be the emgfile.
 
-    Input parameters for event_ are: "rec", "derec", "rec_derec", "steady", "rec_derec_steady"
-    type="rec_derec_steady" means that the DR is calculated at recruitment, derecruitment and during the steady-state phase
-    type="rec" means that the DR is calculated at recruitment
-    type="derec" means that the DR is calculated at derecruitment
-    type="rec_derec" means that the DR is calculated at recruitment and derecruitment
-    type="steady" means that the DR is calculated during the steady-state phase
+    The user will need to select the start and end of the steady-state phase manually.
+
+    The number of firings used for the DR calculation at recruitment/derecruitment and at the start/end of the steady-state phase
+    can be passed to n_firings_RecDerec and n_firings_steady.
+
+    Input parameters for event_ are: "rec", "derec", "rec_derec", "steady", "rec_derec_steady".
+    type="rec_derec_steady" means that the DR is calculated at recruitment, derecruitment and during the steady-state phase.
+    type="rec" means that the DR is calculated at recruitment.
+    type="derec" means that the DR is calculated at derecruitment.
+    type="rec_derec" means that the DR is calculated at recruitment and derecruitment.
+    type="steady" means that the DR is calculated during the steady-state phase.
 
     The user can specify the number of firings to consider at recruitment/derecruitment and 
-    at the start and end of the steady-state phase
+    at the start and end of the steady-state phase.
     
-    DR for all the contraction is automatically calculated and returned
+    DR for all the contraction is automatically calculated and returned.
 
-    The function returns a DataFrame containing the requested DR
+    The function returns a DataFrame containing the requested DR.
     """
 
     # Extract the variables of interest from the EMG file
@@ -309,17 +327,20 @@ def compute_dr(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10, event_="r
 
 def basic_mus_properties(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10, mvif = 0):
     """
-    This function can calculate all the basic properties of the MUs of a trapezoidal contraction
-    In particular the absolute/relative recruitment thresholds and
-    the discharge rate at recruitment, derecruitment and during the steady-state phase
+    This function can calculate all the basic properties of the MUs of a trapezoidal contraction,
+    in particular the absolute/relative recruitment thresholds and
+    the discharge rate at recruitment, derecruitment and during the steady-state phase.
+
+    The first argument should be the emgfile.
+
+    The number of firings used for the DR calculation at recruitment/derecruitment and at the start/end of the steady-state phase
+    can be passed to n_firings_RecDerec and n_firings_steady.
 
     The user will only need to select the start and end of the steady-state phase manually and to enter
-    the MViF if this is not specified (equal to 0) while calling the function basic_mus_properties
+    the MViF if this is not specified (by default mvif = 0) while calling the function basic_mus_properties. If 
+    mvif is a number different from 0, this value is used instead.
 
-    The user can specify the number of firings to consider at recruitment/derecruitment and 
-    at the start and end of the steady-state phase
-
-    The function returns a DataFrame containing all the variables
+    The function returns a DataFrame containing all the results.
     """
 
     # Extract the variables of interest from the EMG file
@@ -390,8 +411,13 @@ def basic_mus_properties(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10,
 
 def compute_idr(emgfile):
     """
-    This function computes the instantaneous discharge rate (IDR) from the MUPULSES
-    The IDR is very useful for plotting and visualisation of the MUs behaviour
+    This function computes the instantaneous discharge rate (IDR) from the MUPULSES.
+    The IDR is very useful for plotting and visualisation of the MUs behaviour.
+
+    The only necessary argument is the emgfile.
+
+    It returns a dict with a key for every MUs (keys are integers). Accessing the key, we have a dataframe containing
+    the mupulses, the time of firing in seconds and the idr for that specific MU.
     """
     # Compute the instantaneous discharge rate (IDR) from the MUPULSES
     if isinstance(emgfile["MUPULSES"], list):
