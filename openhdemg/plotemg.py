@@ -15,13 +15,15 @@ def showgoodlayout(despined= False):
 
 def plot_emgsig(emgfile, channels, timeinseconds=True):
     """ 
-    This function plots the raw EMG. It can plot a single or multiple channels.
+    This function plots the raw EMG signal. It can plot a single or multiple channels.
+
+    The first argument should be the emgfile.
     
     A list of channels can be passed in input as a manually-written list or with:
-    channels=[*range(0, 12)]
+    channels=[*range(0, 12)], 
     We need the "*" operator to unpack the results of range and build a list.
 
-    The x-axes can be shown in seconds or samples.
+    The x-axes can be shown in seconds if timeinseconds=False or samples if True.
     """
     # Check to have the raw EMG signal in a pandas dataframe
     if isinstance(emgfile["RAW_SIGNAL"], pd.DataFrame):
@@ -76,6 +78,13 @@ def plot_emgsig(emgfile, channels, timeinseconds=True):
         print("RAW_SIGNAL is probably absent or it is not contained in a dataframe")
 
 def plot_refsig(emgfile, timeinseconds=True):
+    """ 
+    This function plots the reference (force) signal. The reference signal is expected to be expressed as % MViF.
+
+    The first argument should be the emgfile.
+    
+    The x-axes can be shown in seconds if timeinseconds=False or samples if True.
+    """
     # Check to have the reference signal in a pandas dataframe
     if isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
         refsig = emgfile["REF_SIGNAL"]
@@ -97,6 +106,17 @@ def plot_refsig(emgfile, timeinseconds=True):
        print("REF_SIGNAL is probably absent or it is not contained in a dataframe") 
 
 def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addrefsig=True):
+    """ 
+    This function plots the MUs pulses (i.e., binary firing point).
+
+    The first argument should be the emgfile.
+
+    The width of the lines can be adjusted with linewidths=
+    
+    The x-axes can be shown in seconds if timeinseconds=False or samples if True.
+
+    The reference signal is also shown if addrefsig=True and it is expected to be expressed as % MViF.
+    """
     # Check to have the reference signal in a pandas dataframe
     if isinstance(emgfile["MUPULSES"], list):
         mupulses = emgfile["MUPULSES"]
@@ -145,6 +165,17 @@ def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addr
        print("MUPULSES is probably absent or it is not contained in a list")
 
 def plot_ipts(emgfile, munumber, timeinseconds=True):
+    """ 
+    This function plots the impuls train (i.e., non-binary firing).
+
+    The first argument should be the emgfile.
+    
+    A list of MUs can be passed in input as a manually-written list or with:
+    munumber=[*range(0, 12)], 
+    We need the "*" operator to unpack the results of range and build a list.
+    
+    The x-axes can be shown in seconds if timeinseconds=False or samples if True.
+    """
     # Check to have the raw EMG signal in a pandas dataframe
     if isinstance(emgfile["IPTS"], pd.DataFrame):
         ipts = emgfile["IPTS"]
@@ -197,6 +228,17 @@ def plot_ipts(emgfile, munumber, timeinseconds=True):
         print("IPTS is probably absent or it is not contained in a dataframe")
 
 def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True):
+    """ 
+    This function plots the instantaneous discharge rate.
+
+    The first argument should be the emgfile.
+    
+    A list of MUs can be passed in input as a manually-written list or with:
+    munumber=[*range(0, 12)], 
+    We need the "*" operator to unpack the results of range and build a list.
+    
+    The x-axes can be shown in seconds if timeinseconds=False or samples if True.
+    """
     # Compute the instantaneous discharge rate (IDR) from the MUPULSES
     idr = compute_idr(emgfile = emgfile)
 
