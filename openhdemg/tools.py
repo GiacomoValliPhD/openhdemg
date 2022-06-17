@@ -2,6 +2,7 @@
 This file contains all the functions that don't properly apply to the plot or analysis category.
 However, these functions are necessary for the usability of the library.
 """
+import copy
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -146,3 +147,94 @@ def compute_idr(emgfile):
     
     else:
         print("MUPULSES is probably absent or it is not contained in a list")
+
+
+def delete_mus(emgfile, munumber):
+    """
+    This function allows to delete unwanted MUs.
+
+    The first argument should be the emgfile.
+
+    The second argument is/are the MU/MUs to delete. An integer or a list of MUs to remove
+    can be passed in input. The list can be passed as a manually-written list or with:
+    munumber=[*range(0, 12)], 
+    We need the "*" operator to unpack the results of range and build a list.
+
+    The function returns the same emgfile but without the specified MUs.
+    """
+    
+    # Create the object to store the new emgfile without the specified MUs
+    del_emgfile = copy.deepcopy(emgfile)
+    """
+    Need to be changed: ==>
+    emgfile =   {
+                "SOURCE" : SOURCE,
+                "RAW_SIGNAL" : RAW_SIGNAL, 
+                "REF_SIGNAL" : REF_SIGNAL, 
+                ==> "PNR" : PNR, 
+                ==> "IPTS" : IPTS, 
+                ==> "MUPULSES" : MUPULSES, 
+                "FSAMP" : FSAMP, 
+                "IED" : IED, 
+                "EMG_LENGTH" : EMG_LENGTH, 
+                ==> "NUMBER_OF_MUS" : NUMBER_OF_MUS, 
+                ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
+                }
+    """
+
+    # Common part working for all the possible inputs to munumber
+    # Drop PNR values and rename the index
+    del_emgfile["PNR"] = emgfile["PNR"].drop(munumber) # Works with lists and integers
+    del_emgfile["PNR"].reset_index(inplace = True, drop = True) # Drop the old index
+
+    # Drop IPTS by columns and rename the columns
+    del_emgfile["IPTS"] = emgfile["IPTS"].drop(munumber, axis = 1) # Works with lists and integers
+    del_emgfile["IPTS"].columns = range(del_emgfile["IPTS"].shape[1])
+
+    # Drop BINARY_MUS_FIRING by columns and rename the columns
+    del_emgfile["BINARY_MUS_FIRING"] = emgfile["BINARY_MUS_FIRING"].drop(munumber, axis = 1) # Works with lists and integers
+    del_emgfile["BINARY_MUS_FIRING"].columns = range(del_emgfile["BINARY_MUS_FIRING"].shape[1])
+    
+    if isinstance(munumber, int):
+        # Delete MUPULSES by position in the list.
+        del del_emgfile["MUPULSES"][munumber]
+
+        # Subrtact one MU to the total number
+        del_emgfile["NUMBER_OF_MUS"] = emgfile["NUMBER_OF_MUS"] - 1
+    
+    elif isinstance(munumber, list):
+        # Delete all the content in the del_emgfile["MUPULSES"] and append only the MUs that we want to retain (exclude deleted MUs)
+        # This is a workaround to directly deleting elements
+        del_emgfile["MUPULSES"] = []
+        for mu in range(emgfile["NUMBER_OF_MUS"]):
+            if mu not in munumber:
+                del_emgfile["MUPULSES"].append(emgfile["MUPULSES"][mu])
+        
+        # Subrtact the number of deleted MUs to the total number
+        del_emgfile["NUMBER_OF_MUS"] = emgfile["NUMBER_OF_MUS"] - len(munumber)
+    
+    else:
+        print("Error: while calling the delete_mus function, you should pass an integer or a list in munumber= ")
+    
+    return del_emgfile
+
+
+###########################################################################################################################################################
+###########################################################################################################################################################
+###########################################################################################################################################################
+# Test part
+if __name__ == "__main__":
+    import os, sys
+    from openfiles import emg_from_demuse, emg_from_otb
+    import numpy as np
+
+    # Test DEMUSE file
+    file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
+    #file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_only1MU_testfile.mat") # Test it on a contraction with a single MU
+    emgfile = emg_from_demuse(file=file_toOpen)
+
+    """ # Test OTB file
+    file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
+    emgfile = emg_from_otb(file=file_toOpen, refsig=[True, "filtered"]) """
+
+    res = delete_mus(emgfile, munumber=1)

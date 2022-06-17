@@ -19,7 +19,7 @@ def plot_emgsig(emgfile, channels, timeinseconds=True):
 
     The first argument should be the emgfile.
     
-    A list of channels can be passed in input as a manually-written list or with:
+    An integer or a list of channels can be passed in input. The list can be passed as a manually-written list or with:
     channels=[*range(0, 12)], 
     We need the "*" operator to unpack the results of range and build a list.
 
@@ -170,7 +170,7 @@ def plot_ipts(emgfile, munumber, timeinseconds=True):
 
     The first argument should be the emgfile.
     
-    A list of MUs can be passed in input as a manually-written list or with:
+    An integer or a list of MUs can be passed in input. The list can be passed as a manually-written list or with:
     munumber=[*range(0, 12)], 
     We need the "*" operator to unpack the results of range and build a list.
     
@@ -233,7 +233,7 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True):
 
     The first argument should be the emgfile.
     
-    A list of MUs can be passed in input as a manually-written list or with:
+    An integer or a list of MUs can be passed in input. The list can be passed as a manually-written list or with:
     munumber=[*range(0, 12)], 
     We need the "*" operator to unpack the results of range and build a list.
     
