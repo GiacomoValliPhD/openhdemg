@@ -131,7 +131,6 @@ def compute_dr(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10, event_="r
     NUMBER_OF_MUS = emgfile["NUMBER_OF_MUS"]
     MUPULSES = emgfile["MUPULSES"]
     FSAMP = emgfile["FSAMP"]
-    REF_SIGNAL = emgfile["REF_SIGNAL"]
 
     # Check that all the inputs are correct
     errormessage = f"event_ must be one of the following strings: rec, derec, rec_derec, steady, rec_derec_steady. {event_} was passed instead."
@@ -148,9 +147,9 @@ def compute_dr(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10, event_="r
         # Loop all the MUs
         for i in range(NUMBER_OF_MUS):
             mup = pd.DataFrame(MUPULSES[i]) if NUMBER_OF_MUS > 1 else pd.DataFrame(MUPULSES) # Manage exception of a single MU
-            # Calculate the delta (difference) between the firings and istantaneous discharge rate (idr)
+            # Calculate the istantaneous discharge rate (idr)
             idr = FSAMP / mup.diff()
-            # Then divide FSAMP for the average delta between the firings in the interval specified in "n_firings_RecDerec"
+            # Then average idr between the firings in the interval specified in "n_firings_RecDerec"
             pps_rec = np.mean(idr[0 : n_firings_RecDerec], axis=0) # Can use 0 because it ignores the firs nan value
             pps_derec = np.mean(idr[len(idr)-n_firings_RecDerec+1 : len(idr)], axis=0) # +1 because len() counts position 0
 

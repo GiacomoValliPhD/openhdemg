@@ -67,8 +67,9 @@ def resize_emgfile(emgfile, area=None):
         # Visualise and select the steady-state
         start_, end_ = showselect(emgfile, title="Select the start/end area to consider then press enter")
     
-    # Create the object to store the resized emgfile
-    rs_emgfile = emgfile
+    # Create the object to store the resized emgfile.
+    # Create a deepcopy to avoid changing the original emgfile
+    rs_emgfile = copy.deepcopy(emgfile)
     """
     Need to be resized: ==>
     emgfile =   {
@@ -118,7 +119,7 @@ def compute_idr(emgfile):
             df = pd.DataFrame(emgfile["MUPULSES"][mu] if emgfile["NUMBER_OF_MUS"] > 1 else emgfile["MUPULSES"])
             # Calculate time in seconds and add it in column 1
             df[1] = df[0] / emgfile["FSAMP"]
-            # Calculate the delta (difference) between the firings and istantaneous discharge rate (idr), add it in column 2
+            # Calculate the istantaneous discharge rate (idr), add it in column 2
             df[2] = emgfile["FSAMP"] / df[0].diff()
             
             df.rename(columns = {0:"mupulses", 1:"timesec", 2:"idr"}, inplace = True)
@@ -146,7 +147,7 @@ def compute_idr(emgfile):
         return idr
     
     else:
-        print("MUPULSES is probably absent or it is not contained in a list")
+        raise Exception("MUPULSES is probably absent or it is not contained in a list")
 
 
 def delete_mus(emgfile, munumber):
@@ -161,9 +162,17 @@ def delete_mus(emgfile, munumber):
     We need the "*" operator to unpack the results of range and build a list.
 
     The function returns the same emgfile but without the specified MUs.
+
+    The function will not work if the emgfile only contains 1 motor unit, 
+    since the entire file should be deleted instead. In this case, None will be returned.
     """
     
-    # Create the object to store the new emgfile without the specified MUs
+    # Check how many MUs we have, if we only have 1 MU, the entire file should be deleted instead.
+    if emgfile["NUMBER_OF_MUS"] <= 1:
+        return
+    
+    # Create the object to store the new emgfile without the specified MUs.
+    # Create a deepcopy to avoid changing the original emgfile
     del_emgfile = copy.deepcopy(emgfile)
     """
     Need to be changed: ==>
@@ -184,8 +193,9 @@ def delete_mus(emgfile, munumber):
 
     # Common part working for all the possible inputs to munumber
     # Drop PNR values and rename the index
-    del_emgfile["PNR"] = emgfile["PNR"].drop(munumber) # Works with lists and integers
-    del_emgfile["PNR"].reset_index(inplace = True, drop = True) # Drop the old index
+    if emgfile["SOURCE"] == "DEMUSE": # Modify once PNR calculation is implemented also for OTB files
+        del_emgfile["PNR"] = emgfile["PNR"].drop(munumber) # Works with lists and integers
+        del_emgfile["PNR"].reset_index(inplace = True, drop = True) # Drop the old index
 
     # Drop IPTS by columns and rename the columns
     del_emgfile["IPTS"] = emgfile["IPTS"].drop(munumber, axis = 1) # Works with lists and integers
@@ -214,7 +224,7 @@ def delete_mus(emgfile, munumber):
         del_emgfile["NUMBER_OF_MUS"] = emgfile["NUMBER_OF_MUS"] - len(munumber)
     
     else:
-        print("Error: while calling the delete_mus function, you should pass an integer or a list in munumber= ")
+        raise Exception("While calling the delete_mus function, you should pass an integer or a list in munumber= ")
     
     return del_emgfile
 
@@ -228,13 +238,13 @@ if __name__ == "__main__":
     from openfiles import emg_from_demuse, emg_from_otb
     import numpy as np
 
-    # Test DEMUSE file
+    """ # Test DEMUSE file
     file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
     #file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_only1MU_testfile.mat") # Test it on a contraction with a single MU
-    emgfile = emg_from_demuse(file=file_toOpen)
+    emgfile = emg_from_demuse(file=file_toOpen) """
 
-    """ # Test OTB file
+    # Test OTB file
     file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
-    emgfile = emg_from_otb(file=file_toOpen, refsig=[True, "filtered"]) """
+    emgfile = emg_from_otb(file=file_toOpen, refsig=[True, "filtered"])
 
     res = delete_mus(emgfile, munumber=1)
