@@ -388,7 +388,7 @@ def refsig_from_otb (file, refsig="filtered"):
     In OTBioLab+ the "performed path" refers to the filtered signal, the "acquired data" to the unfiltered signal.
     "filtered" or "unfiltered" can be passed.
 
-    It returns a dictionary containing: "SOURCE", "REF_SIGNAL". This will allow compatibility with the emgfile.
+    It returns a dictionary containing: "SOURCE", "FSAMP", "REF_SIGNAL". This will allow compatibility with the emgfile.
 
     The returned file is called refsig for convention.
     """
@@ -408,9 +408,11 @@ def refsig_from_otb (file, refsig="filtered"):
 
     # Use this to know what data you have or don't have
     SOURCE = "OTB"
+    FSAMP = int(mat_file["SamplingFrequency"])
 
     resdict =   {
                 "SOURCE" : SOURCE,
+                "FSAMP" : FSAMP,
                 "REF_SIGNAL" : REF_SIGNAL,
                 }
 

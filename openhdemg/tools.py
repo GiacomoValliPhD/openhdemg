@@ -6,22 +6,23 @@ import copy
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import signal
 
 
-def showselect(emgfile, title=""):
+def showselect(emgfile, title="", nclic=2):
     """
     This function is used to select a part of the recording (based on the reference signal).
     
     The first argument should be the emgfile.
 
-    Additionally, a title of the plot can be passed in title="Do this".
+    Additionally (and encouraged), a title of the plot can be passed in title="Do this".
+
+    By default, this function collects and sorts 2 clics. 1 and 4 clics can also be specified with nclic.
 
     The area can be selected with any letter or number in the keyboard, wrong points can be removed
     by pressing the right mouse button. Once finished, press enter to continue.
 
     It returns the start and the end point of the selection.
-
-    Suggested names for the returned objects: start_, end_
     """
     # Extract the variables of interest from the EMG file
     REF_SIGNAL = emgfile["REF_SIGNAL"]
@@ -30,18 +31,42 @@ def showselect(emgfile, title=""):
     plt.figure(num="Fig_ginput")
     plt.plot(REF_SIGNAL[0])
     plt.xlabel("Samples")
-    plt.ylabel("%MViF")
+    plt.ylabel("MViF")
     plt.title(title, fontweight ="bold")
     ginput_res = plt.ginput(n=-1, timeout=0, mouse_add=None)
-    # Sort the input range of the steady-state
-    if ginput_res[0][0] < ginput_res[1][0]:
-        start_ = round(ginput_res[0][0])
-        end_ = round(ginput_res[1][0])
-    else:
-        start_ = round(ginput_res[1][0])
-        end_ = round(ginput_res[0][0])
+
+    # Check if the user entered the correct number of clics
+    if nclic != len(ginput_res):
+        raise Exception("Wrong number of inputs, read the title")
     
-    return start_, end_
+    # Act according to the number of clics
+    if nclic == 2:
+    # Sort the input range. Used to resize the signal, select the steady-state, calculate MViF 
+        if ginput_res[0][0] < ginput_res[1][0]:
+            start_point = round(ginput_res[0][0])
+            end_point = round(ginput_res[1][0])
+        else:
+            start_point = round(ginput_res[1][0])
+            end_point = round(ginput_res[0][0])
+        
+        return start_point, end_point
+    
+    elif nclic == 1:
+        start_point = round(ginput_res[0][0])
+        
+        return start_point
+    
+    elif nclic ==4: # Used for activation capacity
+        points = [ginput_res[0][0], ginput_res[1][0], ginput_res[2][0], ginput_res[3][0]]
+        # Sort the input range
+        points.sort()
+        
+        start_point_tw = round(points[0])
+        end_point_tw = round(points[1])
+        start_point_rest = round(points[2])
+        end_point_rest = round(points[3])
+        
+        return start_point_tw, end_point_tw, start_point_rest, end_point_rest
 
 
 def resize_emgfile(emgfile, area=None):
@@ -227,6 +252,56 @@ def delete_mus(emgfile, munumber):
         raise Exception("While calling the delete_mus function, you should pass an integer or a list in munumber= ")
     
     return del_emgfile
+
+
+def filter_refsig(refsig, order=4, cutoff=20):
+    """
+    This function is used to low-pass filter the reference signal and remove noise. The filter is a Zero-lag low-pass Butterworth.
+
+    The firs input is the refsig.
+
+    Other inputs are: filter order (order, 4th if not specified), the cutoff frequency (cutoff, 20 Hz if not specified).
+
+    It returns the filtered refsig.
+    """
+    # Create the object to store the filtered refsig.
+    # Create a deepcopy to avoid changing the original refsig
+    filtrefsig = copy.deepcopy(refsig)
+
+    # Calculate the components of the filter and apply them with filtfilt to obtain Zero-lag filtering
+    b, a = signal.butter(N=order, Wn=cutoff, fs=filtrefsig["FSAMP"], btype="lowpass")
+    filtrefsig["REF_SIGNAL"][0] = signal.filtfilt(b, a, filtrefsig["REF_SIGNAL"][0])
+
+    return filtrefsig
+
+def remove_offset(emgfile, offsetval=0):
+    """
+    This function is used to remove the offset from the refsig. As first input, can be passed both the 
+    emgfile and the refsig (obtained from the function refsig_from_otb).
+
+    If offsetval is 0 (default), the user will be asked to manually select an aerea to compute the offset value.
+    Otherwise, the value passed to offsetval will be used. Negative offsetval can be passed.
+    """
+    # Check that all the inputs are correct
+    if not isinstance(offsetval, (float, int)):
+        raise Exception(f"offsetval must be one of the following types: float, int. {type(offsetval)} was passed instead.")
+
+    # Create the object to store the filtered refsig.
+    # Create a deepcopy to avoid changing the original refsig
+    offs_emgfile = copy.deepcopy(emgfile)
+    
+    if offsetval != 0:
+        # Directly subtract the offset value.
+        offs_emgfile["REF_SIGNAL"][0] = offs_emgfile["REF_SIGNAL"][0] - offsetval
+    
+    else:
+        # Select the area to calculate the offset (average value of the selected area)
+        start_, end_ = showselect(offs_emgfile, title="Select the start/end of a resting area to calculate the offset, then press enter")
+        offsetval = offs_emgfile["REF_SIGNAL"].iloc[start_ : end_].mean()
+        # We need to convert the series offsetval into float
+        offs_emgfile["REF_SIGNAL"][0] = offs_emgfile["REF_SIGNAL"][0] - float(offsetval)
+    
+    return offs_emgfile
 
 
 ###########################################################################################################################################################
