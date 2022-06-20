@@ -6,7 +6,7 @@ from otbelectrodes import *
 """
 Of this library, only few functions will be useful to the final user. Therefore, only some of them should imported as:
 
-from openfiles import emg_from_otb, emg_from_demuse
+from openfiles import emg_from_otb, emg_from_demuse, refsig_from_otb
 """
 
 # -------------------------- Define functions used in the DEMUSE openfile function -----------------------------
@@ -307,11 +307,11 @@ def get_otb_rawsignal(df):
 
 
 
-def emg_from_otb (file, refsig=[True, "filtered"]):
+def emg_from_otb(file, refsig=[True, "filtered"]):
     """
     This function is used to import the .mat file exportable by the OTBiolab+ software as a dictionary of Python objects (mainly pandas dataframes).
 
-    The oargument is the file path (including file extension .mat).
+    The first argument is the file path (including file extension .mat).
 
     refsig can be used to specify if REF_SIGNAL is present and if you want to import the filtered or the unfiltered signal.
     In OTBioLab+ the "performed path" refers to the filtered signal, the "acquired data" to the unfiltered signal.
@@ -370,6 +370,51 @@ def emg_from_otb (file, refsig=[True, "filtered"]):
 
     return resdict
 
+#-----------------------------------------------------------------------------------------------
+
+
+
+
+def refsig_from_otb (file, refsig="filtered"):
+    """
+    This function is used to import the .mat file exportable by the OTBiolab+ software as a dictionary of Python objects (mainly pandas dataframes).
+
+    The first argument is the file path (including file extension .mat).
+
+    Compared to the function emg_from_otb, this function only imports the reference signal and, therefore, it can be used for special cases
+    where only the ref signal is necessary. This will allow a faster execution of the script and to avoid exceptions for missing data.
+
+    The argument refsig can be used to specify if the REF_SIGNAL to import is the filtered or the unfiltered signal (filtered at source).
+    In OTBioLab+ the "performed path" refers to the filtered signal, the "acquired data" to the unfiltered signal.
+    "filtered" or "unfiltered" can be passed.
+
+    It returns a dictionary containing: "SOURCE", "REF_SIGNAL". This will allow compatibility with the emgfile.
+
+    The returned file is called refsig for convention.
+    """
+    mat_file = loadmat(file, simplify_cells=True)
+
+    # Parse .mat obtained from DEMUSE to see the available variables
+    # First: see the variables name
+    print("\n--------------------------------\nAvailable dict keys are:\n\n{}\n".format(mat_file.keys()))
+
+    # Second: Simplify (rename) columns description and extract all the parameters in a pandas dataframe
+    df = pd.DataFrame(mat_file["Data"], columns=mat_file["Description"])
+    #print(df.head())
+
+    # Convert the input passed to refsig in a list compatible with the function get_otb_refsignal
+    refsig_=[True, refsig]
+    REF_SIGNAL = get_otb_refsignal(df=df, refsig=refsig_)
+
+    # Use this to know what data you have or don't have
+    SOURCE = "OTB"
+
+    resdict =   {
+                "SOURCE" : SOURCE,
+                "REF_SIGNAL" : REF_SIGNAL,
+                }
+
+    return resdict
 
 
 ###########################################################################################################################################################
