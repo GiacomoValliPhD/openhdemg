@@ -254,11 +254,11 @@ def delete_mus(emgfile, munumber):
     return del_emgfile
 
 
-def filter_refsig(refsig, order=4, cutoff=20):
+def filter_refsig(emgfile, order=4, cutoff=20):
     """
     This function is used to low-pass filter the reference signal and remove noise. The filter is a Zero-lag low-pass Butterworth.
 
-    The firs input is the refsig.
+    As first input, can be passed both the emgfile and the refsig (obtained from the function refsig_from_otb).
 
     Other inputs are: filter order (order, 4th if not specified), the cutoff frequency (cutoff, 20 Hz if not specified).
 
@@ -266,7 +266,7 @@ def filter_refsig(refsig, order=4, cutoff=20):
     """
     # Create the object to store the filtered refsig.
     # Create a deepcopy to avoid changing the original refsig
-    filtrefsig = copy.deepcopy(refsig)
+    filtrefsig = copy.deepcopy(emgfile)
 
     # Calculate the components of the filter and apply them with filtfilt to obtain Zero-lag filtering
     b, a = signal.butter(N=order, Wn=cutoff, fs=filtrefsig["FSAMP"], btype="lowpass")
@@ -274,10 +274,12 @@ def filter_refsig(refsig, order=4, cutoff=20):
 
     return filtrefsig
 
+
 def remove_offset(emgfile, offsetval=0):
     """
-    This function is used to remove the offset from the refsig. As first input, can be passed both the 
-    emgfile and the refsig (obtained from the function refsig_from_otb).
+    This function is used to remove the offset from the refsig. 
+    
+    As first input, can be passed both the emgfile and the refsig (obtained from the function refsig_from_otb).
 
     If offsetval is 0 (default), the user will be asked to manually select an aerea to compute the offset value.
     Otherwise, the value passed to offsetval will be used. Negative offsetval can be passed.
@@ -303,6 +305,66 @@ def remove_offset(emgfile, offsetval=0):
     
     return offs_emgfile
 
+
+def get_mvif(emgfile):
+    """
+    This function is used to measure the MViF. 
+    
+    As only input, can be passed both the emgfile and the refsig (obtained from the function refsig_from_otb).
+
+    If multiple repetitions are selected, the maximum value will be returned.
+
+    It returns a float.
+    """
+    # Select the area to measure the MViF (maximum value)
+    start_, end_ = showselect(emgfile, title="Select the start/end area to measure the MViF, then press enter")
+    mvif = emgfile["REF_SIGNAL"].iloc[start_ : end_].max()
+    # We need to convert the series mvif into float
+    mvif = round(float(mvif), 2)
+
+    return mvif
+
+def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None):
+    """
+    This function is used to calculate the rate of force development (N/Sec). 
+    
+    As first input, can be passed both the emgfile and the refsig (obtained from the function refsig_from_otb).
+
+    The time to calculate RFD is by default 50, 100, 150, 200 ms. A list with different values can be passed to ms.
+
+    The user will be requested to manually select the starting point for the RFD by default. If an integer is passed
+    to startpoint, this value will be used instead.
+
+    It returns a dataframe containing the RFD.
+    """
+    
+    # Check if the startpoint was passed
+    if isinstance(startpoint, int):
+        start_ = startpoint
+    else:
+        # Otherwise select the starting point for the RFD
+        start_ = showselect(emgfile, title="Select the starting point for RFD, then press enter", nclic=1)
+
+    # Create a dict to add the RFD
+    rfd_dict = dict.fromkeys(ms, None)
+    # Loop through the ms list and calculate the respective rfd.
+    for thisms in ms:
+        ms_insamples = round((thisms * emgfile["FSAMP"]) / 1000)
+    
+        n_0 = emgfile["REF_SIGNAL"].iloc[start_]
+        n_next = emgfile["REF_SIGNAL"].iloc[start_ + ms_insamples]
+        
+        rfdval = (n_next - n_0) / (thisms/1000) # (ms/1000 to convert mSec in Sec)
+        
+        rfd_dict[thisms] = rfdval
+    
+    rfd = pd.DataFrame(rfd_dict)
+    
+    return rfd
+
+
+
+# To do: auto offset
 
 ###########################################################################################################################################################
 ###########################################################################################################################################################
