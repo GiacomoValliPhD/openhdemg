@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+from tools import compute_idr
 
-from analysis import compute_idr
 
 def showgoodlayout(despined= False):
     if despined == False:
@@ -19,7 +19,7 @@ def plot_emgsig(emgfile, channels, timeinseconds=True):
 
     The first argument should be the emgfile.
     
-    A list of channels can be passed in input as a manually-written list or with:
+    An integer or a list of channels can be passed in input. The list can be passed as a manually-written list or with:
     channels=[*range(0, 12)], 
     We need the "*" operator to unpack the results of range and build a list.
 
@@ -72,10 +72,10 @@ def plot_emgsig(emgfile, channels, timeinseconds=True):
             showgoodlayout(despined= True)
         
         else:
-            print("Error: while calling the plot_emgsig function, you should pass an integer or a list to channels= ")
+            raise Exception("While calling the plot_emgsig function, you should pass an integer or a list to channels= ") 
         
     else:
-        print("RAW_SIGNAL is probably absent or it is not contained in a dataframe")
+        raise Exception("RAW_SIGNAL is probably absent or it is not contained in a dataframe") 
 
 def plot_refsig(emgfile, timeinseconds=True):
     """ 
@@ -103,7 +103,7 @@ def plot_refsig(emgfile, timeinseconds=True):
         showgoodlayout()
     
     else:
-       print("REF_SIGNAL is probably absent or it is not contained in a dataframe") 
+       raise Exception("REF_SIGNAL is probably absent or it is not contained in a dataframe") 
 
 def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addrefsig=True):
     """ 
@@ -162,7 +162,7 @@ def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addr
         showgoodlayout()
 
     else:
-       print("MUPULSES is probably absent or it is not contained in a list")
+       raise Exception("MUPULSES is probably absent or it is not contained in a list")
 
 def plot_ipts(emgfile, munumber, timeinseconds=True):
     """ 
@@ -170,7 +170,7 @@ def plot_ipts(emgfile, munumber, timeinseconds=True):
 
     The first argument should be the emgfile.
     
-    A list of MUs can be passed in input as a manually-written list or with:
+    An integer or a list of MUs can be passed in input. The list can be passed as a manually-written list or with:
     munumber=[*range(0, 12)], 
     We need the "*" operator to unpack the results of range and build a list.
     
@@ -222,10 +222,11 @@ def plot_ipts(emgfile, munumber, timeinseconds=True):
             showgoodlayout(despined= True)
         
         else:
-            print("Error: while calling the plot_ipts function, you should pass an integer or a list in munumber= ")
+            raise Exception("While calling the plot_ipts function, you should pass an integer or a list in munumber= ")
         
     else:
-        print("IPTS is probably absent or it is not contained in a dataframe")
+        raise Exception("IPTS is probably absent or it is not contained in a dataframe")
+
 
 def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True):
     """ 
@@ -233,7 +234,7 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True):
 
     The first argument should be the emgfile.
     
-    A list of MUs can be passed in input as a manually-written list or with:
+    An integer or a list of MUs can be passed in input. The list can be passed as a manually-written list or with:
     munumber=[*range(0, 12)], 
     We need the "*" operator to unpack the results of range and build a list.
     
@@ -287,7 +288,7 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True):
         showgoodlayout(despined= True)
     
     else:
-            print("Error: while calling the plot_idr function, you should pass an integer or a list in munumber= ")
+        raise Exception("While calling the plot_idr function, you should pass an integer or a list in munumber= ")
 
 
 
