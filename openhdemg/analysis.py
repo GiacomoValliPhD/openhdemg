@@ -28,6 +28,7 @@ def showselect(emgfile, title=""):
     plt.title(title, fontweight ="bold")
     ginput_res = plt.ginput(n=-1, timeout=0, mouse_add=None)
     # Sort the input range of the steady-state
+    print(ginput_res)
     if ginput_res[0][0] < ginput_res[1][0]:
         start_ = round(ginput_res[0][0])
         end_ = round(ginput_res[1][0])
@@ -479,4 +480,5 @@ if __name__ == "__main__":
 
     df_basic_MUs_properties = basic_mus_properties(emgfile = emgfile)
 
-    #idr = compute_idr(emgfile = emgfile)
+    idr = compute_idr(emgfile = emgfile)
+    print(idr)

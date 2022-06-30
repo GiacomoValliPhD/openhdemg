@@ -374,6 +374,7 @@ if __name__ == "__main__":
     # Test OTB file
     file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
     emgfile = emg_from_otb(file=file_toOpen, refsig=[True, "filtered"])
+    print(emgfile["NUMBER_OF_MUS"])
 
     """ # Test DEMUSE file
     #file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction

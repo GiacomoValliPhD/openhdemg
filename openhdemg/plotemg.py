@@ -311,9 +311,9 @@ if __name__ == "__main__":
     emgfile = emg_from_otb(file=file_toOpen, refsig=[True, "filtered"]) """
     
 
-    #plot_emgsig(emgfile=emgfile, channels=[*range(0, 12)]) # We need the "*" to unpack the results of range and build a list - *range(0, 12)
+    plot_emgsig(emgfile=emgfile, channels=[*range(0, 12)]) # We need the "*" to unpack the results of range and build a list - *range(0, 12)
     #plot_refsig(emgfile=emgfile)
     #plot_mupulses(emgfile=emgfile, order=True, addrefsig=True)
     #plot_ipts(emgfile=emgfile, munumber=[*range(4, 6)]) # We need the "*" to unpack the results of range and build a list - *range(0, 12)
-    plot_idr(emgfile=emgfile, munumber=2, timeinseconds=True)
+    #plot_idr(emgfile=emgfile, munumber=2, timeinseconds=True)
     
