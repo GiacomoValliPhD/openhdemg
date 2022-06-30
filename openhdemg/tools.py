@@ -275,7 +275,7 @@ def filter_refsig(emgfile, order=4, cutoff=20):
     return filtrefsig
 
 
-def remove_offset(emgfile, offsetval=0):
+def remove_offset(emgfile, offsetval=0, auto=0):
     """
     This function is used to remove the offset from the refsig. 
     
@@ -283,23 +283,37 @@ def remove_offset(emgfile, offsetval=0):
 
     If offsetval is 0 (default), the user will be asked to manually select an aerea to compute the offset value.
     Otherwise, the value passed to offsetval will be used. Negative offsetval can be passed.
+
+    If auto > 0, the script automatically removes the offset based on the number of samples passed in input.
+
+    The function returns the same file but with the offset removed.
     """
     # Check that all the inputs are correct
     if not isinstance(offsetval, (float, int)):
         raise Exception(f"offsetval must be one of the following types: float, int. {type(offsetval)} was passed instead.")
+    if not isinstance(auto, (float, int)):
+        raise Exception(f"auto must be one of the following types: float, int. {type(auto)} was passed instead.")
 
     # Create the object to store the filtered refsig.
     # Create a deepcopy to avoid changing the original refsig
     offs_emgfile = copy.deepcopy(emgfile)
     
-    if offsetval != 0:
-        # Directly subtract the offset value.
-        offs_emgfile["REF_SIGNAL"][0] = offs_emgfile["REF_SIGNAL"][0] - offsetval
+    # Act differently if the automatic removal of the offset is active (>0) or not
+    if auto <= 0:
+        if offsetval != 0:
+            # Directly subtract the offset value.
+            offs_emgfile["REF_SIGNAL"][0] = offs_emgfile["REF_SIGNAL"][0] - offsetval
+        
+        else:
+            # Select the area to calculate the offset (average value of the selected area)
+            start_, end_ = showselect(offs_emgfile, title="Select the start/end of a resting area to calculate the offset, then press enter")
+            offsetval = offs_emgfile["REF_SIGNAL"].iloc[start_ : end_].mean()
+            # We need to convert the series offsetval into float
+            offs_emgfile["REF_SIGNAL"][0] = offs_emgfile["REF_SIGNAL"][0] - float(offsetval)
     
     else:
-        # Select the area to calculate the offset (average value of the selected area)
-        start_, end_ = showselect(offs_emgfile, title="Select the start/end of a resting area to calculate the offset, then press enter")
-        offsetval = offs_emgfile["REF_SIGNAL"].iloc[start_ : end_].mean()
+        # Compute and subtract the offset value.
+        offsetval = offs_emgfile["REF_SIGNAL"].iloc[0 : auto].mean()
         # We need to convert the series offsetval into float
         offs_emgfile["REF_SIGNAL"][0] = offs_emgfile["REF_SIGNAL"][0] - float(offsetval)
     
