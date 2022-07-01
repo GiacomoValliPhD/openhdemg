@@ -18,4 +18,5 @@ from tkinter.tix import *
 from threading import Thread, Lock
 from tkinter import StringVar, Tk, N, S, W, E
 
+from openhdemg.demo import *
 

@@ -1,7 +1,3 @@
-"""
-This file contains all the functions that don't properly apply to the plot or analysis category.
-However, these functions are necessary for the usability of the library.
-"""
 import copy
 import pandas as pd
 import numpy as np
