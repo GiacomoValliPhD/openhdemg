@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-from tools import compute_idr
+from openhdemg.tools import compute_idr
 
 
 def showgoodlayout(despined= False):

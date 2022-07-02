@@ -1,3 +1,7 @@
+"""
+This file contains all the functions that don't properly apply to the plot or analysis category.
+However, these functions are necessary for the usability of the library.
+"""
 import copy
 import pandas as pd
 import numpy as np
@@ -10,14 +14,10 @@ def showselect(emgfile, title="", nclic=2):
     This function is used to select a part of the recording (based on the reference signal).
     
     The first argument should be the emgfile.
-
     Additionally (and encouraged), a title of the plot can be passed in title="Do this".
-
     By default, this function collects and sorts 2 clics. 1 and 4 clics can also be specified with nclic.
-
     The area can be selected with any letter or number in the keyboard, wrong points can be removed
     by pressing the right mouse button. Once finished, press enter to continue.
-
     It returns the start and the end point of the selection.
     """
     # Extract the variables of interest from the EMG file
@@ -69,14 +69,10 @@ def resize_emgfile(emgfile, area=None):
     """
     This function resizes all the emgfile (temporarily) to compute the various parameters only in
     the area of interest.
-
     The first argument should be the emgfile.
-
     If the resizing area is already known, it can be passed (in samples, as a list (e.g., [120,2560])) as
     input to area. If area == None, then the user can select the area of interest manually.
-
     It returns the new (resized) emgfile and the start and end of the selection (can be used for code automation).
-
     Suggested names for the returned objects: rs_emgfile, start_, end_
     """
     # Identify the area of interest
@@ -123,9 +119,7 @@ def compute_idr(emgfile):
     """
     This function computes the instantaneous discharge rate (IDR) from the MUPULSES.
     The IDR is very useful for plotting and visualisation of the MUs behaviour.
-
     The only necessary argument is the emgfile.
-
     It returns a dict with a key for every MUs (keys are integers). Accessing the key, we have a dataframe containing
     the mupulses, the time of firing in seconds and the idr for that specific MU.
     """
@@ -174,16 +168,12 @@ def compute_idr(emgfile):
 def delete_mus(emgfile, munumber):
     """
     This function allows to delete unwanted MUs.
-
     The first argument should be the emgfile.
-
     The second argument is/are the MU/MUs to delete. An integer or a list of MUs to remove
     can be passed in input. The list can be passed as a manually-written list or with:
     munumber=[*range(0, 12)], 
     We need the "*" operator to unpack the results of range and build a list.
-
     The function returns the same emgfile but without the specified MUs.
-
     The function will not work if the emgfile only contains 1 motor unit, 
     since the entire file should be deleted instead. In this case, None will be returned.
     """
@@ -253,11 +243,8 @@ def delete_mus(emgfile, munumber):
 def filter_refsig(emgfile, order=4, cutoff=20):
     """
     This function is used to low-pass filter the reference signal and remove noise. The filter is a Zero-lag low-pass Butterworth.
-
     As first input, can be passed both the emgfile and the refsig (obtained from the function refsig_from_otb).
-
     Other inputs are: filter order (order, 4th if not specified), the cutoff frequency (cutoff, 20 Hz if not specified).
-
     It returns the filtered refsig.
     """
     # Create the object to store the filtered refsig.
@@ -276,12 +263,9 @@ def remove_offset(emgfile, offsetval=0, auto=0):
     This function is used to remove the offset from the refsig. 
     
     As first input, can be passed both the emgfile and the refsig (obtained from the function refsig_from_otb).
-
     If offsetval is 0 (default), the user will be asked to manually select an aerea to compute the offset value.
     Otherwise, the value passed to offsetval will be used. Negative offsetval can be passed.
-
     If auto > 0, the script automatically removes the offset based on the number of samples passed in input.
-
     The function returns the same file but with the offset removed.
     """
     # Check that all the inputs are correct
@@ -321,9 +305,7 @@ def get_mvif(emgfile):
     This function is used to measure the MViF. 
     
     As only input, can be passed both the emgfile and the refsig (obtained from the function refsig_from_otb).
-
     If multiple repetitions are selected, the maximum value will be returned.
-
     It returns a float.
     """
     # Select the area to measure the MViF (maximum value)
@@ -339,12 +321,9 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None):
     This function is used to calculate the rate of force development (N/Sec). 
     
     As first input, can be passed both the emgfile and the refsig (obtained from the function refsig_from_otb).
-
     The time to calculate RFD is by default 50, 100, 150, 200 ms. A list with different values can be passed to ms.
-
     The user will be requested to manually select the starting point for the RFD by default. If an integer is passed
     to startpoint, this value will be used instead.
-
     It returns a dataframe containing the RFD.
     """
     
