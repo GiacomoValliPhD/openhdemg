@@ -17,18 +17,16 @@ from matplotlib.figure import Figure
 import openhdemg 
 
 
-class GUI(Tk): 
+class GUI(): 
 
-	def __init__(self):
-
-		super().__init__()
+	def __init__(self, root):
 
 		# Set up GUI
-		self.title("OpenHDemg")
+		root.title("OpenHDemg")
 		#self.iconbitmap()
 
 		# Create left side framing for functionalities 
-		self.left = ttk.Frame(self, padding="10 10 12 12")
+		self.left = ttk.Frame(root, padding="10 10 12 12")
 		self.left.grid(column=0, row=0, sticky=(N, S, W))
 		self.left.columnconfigure(0, weight=1)
 		self.left.columnconfigure(1, weight=1)
@@ -88,7 +86,8 @@ class GUI(Tk):
 
 		# Edit Motor Units
 		edit_mus = ttk.Button(self.left,
-							  text="Edit MUs")
+							  text="Edit MUs",
+							  command=self.editing_mus)
 		edit_mus.grid(column=1, row=9, sticky=W)
 		separator3 = ttk.Separator(self.left, orient="horizontal")
 		separator3.grid(column=0, columnspan=3, row=10, sticky=(W,E), padx=5, pady=5)
@@ -131,15 +130,18 @@ class GUI(Tk):
 		separator5.grid(column=0, columnspan=3, row=18, sticky=(W,E), padx=5, pady=5)
 
 		# Create left side framing for functionalities 
-		self.right = ttk.Frame(self, padding="10 10 12 12")
+		self.right = ttk.Frame(root, padding="10 10 12 12")
 		self.right.grid(column=1, row=0, sticky=(N, S, E))
 		self.right.columnconfigure(0, weight=1)
 
 		# Right side GUI layout
 
 		# Canvas for Plots
-		plot_canvas = Canvas(self.right, width=400, height=400)
+		plot_canvas = Canvas(self.right, width=1, height=1)
 		plot_canvas.grid(column=0, row=1, rowspan=6, sticky=(W,E))
+
+		for child in self.left.winfo_children():
+			child.grid_configure(padx=5, pady=5)
 
 	## Define functionalities for buttons used in GUI
 
@@ -149,7 +151,7 @@ class GUI(Tk):
 		self.file_path = file_path
 
 		# Check filetype for processing
-		if self.filetype == "OTB":
+		if self.filetype.get() == "OTB":
 			self.resdict = openhdemg.emg_from_otb(self.file_path)
 		else:
 			self.resdict = openhdemg.emg_from_demuse(self.file_path)
@@ -164,30 +166,103 @@ class GUI(Tk):
 		file_length_value = ttk.Label(self.left,
 						  text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
 
-		if self.filetype == "REFSIG":
+		if self.filetype.get() == "REFSIG":
 			self.resdict = refsig_from_otb(self.file_path)
 			# Recondifgure labels
 			n_channels.config(text="FSAMP")
 			n_mus.config(text="")
 			file_length.config(text="")
-		
+
+#-----------------------------------------------------------------------------------------------
+# Plotting inside of GUI 
+
 	def in_gui_plotting(self):
 
-		InGUIPlotting.plot_mu_firing(self)
+		self.fig = openhdemg.plot_idr(self.resdict, [*range(0, int(self.resdict["NUMBER_OF_MUS"]))])
+		canvas = FigureCanvasTkAgg(self.fig, master=self.right)
+		canvas_plot = canvas.get_tk_widget()
+		canvas_plot.grid(column=0, row=1, rowspan=6, sticky=(W,E))
+
+#-----------------------------------------------------------------------------------------------
+# Removal of single motor Units 
 
 	def remove_mus(self):
 
-		remove_window = EditMus(self, 
-								self.file_path,
-								50)
-		remove_window.grab_set()
-		#path = RemoveMus.remove_mu(self)
-		#self.file_path = path
+		self.head = tk.Toplevel()
+		self.head.title("Motor Unit Removal Window")
+		self.head.grab_set()
+
+		self.mu_to_remove = StringVar()
+		removed_mu_value = [*range(0, self.resdict["NUMBER_OF_MUS"])]
+		removed_mu = ttk.Combobox(self.head, width=10, textvariable=self.mu_to_remove)
+		removed_mu["values"] = removed_mu_value
+		removed_mu["state"] = "readonly"
+		removed_mu.grid(column=0, row=0, sticky=(W,E))
+
+		remove = ttk.Button(self.head, 
+							text="Remove MU", 
+							command=self.remove)
+		remove.grid(column=0, row=1, sticky=(W,E))
+
+
+	def remove(self):
+
+		self.resdict = openhdemg.delete_mus(self.resdict,
+											int(self.mu_to_remove.get()))
+		n_mus_value = ttk.Label(self.left, 
+						  text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
+
+		self.mu_to_remove = StringVar()
+		removed_mu_value = [*range(0, self.resdict["NUMBER_OF_MUS"])]
+		removed_mu = ttk.Combobox(self.head, width=10, textvariable=self.mu_to_remove)
+		removed_mu["values"] = removed_mu_value
+		removed_mu["state"] = "readonly"
+		removed_mu.grid(column=0, row=0, sticky=(W,E))
+
+		if hasattr(self, "fig"):
+			self.in_gui_plotting()
+
+		
+		
+
+#-----------------------------------------------------------------------------------------------
+# Editing of single motor Units 
+
+	def editing_mus(self):
+
+		head = tk.Toplevel()
+		head.title("Motor Unit Eiditing Window")
+		head.grab_set()
+
+		self.mu_to_edit = StringVar()
+		edit_mu_value = [*range(0, mu_numbers)]
+		edit_mu = ttk.Combobox(head, width=10, textvariable=self.mu_to_edit)
+		edit_mu["values"] = edit_mu_value
+		edit_mu["state"] = "readonly"
+		edit_mu.grid(column=0, row=0, sticky=(W,E))
+
+		single_mu = ttk.Button(head, 
+							  text="View single MU", 
+							  command=self.view_single_mu)
+		single_mu.grid(column=0, row=1, sticky=(W,E))
+		
+	def view_single_mu(self):
+
+		fig = openhdemg.plot_idr(self.resdict, 
+								 int(self.mu_to_edit.get()))
+
+		canvas = FigureCanvasTkAgg(fig, master=head)
+		canvas_plot = canvas.get_tk_widget()
+		canvas_plot.grid(column=0, row=1, rowspan=6, sticky=(W,E))
+
+
+#-----------------------------------------------------------------------------------------------
+# Editing of Reference EMG Signal 
 
 	def edit_refsig(self):
 
 		refsig_window = RefSig(self, 
-							   self.file_path)
+							   self.resdict)
 		refsig_window.grab_set()
 
 	def resize_file(self):
@@ -201,86 +276,35 @@ class GUI(Tk):
 
 	def analyse_mus(self):
 
-		mus_window = MuAnalysis(self, self.file_path)
+		mus_window = MuAnalysis(self, self.resdict)
 		mus_window.grab_set()
-
-	
-
-	
-
-
-class InGUIPlotting(GUI):
-
-	def __init__(self, parent):
-
-		super().__init__(parent)
-
-		self.file = file_path
-		self.mu_number = mu_number
-		self.channels = channels
-
-	def plot_mu_firing(self):
-
-		#Test
-
-		house_prices = np.random.normal(200000, 25000, 5000)
-		fig = Figure(figsize=(5,5))
-		a = fig.add_subplot(111)
-		a.hist(house_prices)
-		a.set_title("Test Plot")
-
-		canvas = FigureCanvasTkAgg(fig, master=self.right)
-		canvas_plot = canvas.get_tk_widget()
-		canvas_plot.grid(column=0, row=1, rowspan=6, sticky=(W,E))
 
 
 class EditMus(tk.Toplevel):
 
-	def __init__(self, parent, file, number):
+	def __init__(self, parent, emgfile, mu_numbers):
 
 		super().__init__(parent)
 
-		self.title("Motor Unit Removal Or Editing Window")
-		self.geometry("400x400")
-		self.file_path = file 
-		self.n_channels = number 
-
 		
-		self.mu_to_remove = StringVar()
-		removed_mu = ttk.Entry(self, width=10, textvariable=self.mu_to_remove)
-		removed_mu.pack()
-
-		remove = ttk.Button(self, 
-							text="Remove MU", 
-							command=self.remove_mu)
-		remove.pack()
-
-	def remove_mu(self):
-
-		#update emgfile with removed MU
-
-		del_emgfile = openhdemg.delete_mus(self.file_path,
-										   self.mu_to_remove.get())
-		print(del_emgfile)
-		return del_emgfile
 
 class RefSig(tk.Toplevel):
 
-	def __init__(self, parent, file):
+	def __init__(self, parent, emgfile):
 
 		super().__init__(parent)
 
 		self.title("Reference signal editing window")
-		head = tk.Frame(self, padding="10 10 12 12")
+		head = ttk.Frame(self, padding="10 10 12 12")
 		head.grid(column=0, row=0, sticky=(S,W,E,N))
 
-		self.file_path = file
+		self.emgfile = emgfile
 
 
 
 class MuAnalysis(tk.Toplevel):
 
-	def __init__(self, parent, file):
+	def __init__(self, parent, emgfile):
 
 		super().__init__(parent)
 
@@ -289,7 +313,7 @@ class MuAnalysis(tk.Toplevel):
 		head = ttk.Frame(self, padding="10 10 12 12")
 		head.grid(column=0, row=0, sticky=(N,S,W,E))
 
-		self.file_path = file
+		self.emg = emgfile
 
 		# MVIF Entry
 		mvf = ttk.Label(head, text="Enter MVIF:").grid(column=0, row=0, sticky=(W))
@@ -377,7 +401,7 @@ class MuAnalysis(tk.Toplevel):
 
 	def compute_mu_threshold(self):
 
-		self.mu_thresholds = openhdemg.compute_thresholds(self.file_path,
+		self.mu_thresholds = openhdemg.compute_thresholds(self.emgfile,
 														  self.ct_event,
 														  self.ct_type,
 														  self.mvif_value)
@@ -385,7 +409,7 @@ class MuAnalysis(tk.Toplevel):
 
 	def compute_mu_dr(self):
 
-		self.mus_dr = openhdemg.compute_dr(self.file_path,
+		self.mus_dr = openhdemg.compute_dr(self.emgfile,
 										   self.firings_rec,
 										   self.firings_ste,
 										   self.dr_event)
@@ -393,7 +417,7 @@ class MuAnalysis(tk.Toplevel):
 
 	def basic_mus_properties(self):
 
-		self.exportable_df = openhdemg.basic_mus_properties(self.file_path,
+		self.exportable_df = openhdemg.basic_mus_properties(self.emgfile,
 															self.b_firings_rec,
 															self.b_firings_ste,
 															self.mvif_value)
@@ -410,13 +434,14 @@ class ForceAnalysis(tk.Toplevel):
 		self.geometry("400x400")
 
 		close_button = ttk.Button(self, 
-				   				  text="Click me!",
-				   				  command=self.destroy)
+								  text="Click me!",
+								  command=self.destroy)
 		close_button.pack()
 
 
 if __name__ == "__main__":
-	gui = GUI()
-	gui.mainloop()
+	root = Tk()
+	GUI(root)
+	root.mainloop()
 
 

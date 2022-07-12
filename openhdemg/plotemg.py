@@ -11,7 +11,7 @@ def showgoodlayout(despined= False):
         sns.despine(top=True, bottom=True, left=True, right=True)
     
     plt.tight_layout()
-    plt.show()
+    #plt.show()
 
 def plot_emgsig(emgfile, channels, timeinseconds=True):
     """ 
@@ -289,6 +289,8 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True):
     
     else:
         raise Exception("While calling the plot_idr function, you should pass an integer or a list in munumber= ")
+
+    return fig
 
 
 
