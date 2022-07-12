@@ -9,6 +9,8 @@ def showgoodlayout(despined= False):
         sns.despine()
     elif despined == True:
         sns.despine(top=True, bottom=True, left=True, right=True)
+    elif despined == "2axes":
+        sns.despine(top=True, bottom=False, left=False, right=False)
     
     plt.tight_layout()
     plt.show()
