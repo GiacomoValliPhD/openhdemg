@@ -3,7 +3,8 @@
 -------------------------------------- Welcome to OpenEMG --------------------------------------
 --------------------- a free and open source framework for HD-EMG analysis ---------------------
 ------------------------------------------------------------------------------------------------
------------ Author: Giacomo Valli (University of Padova) giacomo.valli@phd.unipd.it ------------
+----------- Authors: Giacomo Valli (University of Padova) giacomo.valli@phd.unipd.it------------
+-----------          Paul Ritsche (University of Basel) paul.ritsche@unibas.ch
 ------------------------------------------------------------------------------------------------
 """
 

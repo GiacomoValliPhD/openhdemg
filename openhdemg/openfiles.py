@@ -1,12 +1,12 @@
 from scipy.io import loadmat
 import pandas as pd
 import numpy as np
-from otbelectrodes import *
+from openhdemg.otbelectrodes import *
 
 """
 Of this library, only few functions will be useful to the final user. Therefore, only some of them should imported as:
 
-from openfiles import emg_from_otb, emg_from_demuse
+from openfiles import emg_from_otb, emg_from_demuse, refsig_from_otb
 """
 
 # -------------------------- Define functions used in the DEMUSE openfile function -----------------------------
@@ -34,7 +34,7 @@ def oned_mat_to_pd(variable_name, mat_file, transpose_=False):
         return mat
 
     else:
-        print("Variable {} was not found in the mat file, check the spelling against the dict_keys".format(variable_name))
+        print("\nVariable {} was not found in the mat file, check the spelling against the dict_keys\n".format(variable_name))
 
         return np.nan
 
@@ -55,7 +55,7 @@ def twod_mat_to_pd(variable_name, mat_file, transpose_=True):
         return mat
 
     else:
-        print("Variable {} was not found in the mat file, check the spelling against the dict_keys".format(variable_name))
+        print("\nVariable {} was not found in the mat file, check the spelling against the dict_keys\n".format(variable_name))
 
         return np.nan
 
@@ -72,7 +72,7 @@ def threed_mat_to_list(variable_name, mat_file, transpose_=False):
         return mat
 
     else:
-        print("Variable {} was not found in the mat file, check the spelling against the dict_keys".format(variable_name))
+        print("\nVariable {} was not found in the mat file, check the spelling against the dict_keys\n".format(variable_name))
 
         return np.nan
 
@@ -118,7 +118,7 @@ def raw_sig_from_demuse(variable_name, mat_file, transpose_=False):
         return mat
     
     else:
-        print("Variable {} was not found in the mat file, check the spelling against the dict_keys".format(variable_name))
+        print("\nVariable {} was not found in the mat file, check the spelling against the dict_keys\n".format(variable_name))
 
         return np.nan
 #-----------------------------------------------------------------------------------------------
@@ -189,7 +189,7 @@ def emg_from_demuse (file):
 
 # -------------------------- Define functions used in the OTB openfile function -----------------------------
 #
-# Here we extract and convert variables as those extracted for the .mat file coming from the DEMUSE softwary.
+# Here we extract and convert variables as those extracted for the .mat file coming from the DEMUSE software.
 # That would make it easier to use them later on
 
 # The user can decide if he/she wants the filtered or unfiltered reference signal
@@ -211,7 +211,7 @@ def get_otb_refsignal(df, refsig):
                 return REF_SIGNAL_FILTERED
             
             else:
-                print("Reference signal not found, it might be necessary for some analysis")
+                print("\nReference signal not found, it might be necessary for some analysis\n")
             
                 return np.nan
         
@@ -227,16 +227,15 @@ def get_otb_refsignal(df, refsig):
                 return REF_SIGNAL_UNFILTERED
             
             else:
-                print("Reference signal not found, it might be necessary for some analysis")
+                print("\nReference signal not found, it might be necessary for some analysis\n")
             
                 return np.nan
 
         else:
-            print("Wrong input in the get_OTB_refsignal function, you can use ref=\"filtered\" or ref=\"unfiltered\"")
+            raise Exception("Wrong input in the get_OTB_refsignal function, you can use ref=\"filtered\" or ref=\"unfiltered\"")
             
-            return np.nan
     else:
-        print("Reference signal not found, it might be necessary for some analysis")
+        print("\nReference signal not found, it might be necessary for some analysis\n")
 
         return np.nan
 
@@ -300,24 +299,38 @@ def get_otb_rawsignal(df):
         return RAW_SIGNAL
 
     else:
-        print("ERROR in searching the raw signal, please check what was retrieved for confirmation")
+        # This check here is usefull to control that only the appropriate elements have been included in the .mat file exported from OTBiolab+
+        raise Exception("Failure in searching the raw signal, please check that it is present in the .mat file and that only the accepted parameters have been included")
 
-        
 #-----------------------------------------------------------------------------------------------
 
 
 
 
-def emg_from_otb (file, refsig=[True, "filtered"]):
+def emg_from_otb(file, refsig=[True, "filtered"]):
     """
     This function is used to import the .mat file exportable by the OTBiolab+ software as a dictionary of Python objects (mainly pandas dataframes).
 
-    The only necessary input is the file path (including file extension .mat).
+    The first argument is the file path (including file extension .mat).
+
+    refsig can be used to specify if REF_SIGNAL is present and if you want to import the filtered or the unfiltered signal.
+    In OTBioLab+ the "performed path" refers to the filtered signal, the "acquired data" to the unfiltered signal.
+    A list should be passed to refsig. The first element can be True or False, if False, the REF_SIGNAL is not imported (returns nan).
+    The second element can be one of "filtered" or "unfiltered" depending on what you want to import.
 
     It returns a dictionary containing the following: "SOURCE", "RAW_SIGNAL", "REF_SIGNAL", "PNR",
     "IPTS", "MUPULSES", "FSAMP", "IED", "EMG_LENGTH", "NUMBER_OF_MUS", "BINARY_MUS_FIRING".
 
     The returned file is called emgfile for convention.
+
+    The input .mat file exported from the OTBiolab+ software should have a specific content:
+    - Reference signal is optional but, if present, there should be both the filtered and the unfiltered version
+        (in OTBioLab+ the "performed path" refers to the filtered signal, the "acquired data" to the unfiltered signal),
+        REF_SIGNAL is expected to be expressed as % of the MViF.
+    - Both the IPTS ('Source for decomposition...' in OTBioLab+) and the BINARY_MUS_FIRING ('Decomposition of...' in OTBioLab+) should be present.
+    - The raw EMG signal should be present (it has no specific name in OTBioLab+) with all the channels. 
+        Don't exclude unwanted channels before exporting the .mat file.
+    - NO OTHER ELEMENTS SHOULD BE PRESENT!
     """
     mat_file = loadmat(file, simplify_cells=True)
 
@@ -328,12 +341,7 @@ def emg_from_otb (file, refsig=[True, "filtered"]):
     # Second: Simplify (rename) columns description and extract all the parameters in a pandas dataframe
     df = pd.DataFrame(mat_file["Data"], columns=mat_file["Description"])
     #print(df.head())
-    """ 
-    REF_SIGNAL is expected to be expressed as % of the MViF
-    Remember to specify if you have it and if you want to import the filtered or the unfiltered signal (depending on what you expoorted from OTBioLab+)
-    In OTBioLab+ the "performed path" refers to the filtered signal, the "acquired data" to the unfiltered signal
-    If False, the ref signal will be nan
-    """
+
     REF_SIGNAL = get_otb_refsignal(df=df, refsig=refsig)
     PNR = np.nan
     IPTS, BINARY_MUS_FIRING = get_otb_decomposition(df=df)
@@ -362,6 +370,53 @@ def emg_from_otb (file, refsig=[True, "filtered"]):
 
     return resdict
 
+#-----------------------------------------------------------------------------------------------
+
+
+
+
+def refsig_from_otb (file, refsig="filtered"):
+    """
+    This function is used to import the .mat file exportable by the OTBiolab+ software as a dictionary of Python objects (mainly pandas dataframes).
+
+    The first argument is the file path (including file extension .mat).
+
+    Compared to the function emg_from_otb, this function only imports the reference signal and, therefore, it can be used for special cases
+    where only the ref signal is necessary. This will allow a faster execution of the script and to avoid exceptions for missing data.
+
+    The argument refsig can be used to specify if the REF_SIGNAL to import is the filtered or the unfiltered signal (filtered at source).
+    In OTBioLab+ the "performed path" refers to the filtered signal, the "acquired data" to the unfiltered signal.
+    "filtered" or "unfiltered" can be passed.
+
+    It returns a dictionary containing: "SOURCE", "FSAMP", "REF_SIGNAL". This will allow compatibility with the emgfile.
+
+    The returned file is called refsig for convention.
+    """
+    mat_file = loadmat(file, simplify_cells=True)
+
+    # Parse .mat obtained from DEMUSE to see the available variables
+    # First: see the variables name
+    print("\n--------------------------------\nAvailable dict keys are:\n\n{}\n".format(mat_file.keys()))
+
+    # Second: Simplify (rename) columns description and extract all the parameters in a pandas dataframe
+    df = pd.DataFrame(mat_file["Data"], columns=mat_file["Description"])
+    #print(df.head())
+
+    # Convert the input passed to refsig in a list compatible with the function get_otb_refsignal
+    refsig_=[True, refsig]
+    REF_SIGNAL = get_otb_refsignal(df=df, refsig=refsig_)
+
+    # Use this to know what data you have or don't have
+    SOURCE = "OTB"
+    FSAMP = int(mat_file["SamplingFrequency"])
+
+    resdict =   {
+                "SOURCE" : SOURCE,
+                "FSAMP" : FSAMP,
+                "REF_SIGNAL" : REF_SIGNAL,
+                }
+
+    return resdict
 
 
 ###########################################################################################################################################################
@@ -374,6 +429,7 @@ if __name__ == "__main__":
     # Test OTB file
     file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
     emgfile = emg_from_otb(file=file_toOpen, refsig=[True, "filtered"])
+    print(emgfile["NUMBER_OF_MUS"])
 
     """ # Test DEMUSE file
     #file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
