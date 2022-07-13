@@ -31,7 +31,7 @@ def showgoodlayout(despined=False):
     
     plt.tight_layout()
 
-def plot_emgsig(emgfile, channels, timeinseconds=True):
+def plot_emgsig(emgfile, channels, timeinseconds=True, showimmediately=True):
     """ 
     This function plots the raw EMG signal. It can plot a single or multiple channels.
 
@@ -42,6 +42,8 @@ def plot_emgsig(emgfile, channels, timeinseconds=True):
     We need the "*" operator to unpack the results of range and build a list.
 
     The x-axes can be shown in seconds if timeinseconds=False or samples if True.
+
+    showimmediately=True immediately shows the plot by calling plt.show().
     """
     # Check to have the raw EMG signal in a pandas dataframe
     if isinstance(emgfile["RAW_SIGNAL"], pd.DataFrame):
@@ -62,7 +64,7 @@ def plot_emgsig(emgfile, channels, timeinseconds=True):
             ax.set_xlabel("Time (s)" if timeinseconds else "Samples")
             
             showgoodlayout()
-            plt.show()
+            if showimmediately: plt.show()
 
         elif isinstance(channels, list):
             """ 
@@ -90,7 +92,7 @@ def plot_emgsig(emgfile, channels, timeinseconds=True):
                     ax.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
             showgoodlayout(despined= True)
-            plt.show()
+            if showimmediately: plt.show()
         
         else:
             raise Exception("While calling the plot_emgsig function, you should pass an integer or a list to channels= ") 
@@ -98,13 +100,15 @@ def plot_emgsig(emgfile, channels, timeinseconds=True):
     else:
         raise Exception("RAW_SIGNAL is probably absent or it is not contained in a dataframe") 
 
-def plot_refsig(emgfile, timeinseconds=True):
+def plot_refsig(emgfile, timeinseconds=True, showimmediately=True):
     """ 
     This function plots the reference (force) signal. The reference signal is expected to be expressed as % MViF.
 
     The first argument should be the emgfile.
     
     The x-axes can be shown in seconds if timeinseconds=False or samples if True.
+
+    showimmediately=True immediately shows the plot by calling plt.show().
     """
     # Check to have the reference signal in a pandas dataframe
     if isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
@@ -122,12 +126,12 @@ def plot_refsig(emgfile, timeinseconds=True):
         ax.set_xlabel("Time (s)" if timeinseconds else "Samples")
             
         showgoodlayout()
-        plt.show()
+        if showimmediately: plt.show()
     
     else:
        raise Exception("REF_SIGNAL is probably absent or it is not contained in a dataframe") 
 
-def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addrefsig=True):
+def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addrefsig=True, showimmediately=True):
     """ 
     This function plots the MUs pulses (i.e., binary firing point).
 
@@ -138,6 +142,8 @@ def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addr
     The x-axes can be shown in seconds if timeinseconds=False or samples if True.
 
     The reference signal is also shown if addrefsig=True and it is expected to be expressed as % MViF.
+
+    showimmediately=True immediately shows the plot by calling plt.show().
     """
     # Check to have the correct input
     if isinstance(emgfile["MUPULSES"], list):
@@ -198,9 +204,9 @@ def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addr
     else:
         showgoodlayout()
 
-    plt.show()
+    if showimmediately: plt.show()
 
-def plot_ipts(emgfile, munumber, timeinseconds=True):
+def plot_ipts(emgfile, munumber, timeinseconds=True, showimmediately=True):
     """ 
     This function plots the impuls train (i.e., non-binary firing).
 
@@ -211,6 +217,8 @@ def plot_ipts(emgfile, munumber, timeinseconds=True):
     We need the "*" operator to unpack the results of range and build a list.
     
     The x-axes can be shown in seconds if timeinseconds=False or samples if True.
+
+    showimmediately=True immediately shows the plot by calling plt.show().
     """
     # Check to have the raw EMG signal in a pandas dataframe
     if isinstance(emgfile["IPTS"], pd.DataFrame):
@@ -230,7 +238,7 @@ def plot_ipts(emgfile, munumber, timeinseconds=True):
             ax.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
             
             showgoodlayout()
-            plt.show()
+            if showimmediately: plt.show()
 
         elif isinstance(munumber, list):
             """ 
@@ -258,7 +266,7 @@ def plot_ipts(emgfile, munumber, timeinseconds=True):
                     ax.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
             showgoodlayout(despined= True)
-            plt.show()
+            if showimmediately: plt.show()
         
         else:
             raise Exception("While calling the plot_ipts function, you should pass an integer or a list in munumber= ")
@@ -267,7 +275,7 @@ def plot_ipts(emgfile, munumber, timeinseconds=True):
         raise Exception("IPTS is probably absent or it is not contained in a dataframe")
 
 
-def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True):
+def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True, showimmediately=True):
     """ 
     This function plots the instantaneous discharge rate.
 
@@ -278,6 +286,8 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True):
     We need the "*" operator to unpack the results of range and build a list.
     
     The x-axes can be shown in seconds if timeinseconds=False or samples if True.
+
+    showimmediately=True immediately shows the plot by calling plt.show().
     """
     # Compute the instantaneous discharge rate (IDR) from the MUPULSES and check the input
     idr = compute_idr(emgfile = emgfile)
@@ -307,7 +317,7 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True):
         else:
             showgoodlayout()
 
-        plt.show()
+        if showimmediately: plt.show()
     
     elif isinstance(munumber, list):
         """
@@ -340,7 +350,7 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True):
             ax.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
             showgoodlayout(despined= True)
-            plt.show()
+            if showimmediately: plt.show()
         
         else:
             # Initialise figure and plots
@@ -368,7 +378,7 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True):
             ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
         
             showgoodlayout(despined="2yaxes")
-            plt.show()
+            if showimmediately: plt.show()
     
     else:
         raise Exception("While calling the plot_idr function, you should pass an integer or a list in munumber= ")
@@ -377,7 +387,6 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True):
 # To do: 
 #       Add common y axes nei vari subplots delle liste?
 #       Make figsize an input
-#       Add input showplot per controllare plt.show()
 
 #       Sort the entire file by MUs recruitment order?
 ###########################################################################################################################################################
