@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from openhdemg.tools import showselect, compute_idr
+#from openhdemg.tools import showselect, compute_idr
+from tools import showselect, compute_idr
 
 
 def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
