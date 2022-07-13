@@ -31,7 +31,8 @@ def showgoodlayout(despined=False):
     
     plt.tight_layout()
 
-def plot_emgsig(emgfile, channels, timeinseconds=True, showimmediately=True):
+
+def plot_emgsig(emgfile, channels, timeinseconds=True, figsize=[20,15], showimmediately=True):
     """ 
     This function plots the raw EMG signal. It can plot a single or multiple channels.
 
@@ -42,6 +43,8 @@ def plot_emgsig(emgfile, channels, timeinseconds=True, showimmediately=True):
     We need the "*" operator to unpack the results of range and build a list.
 
     The x-axes can be shown in seconds if timeinseconds=False or samples if True.
+
+    figsize can be used to define the plot size in centimeters. Input is a list [width, height].
 
     showimmediately=True immediately shows the plot by calling plt.show().
     """
@@ -58,7 +61,7 @@ def plot_emgsig(emgfile, channels, timeinseconds=True, showimmediately=True):
 
         # Check if we have a single channel or a list of channels to plot
         if isinstance(channels, int):
-            fig = plt.figure(f"Channel n.{channels}", figsize=(20/2.54, 15/2.54))
+            fig = plt.figure(f"Channel n.{channels}", figsize=(figsize[0]/2.54, figsize[1]/2.54))
             ax = sns.lineplot(x=x_axis, y=emgsig[channels])
             ax.set_ylabel("Ch {}".format(channels)) # Useful because if the channe is empty it won't show the channel number
             ax.set_xlabel("Time (s)" if timeinseconds else "Samples")
@@ -73,7 +76,7 @@ def plot_emgsig(emgfile, channels, timeinseconds=True, showimmediately=True):
             We need the "*" operator to unpack the results of range and build a list 
             """
             figname = "Channels n.{}".format(channels)
-            fig, axes = plt.subplots(len(channels), 1, figsize=(20/2.54, 15/2.54), num=figname)
+            fig, axes = plt.subplots(len(channels), 1, figsize=(figsize[0]/2.54, figsize[1]/2.54), num=figname)
 
             # Plot all the channels in the subplots, up to 12 channels are clearly visible
             for count, channel in enumerate(reversed(channels)):
@@ -100,13 +103,16 @@ def plot_emgsig(emgfile, channels, timeinseconds=True, showimmediately=True):
     else:
         raise Exception("RAW_SIGNAL is probably absent or it is not contained in a dataframe") 
 
-def plot_refsig(emgfile, timeinseconds=True, showimmediately=True):
+
+def plot_refsig(emgfile, timeinseconds=True, figsize=[20,15], showimmediately=True):
     """ 
     This function plots the reference (force) signal. The reference signal is expected to be expressed as % MViF.
 
     The first argument should be the emgfile.
     
     The x-axes can be shown in seconds if timeinseconds=False or samples if True.
+
+    figsize can be used to define the plot size in centimeters. Input is a list [width, height].
 
     showimmediately=True immediately shows the plot by calling plt.show().
     """
@@ -120,7 +126,7 @@ def plot_refsig(emgfile, timeinseconds=True, showimmediately=True):
         else:
             x_axis = refsig.index
 
-        fig = plt.figure("Reference signal", figsize=(20/2.54, 15/2.54))
+        fig = plt.figure("Reference signal", figsize=(figsize[0]/2.54, figsize[1]/2.54))
         ax = sns.lineplot(x=x_axis, y=refsig[0])
         ax.set_ylabel("% MViF")
         ax.set_xlabel("Time (s)" if timeinseconds else "Samples")
@@ -131,7 +137,8 @@ def plot_refsig(emgfile, timeinseconds=True, showimmediately=True):
     else:
        raise Exception("REF_SIGNAL is probably absent or it is not contained in a dataframe") 
 
-def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addrefsig=True, showimmediately=True):
+
+def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addrefsig=True, figsize=[20,15], showimmediately=True):
     """ 
     This function plots the MUs pulses (i.e., binary firing point).
 
@@ -143,6 +150,8 @@ def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addr
 
     The reference signal is also shown if addrefsig=True and it is expected to be expressed as % MViF.
 
+    figsize can be used to define the plot size in centimeters. Input is a list [width, height].
+    
     showimmediately=True immediately shows the plot by calling plt.show().
     """
     # Check to have the correct input
@@ -169,9 +178,8 @@ def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addr
     # Create colors list for the firings and plot them
     colors1 = ['C{}'.format(i) for i in range(emgfile["NUMBER_OF_MUS"])]
 
-    #fig = plt.figure("MUs pulses", figsize=(20/2.54, 15/2.54))
     # Use the subplot to allow the use of twinx
-    fig, ax1 = plt.subplots(figsize=(20/2.54, 15/2.54), num="MUs pulses")
+    fig, ax1 = plt.subplots(figsize=(figsize[0]/2.54, figsize[1]/2.54), num="MUs pulses")
 
     if addrefsig:
         # Assign 90% of the space in the plot to linelengths and 8% to lineoffsets, 2% free
@@ -206,7 +214,8 @@ def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addr
 
     if showimmediately: plt.show()
 
-def plot_ipts(emgfile, munumber, timeinseconds=True, showimmediately=True):
+
+def plot_ipts(emgfile, munumber, timeinseconds=True, figsize=[20,15], showimmediately=True):
     """ 
     This function plots the impuls train (i.e., non-binary firing).
 
@@ -218,6 +227,8 @@ def plot_ipts(emgfile, munumber, timeinseconds=True, showimmediately=True):
     
     The x-axes can be shown in seconds if timeinseconds=False or samples if True.
 
+    figsize can be used to define the plot size in centimeters. Input is a list [width, height].
+    
     showimmediately=True immediately shows the plot by calling plt.show().
     """
     # Check to have the raw EMG signal in a pandas dataframe
@@ -232,7 +243,7 @@ def plot_ipts(emgfile, munumber, timeinseconds=True, showimmediately=True):
 
         # Check if we have a single MU or a list of MUs to plot
         if isinstance(munumber, int):
-            fig = plt.figure(f"Motor unit n.{munumber}", figsize=(20/2.54, 15/2.54))
+            fig = plt.figure(f"Motor unit n.{munumber}", figsize=(figsize[0]/2.54, figsize[1]/2.54))
             ax = sns.lineplot(x=x_axis, y=ipts[munumber])
             ax.set_ylabel("MU {}".format(munumber)) # Useful because if the MU is empty it won't show the channel number
             ax.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
@@ -247,7 +258,7 @@ def plot_ipts(emgfile, munumber, timeinseconds=True, showimmediately=True):
             We need the "*" operator to unpack the results of range and build a list 
             """
             figname = "Motor unit n.{}".format(munumber)
-            fig, axes = plt.subplots(len(munumber), 1, figsize=(20/2.54, 15/2.54), num=figname)
+            fig, axes = plt.subplots(len(munumber), 1, figsize=(figsize[0]/2.54, figsize[1]/2.54), num=figname)
 
             # Plot all the MUs in the subplots. Enumerate reversed munumber to show the first MUs below
             for count, thisMU in enumerate(reversed(munumber)):
@@ -275,7 +286,7 @@ def plot_ipts(emgfile, munumber, timeinseconds=True, showimmediately=True):
         raise Exception("IPTS is probably absent or it is not contained in a dataframe")
 
 
-def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True, showimmediately=True):
+def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True, figsize=[20,15], showimmediately=True):
     """ 
     This function plots the instantaneous discharge rate.
 
@@ -286,6 +297,8 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True, showimmediat
     We need the "*" operator to unpack the results of range and build a list.
     
     The x-axes can be shown in seconds if timeinseconds=False or samples if True.
+
+    figsize can be used to define the plot size in centimeters. Input is a list [width, height].
 
     showimmediately=True immediately shows the plot by calling plt.show().
     """
@@ -298,7 +311,7 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True, showimmediat
 
     # Check if we have a single MU or a list of MUs to plot
     if isinstance(munumber, int):
-        fig = plt.figure(f"Motor unit n.{munumber}", figsize=(20/2.54, 15/2.54))
+        fig = plt.figure(f"Motor unit n.{munumber}", figsize=(figsize[0]/2.54, figsize[1]/2.54))
         ax = sns.scatterplot(x=idr[munumber]["timesec" if timeinseconds else "mupulses"], y= idr[munumber]["idr"])
 
         if addrefsig:
@@ -329,7 +342,7 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True, showimmediat
         if not addrefsig:
             figname = "Motor unit n.{}".format(munumber)
             # sharex is fundamental to ensure correct representation of the idr over the different subplots
-            fig, axes = plt.subplots(len(munumber), 1, figsize=(20/2.54, 15/2.54), num=figname, sharex=True)
+            fig, axes = plt.subplots(len(munumber), 1, figsize=(figsize[0]/2.54, figsize[1]/2.54), num=figname, sharex=True)
             # Create colors list for the firings and plot them. Loop backward because then you are plotting MUs in reversed order
             colors1 = ['C{}'.format(i) for i in range(emgfile["NUMBER_OF_MUS"]-1, -1, -1)]
             # Plot all the MUs in the subplots. Enumerate reversed munumber to show the first MUs below 
@@ -355,7 +368,7 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True, showimmediat
         else:
             # Initialise figure and plots
             figname = "Motor unit n.{}".format(munumber)
-            fig, ax1 = plt.subplots(figsize=(20/2.54, 15/2.54), num=figname)
+            fig, ax1 = plt.subplots(figsize=(figsize[0]/2.54, figsize[1]/2.54), num=figname)
             # Apply twinx to ax2, which is the second y axis.
             ax2 = ax1.twinx() 
 
@@ -384,11 +397,7 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True, showimmediat
         raise Exception("While calling the plot_idr function, you should pass an integer or a list in munumber= ")
 
 
-# To do: 
-#       Add common y axes nei vari subplots delle liste?
-#       Make figsize an input
 
-#       Sort the entire file by MUs recruitment order?
 ###########################################################################################################################################################
 ###########################################################################################################################################################
 ###########################################################################################################################################################
