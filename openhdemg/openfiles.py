@@ -2,7 +2,6 @@ from scipy.io import loadmat
 import pandas as pd
 import numpy as np
 from openhdemg.otbelectrodes import *
-
 """
 Of this library, only few functions will be useful to the final user. Therefore, only some of them should imported as:
 
