@@ -2,9 +2,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import copy
-#from openhdemg.tools import compute_idr
-from tools import compute_idr
-from mathtools import min_max_scaling
+from openhdemg.tools import compute_idr
+from openhdemg.mathtools import min_max_scaling
 
 
 def showgoodlayout(despined=False):
