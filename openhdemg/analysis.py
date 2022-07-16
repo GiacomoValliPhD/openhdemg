@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from openhdemg.tools import showselect, compute_idr
 
 
-def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
+def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):  # In the Gui, we should always aks for the MVIF
     """
     This function calculates the recruitment/derecruitment thresholds in absolute and relative therms.
 

@@ -30,7 +30,6 @@ def showgoodlayout(despined=False):
     
     plt.tight_layout()
 
-
 def plot_emgsig(emgfile, channels, timeinseconds=True, figsize=[20,15], showimmediately=True):
     """ 
     This function plots the raw EMG signal. It can plot a single or multiple channels.
@@ -394,6 +393,8 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True, figsize=[20,
     
     else:
         raise Exception("While calling the plot_idr function, you should pass an integer or a list in munumber= ")
+
+    return fig
 
 
 
