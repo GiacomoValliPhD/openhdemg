@@ -304,7 +304,7 @@ def basic_mus_properties(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10,
     exportable_df = pd.concat([exportable_df, mus_dr], axis=1)
 
     # Print the dataframe containing all the results
-    print("\n--------------------------------\nFinal dataframe containing basic MUs properties:\n\n{}".format(exportable_df))
+    # print("\n--------------------------------\nFinal dataframe containing basic MUs properties:\n\n{}".format(exportable_df))
 
     """ 
     print(exportable_df)
