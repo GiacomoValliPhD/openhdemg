@@ -328,8 +328,8 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None):
     """
     
     # Check if the startpoint was passed
-    if isinstance(startpoint, int):
-        start_ = startpoint
+    if startpoint:
+            start_ = int(startpoint)
     else:
         # Otherwise select the starting point for the RFD
         start_ = showselect(emgfile, title="Select the starting point for RFD, then press enter", nclic=1)
@@ -338,7 +338,7 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None):
     rfd_dict = dict.fromkeys(ms, None)
     # Loop through the ms list and calculate the respective rfd.
     for thisms in ms:
-        ms_insamples = round((thisms * emgfile["FSAMP"]) / 1000)
+        ms_insamples = round((int(thisms) * emgfile["FSAMP"]) / 1000)
     
         n_0 = emgfile["REF_SIGNAL"].iloc[start_]
         n_next = emgfile["REF_SIGNAL"].iloc[start_ + ms_insamples]
