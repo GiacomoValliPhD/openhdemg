@@ -45,11 +45,13 @@ def showselect(emgfile, title="", nclic=2):
             start_point = round(ginput_res[1][0])
             end_point = round(ginput_res[0][0])
         
+        plt.close()
         return start_point, end_point
     
     elif nclic == 1:
         start_point = round(ginput_res[0][0])
-        
+
+        plt.close()
         return start_point
     
     elif nclic ==4: # Used for activation capacity
@@ -62,6 +64,7 @@ def showselect(emgfile, title="", nclic=2):
         start_point_rest = round(points[2])
         end_point_rest = round(points[3])
         
+        plt.close()
         return start_point_tw, end_point_tw, start_point_rest, end_point_rest
 
 
