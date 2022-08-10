@@ -6,7 +6,7 @@ from openhdemg.tools import compute_idr
 from openhdemg.mathtools import min_max_scaling
 
 
-def showgoodlayout(despined=False):
+def showgoodlayout(tight_layout, despined=False):
     """
     This function is a simple shortcut to despine the plots.
 
@@ -28,9 +28,10 @@ def showgoodlayout(despined=False):
     else:
         raise Exception(f"despined can be True, False of 2yaxes. {despined} was passed instead")
     
-    plt.tight_layout()
+    if tight_layout == True:
+        plt.tight_layout()
 
-def plot_emgsig(emgfile, channels, timeinseconds=True, figsize=[20,15], showimmediately=True):
+def plot_emgsig(emgfile, channels, timeinseconds=True, figsize=[20,15], showimmediately=True, tight_layout=True):
     """ 
     This function plots the raw EMG signal. It can plot a single or multiple channels.
 
@@ -64,7 +65,7 @@ def plot_emgsig(emgfile, channels, timeinseconds=True, figsize=[20,15], showimme
             ax.set_ylabel("Ch {}".format(channels)) # Useful because if the channe is empty it won't show the channel number
             ax.set_xlabel("Time (s)" if timeinseconds else "Samples")
             
-            showgoodlayout()
+            showgoodlayout(tight_layout)
             if showimmediately: plt.show()
 
         elif isinstance(channels, list):
@@ -92,7 +93,7 @@ def plot_emgsig(emgfile, channels, timeinseconds=True, figsize=[20,15], showimme
                     ax.tick_params(left=False)
                     ax.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
-            showgoodlayout(despined= True)
+            showgoodlayout(tight_layout, despined=True)
             if showimmediately: plt.show()
         
         else:
@@ -102,7 +103,7 @@ def plot_emgsig(emgfile, channels, timeinseconds=True, figsize=[20,15], showimme
         raise Exception("RAW_SIGNAL is probably absent or it is not contained in a dataframe") 
 
 
-def plot_refsig(emgfile, timeinseconds=True, figsize=[20,15], showimmediately=True):
+def plot_refsig(emgfile, timeinseconds=True, figsize=[20,15], showimmediately=True, tight_layout=True):
     """ 
     This function plots the reference (force) signal. The reference signal is expected to be expressed as % MViF.
 
@@ -129,14 +130,15 @@ def plot_refsig(emgfile, timeinseconds=True, figsize=[20,15], showimmediately=Tr
         ax.set_ylabel("% MViF")
         ax.set_xlabel("Time (s)" if timeinseconds else "Samples")
             
-        showgoodlayout()
+        showgoodlayout(tight_layout)
         if showimmediately: plt.show()
     
     else:
        raise Exception("REF_SIGNAL is probably absent or it is not contained in a dataframe") 
 
 
-def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addrefsig=True, figsize=[20,15], showimmediately=True):
+def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addrefsig=True, figsize=[20,15], showimmediately=True,
+                  tight_layout=True):
     """ 
     This function plots the MUs pulses (i.e., binary firing point).
 
@@ -206,14 +208,14 @@ def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addr
     ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
     if addrefsig:
-        showgoodlayout(despined="2yaxes")
+        showgoodlayout(tight_layout, despined="2yaxes")
     else:
-        showgoodlayout()
+        showgoodlayout(tight_layout)
 
     if showimmediately: plt.show()
 
 
-def plot_ipts(emgfile, munumber, timeinseconds=True, figsize=[20,15], showimmediately=True):
+def plot_ipts(emgfile, munumber, timeinseconds=True, figsize=[20,15], showimmediately=True, tight_layout=True):
     """ 
     This function plots the impuls train (i.e., non-binary firing).
 
@@ -246,7 +248,7 @@ def plot_ipts(emgfile, munumber, timeinseconds=True, figsize=[20,15], showimmedi
             ax.set_ylabel("MU {}".format(munumber)) # Useful because if the MU is empty it won't show the channel number
             ax.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
             
-            showgoodlayout()
+            showgoodlayout(tight_layout)
             if showimmediately: plt.show()
 
         elif isinstance(munumber, list):
@@ -274,7 +276,7 @@ def plot_ipts(emgfile, munumber, timeinseconds=True, figsize=[20,15], showimmedi
                     ax.tick_params(left=False)
                     ax.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
-            showgoodlayout(despined= True)
+            showgoodlayout(tight_layout, despined=True)
             if showimmediately: plt.show()
         
         else:
@@ -284,7 +286,7 @@ def plot_ipts(emgfile, munumber, timeinseconds=True, figsize=[20,15], showimmedi
         raise Exception("IPTS is probably absent or it is not contained in a dataframe")
 
 
-def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True, figsize=[20,15], showimmediately=True):
+def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True, figsize=[20,15], showimmediately=True, tight_layout=True):
     """ 
     This function plots the instantaneous discharge rate.
 
@@ -324,9 +326,9 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True, figsize=[20,
         
         
         if addrefsig:
-            showgoodlayout(despined="2yaxes")
+            showgoodlayout(tight_layout, despined="2yaxes")
         else:
-            showgoodlayout()
+            showgoodlayout(tight_layout)
 
         if showimmediately: plt.show()
     
@@ -360,7 +362,7 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True, figsize=[20,
             # Set axes labels
             ax.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
-            showgoodlayout(despined= True)
+            showgoodlayout(tight_layout, despined=True)
             if showimmediately: plt.show()
         
         else:
@@ -388,7 +390,7 @@ def plot_idr(emgfile, munumber, timeinseconds=True, addrefsig=True, figsize=[20,
             ax1.set_ylabel("MUs number")
             ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
         
-            showgoodlayout(despined="2yaxes")
+            showgoodlayout(tight_layout, despined="2yaxes")
             if showimmediately: plt.show()
     
     else:
@@ -416,7 +418,6 @@ if __name__ == "__main__":
     """ # Test OTB file
     file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
     emgfile = emg_from_otb(file=file_toOpen, refsig=[True, "filtered"]) """
-    
 
     #plot_emgsig(emgfile=emgfile, channels=[*range(0, 12)]) # We need the "*" to unpack the results of range and build a list - *range(0, 12)
     plot_idr(emgfile=emgfile, munumber=[*range(0, emgfile["NUMBER_OF_MUS"])]) 
