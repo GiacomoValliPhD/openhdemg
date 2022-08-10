@@ -131,7 +131,7 @@ def compute_idr(emgfile):
         for mu in range(emgfile["NUMBER_OF_MUS"]):
             # Manage the exception of a single MU
             # Put the mupulses of the MU in the loop in a df
-            df = pd.DataFrame(emgfile["MUPULSES"][mu] if emgfile["NUMBER_OF_MUS"] > 1 else emgfile["MUPULSES"])
+            df = pd.DataFrame(emgfile["MUPULSES"][mu] if emgfile["NUMBER_OF_MUS"] > 1 else np.array(emgfile["MUPULSES"]))
             # Calculate time in seconds and add it in column 1
             df[1] = df[0] / emgfile["FSAMP"]
             # Calculate the istantaneous discharge rate (idr), add it in column 2
@@ -328,8 +328,8 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None):
     """
     
     # Check if the startpoint was passed
-    if startpoint:
-            start_ = int(startpoint)
+    if isinstance(startpoint, int):
+        start_ = startpoint
     else:
         # Otherwise select the starting point for the RFD
         start_ = showselect(emgfile, title="Select the starting point for RFD, then press enter", nclic=1)
