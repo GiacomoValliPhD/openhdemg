@@ -132,6 +132,8 @@ def plot_refsig(emgfile, timeinseconds=True, figsize=[20,15], showimmediately=Tr
             
         showgoodlayout(tight_layout)
         if showimmediately: plt.show()
+
+        return fig
     
     else:
        raise Exception("REF_SIGNAL is probably absent or it is not contained in a dataframe") 
