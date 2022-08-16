@@ -26,7 +26,7 @@ def showgoodlayout(tight_layout, despined=False):
     elif despined == "2yaxes":
         sns.despine(top=True, bottom=False, left=False, right=False)
     else:
-        raise Exception(f"despined can be True, False of 2yaxes. {despined} was passed instead")
+        raise Exception(f"despined can be True, False or 2yaxes. {despined} was passed instead")
     
     if tight_layout == True:
         plt.tight_layout()
