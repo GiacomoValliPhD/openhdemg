@@ -196,7 +196,7 @@ def compute_dr(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10, start_ste
     return mus_dr
 
 
-def basic_mus_properties(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10, mvif = 0):
+def basic_mus_properties(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10, start_steady=-1, end_steady=-1, mvif = 0):
     """
     This function can calculate all the basic properties of the MUs of a trapezoidal contraction,
     in particular the absolute/relative recruitment thresholds and
@@ -207,17 +207,18 @@ def basic_mus_properties(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10,
     The number of firings used for the DR calculation at recruitment/derecruitment and at the start/end of the steady-state phase
     can be passed to n_firings_RecDerec and n_firings_steady.
 
-    The user will only need to select the start and end of the steady-state phase manually and to enter
-    the MViF if this is not specified (by default mvif = 0) while calling the function basic_mus_properties. If 
+    The user will need to select the start and end of the steady-state phase manually unless specified by
+    start_steady and end_steady >= 0.
+
+    If the MViF is not specified (by default mvif = 0) the user will be asked to imput it manually. If 
     mvif is a number different from 0, this value is used instead.
 
     The function returns a DataFrame containing all the results.
     """
 
-    # Extract the variables of interest from the EMG file
-    SOURCE = emgfile["SOURCE"] 
-    NUMBER_OF_MUS = emgfile["NUMBER_OF_MUS"] 
-    PNR = emgfile["PNR"]
+    # Check if we need to select the steady-state phase
+    if start_steady < 0 and end_steady < 0:
+            start_steady, end_steady = showselect(emgfile, title="Select the start/end area to consider then press enter")
 
     # Collect the information to export
     #
@@ -234,23 +235,23 @@ def basic_mus_properties(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10,
 
     # Basically, we create an empty list, append values, convert the list in df and then concatenate to the exportable_df
     toappend = []
-    for i in range(NUMBER_OF_MUS):
+    for i in range(emgfile["NUMBER_OF_MUS"]):
         toappend.append({"MU_number":i+1})
     toappend = pd.DataFrame(toappend)
     exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
     # Only for DEMUSE files at this point (once we compute the PNR for the OTB decomposition, we can use it for both)
-    if SOURCE == "DEMUSE":
+    if emgfile["SOURCE"] == "DEMUSE":
         # Repeat the task for every new column to fill and concatenate
         toappend = []
-        for i in range(NUMBER_OF_MUS):
-            toappend.append({"PNR":PNR[0][i]})
+        for i in range(emgfile["NUMBER_OF_MUS"]):
+            toappend.append({"PNR":emgfile["PNR"][0][i]})
         toappend = pd.DataFrame(toappend)
         exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
         # Repeat again...
         toappend = []
-        toappend.append({"avg_PNR":np.average(PNR)})
+        toappend.append({"avg_PNR":np.average(emgfile["PNR"])})
         toappend = pd.DataFrame(toappend)
         exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
@@ -259,20 +260,26 @@ def basic_mus_properties(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10,
     exportable_df = pd.concat([exportable_df, mus_thresholds], axis=1)
 
     # Calculate DR at recruitment, derecruitment, all, start and end steady-state and all contraction
-    mus_dr = compute_dr(emgfile=emgfile, n_firings_RecDerec=n_firings_RecDerec, n_firings_steady=n_firings_steady)
+    mus_dr = compute_dr(emgfile=emgfile, n_firings_RecDerec=n_firings_RecDerec, n_firings_steady=n_firings_steady, start_steady=start_steady, end_steady=end_steady)
     exportable_df = pd.concat([exportable_df, mus_dr], axis=1)
 
-    # Print the dataframe containing all the results
-    # print("\n--------------------------------\nFinal dataframe containing basic MUs properties:\n\n{}".format(exportable_df))
+    # Calculate COVisi
+    covisi = compute_covisi(emgfile=emgfile, n_firings_RecDerec = n_firings_RecDerec, start_steady=start_steady, end_steady=end_steady, event_="steady")
+    exportable_df = pd.concat([exportable_df, covisi], axis=1)
+
+    # Calculate COVsteady
+    covsteady = compute_covsteady(emgfile, start_steady=start_steady, end_steady=end_steady)
+    covsteady = pd.DataFrame(covsteady, columns=["COV_steady"])
+    exportable_df = pd.concat([exportable_df, covsteady], axis=1)
 
     """ 
     print(exportable_df)
-         MVC  MU_number   PNR  avg_PNR      abs_RT    abs_DERT    rel_RT  rel_DERT  DR_all_contraction    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady
-    0  555.0          1  33.7  32.0125  220.990703  338.584589  4.058934  6.218780            7.225373  6.139581  4.751324         8.222959       6.380241       7.300628
-    1    NaN          2  36.9      NaN  342.778042  383.379447  6.295801  7.041527            5.692758  5.212117  4.349304         5.774452       5.153086       5.758279
-    2    NaN          3  29.5      NaN  233.166062  215.877558  4.282559  3.965021            7.685846  6.154896  4.505799         7.626115       7.341725       7.807892
-    3    NaN          4  36.7      NaN  296.928492  304.142582  5.453683  5.586184            6.374818  5.019371  4.023208         6.882195       5.681288       6.473001
-    4    NaN          5  28.8      NaN  409.113920  338.584589  7.514192  6.218780            6.352171  4.304906  4.503785         6.103125       6.041242       6.466309
+        MVC  MU_number   PNR  avg_PNR      abs_RT    abs_DERT    rel_RT  rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady    DR_all  COVisi_steady  COVisi_all  COV_steady
+    0  333.0          1  33.7  32.0125  132.594422  203.150753  4.058934  6.218780  6.139581  4.751324         8.269338       6.507612       7.303444  7.225373      11.866565   15.450206    4.412715     
+    1    NaN          2  36.9      NaN  205.666825  230.027668  6.295801  7.041527  5.212117  4.349304         5.619159       5.302997       5.739165  5.692758      12.424448   13.071500         NaN     
+    2    NaN          3  29.5      NaN  139.899637  129.526535  4.282559  3.965021  6.154896  4.505799         7.613770       7.503886       7.789876  7.685846      10.322716   14.749926         NaN     
+    3    NaN          4  36.7      NaN  178.157095  182.485549  5.453683  5.586184  5.019371  4.023208         6.660404       5.960320       6.464689  6.374818      11.358656   14.974260         NaN     
+    4    NaN          5  28.8      NaN  245.468352  203.150753  7.514192  6.218780  4.304906  4.503785         5.744684       6.075250       6.426378  6.352171      13.747331   14.902565         NaN
     ...
     """
 
@@ -442,7 +449,7 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
     If we already know the start_steady and end_steady, the two integer values (>=0) can be passed for automation, otherwise,
     the user will be asked to manually select the steady-state phase.
 
-    The function returns the coefficient of variation of the steady-state phase in %.
+    The function returns the coefficient of variation of the steady-state phase in % (as a pandas series accessible as covsteady[0]).
     """
 
     if start_steady < 0 and end_steady < 0:
