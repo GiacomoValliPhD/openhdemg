@@ -110,11 +110,11 @@ def compute_dr(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10, event_="r
     can be passed to n_firings_RecDerec and n_firings_steady.
 
     Input parameters for event_ are: "rec", "derec", "rec_derec", "steady", "rec_derec_steady".
-    type="rec_derec_steady" means that the DR is calculated at recruitment, derecruitment and during the steady-state phase.
-    type="rec" means that the DR is calculated at recruitment.
-    type="derec" means that the DR is calculated at derecruitment.
-    type="rec_derec" means that the DR is calculated at recruitment and derecruitment.
-    type="steady" means that the DR is calculated during the steady-state phase.
+    event_="rec_derec_steady" means that the DR is calculated at recruitment, derecruitment and during the steady-state phase.
+    event_="rec" means that the DR is calculated at recruitment.
+    event_="derec" means that the DR is calculated at derecruitment.
+    event_="rec_derec" means that the DR is calculated at recruitment and derecruitment.
+    event_="steady" means that the DR is calculated during the steady-state phase.
 
     The user can specify the number of firings to consider at recruitment/derecruitment and 
     at the start and end of the steady-state phase.
@@ -317,26 +317,94 @@ def basic_mus_properties(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10,
     return exportable_df
 
 
+def compute_covisi(emgfile, n_firings_RecDerec = 4, start_steady=-1, end_steady=-1, event_="rec_derec_steady"):
+    """
+    This function can calculate the coefficient of variation of interspike interval (COVisi) at recruitment, 
+    derecruitment, during the steady-state phase and during all the contraction.
+
+    The first argument should be the emgfile.
+
+    The user will need to select the start and end of the steady-state phase manually unless specified by
+    start_steady and end_steady >= 0.
+
+    Input parameters for event_ are: "rec", "derec", "rec_derec", "steady", "rec_derec_steady".
+    event_="rec_derec_steady" means that the COVisi is calculated at recruitment, derecruitment and during the steady-state phase.
+    event_="rec" means that the COVisi is calculated at recruitment.
+    event_="derec" means that the COVisi is calculated at derecruitment.
+    event_="rec_derec" means that the COVisi is calculated at recruitment and derecruitment.
+    event_="steady" means that the COVisi is calculated during the steady-state phase.
+
+    The user can specify the number of firings to consider at recruitment/derecruitmente.
+    
+    COVisi for all the contraction is automatically calculated and returned.
+
+    The function returns a DataFrame containing the requested COVisi.
+    """
+
+    idr = compute_idr(emgfile=emgfile) # We use the idr to calculate the COVisi
+
+    # Check if we need to manually select the area for the steady-state phase
+    if event_ == "rec_derec_steady" or event_ == "steady":
+        if start_steady < 0 and end_steady < 0:
+            start_steady, end_steady = showselect(emgfile, title="Select the start/end area to consider then press enter")
+    
+    # Create an object to append the results
+    toappend_covisi = []
+    for i in range(emgfile["NUMBER_OF_MUS"]): # Loop all the MUs
+
+        # COVisi rec
+        selected_idr = idr[i]["idr"].iloc[0 : n_firings_RecDerec]
+        covisirec = (selected_idr.std() / selected_idr.mean()) * 100
+
+        # COVisi derec
+        length = len(idr[i]["idr"])
+        selected_idr = idr[i]["idr"].iloc[length-n_firings_RecDerec+1 : length] # +1 because len() counts position 0
+        covisiderec = (selected_idr.std() / selected_idr.mean()) * 100
+        
+        # COVisi all steady
+        if event_ == "rec_derec_steady" or event_ == "steady": # Check if we need the steady-state phase
+            idr[i] = idr[i].set_index("mupulses")
+            selected_idr = idr[i]["idr"].loc[start_steady : end_steady]
+            covisisteady = (selected_idr.std() / selected_idr.mean()) * 100
+
+        # COVisi all contraction
+        selected_idr = idr[i]["idr"]
+        covisiall = (selected_idr.std() / selected_idr.mean()) * 100
+
+        if event_ == "rec":
+            toappend_covisi.append({"COVisi_rec":covisirec, "COVisi_all":covisiall})
+        elif event_ == "derec":
+            toappend_covisi.append({"COVisi_derec":covisiderec, "COVisi_all":covisiall})
+        elif event_ == "rec_derec":
+            toappend_covisi.append({"COVisi_rec":covisirec, "COVisi_derec":covisiderec, "COVisi_all":covisiall})
+        elif event_ == "steady":
+            toappend_covisi.append({"COVisi_steady":covisisteady, "COVisi_all":covisiall})
+        elif event_ == "rec_derec_steady":
+            toappend_covisi.append({"COVisi_rec":covisirec, "COVisi_derec":covisiderec, "COVisi_steady":covisisteady, "COVisi_all":covisiall})
+    
+    # Convert the dictionary in a DataFrame
+    covisi = pd.DataFrame(toappend_covisi)
+
+    return covisi
+
+
 def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
     """
     This function calculates the coefficient of variation of the steady-state phase.
 
     The first argument should be the emgfile.
 
-    If we already know the start_steady and end_steady, the two integer values can be passed for automation, otherwise,
+    If we already know the start_steady and end_steady, the two integer values (>=0) can be passed for automation, otherwise,
     the user will be asked to manually select the steady-state phase.
 
     The function returns the coefficient of variation of the steady-state phase in %.
     """
 
-    if start_steady >= 0 and end_steady >= 0:
-        ref = emgfile["REF_SIGNAL"].loc[start_steady : end_steady]
-        covsteady = (ref.std() / ref.mean()) * 100
-    
-    else:
+    if start_steady < 0 and end_steady < 0:
         start_steady, end_steady = showselect(emgfile, title="Select the start/end area to consider then press enter")
-        ref = emgfile["REF_SIGNAL"].loc[start_steady : end_steady]
-        covsteady = (ref.std() / ref.mean()) * 100
+    
+    ref = emgfile["REF_SIGNAL"].loc[start_steady : end_steady]
+    covsteady = (ref.std() / ref.mean()) * 100
         
     return covsteady
 
