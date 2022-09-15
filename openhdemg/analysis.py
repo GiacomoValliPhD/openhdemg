@@ -353,22 +353,22 @@ def compute_covisi(emgfile, n_firings_RecDerec = 4, start_steady=-1, end_steady=
     for i in range(emgfile["NUMBER_OF_MUS"]): # Loop all the MUs
 
         # COVisi rec
-        selected_idr = idr[i]["idr"].iloc[0 : n_firings_RecDerec]
+        selected_idr = idr[i]["diff_mupulses"].iloc[0 : n_firings_RecDerec]
         covisirec = (selected_idr.std() / selected_idr.mean()) * 100
 
         # COVisi derec
-        length = len(idr[i]["idr"])
-        selected_idr = idr[i]["idr"].iloc[length-n_firings_RecDerec+1 : length] # +1 because len() counts position 0
+        length = len(idr[i]["diff_mupulses"])
+        selected_idr = idr[i]["diff_mupulses"].iloc[length-n_firings_RecDerec+1 : length] # +1 because len() counts position 0
         covisiderec = (selected_idr.std() / selected_idr.mean()) * 100
         
         # COVisi all steady
         if event_ == "rec_derec_steady" or event_ == "steady": # Check if we need the steady-state phase
-            idr[i] = idr[i].set_index("mupulses")
-            selected_idr = idr[i]["idr"].loc[start_steady : end_steady]
+            idr_indexed = idr[i].set_index("mupulses")
+            selected_idr = idr_indexed["diff_mupulses"].loc[start_steady : end_steady]
             covisisteady = (selected_idr.std() / selected_idr.mean()) * 100
 
         # COVisi all contraction
-        selected_idr = idr[i]["idr"]
+        selected_idr = idr[i]["diff_mupulses"]
         covisiall = (selected_idr.std() / selected_idr.mean()) * 100
 
         if event_ == "rec":
