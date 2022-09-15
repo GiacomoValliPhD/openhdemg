@@ -106,12 +106,12 @@ def resize_emgfile(emgfile, area=None):
                 ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
                 }
     """
-    rs_emgfile["RAW_SIGNAL"] = emgfile["RAW_SIGNAL"].iloc[start_ : end_]
-    rs_emgfile["REF_SIGNAL"] = emgfile["REF_SIGNAL"].iloc[start_ : end_]
-    rs_emgfile["IPTS"] = emgfile["IPTS"].iloc[start_ : end_]
-    rs_emgfile["EMG_LENGTH"] = int(len(emgfile["IPTS"].index))
-    rs_emgfile["BINARY_MUS_FIRING"] = emgfile["BINARY_MUS_FIRING"].iloc[start_ : end_]
-    for i in range(emgfile["NUMBER_OF_MUS"]):
+    rs_emgfile["RAW_SIGNAL"] = rs_emgfile["RAW_SIGNAL"].iloc[start_ : end_]
+    rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].iloc[start_ : end_]
+    rs_emgfile["IPTS"] = rs_emgfile["IPTS"].iloc[start_ : end_]
+    rs_emgfile["EMG_LENGTH"] = int(len(rs_emgfile["IPTS"].index))
+    rs_emgfile["BINARY_MUS_FIRING"] = rs_emgfile["BINARY_MUS_FIRING"].iloc[start_ : end_]
+    for i in range(rs_emgfile["NUMBER_OF_MUS"]):
         # Here I need to mask the array based on a filter and return the values in an array with []
         rs_emgfile["MUPULSES"][i] = rs_emgfile["MUPULSES"][i][(rs_emgfile["MUPULSES"][i] >= start_) & (rs_emgfile["MUPULSES"][i] < end_)]
    
@@ -208,15 +208,15 @@ def delete_mus(emgfile, munumber):
     # Common part working for all the possible inputs to munumber
     # Drop PNR values and rename the index
     if emgfile["SOURCE"] == "DEMUSE": # Modify once PNR calculation is implemented also for OTB files
-        del_emgfile["PNR"] = emgfile["PNR"].drop(munumber) # Works with lists and integers
+        del_emgfile["PNR"] = del_emgfile["PNR"].drop(munumber) # Works with lists and integers
         del_emgfile["PNR"].reset_index(inplace = True, drop = True) # Drop the old index
 
     # Drop IPTS by columns and rename the columns
-    del_emgfile["IPTS"] = emgfile["IPTS"].drop(munumber, axis = 1) # Works with lists and integers
+    del_emgfile["IPTS"] = del_emgfile["IPTS"].drop(munumber, axis = 1) # Works with lists and integers
     del_emgfile["IPTS"].columns = range(del_emgfile["IPTS"].shape[1])
 
     # Drop BINARY_MUS_FIRING by columns and rename the columns
-    del_emgfile["BINARY_MUS_FIRING"] = emgfile["BINARY_MUS_FIRING"].drop(munumber, axis = 1) # Works with lists and integers
+    del_emgfile["BINARY_MUS_FIRING"] = del_emgfile["BINARY_MUS_FIRING"].drop(munumber, axis = 1) # Works with lists and integers
     del_emgfile["BINARY_MUS_FIRING"].columns = range(del_emgfile["BINARY_MUS_FIRING"].shape[1])
     
     if isinstance(munumber, int):
@@ -224,7 +224,7 @@ def delete_mus(emgfile, munumber):
         del del_emgfile["MUPULSES"][munumber]
 
         # Subrtact one MU to the total number
-        del_emgfile["NUMBER_OF_MUS"] = emgfile["NUMBER_OF_MUS"] - 1
+        del_emgfile["NUMBER_OF_MUS"] = del_emgfile["NUMBER_OF_MUS"] - 1
     
     elif isinstance(munumber, list):
         # Delete all the content in the del_emgfile["MUPULSES"] and append only the MUs that we want to retain (exclude deleted MUs)
@@ -235,7 +235,7 @@ def delete_mus(emgfile, munumber):
                 del_emgfile["MUPULSES"].append(emgfile["MUPULSES"][mu])
         
         # Subrtact the number of deleted MUs to the total number
-        del_emgfile["NUMBER_OF_MUS"] = emgfile["NUMBER_OF_MUS"] - len(munumber)
+        del_emgfile["NUMBER_OF_MUS"] = del_emgfile["NUMBER_OF_MUS"] - len(munumber)
     
     else:
         raise Exception("While calling the delete_mus function, you should pass an integer or a list in munumber= ")
