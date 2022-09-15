@@ -1,3 +1,5 @@
+from locale import LC_ALL
+from re import L
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -314,6 +316,29 @@ def basic_mus_properties(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10,
 
     return exportable_df
 
+
+def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
+    """
+    This function calculates the coefficient of variation of the steady-state phase.
+
+    The first argument should be the emgfile.
+
+    If we already know the start_steady and end_steady, the two integer values can be passed for automation, otherwise,
+    the user will be asked to manually select the steady-state phase.
+
+    The function returns the coefficient of variation of the steady-state phase in %.
+    """
+
+    if start_steady >= 0 and end_steady >= 0:
+        ref = emgfile["REF_SIGNAL"].loc[start_steady : end_steady]
+        covsteady = (ref.std() / ref.mean()) * 100
+    
+    else:
+        start_steady, end_steady = showselect(emgfile, title="Select the start/end area to consider then press enter")
+        ref = emgfile["REF_SIGNAL"].loc[start_steady : end_steady]
+        covsteady = (ref.std() / ref.mean()) * 100
+        
+    return covsteady
 
 
 ###########################################################################################################################################################
