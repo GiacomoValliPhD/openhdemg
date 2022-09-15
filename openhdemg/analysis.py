@@ -43,20 +43,15 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):  # I
     toappend = []
     # Loop all the MUs
     for i in range(NUMBER_OF_MUS):
-        if NUMBER_OF_MUS > 1:
-            # Detect the first and last firing of the MU and manage the exception of a single MU
-            mup_rec = MUPULSES[i][0]
-            mup_derec = MUPULSES[i][-1]
-        else:
-            # Detect the first and last firing of the MU and manage the exception of a single MU
-            mup_rec = MUPULSES[0]
-            mup_derec = MUPULSES[-1]
+        # Detect the first and last firing of the MU and manage the exception of a single MU
+        mup_rec = MUPULSES[i][0]
+        mup_derec = MUPULSES[i][-1]
 
         # Calculate absolute and relative RT and DERT if requested
-        abs_RT = ((float(REF_SIGNAL.iloc[mup_rec]) * float(mvif)) / 100) * 9.81
-        abs_DERT = ((float(REF_SIGNAL.iloc[mup_derec]) * float(mvif)) / 100) * 9.81
-        rel_RT = float(REF_SIGNAL.iloc[mup_rec])
-        rel_DERT = float(REF_SIGNAL.iloc[mup_derec])
+        abs_RT = ((float(REF_SIGNAL.loc[mup_rec]) * float(mvif)) / 100) * 9.81
+        abs_DERT = ((float(REF_SIGNAL.loc[mup_derec]) * float(mvif)) / 100) * 9.81
+        rel_RT = float(REF_SIGNAL.loc[mup_rec])
+        rel_DERT = float(REF_SIGNAL.loc[mup_derec])
 
         if event_ == "rt_dert" and type_ =="abs_rel":
             toappend.append({"abs_RT":abs_RT, "abs_DERT":abs_DERT, "rel_RT":rel_RT, "rel_DERT":rel_DERT})
@@ -146,7 +141,7 @@ def compute_dr(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10, event_="r
     if event_ != "steady":
         # Loop all the MUs
         for i in range(NUMBER_OF_MUS):
-            mup = pd.DataFrame(MUPULSES[i]) if NUMBER_OF_MUS > 1 else pd.DataFrame(MUPULSES) # Manage exception of a single MU
+            mup = pd.DataFrame(MUPULSES[i])
             # Calculate the istantaneous discharge rate (idr)
             idr = FSAMP / mup.diff()
             # Then average idr between the firings in the interval specified in "n_firings_RecDerec"
@@ -173,7 +168,7 @@ def compute_dr(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10, event_="r
         # Now calculate the DR in the specified range
         # Loop all the MUs
         for i in range(NUMBER_OF_MUS):
-            mup = pd.DataFrame(MUPULSES[i]) if NUMBER_OF_MUS > 1 else pd.DataFrame(MUPULSES) # Manage exception of a single MU
+            mup = pd.DataFrame(MUPULSES[i])
             # Calculate the delta (difference) between the firings and istantaneous discharge rate (idr)
             idr = FSAMP / mup.diff()
             # Add to the idr df the corresponding position of the ref signal
@@ -204,7 +199,7 @@ def compute_dr(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10, event_="r
     # Calculate the DR for all the contraction, this is done in any case, then the user can decide whether to use it or not
     # Loop all the MUs
     for i in range(NUMBER_OF_MUS):
-        mup = pd.DataFrame(MUPULSES[i]) if NUMBER_OF_MUS > 1 else pd.DataFrame(MUPULSES) # Manage exception of a single MU
+        mup = pd.DataFrame(MUPULSES[i])
         # Calculate the delta (difference) between the firings and istantaneous discharge rate (idr)
         idr = FSAMP / mup.diff()
 

@@ -113,7 +113,7 @@ def resize_emgfile(emgfile, area=None):
     rs_emgfile["BINARY_MUS_FIRING"] = emgfile["BINARY_MUS_FIRING"].iloc[start_ : end_]
     for i in range(emgfile["NUMBER_OF_MUS"]):
         # Here I need to mask the array based on a filter and return the values in an array with []
-        rs_emgfile["MUPULSES"][i] = emgfile["MUPULSES"][i][(emgfile["MUPULSES"][i] >= start_) & (emgfile["MUPULSES"][i] < end_)]
+        rs_emgfile["MUPULSES"][i] = rs_emgfile["MUPULSES"][i][(rs_emgfile["MUPULSES"][i] >= start_) & (rs_emgfile["MUPULSES"][i] < end_)]
    
     return rs_emgfile, start_, end_
 
@@ -134,7 +134,7 @@ def compute_idr(emgfile):
         for mu in range(emgfile["NUMBER_OF_MUS"]):
             # Manage the exception of a single MU
             # Put the mupulses of the MU in the loop in a df
-            df = pd.DataFrame(emgfile["MUPULSES"][mu] if emgfile["NUMBER_OF_MUS"] > 1 else np.array(emgfile["MUPULSES"]))
+            df = pd.DataFrame(emgfile["MUPULSES"][mu] if emgfile["NUMBER_OF_MUS"] > 1 else np.transpose(np.array(emgfile["MUPULSES"])))
             # Calculate time in seconds and add it in column 1
             df[1] = df[0] / emgfile["FSAMP"]
             # Calculate the istantaneous discharge rate (idr), add it in column 2
