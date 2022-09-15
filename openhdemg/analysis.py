@@ -388,6 +388,77 @@ def compute_covisi(emgfile, n_firings_RecDerec = 4, start_steady=-1, end_steady=
     return covisi
 
 
+def compute_drvariability(emgfile, n_firings_RecDerec = 4, start_steady=-1, end_steady=-1, event_="rec_derec_steady"):
+    """
+    This function can calculate the variability of the instantaneous DR at recruitment, 
+    derecruitment, during the steady-state phase and during all the contraction.
+
+    The first argument should be the emgfile.
+
+    The user will need to select the start and end of the steady-state phase manually unless specified by
+    start_steady and end_steady >= 0.
+
+    Input parameters for event_ are: "rec", "derec", "rec_derec", "steady", "rec_derec_steady".
+    event_="rec_derec_steady" means that the COVisi is calculated at recruitment, derecruitment and during the steady-state phase.
+    event_="rec" means that the COVisi is calculated at recruitment.
+    event_="derec" means that the COVisi is calculated at derecruitment.
+    event_="rec_derec" means that the COVisi is calculated at recruitment and derecruitment.
+    event_="steady" means that the COVisi is calculated during the steady-state phase.
+
+    The user can specify the number of firings to consider at recruitment/derecruitmente.
+    
+    drvariability for all the contraction is automatically calculated and returned.
+
+    The function returns a DataFrame containing the requested drvariability.
+    """
+
+    idr = compute_idr(emgfile=emgfile) # We use the idr to calculate the COVisi
+
+    # Check if we need to manually select the area for the steady-state phase
+    if event_ == "rec_derec_steady" or event_ == "steady":
+        if start_steady < 0 and end_steady < 0:
+            start_steady, end_steady = showselect(emgfile, title="Select the start/end area to consider then press enter")
+    
+    # Create an object to append the results
+    toappend_drvariability = []
+    for i in range(emgfile["NUMBER_OF_MUS"]): # Loop all the MUs
+
+        # COVisi rec
+        selected_idr = idr[i]["idr"].iloc[0 : n_firings_RecDerec]
+        drvariabilityrec = (selected_idr.std() / selected_idr.mean()) * 100
+
+        # COVisi derec
+        length = len(idr[i]["idr"])
+        selected_idr = idr[i]["idr"].iloc[length-n_firings_RecDerec+1 : length] # +1 because len() counts position 0
+        drvariabilityderec = (selected_idr.std() / selected_idr.mean()) * 100
+        
+        # COVisi all steady
+        if event_ == "rec_derec_steady" or event_ == "steady": # Check if we need the steady-state phase
+            idr_indexed = idr[i].set_index("mupulses")
+            selected_idr = idr_indexed["idr"].loc[start_steady : end_steady]
+            drvariabilitysteady = (selected_idr.std() / selected_idr.mean()) * 100
+
+        # COVisi all contraction
+        selected_idr = idr[i]["idr"]
+        drvariabilityall = (selected_idr.std() / selected_idr.mean()) * 100
+
+        if event_ == "rec":
+            toappend_drvariability.append({"DRvar_rec":drvariabilityrec, "DRvar_all":drvariabilityall})
+        elif event_ == "derec":
+            toappend_drvariability.append({"DRvar_derec":drvariabilityderec, "DRvar_all":drvariabilityall})
+        elif event_ == "rec_derec":
+            toappend_drvariability.append({"DRvar_rec":drvariabilityrec, "DRvar_derec":drvariabilityderec, "DRvar_all":drvariabilityall})
+        elif event_ == "steady":
+            toappend_drvariability.append({"DRvar_steady":drvariabilitysteady, "DRvar_all":drvariabilityall})
+        elif event_ == "rec_derec_steady":
+            toappend_drvariability.append({"DRvar_rec":drvariabilityrec, "DRvar_derec":drvariabilityderec, "DRvar_steady":drvariabilitysteady, "DRvar_all":drvariabilityall})
+    
+    # Convert the dictionary in a DataFrame
+    drvariability = pd.DataFrame(toappend_drvariability)
+
+    return drvariability
+
+
 def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
     """
     This function calculates the coefficient of variation of the steady-state phase.
