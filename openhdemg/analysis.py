@@ -13,9 +13,9 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):  # I
     The first argument should be the emgfile.
 
     Input parameters for event_ are: "rt", "dert", "rt_dert".
-    type="rt_dert" means that both recruitment and derecruitment tresholds will be calculated.
-    type="rt" means that only recruitment tresholds will be calculated.
-    type="dert" means that only derecruitment tresholds will be calculated.
+    event_="rt_dert" means that both recruitment and derecruitment tresholds will be calculated.
+    event_="rt" means that only recruitment tresholds will be calculated.
+    event_="dert" means that only derecruitment tresholds will be calculated.
 
     Input parameters for type_ are: "abs", "rel", "abs_rel".
     type="abs_rel" means that both absolute and relative tresholds will be calculated.
@@ -57,28 +57,20 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):  # I
 
         if event_ == "rt_dert" and type_ =="abs_rel":
             toappend.append({"abs_RT":abs_RT, "abs_DERT":abs_DERT, "rel_RT":rel_RT, "rel_DERT":rel_DERT})
-
         elif event_ == "rt" and type_ =="abs_rel":
             toappend.append({"abs_RT":abs_RT, "rel_RT":rel_RT})
-        
         elif event_ == "dert" and type_ =="abs_rel":
             toappend.append({"abs_DERT":abs_DERT, "rel_DERT":rel_DERT})
-
         elif event_ == "rt_dert" and type_ =="abs":
             toappend.append({"abs_RT":abs_RT, "abs_DERT":abs_DERT})
-        
         elif event_ == "rt" and type_ =="abs":
             toappend.append({"abs_RT":abs_RT})
-
         elif event_ == "dert" and type_ =="abs":
             toappend.append({"abs_DERT":abs_DERT})
-        
         elif event_ == "rt_dert" and type_ =="rel":
             toappend.append({"rel_RT":rel_RT, "rel_DERT":rel_DERT})
-        
         elif event_ == "rt" and type_ =="rel":
             toappend.append({"rel_RT":rel_RT})
-        
         elif event_ == "dert" and type_ =="rel":
             toappend.append({"rel_DERT":rel_DERT})
 
@@ -97,14 +89,14 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):  # I
     
     return mus_thresholds
 
-
-def compute_dr(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10, event_="rec_derec_steady"):
+def compute_dr(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10, start_steady=-1, end_steady=-1, event_="rec_derec_steady"):
     """
     This function can calculate the discharge rate at recruitment, derecruitment and during the steady-state phase.
 
     The first argument should be the emgfile.
 
-    The user will need to select the start and end of the steady-state phase manually.
+    The user will need to select the start and end of the steady-state phase manually unless specified by
+    start_steady and end_steady >= 0..
 
     The number of firings used for the DR calculation at recruitment/derecruitment and at the start/end of the steady-state phase
     can be passed to n_firings_RecDerec and n_firings_steady.
@@ -115,19 +107,11 @@ def compute_dr(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10, event_="r
     event_="derec" means that the DR is calculated at derecruitment.
     event_="rec_derec" means that the DR is calculated at recruitment and derecruitment.
     event_="steady" means that the DR is calculated during the steady-state phase.
-
-    The user can specify the number of firings to consider at recruitment/derecruitment and 
-    at the start and end of the steady-state phase.
     
     DR for all the contraction is automatically calculated and returned.
 
     The function returns a DataFrame containing the requested DR.
     """
-
-    # Extract the variables of interest from the EMG file
-    NUMBER_OF_MUS = emgfile["NUMBER_OF_MUS"]
-    MUPULSES = emgfile["MUPULSES"]
-    FSAMP = emgfile["FSAMP"]
 
     # Check that all the inputs are correct
     errormessage = f"event_ must be one of the following strings: rec, derec, rec_derec, steady, rec_derec_steady. {event_} was passed instead."
@@ -137,100 +121,78 @@ def compute_dr(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10, event_="r
     if not isinstance(n_firings_steady, int):
         raise Exception(f"n_firings_steady must be an integer. {type(n_firings_steady)} was passed instead.")
 
-    # Create an object to append the results of the recruitment and derecruitment only
-    toappend_recderec = []
-    # Calculate DR at recruitment and derecruitment
-    if event_ != "steady":
-        # Loop all the MUs
-        for i in range(NUMBER_OF_MUS):
-            mup = pd.DataFrame(MUPULSES[i])
-            # Calculate the istantaneous discharge rate (idr)
-            idr = FSAMP / mup.diff()
-            # Then average idr between the firings in the interval specified in "n_firings_RecDerec"
-            pps_rec = np.mean(idr[0 : n_firings_RecDerec], axis=0) # Can use 0 because it ignores the firs nan value
-            pps_derec = np.mean(idr[len(idr)-n_firings_RecDerec+1 : len(idr)], axis=0) # +1 because len() counts position 0
+    idr = compute_idr(emgfile=emgfile)
 
-            if event_ == "rec_derec" or event_ == "rec_derec_steady":
-                toappend_recderec.append({"DR_rec":pps_rec[0],"DR_derec":pps_derec[0]}) # 0 because has index column to omit
-            elif event_ == "rec":
-                toappend_recderec.append({"DR_rec":pps_rec[0]}) # 0 because has index column to omit
-            elif event_ == "derec":
-                toappend_recderec.append({"DR_derec":pps_derec[0]}) # 0 because has index column to omit
+    # Check if we need to manually select the area for the steady-state phase
+    if event_ == "rec_derec_steady" or event_ == "steady":
+        if start_steady < 0 and end_steady < 0:
+            start_steady, end_steady = showselect(emgfile, title="Select the start/end area to consider then press enter")
+    
+    # Create an object to append the results
+    toappend_dr = []
+    for i in range(emgfile["NUMBER_OF_MUS"]): # Loop all the MUs
+
+        # DR rec
+        selected_idr = idr[i]["idr"].iloc[0 : n_firings_RecDerec]
+        drrec = selected_idr.mean()
+
+        # DR derec
+        length = len(idr[i]["idr"])
+        selected_idr = idr[i]["idr"].iloc[length-n_firings_RecDerec+1 : length] # +1 because len() counts position 0
+        drderec = selected_idr.mean()
+
+        # Find indexes of start and end steady
+        for count, pulse in enumerate(idr[i]["mupulses"]):
+            if pulse >= start_steady:
+                index_startsteady = count
+                break
+
+        for count, pulse in enumerate(idr[i]["mupulses"]):
+            if pulse >= end_steady:
+                index_endsteady = count
+                break
         
-        # Convert the dictionary in a DataFrame
-        toappend_recderec = pd.DataFrame(toappend_recderec)
-    
-    # Create an object to append the results of the steady-state only
-    toappend_steady = []
-    # Calculate DR at all, start and end steady-state and all contraction
-    if event_ == "steady" or event_ == "rec_derec_steady":
-        # Visualise and select the steady-state
-        start_steady, end_steady = showselect(emgfile, title="Select start/end of the steady-state phase then press enter")
+        # DR startsteady
+        selected_idr = idr[i]["idr"].loc[index_startsteady+1 : index_startsteady+n_firings_steady] # +1 because to work only on the steady state
+        drstartsteady = selected_idr.mean()
 
-        # Now calculate the DR in the specified range
-        # Loop all the MUs
-        for i in range(NUMBER_OF_MUS):
-            mup = pd.DataFrame(MUPULSES[i])
-            # Calculate the delta (difference) between the firings and istantaneous discharge rate (idr)
-            idr = FSAMP / mup.diff()
-            # Add to the idr df the corresponding position of the ref signal
-            idr["pos"] = mup
-            
-            # Find the first firing of the steady and calculkate DR at start steady
-            for ind_start in idr.index:
-                if idr["pos"].loc[ind_start] >= start_steady:
-                    break
-            pps_start = np.mean(idr[0].iloc[ind_start+1 : ind_start+n_firings_steady], axis=0) # +1 because to work only on the steady state
-            
-            # Find the last firing of the steady and calculkate DR at end steady
-            for ind_end in idr.index:
-                if idr["pos"].loc[ind_end] >= end_steady:
-                    break
-            pps_end = np.mean(idr[0].iloc[ind_end+1-n_firings_steady : ind_end], axis=0) # Stop to ind (and not ind-1) because iloc excludes the last element (as Python standard)
-            
-            # Calculate the DR for the entire stedy-state
-            pps_all_steady = np.mean(idr[0].iloc[ind_start+1 : ind_end], axis=0)
-            
-            toappend_steady.append({"DR_start_steady":pps_start,"DR_end_steady":pps_end,"DR_all_steady":pps_all_steady}) # 0 because has index column to omit
-    
-        # Convert the dictionary in a DataFrame
-        toappend_steady = pd.DataFrame(toappend_steady)
+        # DR endsteady
+        selected_idr = idr[i]["idr"].loc[index_endsteady+1-n_firings_steady : index_endsteady] # +1 because to work only on the steady state
+        drendsteady = selected_idr.mean()
 
-    # Create an object to append the results of all the contraction only
-    toappend_allcontr = []
-    # Calculate the DR for all the contraction, this is done in any case, then the user can decide whether to use it or not
-    # Loop all the MUs
-    for i in range(NUMBER_OF_MUS):
-        mup = pd.DataFrame(MUPULSES[i])
-        # Calculate the delta (difference) between the firings and istantaneous discharge rate (idr)
-        idr = FSAMP / mup.diff()
+        # DR steady
+        selected_idr = idr[i]["idr"].loc[index_startsteady+1 : index_endsteady] # +1 because to work only on the steady state
+        drsteady = selected_idr.mean()
 
-        pps_all_contraction = np.mean(idr[0], axis=0)
+        # DR all contraction
+        selected_idr = idr[i]["idr"]
+        drall = selected_idr.mean()
 
-        toappend_allcontr.append({"DR_all_contraction":pps_all_contraction})
+        if event_ == "rec":
+            toappend_dr.append({"DR_rec":drrec, "DR_all":drall})
+        elif event_ == "derec":
+            toappend_dr.append({"DR_derec":drderec, "DR_all":drall})
+        elif event_ == "rec_derec":
+            toappend_dr.append({"DR_rec":drrec, "DR_derec":drderec, "DR_all":drall})
+        elif event_ == "steady":
+            toappend_dr.append({"DR_start_steady":drstartsteady, "DR_end_steady":drendsteady, "DR_all_steady":drsteady, "DR_all":drall})
+        elif event_ == "rec_derec_steady":
+            toappend_dr.append({"DR_rec":drrec, "DR_derec":drderec, "DR_start_steady":drstartsteady, "DR_end_steady":drendsteady, "DR_all_steady":drsteady, "DR_all":drall})
     
     # Convert the dictionary in a DataFrame
-    toappend_allcontr = pd.DataFrame(toappend_allcontr)
-    
-    # Merge the appended DataFrames
-    if isinstance(toappend_recderec, pd.DataFrame):
-        toappend_allcontr = pd.concat([toappend_allcontr, toappend_recderec], axis=1)
-    if isinstance(toappend_steady, pd.DataFrame):
-        toappend_allcontr = pd.concat([toappend_allcontr, toappend_steady], axis=1)
-    
-    mus_dr = pd.DataFrame(toappend_allcontr)
-    
+    mus_dr = pd.DataFrame(toappend_dr)
+
     """
     print(mus_dr)
-    DR_all_contraction    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady
-    0            7.225373  6.139581  4.751324         8.146854       6.417864       7.167632
-    1            5.692758  5.212117  4.349304         6.446452       5.242241       5.713736
-    2            7.685846  6.154896  4.505799         8.512083       7.337702       7.801723
-    3            6.374818  5.019371  4.023208         7.184807       5.833290       6.396255
-    4            6.352171  4.304906  4.503785         6.598922       6.025797       6.472538
+         DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady    DR_all
+    0  6.139581  4.751324         8.269338       6.467472       7.308025  7.225373
+    1  5.212117  4.349304         5.619159       5.386972       5.742270  5.692758
+    2  6.154896  4.505799         7.613770       7.381648       7.788328  7.685846
+    3  5.019371  4.023208         6.660404       5.872341       6.465086  6.374818
+    4  4.304906  4.503785         5.744684       6.078921       6.428322  6.352171
     ...
     """
-    
+
     return mus_dr
 
 
@@ -341,6 +303,12 @@ def compute_covisi(emgfile, n_firings_RecDerec = 4, start_steady=-1, end_steady=
     The function returns a DataFrame containing the requested COVisi.
     """
 
+    # Check that all the inputs are correct
+    errormessage = f"event_ must be one of the following strings: rec, derec, rec_derec, steady, rec_derec_steady. {event_} was passed instead."
+    assert event_ in ["rec", "derec", "rec_derec", "steady", "rec_derec_steady"], errormessage
+    if not isinstance(n_firings_RecDerec, int):
+        raise Exception(f"n_firings_RecDerec must be an integer. {type(n_firings_RecDerec)} was passed instead.")
+    
     idr = compute_idr(emgfile=emgfile) # We use the idr to calculate the COVisi
 
     # Check if we need to manually select the area for the steady-state phase
@@ -411,6 +379,12 @@ def compute_drvariability(emgfile, n_firings_RecDerec = 4, start_steady=-1, end_
 
     The function returns a DataFrame containing the requested drvariability.
     """
+
+    # Check that all the inputs are correct
+    errormessage = f"event_ must be one of the following strings: rec, derec, rec_derec, steady, rec_derec_steady. {event_} was passed instead."
+    assert event_ in ["rec", "derec", "rec_derec", "steady", "rec_derec_steady"], errormessage
+    if not isinstance(n_firings_RecDerec, int):
+        raise Exception(f"n_firings_RecDerec must be an integer. {type(n_firings_RecDerec)} was passed instead.")
 
     idr = compute_idr(emgfile=emgfile) # We use the idr to calculate the COVisi
 
