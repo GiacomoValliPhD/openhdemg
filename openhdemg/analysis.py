@@ -286,7 +286,7 @@ def basic_mus_properties(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10,
     return exportable_df
 
 
-def compute_covisi(emgfile, n_firings_RecDerec = 4, start_steady=-1, end_steady=-1, event_="rec_derec_steady"):
+def compute_covisi(emgfile, n_firings_RecDerec = 4, start_steady=-1, end_steady=-1, event_="rec_derec_steady", single_mu_number=-1):
     """
     This function can calculate the coefficient of variation of interspike interval (COVisi) at recruitment, 
     derecruitment, during the steady-state phase and during all the contraction.
@@ -307,6 +307,9 @@ def compute_covisi(emgfile, n_firings_RecDerec = 4, start_steady=-1, end_steady=
     
     COVisi for all the contraction is automatically calculated and returned.
 
+    This function is also used to calculate the COVisi of a MU while cleaning it. In this case the function can be called
+    with single_mu_number=munumber. In this case, only the COVisi of the entire contraction will be returned.
+
     The function returns a DataFrame containing the requested COVisi.
     """
 
@@ -318,47 +321,59 @@ def compute_covisi(emgfile, n_firings_RecDerec = 4, start_steady=-1, end_steady=
     
     idr = compute_idr(emgfile=emgfile) # We use the idr to calculate the COVisi
 
-    # Check if we need to manually select the area for the steady-state phase
-    if event_ == "rec_derec_steady" or event_ == "steady":
-        if start_steady < 0 and end_steady < 0:
-            start_steady, end_steady = showselect(emgfile, title="Select the start/end area to consider then press enter")
-    
-    # Create an object to append the results
-    toappend_covisi = []
-    for i in range(emgfile["NUMBER_OF_MUS"]): # Loop all the MUs
-
-        # COVisi rec
-        selected_idr = idr[i]["diff_mupulses"].iloc[0 : n_firings_RecDerec]
-        covisirec = (selected_idr.std() / selected_idr.mean()) * 100
-
-        # COVisi derec
-        length = len(idr[i]["diff_mupulses"])
-        selected_idr = idr[i]["diff_mupulses"].iloc[length-n_firings_RecDerec+1 : length] # +1 because len() counts position 0
-        covisiderec = (selected_idr.std() / selected_idr.mean()) * 100
+    # Check if we need to analyse all the MUs or a single MU
+    if single_mu_number < 0:
+        # Check if we need to manually select the area for the steady-state phase
+        if event_ == "rec_derec_steady" or event_ == "steady":
+            if start_steady < 0 and end_steady < 0:
+                start_steady, end_steady = showselect(emgfile, title="Select the start/end area to consider then press enter")
         
-        # COVisi all steady
-        if event_ == "rec_derec_steady" or event_ == "steady": # Check if we need the steady-state phase
-            idr_indexed = idr[i].set_index("mupulses")
-            selected_idr = idr_indexed["diff_mupulses"].loc[start_steady : end_steady]
-            covisisteady = (selected_idr.std() / selected_idr.mean()) * 100
+        # Create an object to append the results
+        toappend_covisi = []
+        for i in range(emgfile["NUMBER_OF_MUS"]): # Loop all the MUs
 
-        # COVisi all contraction
-        selected_idr = idr[i]["diff_mupulses"]
-        covisiall = (selected_idr.std() / selected_idr.mean()) * 100
+            # COVisi rec
+            selected_idr = idr[i]["diff_mupulses"].iloc[0 : n_firings_RecDerec]
+            covisirec = (selected_idr.std() / selected_idr.mean()) * 100
 
-        if event_ == "rec":
-            toappend_covisi.append({"COVisi_rec":covisirec, "COVisi_all":covisiall})
-        elif event_ == "derec":
-            toappend_covisi.append({"COVisi_derec":covisiderec, "COVisi_all":covisiall})
-        elif event_ == "rec_derec":
-            toappend_covisi.append({"COVisi_rec":covisirec, "COVisi_derec":covisiderec, "COVisi_all":covisiall})
-        elif event_ == "steady":
-            toappend_covisi.append({"COVisi_steady":covisisteady, "COVisi_all":covisiall})
-        elif event_ == "rec_derec_steady":
-            toappend_covisi.append({"COVisi_rec":covisirec, "COVisi_derec":covisiderec, "COVisi_steady":covisisteady, "COVisi_all":covisiall})
+            # COVisi derec
+            length = len(idr[i]["diff_mupulses"])
+            selected_idr = idr[i]["diff_mupulses"].iloc[length-n_firings_RecDerec+1 : length] # +1 because len() counts position 0
+            covisiderec = (selected_idr.std() / selected_idr.mean()) * 100
+            
+            # COVisi all steady
+            if event_ == "rec_derec_steady" or event_ == "steady": # Check if we need the steady-state phase
+                idr_indexed = idr[i].set_index("mupulses")
+                selected_idr = idr_indexed["diff_mupulses"].loc[start_steady : end_steady]
+                covisisteady = (selected_idr.std() / selected_idr.mean()) * 100
+
+            # COVisi all contraction
+            selected_idr = idr[i]["diff_mupulses"]
+            covisiall = (selected_idr.std() / selected_idr.mean()) * 100
+
+            if event_ == "rec":
+                toappend_covisi.append({"COVisi_rec":covisirec, "COVisi_all":covisiall})
+            elif event_ == "derec":
+                toappend_covisi.append({"COVisi_derec":covisiderec, "COVisi_all":covisiall})
+            elif event_ == "rec_derec":
+                toappend_covisi.append({"COVisi_rec":covisirec, "COVisi_derec":covisiderec, "COVisi_all":covisiall})
+            elif event_ == "steady":
+                toappend_covisi.append({"COVisi_steady":covisisteady, "COVisi_all":covisiall})
+            elif event_ == "rec_derec_steady":
+                toappend_covisi.append({"COVisi_rec":covisirec, "COVisi_derec":covisiderec, "COVisi_steady":covisisteady, "COVisi_all":covisiall})
+        
+        # Convert the dictionary in a DataFrame
+        covisi = pd.DataFrame(toappend_covisi)
     
-    # Convert the dictionary in a DataFrame
-    covisi = pd.DataFrame(toappend_covisi)
+    else:
+        # COVisi all contraction
+        selected_idr = idr[single_mu_number]["diff_mupulses"]
+        covisiall = (selected_idr.std() / selected_idr.mean()) * 100
+        # Create an object to append the results
+        toappend_covisi = []
+        toappend_covisi.append({"COVisi_all":covisiall})
+        # Convert the dictionary in a DataFrame
+        covisi = pd.DataFrame(toappend_covisi)
 
     return covisi
 
