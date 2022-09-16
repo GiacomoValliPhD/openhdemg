@@ -8,18 +8,19 @@ matplotlib.use('TkAgg')
 import tkinter as tk
 import tkinter.messagebox
 import pandas as pd
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, Canvas
 from tkinter import StringVar, Tk, N, S, W, E
 from pandastable import Table
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk 
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
+from PIL import Image, ImageTk
 
 import openhdemg 
 
 
 class GUI():
-    """GUI class for the openEMG package. 
+    """GUI class for the openEMG package.
        The attributes can not be used singularily.
 
        Attributes
@@ -29,8 +30,8 @@ class GUI():
     def __init__(self, root):
 
         # Set up GUI
-        root.title("OpenHDemg")
-        #self.iconbitmap()
+        root.title("openHD-EMG")
+        root.iconbitmap("logo.ico")
 
         # Create left side framing for functionalities
         self.left = ttk.Frame(root, padding="10 10 12 12")
@@ -38,6 +39,20 @@ class GUI():
         self.left.columnconfigure(0, weight=1)
         self.left.columnconfigure(1, weight=1)
         self.left.columnconfigure(2, weight=1)
+
+        # Style
+        style = ttk.Style()
+        style.theme_use('clam')
+        style.configure('TToplevel', background = 'LightBlue4')
+        style.configure('TFrame', background = 'LightBlue4')
+        style.configure('TLabel', font=('Lucida Sans', 12),
+                        foreground = 'black', background = 'LightBlue4')
+        style.configure('TButton',
+                        foreground = 'black', font = ('Lucida Sans', 11))
+        style.configure('TEntry', font = ('Lucida Sans', 12), foreground = 'black')
+        style.configure('TCombobox', background = 'LightBlue4', foreground = 'black')
+        style.configure('TLabelFrame', foreground = 'black',
+                        font = ('Lucida Sans', 16))
 
         # Specify Signal
         self.filetype = StringVar()
@@ -145,14 +160,21 @@ class GUI():
         self.right.grid(column=1, row=0, sticky=(N, S, E))
 
         # Create empty figure
-        self.fig = Figure(figsize=(20/2.54,15/2.54))
-        self.canvas = FigureCanvasTkAgg(self.fig, master=self.right)
+        self.first_fig = Figure(figsize=(20/2.54,15/2.54))
+        self.canvas = FigureCanvasTkAgg(self.first_fig, master=self.right)
         self.canvas.get_tk_widget().grid(row=0, column=0)
+
+        # Create logo figure
+        self.logo_canvas = Canvas(self.right, height=590, width=800, bg="white")
+        self.logo_canvas.grid(row=0, column=0)
+        self.logo = tk.PhotoImage(file="logo.png")
+        self.logo_canvas.create_image(400,300,anchor="center", image=self.logo)
 
         # Create frame for output
         self.terminal = ttk.LabelFrame(root, text="Result Output",
-                                       width= 800, height=200, relief="ridge")
-        self.terminal.grid(column=0, row=21, columnspan=2)
+                                       height=200, relief="ridge")
+        self.terminal.grid(column=0, row=21, columnspan=2, pady=8, padx=10,
+                           sticky=(N,S,W,E))
 
         for child in self.left.winfo_children():
             child.grid_configure(padx=5, pady=5)
@@ -282,7 +304,7 @@ class GUI():
             if plot == "idr":
                 self.fig = openhdemg.plot_idr(self.resdict, [*range(0, int(self.resdict["NUMBER_OF_MUS"]))], showimmediately=False, tight_layout=False)
             elif plot == "refsig_fil":
-                self.fig = openhdemg.plot_refsig(self.filter_refsig, showimmediately=False, tight_layout=False)
+                self.fig = openhdemg.plot_refsig(self.filtrefsig, showimmediately=False, tight_layout=False)
             elif plot == "refsig_off":
                 self.fig = openhdemg.plot_refsig(self.offs_emgfile, showimmediately=False, tight_layout=False)
 
@@ -303,7 +325,7 @@ class GUI():
            MUs can be recovered by reseting the analysis progress.
         """
         # Create new window
-        self.head = tk.Toplevel()
+        self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Motor Unit Removal Window")
         self.head.grab_set()
 
@@ -342,7 +364,8 @@ class GUI():
         removed_mu.grid(column=1, row=0, sticky=(W,E), padx=5, pady=5)
 
         # Update plot
-        self.in_gui_plotting()
+        if hasattr(self, "fig"):
+            self.in_gui_plotting()
 
 #-----------------------------------------------------------------------------------------------
 # Editing of single motor Units
@@ -354,7 +377,7 @@ class GUI():
         """
 
         # Create new window
-        self.head = tk.Toplevel()
+        self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Motor Unit Eiditing Window")
         self.head.grab_set()
 
@@ -399,7 +422,7 @@ class GUI():
            This funtion provides two options, refsig filtering and offset removal.
         """
         # Create new window
-        self.head = tk.Toplevel()
+        self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Reference Signal Eiditing Window")
         self.head.grab_set()
 
@@ -463,16 +486,16 @@ class GUI():
         """Function that filters the refig based on specs.
         """
 
-        try:
-            # Filter refsig
-            self.filtrefsig = openhdemg.filter_refsig(self.resdict,
+        #try:
+        # Filter refsig
+        self.filtrefsig = openhdemg.filter_refsig(self.resdict,
                                                       int(self.filter_order.get()),
                                                       int(self.cutoff_freq.get()))
-            # Plot filtered Refsig
-            self.in_gui_plotting(plot="refsig_fil")
+        # Plot filtered Refsig
+        self.in_gui_plotting(plot="refsig_fil")
 
-        except TypeError:
-            tk.messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
+        #except TypeError:
+            #tk.messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
 
 
     def remove_offset(self):
@@ -496,7 +519,7 @@ class GUI():
         """Function to resize the EMG. A new window is openend.
         """
         # Create new window
-        self.head = tk.Toplevel()
+        self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Resize EMG File Window")
         self.head.grab_set()
 
@@ -574,7 +597,7 @@ class GUI():
            The user can calculate the MVC of the steady state and the RFD.
         """
         # Create new window
-        self.head = tk.Toplevel()
+        self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Force Analysis Window")
 
         # Get MVIF
@@ -631,7 +654,7 @@ class GUI():
            discharge rate or basic properties computing.
         """
         # Create new window
-        self.head = tk.Toplevel()
+        self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Motor Unit Properties Window")
 
         # MVIF Entry
@@ -761,10 +784,10 @@ class GUI():
         """
         try:
             # Compute discharge rates
-            self.mus_dr = openhdemg.compute_dr(self.resdict,
-                                               int(self.firings_rec.get()),
-                                               int(self.firings_ste.get()),
-                                               self.dr_event.get())
+            self.mus_dr = openhdemg.compute_dr(emgfile=self.resdict,
+                                               n_firings_RecDerec=int(self.firings_rec.get()),
+                                               n_firings_steady=int(self.firings_ste.get()),
+                                               event_=self.dr_event.get())
             # Display results
             self.display_results(self.mus_dr)
 
@@ -783,10 +806,10 @@ class GUI():
         """
         try:
             # Calculate properties
-            self.exportable_df = openhdemg.basic_mus_properties(self.resdict,
-                                                                int(self.b_firings_rec.get()),
-                                                                int(self.b_firings_ste.get()),
-                                                                int(self.mvif_value.get()))
+            self.exportable_df = openhdemg.basic_mus_properties(emgfile=self.resdict,
+                                                                n_firings_RecDerec = int(self.b_firings_rec.get()),
+                                                                n_firings_steady = int(self.b_firings_ste.get()),
+                                                                mvif = int(self.mvif_value.get()))
             # Display results
             self.display_results(self.exportable_df)
 
@@ -834,5 +857,6 @@ class GUI():
 
 if __name__ == "__main__":
     root = Tk()
+    root['bg'] = 'LightBlue4'
     GUI(root)
     root.mainloop()
