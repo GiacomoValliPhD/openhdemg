@@ -4,16 +4,16 @@ This file contains the gui functionalities of openhdemg.
 
 import os
 import matplotlib
-matplotlib.use('TkAgg')
 import tkinter as tk
 import tkinter.messagebox
 import pandas as pd
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk 
+from matplotlib.figure import Figure
 from tkinter import ttk, filedialog, Canvas
 from tkinter import StringVar, Tk, N, S, W, E
 from pandastable import Table
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk 
-from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
 from PIL import Image, ImageTk
 
 import openhdemg 
@@ -21,10 +21,48 @@ import openhdemg
 
 class GUI():
     """GUI class for the openEMG package.
-       The attributes can not be used singularily.
+       The included functions can not be used singularily.
 
-       Attributes
-
+       Attributes:
+        self.left = Left frame inside of root
+        self.filetype = Filetype of import EMG file
+        self.right = Right frame insinde of root 
+        self.first_fig = Figure frame determinining size of all figures
+        self.logo = Path to file containing logo of OpenHDemg
+        self.logo_canvas = Canvas to display logo
+        self.terminal = Frame for pandastable results table
+        self.filepath = Path to EMG file selected for analysis
+        self.resdict = Dictionary derived from input EMG file for further analysis
+        self.mvif_df = Dataframe containing MVIF values
+        self.rfd_df = Dataframe containing RFD values
+        self.exportable_df = Dataframe containing ALL basic motor unit properties 
+        self.mus_dr = Dataframe containing motor unit discharge rate
+        self.mu_thresholds = Dataframe containing motor unit threshold values
+        self.fig = Matplotlib figure to be plotted on Canvas
+        self.canvas = General canvas for plotting figures
+        self.head = NEW tk.toplevel instance created everytime upon opnening a new window
+        self.mu_to_remove = Selected number of motor unit to be removed
+        self.mu_to_edit = Selected motor unit to be visuallized and edited individually
+        self.filter_order = Specified order of Butterworth low pass filter 
+        self.cutoff_freq = Specified cutt-off frequency used for low pass
+        self.offset_val = Specified/Determined offset value for reference signal
+        self.auto_eval = Variable that if > 0 leads to automatic determination of offset
+        self.filtrefsig = Reference signal instance sbsequent to filtering
+        self.offs_emgfile = Reference signal subsequent to removal of offset
+        self.start_area = Startpoint fo resizing of EMG file
+        self.end_area = Endpoint for resizing of EMG file
+        self.rfds = Selection of timepoints to calculate rfd
+        self.mvif = Determined MVIF value
+        self.mvifvalue = MVIF values used for further analysis
+        self.ct_event = Specified event for firing threshold calculation
+        self.firings_rec = Number of firings used for discharge rate calculation
+        self.firings_ste = Number of firings at start/end of steady state 
+        self.dr_event = Specified event for discharge rate calculation
+        self.b_firings_rec = Number of firings used for discharge rate calculation
+                             when assessing basic motor unit properties
+        self.b_firings_ste = Number of firings at start/end of steady state 
+                             when assessing basic motor unit properties 
+        self.table = Table object used for display of results
     """
 
     def __init__(self, root):
@@ -486,16 +524,16 @@ class GUI():
         """Function that filters the refig based on specs.
         """
 
-        #try:
-        # Filter refsig
-        self.filtrefsig = openhdemg.filter_refsig(self.resdict,
-                                                      int(self.filter_order.get()),
-                                                      int(self.cutoff_freq.get()))
-        # Plot filtered Refsig
-        self.in_gui_plotting(plot="refsig_fil")
+        try:
+            # Filter refsig
+            self.filtrefsig = openhdemg.filter_refsig(self.resdict,
+                                                          int(self.filter_order.get()),
+                                                          int(self.cutoff_freq.get()))
+            # Plot filtered Refsig
+            self.in_gui_plotting(plot="refsig_fil")
 
-        #except TypeError:
-            #tk.messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
+        except TypeError:
+            tk.messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
 
 
     def remove_offset(self):
@@ -514,6 +552,8 @@ class GUI():
 
 #-----------------------------------------------------------------------------------------------
 # Resize EMG File
+
+# See if the update of the file length is working in the original code!
 
     def resize_file(self):
         """Function to resize the EMG. A new window is openend.
@@ -825,6 +865,8 @@ class GUI():
 #-----------------------------------------------------------------------------------------------
 # Plot EMG
 
+# NOT FUNCTIONAL YET
+
     def plot_emg(self):
         """Function that creates several plots from the emg file.
            This is currently not used.
@@ -840,7 +882,7 @@ class GUI():
 
     def display_results(self, input_df):
         """Functions that displays all analysis results in the
-           ResulOutput labelframe using Pandastable. Input must be a
+           output labelframe using Pandastable. Input must be a
            Pandas dataframe.
         """
         # Display results
@@ -854,7 +896,7 @@ class GUI():
         pt.show()
 #-----------------------------------------------------------------------------------------------
 
-
+# Run GUI upon calling
 if __name__ == "__main__":
     root = Tk()
     root['bg'] = 'LightBlue4'
