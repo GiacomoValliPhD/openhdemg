@@ -4,33 +4,72 @@ This file contains the gui functionalities of openhdemg.
 
 import os
 import matplotlib
-matplotlib.use('TkAgg')
 import tkinter as tk
 import tkinter.messagebox
 import pandas as pd
-from tkinter import ttk, filedialog
-from tkinter import StringVar, Tk, N, S, W, E
-from pandastable import Table
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk 
 from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
+from tkinter import ttk, filedialog, Canvas
+from tkinter import StringVar, Tk, N, S, W, E
+from pandastable import Table
+from PIL import Image, ImageTk
 
 import openhdemg 
 
 
 class GUI():
-    """GUI class for the openEMG package. 
-       The attributes can not be used singularily.
+    """GUI class for the openEMG package.
+       The included functions can not be used singularily.
 
-       Attributes
-
+       Attributes:
+        self.left = Left frame inside of root
+        self.filetype = Filetype of import EMG file
+        self.right = Right frame insinde of root 
+        self.first_fig = Figure frame determinining size of all figures
+        self.logo = Path to file containing logo of OpenHDemg
+        self.logo_canvas = Canvas to display logo
+        self.terminal = Frame for pandastable results table
+        self.filepath = Path to EMG file selected for analysis
+        self.resdict = Dictionary derived from input EMG file for further analysis
+        self.mvif_df = Dataframe containing MVIF values
+        self.rfd_df = Dataframe containing RFD values
+        self.exportable_df = Dataframe containing ALL basic motor unit properties 
+        self.mus_dr = Dataframe containing motor unit discharge rate
+        self.mu_thresholds = Dataframe containing motor unit threshold values
+        self.fig = Matplotlib figure to be plotted on Canvas
+        self.canvas = General canvas for plotting figures
+        self.head = NEW tk.toplevel instance created everytime upon opnening a new window
+        self.mu_to_remove = Selected number of motor unit to be removed
+        self.mu_to_edit = Selected motor unit to be visuallized and edited individually
+        self.filter_order = Specified order of Butterworth low pass filter 
+        self.cutoff_freq = Specified cutt-off frequency used for low pass
+        self.offset_val = Specified/Determined offset value for reference signal
+        self.auto_eval = Variable that if > 0 leads to automatic determination of offset
+        self.filtrefsig = Reference signal instance sbsequent to filtering
+        self.offs_emgfile = Reference signal subsequent to removal of offset
+        self.start_area = Startpoint fo resizing of EMG file
+        self.end_area = Endpoint for resizing of EMG file
+        self.rfds = Selection of timepoints to calculate rfd
+        self.mvif = Determined MVIF value
+        self.mvifvalue = MVIF values used for further analysis
+        self.ct_event = Specified event for firing threshold calculation
+        self.firings_rec = Number of firings used for discharge rate calculation
+        self.firings_ste = Number of firings at start/end of steady state 
+        self.dr_event = Specified event for discharge rate calculation
+        self.b_firings_rec = Number of firings used for discharge rate calculation
+                             when assessing basic motor unit properties
+        self.b_firings_ste = Number of firings at start/end of steady state 
+                             when assessing basic motor unit properties 
+        self.table = Table object used for display of results
     """
 
     def __init__(self, root):
 
         # Set up GUI
-        root.title("OpenHDemg")
-        #self.iconbitmap()
+        root.title("openHD-EMG")
+        root.iconbitmap("logo.ico")
 
         # Create left side framing for functionalities
         self.left = ttk.Frame(root, padding="10 10 12 12")
@@ -38,6 +77,20 @@ class GUI():
         self.left.columnconfigure(0, weight=1)
         self.left.columnconfigure(1, weight=1)
         self.left.columnconfigure(2, weight=1)
+
+        # Style
+        style = ttk.Style()
+        style.theme_use('clam')
+        style.configure('TToplevel', background = 'LightBlue4')
+        style.configure('TFrame', background = 'LightBlue4')
+        style.configure('TLabel', font=('Lucida Sans', 12),
+                        foreground = 'black', background = 'LightBlue4')
+        style.configure('TButton',
+                        foreground = 'black', font = ('Lucida Sans', 11))
+        style.configure('TEntry', font = ('Lucida Sans', 12), foreground = 'black')
+        style.configure('TCombobox', background = 'LightBlue4', foreground = 'black')
+        style.configure('TLabelFrame', foreground = 'black',
+                        font = ('Lucida Sans', 16))
 
         # Specify Signal
         self.filetype = StringVar()
@@ -145,14 +198,21 @@ class GUI():
         self.right.grid(column=1, row=0, sticky=(N, S, E))
 
         # Create empty figure
-        self.fig = Figure(figsize=(20/2.54,15/2.54))
-        self.canvas = FigureCanvasTkAgg(self.fig, master=self.right)
+        self.first_fig = Figure(figsize=(20/2.54,15/2.54))
+        self.canvas = FigureCanvasTkAgg(self.first_fig, master=self.right)
         self.canvas.get_tk_widget().grid(row=0, column=0)
+
+        # Create logo figure
+        self.logo_canvas = Canvas(self.right, height=590, width=800, bg="white")
+        self.logo_canvas.grid(row=0, column=0)
+        self.logo = tk.PhotoImage(file="logo.png")
+        self.logo_canvas.create_image(400,300,anchor="center", image=self.logo)
 
         # Create frame for output
         self.terminal = ttk.LabelFrame(root, text="Result Output",
-                                       width= 800, height=200, relief="ridge")
-        self.terminal.grid(column=0, row=21, columnspan=2)
+                                       height=200, relief="ridge")
+        self.terminal.grid(column=0, row=21, columnspan=2, pady=8, padx=10,
+                           sticky=(N,S,W,E))
 
         for child in self.left.winfo_children():
             child.grid_configure(padx=5, pady=5)
@@ -282,7 +342,7 @@ class GUI():
             if plot == "idr":
                 self.fig = openhdemg.plot_idr(self.resdict, [*range(0, int(self.resdict["NUMBER_OF_MUS"]))], showimmediately=False, tight_layout=False)
             elif plot == "refsig_fil":
-                self.fig = openhdemg.plot_refsig(self.filter_refsig, showimmediately=False, tight_layout=False)
+                self.fig = openhdemg.plot_refsig(self.filtrefsig, showimmediately=False, tight_layout=False)
             elif plot == "refsig_off":
                 self.fig = openhdemg.plot_refsig(self.offs_emgfile, showimmediately=False, tight_layout=False)
 
@@ -303,7 +363,7 @@ class GUI():
            MUs can be recovered by reseting the analysis progress.
         """
         # Create new window
-        self.head = tk.Toplevel()
+        self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Motor Unit Removal Window")
         self.head.grab_set()
 
@@ -342,7 +402,8 @@ class GUI():
         removed_mu.grid(column=1, row=0, sticky=(W,E), padx=5, pady=5)
 
         # Update plot
-        self.in_gui_plotting()
+        if hasattr(self, "fig"):
+            self.in_gui_plotting()
 
 #-----------------------------------------------------------------------------------------------
 # Editing of single motor Units
@@ -354,7 +415,7 @@ class GUI():
         """
 
         # Create new window
-        self.head = tk.Toplevel()
+        self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Motor Unit Eiditing Window")
         self.head.grab_set()
 
@@ -399,7 +460,7 @@ class GUI():
            This funtion provides two options, refsig filtering and offset removal.
         """
         # Create new window
-        self.head = tk.Toplevel()
+        self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Reference Signal Eiditing Window")
         self.head.grab_set()
 
@@ -466,8 +527,8 @@ class GUI():
         try:
             # Filter refsig
             self.filtrefsig = openhdemg.filter_refsig(self.resdict,
-                                                      int(self.filter_order.get()),
-                                                      int(self.cutoff_freq.get()))
+                                                          int(self.filter_order.get()),
+                                                          int(self.cutoff_freq.get()))
             # Plot filtered Refsig
             self.in_gui_plotting(plot="refsig_fil")
 
@@ -492,11 +553,13 @@ class GUI():
 #-----------------------------------------------------------------------------------------------
 # Resize EMG File
 
+# See if the update of the file length is working in the original code!
+
     def resize_file(self):
         """Function to resize the EMG. A new window is openend.
         """
         # Create new window
-        self.head = tk.Toplevel()
+        self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Resize EMG File Window")
         self.head.grab_set()
 
@@ -574,7 +637,7 @@ class GUI():
            The user can calculate the MVC of the steady state and the RFD.
         """
         # Create new window
-        self.head = tk.Toplevel()
+        self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Force Analysis Window")
 
         # Get MVIF
@@ -631,7 +694,7 @@ class GUI():
            discharge rate or basic properties computing.
         """
         # Create new window
-        self.head = tk.Toplevel()
+        self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Motor Unit Properties Window")
 
         # MVIF Entry
@@ -802,6 +865,8 @@ class GUI():
 #-----------------------------------------------------------------------------------------------
 # Plot EMG
 
+# NOT FUNCTIONAL YET
+
     def plot_emg(self):
         """Function that creates several plots from the emg file.
            This is currently not used.
@@ -817,7 +882,7 @@ class GUI():
 
     def display_results(self, input_df):
         """Functions that displays all analysis results in the
-           ResulOutput labelframe using Pandastable. Input must be a
+           output labelframe using Pandastable. Input must be a
            Pandas dataframe.
         """
         # Display results
@@ -831,8 +896,9 @@ class GUI():
         pt.show()
 #-----------------------------------------------------------------------------------------------
 
-
+# Run GUI upon calling
 if __name__ == "__main__":
     root = Tk()
+    root['bg'] = 'LightBlue4'
     GUI(root)
     root.mainloop()
