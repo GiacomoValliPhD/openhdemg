@@ -106,14 +106,14 @@ def resize_emgfile(emgfile, area=None):
                 ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
                 }
     """
-    rs_emgfile["RAW_SIGNAL"] = emgfile["RAW_SIGNAL"].iloc[start_ : end_]
-    rs_emgfile["REF_SIGNAL"] = emgfile["REF_SIGNAL"].iloc[start_ : end_]
-    rs_emgfile["IPTS"] = emgfile["IPTS"].iloc[start_ : end_]
-    rs_emgfile["EMG_LENGTH"] = int(len(emgfile["IPTS"].index))
-    rs_emgfile["BINARY_MUS_FIRING"] = emgfile["BINARY_MUS_FIRING"].iloc[start_ : end_]
-    for i in range(emgfile["NUMBER_OF_MUS"]):
+    rs_emgfile["RAW_SIGNAL"] = rs_emgfile["RAW_SIGNAL"].iloc[start_ : end_]
+    rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].iloc[start_ : end_]
+    rs_emgfile["IPTS"] = rs_emgfile["IPTS"].iloc[start_ : end_]
+    rs_emgfile["EMG_LENGTH"] = int(len(rs_emgfile["IPTS"].index))
+    rs_emgfile["BINARY_MUS_FIRING"] = rs_emgfile["BINARY_MUS_FIRING"].iloc[start_ : end_]
+    for i in range(rs_emgfile["NUMBER_OF_MUS"]):
         # Here I need to mask the array based on a filter and return the values in an array with []
-        rs_emgfile["MUPULSES"][i] = emgfile["MUPULSES"][i][(emgfile["MUPULSES"][i] >= start_) & (emgfile["MUPULSES"][i] < end_)]
+        rs_emgfile["MUPULSES"][i] = rs_emgfile["MUPULSES"][i][(rs_emgfile["MUPULSES"][i] >= start_) & (rs_emgfile["MUPULSES"][i] < end_)]
    
     return rs_emgfile, start_, end_
 
@@ -124,7 +124,7 @@ def compute_idr(emgfile):
     The IDR is very useful for plotting and visualisation of the MUs behaviour.
     The only necessary argument is the emgfile.
     It returns a dict with a key for every MUs (keys are integers). Accessing the key, we have a dataframe containing
-    the mupulses, the time of firing in seconds and the idr for that specific MU.
+    the mupulses, diff_mupulses, the time of firing in seconds and the idr for that specific MU.
     """
     # Compute the instantaneous discharge rate (IDR) from the MUPULSES
     if isinstance(emgfile["MUPULSES"], list):
@@ -134,13 +134,16 @@ def compute_idr(emgfile):
         for mu in range(emgfile["NUMBER_OF_MUS"]):
             # Manage the exception of a single MU
             # Put the mupulses of the MU in the loop in a df
-            df = pd.DataFrame(emgfile["MUPULSES"][mu] if emgfile["NUMBER_OF_MUS"] > 1 else emgfile["MUPULSES"])
-            # Calculate time in seconds and add it in column 1
-            df[1] = df[0] / emgfile["FSAMP"]
-            # Calculate the istantaneous discharge rate (idr), add it in column 2
-            df[2] = emgfile["FSAMP"] / df[0].diff()
+            df = pd.DataFrame(emgfile["MUPULSES"][mu] if emgfile["NUMBER_OF_MUS"] > 1 else np.transpose(np.array(emgfile["MUPULSES"])))
             
-            df.rename(columns = {0:"mupulses", 1:"timesec", 2:"idr"}, inplace = True)
+            # Calculate difference in mupulses it in column 1
+            df[1] = df[0].diff()
+            # Calculate time in seconds and add it in column 2
+            df[2] = df[0] / emgfile["FSAMP"]
+            # Calculate the istantaneous discharge rate (idr), add it in column 3
+            df[3] = emgfile["FSAMP"] / df[0].diff()
+            
+            df.rename(columns = {0:"mupulses", 1:"diff_mupulses", 2:"timesec", 3:"idr"}, inplace = True)
             
             # Add the idr to the idr dict
             idr[mu] = (df)
@@ -148,18 +151,18 @@ def compute_idr(emgfile):
             """ 
             idr is a dict with a key for every MU
             idr[mu] is a DataFrame
-                 mupulses    timesec       idr
-            0        3956   1.931641       NaN
-            1        4398   2.147461  4.633484
-            2        4738   2.313477  6.023529
-            3        5030   2.456055  7.013699
-            4        5366   2.620117  6.095238
-            ..        ...        ...       ...
-            184     59441  29.023926  6.340557
-            185     59756  29.177734  6.501587
-            186     60258  29.422852  4.079681
-            187     60813  29.693848  3.690090
-            188     61453  30.006348  3.200000
+                 mupulses  diff_mupulses    timesec       idr
+            0        2719            NaN   1.327637       NaN
+            1        3046          327.0   1.487305  6.262997
+            2        3370          324.0   1.645508  6.320988
+            3        3721          351.0   1.816895  5.834758
+            4        3952          231.0   1.929688  8.865801
+            ..        ...            ...        ...       ...
+            193     57862          385.0  28.252930  5.319481
+            194     58247          385.0  28.440918  5.319481
+            195     58585          338.0  28.605957  6.059172
+            196     58993          408.0  28.805176  5.019608
+            197     59638          645.0  29.120117  3.175194
             """
 
         return idr
@@ -208,15 +211,15 @@ def delete_mus(emgfile, munumber):
     # Common part working for all the possible inputs to munumber
     # Drop PNR values and rename the index
     if emgfile["SOURCE"] == "DEMUSE": # Modify once PNR calculation is implemented also for OTB files
-        del_emgfile["PNR"] = emgfile["PNR"].drop(munumber) # Works with lists and integers
+        del_emgfile["PNR"] = del_emgfile["PNR"].drop(munumber) # Works with lists and integers
         del_emgfile["PNR"].reset_index(inplace = True, drop = True) # Drop the old index
 
     # Drop IPTS by columns and rename the columns
-    del_emgfile["IPTS"] = emgfile["IPTS"].drop(munumber, axis = 1) # Works with lists and integers
+    del_emgfile["IPTS"] = del_emgfile["IPTS"].drop(munumber, axis = 1) # Works with lists and integers
     del_emgfile["IPTS"].columns = range(del_emgfile["IPTS"].shape[1])
 
     # Drop BINARY_MUS_FIRING by columns and rename the columns
-    del_emgfile["BINARY_MUS_FIRING"] = emgfile["BINARY_MUS_FIRING"].drop(munumber, axis = 1) # Works with lists and integers
+    del_emgfile["BINARY_MUS_FIRING"] = del_emgfile["BINARY_MUS_FIRING"].drop(munumber, axis = 1) # Works with lists and integers
     del_emgfile["BINARY_MUS_FIRING"].columns = range(del_emgfile["BINARY_MUS_FIRING"].shape[1])
     
     if isinstance(munumber, int):
@@ -224,7 +227,7 @@ def delete_mus(emgfile, munumber):
         del del_emgfile["MUPULSES"][munumber]
 
         # Subrtact one MU to the total number
-        del_emgfile["NUMBER_OF_MUS"] = emgfile["NUMBER_OF_MUS"] - 1
+        del_emgfile["NUMBER_OF_MUS"] = del_emgfile["NUMBER_OF_MUS"] - 1
     
     elif isinstance(munumber, list):
         # Delete all the content in the del_emgfile["MUPULSES"] and append only the MUs that we want to retain (exclude deleted MUs)
@@ -235,7 +238,7 @@ def delete_mus(emgfile, munumber):
                 del_emgfile["MUPULSES"].append(emgfile["MUPULSES"][mu])
         
         # Subrtact the number of deleted MUs to the total number
-        del_emgfile["NUMBER_OF_MUS"] = emgfile["NUMBER_OF_MUS"] - len(munumber)
+        del_emgfile["NUMBER_OF_MUS"] = del_emgfile["NUMBER_OF_MUS"] - len(munumber)
     
     else:
         raise Exception("While calling the delete_mus function, you should pass an integer or a list in munumber= ")
@@ -331,8 +334,8 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None):
     """
     
     # Check if the startpoint was passed
-    if startpoint:
-            start_ = int(startpoint)
+    if isinstance(startpoint, int):
+        start_ = startpoint
     else:
         # Otherwise select the starting point for the RFD
         start_ = showselect(emgfile, title="Select the starting point for RFD, then press enter", nclic=1)

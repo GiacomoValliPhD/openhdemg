@@ -26,7 +26,7 @@ def showgoodlayout(tight_layout, despined=False):
     elif despined == "2yaxes":
         sns.despine(top=True, bottom=False, left=False, right=False)
     else:
-        raise Exception(f"despined can be True, False of 2yaxes. {despined} was passed instead")
+        raise Exception(f"despined can be True, False or 2yaxes. {despined} was passed instead")
     
     if tight_layout == True:
         plt.tight_layout()
@@ -133,6 +133,7 @@ def plot_refsig(emgfile, timeinseconds=True, figsize=[20,15], showimmediately=Tr
         showgoodlayout(tight_layout)
         if showimmediately: plt.show()
 
+        # Needed for the GUI? To check the other plot functions
         return fig
     
     else:
@@ -161,7 +162,7 @@ def plot_mupulses(emgfile, linewidths=0.5, timeinseconds=True, order=False, addr
         # Create a deepcopy to modify mupulses without affecting the original file
         mupulses = copy.deepcopy(emgfile["MUPULSES"])
     else:
-        raise Exception("MUPULSES is probably absent or it is not contained in a list")
+        raise Exception("MUPULSES is probably absent or it is not contained in a np.array")
 
     if addrefsig:
         if not isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):

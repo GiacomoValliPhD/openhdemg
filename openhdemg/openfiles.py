@@ -164,6 +164,10 @@ def emg_from_demuse (file):
     # Use this to know what data you have or don't have
     SOURCE = "DEMUSE"
 
+    # Manage exception of single MU
+    if NUMBER_OF_MUS == 1:
+        MUPULSES = [np.array(MUPULSES)]
+
     resdict =   {
                 "SOURCE" : SOURCE,
                 "RAW_SIGNAL" : RAW_SIGNAL, 

@@ -824,10 +824,10 @@ class GUI():
         """
         try:
             # Compute discharge rates
-            self.mus_dr = openhdemg.compute_dr(self.resdict,
-                                               int(self.firings_rec.get()),
-                                               int(self.firings_ste.get()),
-                                               self.dr_event.get())
+            self.mus_dr = openhdemg.compute_dr(emgfile=self.resdict,
+                                               n_firings_RecDerec=int(self.firings_rec.get()),
+                                               n_firings_steady=int(self.firings_ste.get()),
+                                               event_=self.dr_event.get())
             # Display results
             self.display_results(self.mus_dr)
 
@@ -846,10 +846,10 @@ class GUI():
         """
         try:
             # Calculate properties
-            self.exportable_df = openhdemg.basic_mus_properties(self.resdict,
-                                                                int(self.b_firings_rec.get()),
-                                                                int(self.b_firings_ste.get()),
-                                                                int(self.mvif_value.get()))
+            self.exportable_df = openhdemg.basic_mus_properties(emgfile=self.resdict,
+                                                                n_firings_RecDerec = int(self.b_firings_rec.get()),
+                                                                n_firings_steady = int(self.b_firings_ste.get()),
+                                                                mvif = int(self.mvif_value.get()))
             # Display results
             self.display_results(self.exportable_df)
 
