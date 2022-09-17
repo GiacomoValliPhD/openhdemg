@@ -109,7 +109,7 @@ class GUI():
 
         # File specifications
         name = ttk.Label(self.left,
-                          text="File name:").grid(column=1, row=1, sticky=(W,E))
+                          text="File:").grid(column=1, row=1, sticky=(W,E))
 
         n_channels = ttk.Label(self.left,
                           text="N Channels:").grid(column=1, row=2, sticky=(W,E))
@@ -228,7 +228,7 @@ class GUI():
         # Check filetype for processing
         if self.filetype.get() == "OTB":
             # load OTB
-            self.resdict = openhdemg.emg_from_otb(self.file_path)
+            self.resdict = openhdemg.emg_from_otb(file=self.file_path)
 
             # Add filespecs
             n_channels_value = ttk.Label(self.left,
@@ -242,7 +242,7 @@ class GUI():
 
         elif self.filetype.get() == "DEMUSE":
             # load DEMUSE
-            self.resdict = openhdemg.emg_from_demuse(self.file_path)
+            self.resdict = openhdemg.emg_from_demuse(file=self.file_path)
 
             # Add filespecs
             n_channels_value = ttk.Label(self.left,
@@ -256,7 +256,7 @@ class GUI():
         
         else:
             # load refsig
-            self.resdict = openhdemg.refsig_from_otb(self.file_path)
+            self.resdict = openhdemg.refsig_from_otb(file=self.file_path)
             # Recondifgure labels for refsig
             n_channels_value = ttk.Label(self.left,
                                  text=str(len(self.resdict["REF_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
@@ -320,7 +320,7 @@ class GUI():
 
                 # reload original file
                 if self.filetype.get() == "OTB":
-                    self.resdict = openhdemg.emg_from_otb(self.file_path)
+                    self.resdict = openhdemg.emg_from_otb(file=self.file_path)
 
                     # Update Filespecs
                     n_channels_value = ttk.Label(self.left,
@@ -333,7 +333,7 @@ class GUI():
                                       text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
 
                 elif self.filetype.get() == "DEMUSE":
-                    self.resdict = openhdemg.emg_from_demuse(self.file_path)
+                    self.resdict = openhdemg.emg_from_demuse(file=self.file_path)
 
                     # Update Filespecs
                     n_channels_value = ttk.Label(self.left,
@@ -347,7 +347,7 @@ class GUI():
 
                 else:
                     # load refsig
-                    self.resdict = openhdemg.refsig_from_otb(self.file_path)
+                    self.resdict = openhdemg.refsig_from_otb(file=self.file_path)
                     # Recondifgure labels for refsig
                     n_channels_value = ttk.Label(self.left,
                                          text=str(len(self.resdict["REF_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
@@ -374,11 +374,11 @@ class GUI():
 
         try:
             if plot == "idr":
-                self.fig = openhdemg.plot_idr(self.resdict, [*range(0, int(self.resdict["NUMBER_OF_MUS"]))], showimmediately=False, tight_layout=False)
+                self.fig = openhdemg.plot_idr(emgfile=self.resdict, munumber=[*range(0, int(self.resdict["NUMBER_OF_MUS"]))], showimmediately=False, tight_layout=False)
             elif plot == "refsig_fil":
-                self.fig = openhdemg.plot_refsig(self.resdict, showimmediately=False, tight_layout=False)
+                self.fig = openhdemg.plot_refsig(emgfile=self.resdict, showimmediately=False, tight_layout=False)
             elif plot == "refsig_off":
-                self.fig = openhdemg.plot_refsig(self.resdict, showimmediately=False, tight_layout=False)
+                self.fig = openhdemg.plot_refsig(emgfile=self.resdict, showimmediately=False, tight_layout=False)
 
             self.canvas = FigureCanvasTkAgg(self.fig, master=self.right)
             self.canvas.get_tk_widget().grid(row=0, column=0)
@@ -421,8 +421,8 @@ class GUI():
         """Function that actually removes the motor unit.
         """
         # Get resdict with MU removed
-        self.resdict = openhdemg.delete_mus(self.resdict,
-                                            int(self.mu_to_remove.get()))
+        self.resdict = openhdemg.delete_mus(emgfile=self.resdict,
+                                            munumber=int(self.mu_to_remove.get()))
         # Upate MU number
         n_mus_value = ttk.Label(self.left,
                           text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
@@ -473,8 +473,8 @@ class GUI():
         """Funktion that plots single selected MU.
         """
         # Make figure
-        fig = openhdemg.plot_idr(self.resdict,
-                                 int(self.mu_to_edit.get()),
+        fig = openhdemg.plot_idr(emgfile=self.resdict,
+                                 munumber=int(self.mu_to_edit.get()),
                                  showimmediately=False)
         # Create canvas and plot
         canvas = FigureCanvasTkAgg(fig, master=self.head)
@@ -560,9 +560,9 @@ class GUI():
 
         try:
             # Filter refsig
-            self.resdict = openhdemg.filter_refsig(self.resdict,
-                                                   int(self.filter_order.get()),
-                                                   int(self.cutoff_freq.get()))
+            self.resdict = openhdemg.filter_refsig(emgfile=self.resdict,
+                                                   order=int(self.filter_order.get()),
+                                                   cutoff=int(self.cutoff_freq.get()))
             # Plot filtered Refsig
             self.in_gui_plotting(plot="refsig_fil")
 
@@ -575,9 +575,9 @@ class GUI():
         """
         try:
             # Remove offset
-            self.resdict = openhdemg.remove_offset(self.resdict,
-                                                   int(self.offsetval.get()),
-                                                   int(self.auto_eval.get()))
+            self.resdict = openhdemg.remove_offset(emgfile=self.resdict,
+                                                   offsetval=int(self.offsetval.get()),
+                                                   auto=int(self.auto_eval.get()))
             # Update Plot
             self.in_gui_plotting(plot="refsig_off")
 
@@ -634,9 +634,9 @@ class GUI():
         """ Function to get resize selection from user.
         """
         # Open selection window for user
-        start, end = openhdemg.showselect(self.resdict, title="Select the start/end area to consider then press enter")
-        self.resdict, start_, end_ = openhdemg.resize_emgfile(self.resdict,
-                                                                 [start, end])
+        start, end = openhdemg.showselect(emgfile=self.resdict, title="Select the start/end area to consider then press enter")
+        self.resdict, start_, end_ = openhdemg.resize_emgfile(emgfile=self.resdict,
+                                                              area=[start, end])
         # Update Plot
         self.in_gui_plotting()
 
@@ -644,9 +644,9 @@ class GUI():
         """Function that actually resizes the file.
         """
         # Resize the file.
-        self.resdict, start_, end_ = openhdemg.resize_emgfile(self.resdict,
-                                                                 [int(self.start_area.get()),
-                                                                 int(self.end_area.get())])
+        self.resdict, start_, end_ = openhdemg.resize_emgfile(emgfile=self.resdict,
+                                                              area=[int(self.start_area.get()),
+                                                                   int(self.end_area.get())])
         # Define dictionary for pandas
         mvf_dic = {"Length": [self.resdict["EMG_LENGTH"]],
                    "Start": [start_],
@@ -701,7 +701,7 @@ class GUI():
     def get_mvif(self):
         """Function that retrieves calculated MVIF.
         """
-        self.mvif = openhdemg.get_mvif(self.resdict)
+        self.mvif = openhdemg.get_mvif(emgfile=self.resdict)
         # Define dictionary for pandas
         mvf_dic = {"MVIF": [self.mvif]}
         self.mvif_df = pd.DataFrame(data=mvf_dic)
@@ -716,8 +716,8 @@ class GUI():
         ms_list = ms.split(",")
         ms_list = [int(i) for i in ms_list]
         # Calculate rfd
-        self.rfd = openhdemg.compute_rfd(self.resdict,
-                                         ms_list)
+        self.rfd = openhdemg.compute_rfd(emgfile=self.resdict,
+                                         ms=ms_list)
         # Display results
         self.display_results(self.rfd)
 #-----------------------------------------------------------------------------------------------
@@ -838,10 +838,10 @@ class GUI():
         """
         try:
             # Compute thresholds
-            self.mu_thresholds = openhdemg.compute_thresholds(self.resdict,
-                                                              self.ct_event.get(),
-                                                              self.ct_type.get(),
-                                                              int(self.mvif_value.get()))
+            self.mu_thresholds = openhdemg.compute_thresholds(emgfile=self.resdict,
+                                                              event_=self.ct_event.get(),
+                                                              type_=self.ct_type.get(),
+                                                              mvif=int(self.mvif_value.get()))
             # Display results
             self.display_results(self.mu_thresholds)
 
