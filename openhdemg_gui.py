@@ -934,7 +934,7 @@ class GUI():
         # Display results
         self.table = Table(terminal,
                           dataframe=input_df,
-                          showtoolbar=False,
+                          showtoolbar=True,
                           showstatusbar=False)
  
         # Show results
