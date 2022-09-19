@@ -4,16 +4,16 @@ This file contains the gui functionalities of openhdemg.
 
 import os
 import matplotlib
-matplotlib.use('TkAgg')
 import tkinter as tk
 import tkinter.messagebox
 import pandas as pd
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk 
+from matplotlib.figure import Figure
 from tkinter import ttk, filedialog, Canvas
 from tkinter import StringVar, Tk, N, S, W, E
 from pandastable import Table
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk 
-from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
 from PIL import Image, ImageTk
 
 import openhdemg 
@@ -21,10 +21,45 @@ import openhdemg
 
 class GUI():
     """GUI class for the openEMG package.
-       The attributes can not be used singularily.
+       The included functions can not be used singularily.
 
-       Attributes
-
+       Attributes:
+        self.left = Left frame inside of root
+        self.filetype = Filetype of import EMG file
+        self.right = Right frame insinde of root 
+        self.first_fig = Figure frame determinining size of all figures
+        self.logo = Path to file containing logo of OpenHDemg
+        self.logo_canvas = Canvas to display logo
+        self.filename = Name of the file to be analysed
+        self.filepath = Path to EMG file selected for analysis
+        self.resdict = Dictionary derived from input EMG file for further analysis
+        self.mvif_df = Dataframe containing MVIF values
+        self.rfd_df = Dataframe containing RFD values
+        self.exportable_df = Dataframe containing ALL basic motor unit properties 
+        self.mus_dr = Dataframe containing motor unit discharge rate
+        self.mu_thresholds = Dataframe containing motor unit threshold values
+        self.fig = Matplotlib figure to be plotted on Canvas
+        self.canvas = General canvas for plotting figures
+        self.head = NEW tk.toplevel instance created everytime upon opnening a new window
+        self.mu_to_remove = Selected number of motor unit to be removed
+        self.mu_to_edit = Selected motor unit to be visuallized and edited individually
+        self.filter_order = Specified order of Butterworth low pass filter 
+        self.cutoff_freq = Specified cutt-off frequency used for low pass
+        self.offset_val = Specified/Determined offset value for reference signal
+        self.auto_eval = Variable that if > 0 leads to automatic determination of offset
+        self.start_area = Startpoint fo resizing of EMG file
+        self.end_area = Endpoint for resizing of EMG file
+        self.rfds = Selection of timepoints to calculate rfd
+        self.mvif = Determined MVIF value
+        self.mvifvalue = MVIF values used for further analysis
+        self.ct_event = Specified event for firing threshold calculation
+        self.firings_rec = Number of firings used for discharge rate calculation
+        self.firings_ste = Number of firings at start/end of steady state 
+        self.dr_event = Specified event for discharge rate calculation
+        self.b_firings_rec = Number of firings used for discharge rate calculation
+                             when assessing basic motor unit properties
+        self.b_firings_ste = Number of firings at start/end of steady state 
+                             when assessing basic motor unit properties 
     """
 
     def __init__(self, root):
@@ -73,8 +108,8 @@ class GUI():
         load.grid(column=0, row=2, sticky=W)
 
         # File specifications
-        specs = ttk.Label(self.left,
-                          text="File specifications:").grid(column=1, row=1, sticky=(W,E))
+        name = ttk.Label(self.left,
+                          text="File:").grid(column=1, row=1, sticky=(W,E))
 
         n_channels = ttk.Label(self.left,
                           text="N Channels:").grid(column=1, row=2, sticky=(W,E))
@@ -170,12 +205,6 @@ class GUI():
         self.logo = tk.PhotoImage(file="logo.png")
         self.logo_canvas.create_image(400,300,anchor="center", image=self.logo)
 
-        # Create frame for output
-        self.terminal = ttk.LabelFrame(root, text="Result Output",
-                                       height=200, relief="ridge")
-        self.terminal.grid(column=0, row=21, columnspan=2, pady=8, padx=10,
-                           sticky=(N,S,W,E))
-
         for child in self.left.winfo_children():
             child.grid_configure(padx=5, pady=5)
 
@@ -188,29 +217,55 @@ class GUI():
         # Ask user to select the file
         file_path = filedialog.askopenfilename()
         self.file_path = file_path
+        # Get filename
+        filename = os.path.splitext(os.path.basename(file_path))[0]
+        self.filename = filename
+
+        # Add filename to label
+        file_name = ttk.Label(self.left,
+                            text=str(self.filename)).grid(column=2, row=1, sticky=(W,E))
 
         # Check filetype for processing
         if self.filetype.get() == "OTB":
-            self.resdict = openhdemg.emg_from_otb(self.file_path)
+            # load OTB
+            self.resdict = openhdemg.emg_from_otb(file=self.file_path)
+
+            # Add filespecs
+            n_channels_value = ttk.Label(self.left,
+                              text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
+
+            n_mus_value = ttk.Label(self.left,
+                              text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
+
+            file_length_value = ttk.Label(self.left,
+                              text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
+
+        elif self.filetype.get() == "DEMUSE":
+            # load DEMUSE
+            self.resdict = openhdemg.emg_from_demuse(file=self.file_path)
+
+            # Add filespecs
+            n_channels_value = ttk.Label(self.left,
+                              text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
+
+            n_mus_value = ttk.Label(self.left,
+                              text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
+
+            file_length_value = ttk.Label(self.left,
+                              text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
+        
         else:
-            self.resdict = openhdemg.emg_from_demuse(self.file_path)
-
-        # Add filespecs
-        n_channels_value = ttk.Label(self.left,
-                          text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
-
-        n_mus_value = ttk.Label(self.left,
-                          text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
-
-        file_length_value = ttk.Label(self.left,
-                          text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
-
-        if self.filetype.get() == "REFSIG":
-            self.resdict = refsig_from_otb(self.file_path)
+            # load refsig
+            self.resdict = openhdemg.refsig_from_otb(file=self.file_path)
             # Recondifgure labels for refsig
-            n_channels.config(text="FSAMP")
-            n_mus.config(text="")
-            file_length.config(text="")
+            n_channels_value = ttk.Label(self.left,
+                                 text=str(len(self.resdict["REF_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
+
+            n_mus_value = ttk.Label(self.left,
+                              text="        ").grid(column=2, row=3, sticky=(W,E))
+
+            file_length_value = ttk.Label(self.left,
+                              text="        ").grid(column=2, row=4, sticky=(W,E))
 
     def save_emgfile(self):
         """Function to save the edited emgfile.
@@ -254,44 +309,61 @@ class GUI():
         """Funktion to restore the base file.
            Any analysis progress will be deleted by reloading the base file.
         """
+        # Get user input and check whether analysis wants to be truly resetted
+        if tk.messagebox.askokcancel("Attention", "Do you really want to reset the analysis?"):
 
-        try:
-            # Get user input
-            tk.messagebox.askokcancel("Attention", "Do you really want to reset the analysis?")
+            # user decided to rest analysis
+            try:
+                # Empty result table
+                if hasattr(self, "table"):
+                    self.table.clearTable()
 
-            # reload original file
-            if self.filetype.get() == "OTB":
-                self.resdict = openhdemg.emg_from_otb(self.file_path)
-            else:
-                self.resdict = openhdemg.emg_from_demuse(self.file_path)
+                # reload original file
+                if self.filetype.get() == "OTB":
+                    self.resdict = openhdemg.emg_from_otb(file=self.file_path)
 
-            # Update Filespecs
-            n_channels_value = ttk.Label(self.left,
-                              text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
+                    # Update Filespecs
+                    n_channels_value = ttk.Label(self.left,
+                                      text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
 
-            n_mus_value = ttk.Label(self.left,
-                              text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
+                    n_mus_value = ttk.Label(self.left,
+                                      text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
 
-            file_length_value = ttk.Label(self.left,
-                              text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
+                    file_length_value = ttk.Label(self.left,
+                                      text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
 
-            if self.filetype.get() == "REFSIG":
-                self.resdict = refsig_from_otb(self.file_path)
-                # Recondifgure labels
-                n_channels.config(text="FSAMP")
-                n_mus.config(text="")
-                file_length.config(text="")
+                elif self.filetype.get() == "DEMUSE":
+                    self.resdict = openhdemg.emg_from_demuse(file=self.file_path)
 
-            # Update Plot
-            if hasattr(self, "fig"):
-                self.in_gui_plotting()
+                    # Update Filespecs
+                    n_channels_value = ttk.Label(self.left,
+                                      text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
 
-            # Empty result table
-            if hasattr(self, "table"):
-                self.table.clearTable()
+                    n_mus_value = ttk.Label(self.left,
+                                      text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
 
-        except AttributeError:
-            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
+                    file_length_value = ttk.Label(self.left,
+                                      text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
+
+                else:
+                    # load refsig
+                    self.resdict = openhdemg.refsig_from_otb(file=self.file_path)
+                    # Recondifgure labels for refsig
+                    n_channels_value = ttk.Label(self.left,
+                                         text=str(len(self.resdict["REF_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
+
+                    n_mus_value = ttk.Label(self.left,
+                                      text="        ").grid(column=2, row=3, sticky=(W,E))
+
+                    file_length_value = ttk.Label(self.left,
+                                      text="        ").grid(column=2, row=4, sticky=(W,E))
+
+                # Update Plot
+                if hasattr(self, "fig"):
+                    self.in_gui_plotting()
+
+            except AttributeError:
+                tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 #-----------------------------------------------------------------------------------------------
 # Plotting inside of GUI
 
@@ -302,11 +374,11 @@ class GUI():
 
         try:
             if plot == "idr":
-                self.fig = openhdemg.plot_idr(self.resdict, [*range(0, int(self.resdict["NUMBER_OF_MUS"]))], showimmediately=False, tight_layout=False)
+                self.fig = openhdemg.plot_idr(emgfile=self.resdict, munumber=[*range(0, int(self.resdict["NUMBER_OF_MUS"]))], showimmediately=False, tight_layout=False)
             elif plot == "refsig_fil":
-                self.fig = openhdemg.plot_refsig(self.filtrefsig, showimmediately=False, tight_layout=False)
+                self.fig = openhdemg.plot_refsig(emgfile=self.resdict, showimmediately=False, tight_layout=False)
             elif plot == "refsig_off":
-                self.fig = openhdemg.plot_refsig(self.offs_emgfile, showimmediately=False, tight_layout=False)
+                self.fig = openhdemg.plot_refsig(emgfile=self.resdict, showimmediately=False, tight_layout=False)
 
             self.canvas = FigureCanvasTkAgg(self.fig, master=self.right)
             self.canvas.get_tk_widget().grid(row=0, column=0)
@@ -349,8 +421,8 @@ class GUI():
         """Function that actually removes the motor unit.
         """
         # Get resdict with MU removed
-        self.resdict = openhdemg.delete_mus(self.resdict,
-                                            int(self.mu_to_remove.get()))
+        self.resdict = openhdemg.delete_mus(emgfile=self.resdict,
+                                            munumber=int(self.mu_to_remove.get()))
         # Upate MU number
         n_mus_value = ttk.Label(self.left,
                           text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
@@ -401,8 +473,8 @@ class GUI():
         """Funktion that plots single selected MU.
         """
         # Make figure
-        fig = openhdemg.plot_idr(self.resdict,
-                                 int(self.mu_to_edit.get()),
+        fig = openhdemg.plot_idr(emgfile=self.resdict,
+                                 munumber=int(self.mu_to_edit.get()),
                                  showimmediately=False)
         # Create canvas and plot
         canvas = FigureCanvasTkAgg(fig, master=self.head)
@@ -486,16 +558,16 @@ class GUI():
         """Function that filters the refig based on specs.
         """
 
-        #try:
-        # Filter refsig
-        self.filtrefsig = openhdemg.filter_refsig(self.resdict,
-                                                      int(self.filter_order.get()),
-                                                      int(self.cutoff_freq.get()))
-        # Plot filtered Refsig
-        self.in_gui_plotting(plot="refsig_fil")
+        try:
+            # Filter refsig
+            self.resdict = openhdemg.filter_refsig(emgfile=self.resdict,
+                                                   order=int(self.filter_order.get()),
+                                                   cutoff=int(self.cutoff_freq.get()))
+            # Plot filtered Refsig
+            self.in_gui_plotting(plot="refsig_fil")
 
-        #except TypeError:
-            #tk.messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
+        except TypeError:
+            tk.messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
 
 
     def remove_offset(self):
@@ -503,9 +575,9 @@ class GUI():
         """
         try:
             # Remove offset
-            self.offs_emgfile = openhdemg.remove_offset(self.resdict,
-                                                        int(self.offsetval.get()),
-                                                        int(self.auto_eval.get()))
+            self.resdict = openhdemg.remove_offset(emgfile=self.resdict,
+                                                   offsetval=int(self.offsetval.get()),
+                                                   auto=int(self.auto_eval.get()))
             # Update Plot
             self.in_gui_plotting(plot="refsig_off")
 
@@ -514,6 +586,8 @@ class GUI():
 
 #-----------------------------------------------------------------------------------------------
 # Resize EMG File
+
+# See if the update of the file length is working in the original code!
 
     def resize_file(self):
         """Function to resize the EMG. A new window is openend.
@@ -560,9 +634,9 @@ class GUI():
         """ Function to get resize selection from user.
         """
         # Open selection window for user
-        start, end = openhdemg.showselect(self.resdict, title="Select the start/end area to consider then press enter")
-        self.resdict, start_, end_ = openhdemg.resize_emgfile(self.resdict,
-                                                                 [start, end])
+        start, end = openhdemg.showselect(emgfile=self.resdict, title="Select the start/end area to consider then press enter")
+        self.resdict, start_, end_ = openhdemg.resize_emgfile(emgfile=self.resdict,
+                                                              area=[start, end])
         # Update Plot
         self.in_gui_plotting()
 
@@ -570,9 +644,9 @@ class GUI():
         """Function that actually resizes the file.
         """
         # Resize the file.
-        self.resdict, start_, end_ = openhdemg.resize_emgfile(self.resdict,
-                                                                 [int(self.start_area.get()),
-                                                                 int(self.end_area.get())])
+        self.resdict, start_, end_ = openhdemg.resize_emgfile(emgfile=self.resdict,
+                                                              area=[int(self.start_area.get()),
+                                                                   int(self.end_area.get())])
         # Define dictionary for pandas
         mvf_dic = {"Length": [self.resdict["EMG_LENGTH"]],
                    "Start": [start_],
@@ -599,6 +673,7 @@ class GUI():
         # Create new window
         self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Force Analysis Window")
+        self.head.grab_set()
 
         # Get MVIF
         get_mvf = ttk.Button(self.head,
@@ -626,7 +701,7 @@ class GUI():
     def get_mvif(self):
         """Function that retrieves calculated MVIF.
         """
-        self.mvif = openhdemg.get_mvif(self.resdict)
+        self.mvif = openhdemg.get_mvif(emgfile=self.resdict)
         # Define dictionary for pandas
         mvf_dic = {"MVIF": [self.mvif]}
         self.mvif_df = pd.DataFrame(data=mvf_dic)
@@ -641,8 +716,8 @@ class GUI():
         ms_list = ms.split(",")
         ms_list = [int(i) for i in ms_list]
         # Calculate rfd
-        self.rfd = openhdemg.compute_rfd(self.resdict,
-                                         ms_list)
+        self.rfd = openhdemg.compute_rfd(emgfile=self.resdict,
+                                         ms=ms_list)
         # Display results
         self.display_results(self.rfd)
 #-----------------------------------------------------------------------------------------------
@@ -656,6 +731,7 @@ class GUI():
         # Create new window
         self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Motor Unit Properties Window")
+        self.head.grab_set()
 
         # MVIF Entry
         ttk.Label(self.head, text="Enter MVIF[n]:").grid(column=0, row=0, sticky=(W))
@@ -762,10 +838,10 @@ class GUI():
         """
         try:
             # Compute thresholds
-            self.mu_thresholds = openhdemg.compute_thresholds(self.resdict,
-                                                              self.ct_event.get(),
-                                                              self.ct_type.get(),
-                                                              int(self.mvif_value.get()))
+            self.mu_thresholds = openhdemg.compute_thresholds(emgfile=self.resdict,
+                                                              event_=self.ct_event.get(),
+                                                              type_=self.ct_type.get(),
+                                                              mvif=int(self.mvif_value.get()))
             # Display results
             self.display_results(self.mu_thresholds)
 
@@ -825,6 +901,8 @@ class GUI():
 #-----------------------------------------------------------------------------------------------
 # Plot EMG
 
+# NOT FUNCTIONAL YET
+
     def plot_emg(self):
         """Function that creates several plots from the emg file.
            This is currently not used.
@@ -840,21 +918,30 @@ class GUI():
 
     def display_results(self, input_df):
         """Functions that displays all analysis results in the
-           ResulOutput labelframe using Pandastable. Input must be a
+           output labelframe using Pandastable. Input must be a
            Pandas dataframe.
         """
+        # Create frame for output
+        terminal = ttk.LabelFrame(root, text="Result Output",
+                                       height=150, relief="ridge")
+        terminal.grid(column=0, row=21, columnspan=2, pady=8, padx=10,
+                           sticky=(N,S,W,E))
+
+        # Empty result table
+        if hasattr(self, "table"):
+            self.table.clearTable()
+
         # Display results
-        self.table = pt = Table(self.terminal,
-                                    dataframe=input_df,
-                                    showtoolbar=False,
-                                    showstatusbar=False,
-                                    height=200,
-                                    width=800)
+        self.table = Table(terminal,
+                          dataframe=input_df,
+                          showtoolbar=True,
+                          showstatusbar=False)
+ 
         # Show results
-        pt.show()
+        self.table.show()
 #-----------------------------------------------------------------------------------------------
 
-
+# Run GUI upon calling
 if __name__ == "__main__":
     root = Tk()
     root['bg'] = 'LightBlue4'
