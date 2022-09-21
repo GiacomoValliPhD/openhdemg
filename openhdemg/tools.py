@@ -281,7 +281,6 @@ def sort_mus(emgfile):
     df["firstpulses"] = [emgfile["MUPULSES"][i][0] for i in range(emgfile["NUMBER_OF_MUS"])]
     df.sort_values(by="firstpulses", inplace=True)
     sorting_order = list(df.index)
-    print(sorting_order)
 
     # Sort PNR (single column)
     for origpos, newpos in enumerate(sorting_order):

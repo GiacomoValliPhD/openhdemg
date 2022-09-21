@@ -2,12 +2,15 @@ from scipy.io import loadmat
 import pandas as pd
 import numpy as np
 from openhdemg.otbelectrodes import *
+from tkinter import *
+from tkinter import filedialog
+import os
+from pathlib import Path
 """
 Of this library, only few functions will be useful to the final user. Therefore, only some of them should imported as:
 
-from openfiles import emg_from_otb, emg_from_demuse, refsig_from_otb
+from openfiles import emg_from_otb, emg_from_demuse, refsig_from_otb, askopenfile
 """
-
 # -------------------------- Define functions used in the DEMUSE openfile function -----------------------------
 #
 # As different Matlab file structures exist, a different processing is necessary to use them in Python.
@@ -420,6 +423,68 @@ def refsig_from_otb (file, refsig="filtered"):
                 }
 
     return resdict
+
+#-----------------------------------------------------------------------------------------------
+
+
+
+
+def askopenfile(initialdir="/", filetype="DEMUSE", otb_refsig_type=[True, "filtered"]):
+    """
+    This function is a shortcut to select and open files with a GUI in a single line of code.
+
+    Input:
+    initialdir = Path("/Decomposed Test files/") by default, any other path can be specified,
+        both as string or as Path.
+    
+    filetype = "DEMUSE" by default, one of "OTB", "OTB_refsig", "Open_HD-EMG" can be specified.
+    
+    otb_refsig_type = [True, "filtered"] by default, refsig can be used to specify if REF_SIGNAL is present 
+        and if you want to import the filtered or the unfiltered signal. In OTBioLab+ the "performed path" refers 
+        to the filtered signal, the "acquired data" to the unfiltered signal. A list should be passed to refsig. 
+        The first element can be True or False, if False, the REF_SIGNAL is not imported (returns nan).
+        The second element can be one of "filtered" or "unfiltered" depending on what you want to import.
+        This input is necessery only if loading files from OTBiolab+.
+
+    Return:
+    The returned file is called emgfile for convention (or refsig if filetype = "OTB_refsig").
+
+    """
+    # If initialdir == str, check if a string path is passed. If not, use a path to sample files.
+    # elif initialdir == Path, use that path
+    if isinstance(initialdir, str):
+        if initialdir == "/":
+            initialdir = Path("/Decomposed Test files/")
+        else:
+            initialdir = Path(initialdir)
+    elif isinstance(initialdir, Path):
+        pass
+    else:
+        raise Exception("initialdir must be a string or a Path")
+    
+    # Create and hide the tkinter root window necessary for the GUI based open-file function
+    root = Tk()
+    root.withdraw()
+
+    file_toOpen = filedialog.askopenfilename(initialdir=initialdir,
+                                            title="Select a file", 
+                                            filetypes=[("Matlab files" , ".mat")] # Change once the .pyemg is available
+                                            )
+
+    # Destroy the root since it is no longer necessary
+    root.destroy()
+
+    # Open file depending on file origin
+    if filetype == "DEMUSE":
+        emgfile = emg_from_demuse(file=file_toOpen)
+    elif filetype == "OTB":
+        emgfile = emg_from_otb(file=file_toOpen, refsig=otb_refsig_type)
+    elif filetype == "OTB_refsig":
+        emgfile = refsig_from_otb(file=file_toOpen, refsig=otb_refsig_type[1])
+    elif filetype == "Open_HD-EMG":
+        pass # to finish once the .pyemg is available
+
+    return emgfile
 
 
 ###########################################################################################################################################################
