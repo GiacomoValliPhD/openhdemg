@@ -283,8 +283,11 @@ def sort_mus(emgfile):
     sorting_order = list(df.index)
 
     # Sort PNR (single column)
-    for origpos, newpos in enumerate(sorting_order):
-        sorted_emgfile["PNR"].loc[origpos] = emgfile["PNR"].loc[newpos]
+    if emgfile["SOURCE"] == "DEMUSE":
+        for origpos, newpos in enumerate(sorting_order):
+            sorted_emgfile["PNR"].loc[origpos] = emgfile["PNR"].loc[newpos]
+    else:
+        pass
 
     # Sort IPTS (multiple columns, sort by columns, then reset columns' name)
     sorted_emgfile["IPTS"] = sorted_emgfile["IPTS"].reindex(columns=sorting_order)

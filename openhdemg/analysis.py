@@ -254,6 +254,8 @@ def basic_mus_properties(emgfile, n_firings_RecDerec = 4, n_firings_steady = 10,
         toappend.append({"avg_PNR":np.average(emgfile["PNR"])})
         toappend = pd.DataFrame(toappend)
         exportable_df = pd.concat([exportable_df, toappend], axis=1)
+    else:
+        pass
 
     # Calculate RT and DERT
     mus_thresholds = compute_thresholds(emgfile=emgfile, mvif=mvif)   

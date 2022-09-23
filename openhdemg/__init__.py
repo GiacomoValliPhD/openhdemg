@@ -1,6 +1,6 @@
 __all__= ["openfiles", "analysis", "plotemg", "tools", "mathtools", "otbelectrodes"]
 
-from openhdemg.openfiles import emg_from_otb, emg_from_demuse, refsig_from_otb, askopenfile
+from openhdemg.openfiles import emg_from_otb, emg_from_demuse, refsig_from_otb, askopenfile, save_json_emgfile, emg_from_json
 from openhdemg.analysis import *
 from openhdemg.plotemg import *
 from openhdemg.tools import *

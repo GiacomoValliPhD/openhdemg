@@ -4,8 +4,8 @@ import numpy as np
 from openhdemg.otbelectrodes import *
 from tkinter import *
 from tkinter import filedialog
-import os
 from pathlib import Path
+import json, gzip
 """
 Of this library, only few functions will be useful to the final user. Therefore, only some of them should imported as:
 
@@ -349,7 +349,7 @@ def emg_from_otb(file, refsig=[True, "filtered"]):
     #print(df.head())
 
     REF_SIGNAL = get_otb_refsignal(df=df, refsig=refsig)
-    PNR = np.nan
+    PNR = pd.DataFrame({0 : np.nan}, index=[0])
     IPTS, BINARY_MUS_FIRING = get_otb_decomposition(df=df)
     EMG_LENGTH, NUMBER_OF_MUS = IPTS.shape
     MUPULSES = get_otb_mupulses(binarymusfiring=BINARY_MUS_FIRING, numberofMUs=NUMBER_OF_MUS)
@@ -413,7 +413,7 @@ def refsig_from_otb (file, refsig="filtered"):
     REF_SIGNAL = get_otb_refsignal(df=df, refsig=refsig_)
 
     # Use this to know what data you have or don't have
-    SOURCE = "OTB"
+    SOURCE = "OTB_refsig"
     FSAMP = int(mat_file["SamplingFrequency"])
 
     resdict =   {
@@ -429,7 +429,7 @@ def refsig_from_otb (file, refsig="filtered"):
 
 
 
-def askopenfile(initialdir="/", filetype="DEMUSE", otb_refsig_type=[True, "filtered"]):
+def askopenfile(initialdir="/", filesource="DEMUSE", otb_refsig_type=[True, "filtered"]):
     """
     This function is a shortcut to select and open files with a GUI in a single line of code.
 
@@ -437,7 +437,7 @@ def askopenfile(initialdir="/", filetype="DEMUSE", otb_refsig_type=[True, "filte
     initialdir = Path("/Decomposed Test files/") by default, any other path can be specified,
         both as string or as Path.
     
-    filetype = "DEMUSE" by default, one of "OTB", "OTB_refsig", "Open_HD-EMG" can be specified.
+    filesource = "DEMUSE" by default, one of "OTB", "OTB_refsig", "Open_HD-EMG" can be specified.
     
     otb_refsig_type = [True, "filtered"] by default, refsig can be used to specify if REF_SIGNAL is present 
         and if you want to import the filtered or the unfiltered signal. In OTBioLab+ the "performed path" refers 
@@ -447,7 +447,7 @@ def askopenfile(initialdir="/", filetype="DEMUSE", otb_refsig_type=[True, "filte
         This input is necessery only if loading files from OTBiolab+.
 
     Return:
-    The returned file is called emgfile for convention (or refsig if filetype = "OTB_refsig").
+    The returned file is called emgfile for convention (or refsig if filesource = "OTB_refsig").
 
     """
     # If initialdir == str, check if a string path is passed. If not, use a path to sample files.
@@ -466,22 +466,25 @@ def askopenfile(initialdir="/", filetype="DEMUSE", otb_refsig_type=[True, "filte
     root = Tk()
     root.withdraw()
 
-    file_toOpen = filedialog.askopenfilename(initialdir=initialdir,
-                                            title="Select a file", 
-                                            filetypes=[("Matlab files" , ".mat")] # Change once the .pyemg is available
-                                            )
+    if filesource in ["DEMUSE", "OTB", "OTB_refsig"]:
+        file_toOpen = filedialog.askopenfilename(initialdir=initialdir,
+                                                title="Select a file", 
+                                                filetypes=[("Matlab files" , ".mat")] # Change once the .pyemg is available
+                                                )
+    else:
+        pass
 
     # Destroy the root since it is no longer necessary
     root.destroy()
 
     # Open file depending on file origin
-    if filetype == "DEMUSE":
+    if filesource == "DEMUSE":
         emgfile = emg_from_demuse(file=file_toOpen)
-    elif filetype == "OTB":
+    elif filesource == "OTB":
         emgfile = emg_from_otb(file=file_toOpen, refsig=otb_refsig_type)
-    elif filetype == "OTB_refsig":
+    elif filesource == "OTB_refsig":
         emgfile = refsig_from_otb(file=file_toOpen, refsig=otb_refsig_type[1])
-    elif filetype == "Open_HD-EMG":
+    elif filesource == "Open_HD-EMG":
         pass # to finish once the .pyemg is available
 
     return emgfile
@@ -490,16 +493,90 @@ def askopenfile(initialdir="/", filetype="DEMUSE", otb_refsig_type=[True, "filte
 ###########################################################################################################################################################
 ###########################################################################################################################################################
 ###########################################################################################################################################################
-# Test part
-if __name__ == "__main__":
-    import os, sys
+def save_json_emgfile(emgfile): # To add save OTBrefsig
     
-    # Test OTB file
-    file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
-    emgfile = emg_from_otb(file=file_toOpen, refsig=[True, "filtered"])
-    print(emgfile["NUMBER_OF_MUS"])
+    """
+    We need to convert all the components of emgfile to a dictionary and then to json object.
+    df cannot be converted with json.dumps.
+    Once all the elements are converted to json objects, we create a list of json objects and dump/save it into a single json file.
+    emgfile =   {
+                "SOURCE" : SOURCE,
+                "RAW_SIGNAL" : RAW_SIGNAL, 
+                "REF_SIGNAL" : REF_SIGNAL, 
+                ==> "PNR" : PNR, 
+                ==> "IPTS" : IPTS, 
+                ==> "MUPULSES" : MUPULSES, 
+                "FSAMP" : FSAMP, 
+                "IED" : IED, 
+                "EMG_LENGTH" : EMG_LENGTH, 
+                "NUMBER_OF_MUS" : NUMBER_OF_MUS, 
+                ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
+                }
+    """
+    """
+    If we are using the OTB files, the pnr will be saved as a list and not as a df. This needs to be check also for json import.
+    """
+    if emgfile["SOURCE"] in ["DEMUSE", "OTB"]:
+        # str or int
+        # Directly convert the ditionary to a json format
+        source              = {"SOURCE" : emgfile["SOURCE"]}
+        fsamp               = {"FSAMP" : emgfile["FSAMP"]}
+        ied                 = {"IED" : emgfile["IED"]}
+        emglength           = {"EMG_LENGTH" : emgfile["EMG_LENGTH"]}
+        number_of_mus       = {"NUMBER_OF_MUS" : emgfile["NUMBER_OF_MUS"]}    
+        source              = json.dumps(source)
+        fsamp               = json.dumps(fsamp)
+        ied                 = json.dumps(ied)
+        emglength           = json.dumps(emglength)
+        number_of_mus       = json.dumps(number_of_mus)
+        
+        # df
+        # Extract the df from the dict, convert the dict to a json, put the json in a dict, convert the dict to a json
+        # We use dict converted to json to locate better the objects while re-importing them in python
+        raw_signal          = emgfile["RAW_SIGNAL"]
+        ref_signal          = emgfile["REF_SIGNAL"]
+        pnr                 = emgfile["PNR"]
+        ipts                = emgfile["IPTS"]
+        binary_mus_firing   = emgfile["BINARY_MUS_FIRING"] 
+        raw_signal          = raw_signal.to_json()       
+        ref_signal          = ref_signal.to_json()       
+        pnr                 = pnr.to_json()              
+        ipts                = ipts.to_json()             
+        binary_mus_firing   = binary_mus_firing.to_json()
+        raw_signal          = {"RAW_SIGNAL" : raw_signal}
+        ref_signal          = {"REF_SIGNAL" : ref_signal}
+        pnr                 = {"PNR" : pnr}
+        ipts                = {"IPTS" : ipts}
+        binary_mus_firing   = {"BINARY_MUS_FIRING" : binary_mus_firing}
+        raw_signal          = json.dumps(raw_signal)
+        ref_signal          = json.dumps(ref_signal)
+        pnr                 = json.dumps(pnr)
+        ipts                = json.dumps(ipts)
+        binary_mus_firing   = json.dumps(binary_mus_firing)
 
-    """ # Test DEMUSE file
-    #file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_testfile.mat") # Test it on a common trapezoidal contraction
-    file_toOpen = os.path.join(sys.path[0], "Decomposed Test files/DEMUSE_10MViF_TRAPEZOIDAL_only1MU_testfile.mat") # Test it on a contraction with a single MU
-    emgfile = emg_from_demuse(file=file_toOpen) """
+        # list of ndarray
+        # Every array has to be converted in a list; then, the list of lists can be converted to json
+        mupulses = []
+        for ind, array in enumerate(emgfile["MUPULSES"]):
+            mupulses.insert(ind, array.tolist())
+        mupulses            = json.dumps(mupulses)
+
+        # Convert a list of json objects to json. The result of the conversion will be saved as the final json file.
+        list_to_save = [source, raw_signal, ref_signal, pnr, ipts, mupulses, fsamp, ied, emglength, number_of_mus, binary_mus_firing]
+        json_to_save = json.dumps(list_to_save)
+
+        # Compress and save the json file
+        with gzip.open('test_savedfile.gz', 'w') as f:
+            # Encode json
+            json_bytes = json_to_save.encode('utf-8')
+            # Write to a file
+            f.write(json_bytes)
+    
+    else:
+        pass
+
+
+
+
+
+

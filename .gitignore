@@ -2,3 +2,5 @@ openhdemgenv
 __pycache__*
 
 prove.py
+test_savedfile.json
+test_savedfile.gz
