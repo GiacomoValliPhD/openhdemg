@@ -1,4 +1,4 @@
-from scipy.io import loadmat
+from scipy.io import loadmat, savemat
 import pandas as pd
 import numpy as np
 from openhdemg.otbelectrodes import *
@@ -493,8 +493,12 @@ def askopenfile(initialdir="/", filesource="DEMUSE", otb_refsig_type=[True, "fil
 ###########################################################################################################################################################
 ###########################################################################################################################################################
 ###########################################################################################################################################################
-def save_json_emgfile(emgfile): # To add save OTBrefsig
-    
+def save_json_emgfile(emgfile, path): # To add save OTBrefsig
+    """
+    The first argument is the emgfile to save (as a python object).
+
+    The second argument is the file path (including file extension .json). This can be a simple string; The use of Path is not necessary.
+    """
     """
     We need to convert all the components of emgfile to a dictionary and then to json object.
     df cannot be converted with json.dumps.
@@ -513,21 +517,18 @@ def save_json_emgfile(emgfile): # To add save OTBrefsig
                 ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
                 }
     """
-    """
-    If we are using the OTB files, the pnr will be saved as a list and not as a df. This needs to be check also for json import.
-    """
     if emgfile["SOURCE"] in ["DEMUSE", "OTB"]:
         # str or int
         # Directly convert the ditionary to a json format
         source              = {"SOURCE" : emgfile["SOURCE"]}
         fsamp               = {"FSAMP" : emgfile["FSAMP"]}
         ied                 = {"IED" : emgfile["IED"]}
-        emglength           = {"EMG_LENGTH" : emgfile["EMG_LENGTH"]}
+        emg_length           = {"EMG_LENGTH" : emgfile["EMG_LENGTH"]}
         number_of_mus       = {"NUMBER_OF_MUS" : emgfile["NUMBER_OF_MUS"]}    
         source              = json.dumps(source)
         fsamp               = json.dumps(fsamp)
         ied                 = json.dumps(ied)
-        emglength           = json.dumps(emglength)
+        emg_length          = json.dumps(emg_length)
         number_of_mus       = json.dumps(number_of_mus)
         
         # df
@@ -562,13 +563,14 @@ def save_json_emgfile(emgfile): # To add save OTBrefsig
         mupulses            = json.dumps(mupulses)
 
         # Convert a list of json objects to json. The result of the conversion will be saved as the final json file.
-        list_to_save = [source, raw_signal, ref_signal, pnr, ipts, mupulses, fsamp, ied, emglength, number_of_mus, binary_mus_firing]
+        ############ Don't alter this order unless you modify also the emg_from_json function ############
+        list_to_save = [source, raw_signal, ref_signal, pnr, ipts, mupulses, fsamp, ied, emg_length, number_of_mus, binary_mus_firing]
         json_to_save = json.dumps(list_to_save)
 
-        # Compress and save the json file
-        with gzip.open('test_savedfile.gz', 'w') as f:
+        # Compress and write the json file
+        with gzip.open(path, "w") as f:
             # Encode json
-            json_bytes = json_to_save.encode('utf-8')
+            json_bytes = json_to_save.encode("utf-8")
             # Write to a file
             f.write(json_bytes)
     
@@ -578,5 +580,95 @@ def save_json_emgfile(emgfile): # To add save OTBrefsig
 
 
 
+def emg_from_json(path):
+    """
+    The only argument is the path of the file to open (including file extension .json). This can be a simple string; The use of Path is not necessary.
+    """
+    # Read and decompress json file
+    with gzip.open(path, "r") as fin:
+        json_bytes = fin.read()
+        # Decode json file
+        json_str = json_bytes.decode("utf-8")
+        jsonemgfile = json.loads(json_str)
 
+    """
+    print(type(jsonemgfile))
+    <class 'list'>
+    print(len(jsonemgfile))
+    11
+    """
+    # Access the dictionaries and extract the data
+    # jsonemgfile[0] contains the source in a dictionary
+    source_dict         = json.loads(jsonemgfile[0])
+    source              = source_dict["SOURCE"] 
+    if source in ["DEMUSE", "OTB"]:
+        # jsonemgfile[1] contains the raw signal in a dictionary, i can extract the raw signal in a new dictionary and convert it to a df
+        # index and columns are imported as str, so we need to convert it to int 
+        raw_signal_dict     = json.loads(jsonemgfile[1])
+        raw_signal_dict     = json.loads(raw_signal_dict["RAW_SIGNAL"])
+        raw_signal          = pd.DataFrame(raw_signal_dict)
+        raw_signal.columns  = raw_signal.columns.astype(int)
+        raw_signal.index    = raw_signal.index.astype(int)
+        raw_signal.sort_index(inplace=True)
+        # jsonemgfile[2] contains the reference signal to be treated as jsonemgfile[1]
+        ref_signal_dict     = json.loads(jsonemgfile[2])
+        ref_signal_dict     = json.loads(ref_signal_dict["REF_SIGNAL"])
+        ref_signal          = pd.DataFrame(ref_signal_dict)
+        ref_signal.columns  = ref_signal.columns.astype(int)
+        ref_signal.index    = ref_signal.index.astype(int)
+        ref_signal.sort_index(inplace=True)
+        # jsonemgfile[3] contains the pnr to be treated as jsonemgfile[1]
+        pnr_dict            = json.loads(jsonemgfile[3])
+        pnr_dict            = json.loads(pnr_dict["PNR"])
+        pnr                 = pd.DataFrame(pnr_dict)
+        pnr.columns         = pnr.columns.astype(int)
+        pnr.index           = pnr.index.astype(int)
+        pnr.sort_index(inplace=True)
+        # jsonemgfile[4] contains the ipts to be treated as jsonemgfile[1]
+        ipts_dict           = json.loads(jsonemgfile[4])
+        ipts_dict           = json.loads(ipts_dict["IPTS"])
+        ipts                = pd.DataFrame(ipts_dict)
+        ipts.columns        = ipts.columns.astype(int)
+        ipts.index          = ipts.index.astype(int)
+        ipts.sort_index(inplace=True)
+        # jsonemgfile[5] contains the mupulses which is a list of lists but has to be converted in a list of ndarrays
+        mupulses            = json.loads(jsonemgfile[5])
+        for num, element in enumerate(mupulses):
+            mupulses[num]   = np.array(element)
+        # jsonemgfile[6] contains the fsamp to be treated as jsonemgfile[0]
+        fsamp_dict          = json.loads(jsonemgfile[6])
+        fsamp               = int(fsamp_dict["FSAMP"])
+        # jsonemgfile[7] contains the ied to be treated as jsonemgfile[0]
+        ied_dict            = json.loads(jsonemgfile[7])
+        ied                 = int(ied_dict["IED"])
+        # jsonemgfile[8] contains the ied to be treated as jsonemgfile[0]
+        emg_length_dict     = json.loads(jsonemgfile[8])
+        emg_length          = int(emg_length_dict["EMG_LENGTH"])
+        # jsonemgfile[9] contains the ied to be treated as jsonemgfile[0]
+        number_of_mus_dict  = json.loads(jsonemgfile[9])
+        number_of_mus       = int(number_of_mus_dict["NUMBER_OF_MUS"])
+        # jsonemgfile[10] contains the binary_mus_firing to be treated as jsonemgfile[1]
+        binary_mus_firing_dict   = json.loads(jsonemgfile[10])
+        binary_mus_firing_dict   = json.loads(binary_mus_firing_dict["BINARY_MUS_FIRING"])
+        binary_mus_firing        = pd.DataFrame(binary_mus_firing_dict)
+        binary_mus_firing.columns= binary_mus_firing.columns.astype(int)
+        binary_mus_firing.index  = binary_mus_firing.index.astype(int)
+
+        resdict =   {
+                    "SOURCE" : source,
+                    "RAW_SIGNAL" : raw_signal, 
+                    "REF_SIGNAL" : ref_signal, 
+                    "PNR" : pnr, 
+                    "IPTS" : ipts, 
+                    "MUPULSES" : mupulses, 
+                    "FSAMP" : fsamp, 
+                    "IED" : ied, 
+                    "EMG_LENGTH" : emg_length, 
+                    "NUMBER_OF_MUS" : number_of_mus, 
+                    "BINARY_MUS_FIRING" : binary_mus_firing,
+                    }
+    else:
+        pass
+    
+    return resdict
 
