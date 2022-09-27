@@ -246,6 +246,65 @@ def delete_mus(emgfile, munumber):
     return del_emgfile
 
 
+def sort_mus(emgfile):
+    """
+    This function sorts the MUs in order of recruitment (ascending order) and returns a sorted file.
+
+    The only input is the emgfile.
+    """
+    # If we only have 1 MU, there is no necessity to sort it.
+    if emgfile["NUMBER_OF_MUS"] <= 1:
+        return emgfile
+    
+    # Create the object to store the sorted emgfile.
+    # Create a deepcopy to avoid changing the original emgfile
+    sorted_emgfile = copy.deepcopy(emgfile)
+    """
+    Need to be changed: ==>
+    emgfile =   {
+                "SOURCE" : SOURCE,
+                "RAW_SIGNAL" : RAW_SIGNAL, 
+                "REF_SIGNAL" : REF_SIGNAL, 
+                ==> "PNR" : PNR, 
+                ==> "IPTS" : IPTS, 
+                ==> "MUPULSES" : MUPULSES, 
+                "FSAMP" : FSAMP, 
+                "IED" : IED, 
+                "EMG_LENGTH" : EMG_LENGTH, 
+                "NUMBER_OF_MUS" : NUMBER_OF_MUS, 
+                ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
+                }
+    """
+
+    # Identify sorting_order by sorting the the firsr MUpulse of every MUs
+    df = pd.DataFrame()
+    df["firstpulses"] = [emgfile["MUPULSES"][i][0] for i in range(emgfile["NUMBER_OF_MUS"])]
+    df.sort_values(by="firstpulses", inplace=True)
+    sorting_order = list(df.index)
+
+    # Sort PNR (single column)
+    if emgfile["SOURCE"] == "DEMUSE":
+        for origpos, newpos in enumerate(sorting_order):
+            sorted_emgfile["PNR"].loc[origpos] = emgfile["PNR"].loc[newpos]
+    else:
+        pass
+
+    # Sort IPTS (multiple columns, sort by columns, then reset columns' name)
+    sorted_emgfile["IPTS"] = sorted_emgfile["IPTS"].reindex(columns=sorting_order)
+    sorted_emgfile["IPTS"].columns = np.arange(emgfile["NUMBER_OF_MUS"])
+
+    # Sort BINARY_MUS_FIRING (multiple columns, sort by columns, then reset columns' name)
+    sorted_emgfile["BINARY_MUS_FIRING"] = sorted_emgfile["BINARY_MUS_FIRING"].reindex(columns=sorting_order)
+    sorted_emgfile["BINARY_MUS_FIRING"].columns = np.arange(emgfile["NUMBER_OF_MUS"])
+    
+    # Sort MUPULSES (I preferred to use the sorting_order as a double-check, but could also use: 
+    # sorted_emgfile["MUPULSES"] = sorted(sorted_emgfile["MUPULSES"], key=min, reverse=False))
+    for origpos, newpos in enumerate(sorting_order):
+        sorted_emgfile["MUPULSES"][origpos] = emgfile["MUPULSES"][newpos]
+    
+    return sorted_emgfile
+
+
 def filter_refsig(emgfile, order=4, cutoff=20):
     """
     This function is used to low-pass filter the reference signal and remove noise. The filter is a Zero-lag low-pass Butterworth.
