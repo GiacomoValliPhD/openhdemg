@@ -132,7 +132,7 @@ def emg_from_demuse (file):
     """
     This function is used to import the .mat file used in DEMUSE as a dictionary of Python objects (mainly pandas dataframes).
 
-    The only necessary input is the file path (including file extension .mat).
+    The only necessary input is the file path (including file extension .mat). The use of Path is not required.
 
     It returns a dictionary containing the following: "SOURCE", "RAW_SIGNAL", "REF_SIGNAL", "PNR",
     "IPTS", "MUPULSES", "FSAMP", "IED", "EMG_LENGTH", "NUMBER_OF_MUS", "BINARY_MUS_FIRING".
@@ -317,7 +317,7 @@ def emg_from_otb(file, refsig=[True, "filtered"]):
     """
     This function is used to import the .mat file exportable by the OTBiolab+ software as a dictionary of Python objects (mainly pandas dataframes).
 
-    The first argument is the file path (including file extension .mat).
+    The first argument is the file path (including file extension .mat). The use of Path is not required.
 
     refsig can be used to specify if REF_SIGNAL is present and if you want to import the filtered or the unfiltered signal.
     In OTBioLab+ the "performed path" refers to the filtered signal, the "acquired data" to the unfiltered signal.
@@ -437,7 +437,7 @@ def askopenfile(initialdir="/", filesource="DEMUSE", otb_refsig_type=[True, "fil
     initialdir = Path("/Decomposed Test files/") by default, any other path can be specified,
         both as string or as Path.
     
-    filesource = "DEMUSE" by default, one of "OTB", "OTB_refsig", "Open_HD-EMG" can be specified.
+    filesource = "DEMUSE" by default, one of "OTB", "OTB_refsig", "Open_HD-EMG" (json file) can be specified.
     
     otb_refsig_type = [True, "filtered"] by default, refsig can be used to specify if REF_SIGNAL is present 
         and if you want to import the filtered or the unfiltered signal. In OTBioLab+ the "performed path" refers 
@@ -469,10 +469,15 @@ def askopenfile(initialdir="/", filesource="DEMUSE", otb_refsig_type=[True, "fil
     if filesource in ["DEMUSE", "OTB", "OTB_refsig"]:
         file_toOpen = filedialog.askopenfilename(initialdir=initialdir,
                                                 title="Select a file", 
-                                                filetypes=[("Matlab files" , ".mat")] # Change once the .pyemg is available
+                                                filetypes=[("MATLAB files" , ".mat")] # Change once the .pyemg is available
+                                                )
+    elif filesource == "Open_HD-EMG":
+        file_toOpen = filedialog.askopenfilename(initialdir=initialdir,
+                                                title="Select a file", 
+                                                filetypes=[("JSON files" , ".json")] # Change once the .pyemg is available
                                                 )
     else:
-        pass
+        raise Exception("filesource not valid, it must be one of DEMUSE, OTB, OTB_refsig or Open_HD-EMG (as string)")
 
     # Destroy the root since it is no longer necessary
     root.destroy()
@@ -485,7 +490,7 @@ def askopenfile(initialdir="/", filesource="DEMUSE", otb_refsig_type=[True, "fil
     elif filesource == "OTB_refsig":
         emgfile = refsig_from_otb(file=file_toOpen, refsig=otb_refsig_type[1])
     elif filesource == "Open_HD-EMG":
-        pass # to finish once the .pyemg is available
+        emgfile = emg_from_json(path=file_toOpen)
 
     return emgfile
 
@@ -495,29 +500,31 @@ def askopenfile(initialdir="/", filesource="DEMUSE", otb_refsig_type=[True, "fil
 ###########################################################################################################################################################
 def save_json_emgfile(emgfile, path): # To add save OTBrefsig
     """
-    The first argument is the emgfile to save (as a python object).
+    This function saves the file (with the changes made by the user, if any) as a json file.
+    
+    The first argument is the emgfile to save (a python dictionary).
 
     The second argument is the file path (including file extension .json). This can be a simple string; The use of Path is not necessary.
     """
-    """
-    We need to convert all the components of emgfile to a dictionary and then to json object.
-    df cannot be converted with json.dumps.
-    Once all the elements are converted to json objects, we create a list of json objects and dump/save it into a single json file.
-    emgfile =   {
-                "SOURCE" : SOURCE,
-                "RAW_SIGNAL" : RAW_SIGNAL, 
-                "REF_SIGNAL" : REF_SIGNAL, 
-                ==> "PNR" : PNR, 
-                ==> "IPTS" : IPTS, 
-                ==> "MUPULSES" : MUPULSES, 
-                "FSAMP" : FSAMP, 
-                "IED" : IED, 
-                "EMG_LENGTH" : EMG_LENGTH, 
-                "NUMBER_OF_MUS" : NUMBER_OF_MUS, 
-                ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
-                }
-    """
     if emgfile["SOURCE"] in ["DEMUSE", "OTB"]:
+        """
+        We need to convert all the components of emgfile to a dictionary and then to json object.
+        df cannot be converted with json.dumps.
+        Once all the elements are converted to json objects, we create a list of json objects and dump/save it into a single json file.
+        emgfile =   {
+                    "SOURCE" : SOURCE,
+                    "RAW_SIGNAL" : RAW_SIGNAL, 
+                    "REF_SIGNAL" : REF_SIGNAL, 
+                    ==> "PNR" : PNR, 
+                    ==> "IPTS" : IPTS, 
+                    ==> "MUPULSES" : MUPULSES, 
+                    "FSAMP" : FSAMP, 
+                    "IED" : IED, 
+                    "EMG_LENGTH" : EMG_LENGTH, 
+                    "NUMBER_OF_MUS" : NUMBER_OF_MUS, 
+                    ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
+                    }
+        """
         # str or int
         # Directly convert the ditionary to a json format
         source              = {"SOURCE" : emgfile["SOURCE"]}
@@ -568,21 +575,53 @@ def save_json_emgfile(emgfile, path): # To add save OTBrefsig
         json_to_save = json.dumps(list_to_save)
 
         # Compress and write the json file
+        # From: https://stackoverflow.com/questions/39450065/python-3-read-write-compressed-json-objects-from-to-gzip-file
         with gzip.open(path, "w") as f:
             # Encode json
             json_bytes = json_to_save.encode("utf-8")
             # Write to a file
             f.write(json_bytes)
     
+    elif emgfile["SOURCE"] == "OTB_refsig":
+        """ 
+        refsig =   {
+                "SOURCE" : SOURCE,
+                "FSAMP" : FSAMP,
+                "REF_SIGNAL" : REF_SIGNAL,
+                } 
+        """
+        # str or int
+        source              = {"SOURCE" : emgfile["SOURCE"]}
+        fsamp               = {"FSAMP" : emgfile["FSAMP"]}
+        source              = json.dumps(source)
+        fsamp               = json.dumps(fsamp)
+        # df
+        ref_signal          = emgfile["REF_SIGNAL"]
+        ref_signal          = ref_signal.to_json()
+        ref_signal          = {"REF_SIGNAL" : ref_signal}
+        ref_signal          = json.dumps(ref_signal)
+        # Merge all the objects in one
+        list_to_save = [source, fsamp, ref_signal]
+        json_to_save = json.dumps(list_to_save)
+        # Compress and save
+        with gzip.open(path, "w") as f:
+            json_bytes = json_to_save.encode("utf-8")
+            f.write(json_bytes)
+
     else:
-        pass
+        raise Exception("File source not recognised")
 
 
 
 
 def emg_from_json(path):
     """
+    This function loads the emgfile stored in json format.
+
     The only argument is the path of the file to open (including file extension .json). This can be a simple string; The use of Path is not necessary.
+
+    Return:
+    The returned file is called emgfile for convention (or refsig if filesource = "OTB_refsig").
     """
     # Read and decompress json file
     with gzip.open(path, "r") as fin:
@@ -667,8 +706,27 @@ def emg_from_json(path):
                     "NUMBER_OF_MUS" : number_of_mus, 
                     "BINARY_MUS_FIRING" : binary_mus_firing,
                     }
+    
+    elif source == "OTB_refsig":
+        # jsonemgfile[1] contains the fsamp
+        fsamp_dict          = json.loads(jsonemgfile[1])
+        fsamp               = int(fsamp_dict["FSAMP"])
+        # jsonemgfile[2] contains the reference signal to be treated as jsonemgfile[1]
+        ref_signal_dict     = json.loads(jsonemgfile[2])
+        ref_signal_dict     = json.loads(ref_signal_dict["REF_SIGNAL"])
+        ref_signal          = pd.DataFrame(ref_signal_dict)
+        ref_signal.columns  = ref_signal.columns.astype(int)
+        ref_signal.index    = ref_signal.index.astype(int)
+        ref_signal.sort_index(inplace=True)
+
+        resdict =   {
+                    "SOURCE" : source,
+                    "FSAMP" : fsamp,
+                    "REF_SIGNAL" : ref_signal, 
+                    }
+
     else:
-        pass
+        raise Exception("File source not recognised")
     
     return resdict
 
