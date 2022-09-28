@@ -109,7 +109,7 @@ class GUI():
 
         # File specifications
         name = ttk.Label(self.left,
-                          text="File:").grid(column=1, row=1, sticky=(W,E))
+                          text="Filespecs:").grid(column=1, row=1, sticky=(W,E))
 
         n_channels = ttk.Label(self.left,
                           text="N Channels:").grid(column=1, row=2, sticky=(W,E))
@@ -135,7 +135,7 @@ class GUI():
 
         # View Motor Unit Firings
         firings = ttk.Button(self.left,
-                             text="View MU firing",
+                             text="View MUs",
                              command=self.in_gui_plotting)
         firings.grid(column=0, row=7, sticky=W)
         separator2 = ttk.Separator(self.left, orient="horizontal")
@@ -222,8 +222,7 @@ class GUI():
         self.filename = filename
 
         # Add filename to label
-        file_name = ttk.Label(self.left,
-                            text=str(self.filename)).grid(column=2, row=1, sticky=(W,E))
+        root.title(self.filename)
 
         # Check filetype for processing
         if self.filetype.get() == "OTB":
@@ -253,7 +252,7 @@ class GUI():
 
             file_length_value = ttk.Label(self.left,
                               text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
-        
+
         else:
             # load refsig
             self.resdict = openhdemg.refsig_from_otb(file=self.file_path)
@@ -262,7 +261,7 @@ class GUI():
                                  text=str(len(self.resdict["REF_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
 
             n_mus_value = ttk.Label(self.left,
-                              text="        ").grid(column=2, row=3, sticky=(W,E))
+                              text="NA").grid(column=2, row=3, sticky=(W,E))
 
             file_length_value = ttk.Label(self.left,
                               text="        ").grid(column=2, row=4, sticky=(W,E))
@@ -314,10 +313,7 @@ class GUI():
 
             # user decided to rest analysis
             try:
-                # Empty result table
-                if hasattr(self, "table"):
-                    self.table.clearTable()
-
+ 
                 # reload original file
                 if self.filetype.get() == "OTB":
                     self.resdict = openhdemg.emg_from_otb(file=self.file_path)
@@ -353,7 +349,7 @@ class GUI():
                                          text=str(len(self.resdict["REF_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
 
                     n_mus_value = ttk.Label(self.left,
-                                      text="        ").grid(column=2, row=3, sticky=(W,E))
+                                      text="NA").grid(column=2, row=3, sticky=(W,E))
 
                     file_length_value = ttk.Label(self.left,
                                       text="        ").grid(column=2, row=4, sticky=(W,E))
@@ -361,6 +357,12 @@ class GUI():
                 # Update Plot
                 if hasattr(self, "fig"):
                     self.in_gui_plotting()
+
+                # Clear frame for output
+                terminal = ttk.LabelFrame(root, text="Result Output",
+                                          height=100, relief="ridge")
+                terminal.grid(column=0, row=21, columnspan=2, pady=8, padx=10,
+                              sticky=(N,S,W,E))
 
             except AttributeError:
                 tk.messagebox.showerror("Information", "Make sure a file is loaded.")
@@ -373,7 +375,9 @@ class GUI():
         """
 
         try:
-            if plot == "idr":
+            if self.filetype.get() == "REFSIG":
+                self.fig = openhdemg.plot_refsig(emgfile=self.resdict, showimmediately=False, tight_layout=False) 
+            elif plot == "idr":
                 self.fig = openhdemg.plot_idr(emgfile=self.resdict, munumber=[*range(0, int(self.resdict["NUMBER_OF_MUS"]))], showimmediately=False, tight_layout=False)
             elif plot == "refsig_fil":
                 self.fig = openhdemg.plot_refsig(emgfile=self.resdict, showimmediately=False, tight_layout=False)
@@ -923,22 +927,19 @@ class GUI():
         """
         # Create frame for output
         terminal = ttk.LabelFrame(root, text="Result Output",
-                                       height=150, relief="ridge")
+                                       height=100, relief="ridge")
         terminal.grid(column=0, row=21, columnspan=2, pady=8, padx=10,
                            sticky=(N,S,W,E))
 
-        # Empty result table
-        if hasattr(self, "table"):
-            self.table.clearTable()
-
         # Display results
-        self.table = Table(terminal,
+        table = Table(terminal,
                           dataframe=input_df,
-                          showtoolbar=True,
-                          showstatusbar=False)
- 
+                          showtoolbar=False,
+                          showstatusbar=False,
+                          height=100)
+
         # Show results
-        self.table.show()
+        table.show()
 #-----------------------------------------------------------------------------------------------
 
 # Run GUI upon calling
