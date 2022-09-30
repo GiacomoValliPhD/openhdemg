@@ -1,4 +1,5 @@
 openhdemgenv
 __pycache__*
+.vscode/
 
 prove.py
