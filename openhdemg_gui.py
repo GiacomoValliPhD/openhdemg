@@ -3,18 +3,17 @@ This file contains the gui functionalities of openhdemg.
 """
 
 import os
-import matplotlib
 import tkinter as tk
-import tkinter.messagebox
-import pandas as pd
-matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk 
-from matplotlib.figure import Figure
 from tkinter import ttk, filedialog, Canvas
 from tkinter import StringVar, Tk, N, S, W, E
 from pandastable import Table
-from PIL import Image, ImageTk
+
+import matplotlib.pyplot as plt
+import matplotlib
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib.figure import Figure
+import pandas as pd
+matplotlib.use('TkAgg')
 
 import openhdemg 
 
@@ -26,16 +25,17 @@ class GUI():
        Attributes:
         self.left = Left frame inside of root
         self.filetype = Filetype of import EMG file
-        self.right = Right frame insinde of root 
+        self.right = Right frame insinde of root
         self.first_fig = Figure frame determinining size of all figures
         self.logo = Path to file containing logo of OpenHDemg
         self.logo_canvas = Canvas to display logo
+        self.terminal = Terminal to display calculation results
         self.filename = Name of the file to be analysed
         self.filepath = Path to EMG file selected for analysis
         self.resdict = Dictionary derived from input EMG file for further analysis
         self.mvif_df = Dataframe containing MVIF values
         self.rfd_df = Dataframe containing RFD values
-        self.exportable_df = Dataframe containing ALL basic motor unit properties 
+        self.exportable_df = Dataframe containing ALL basic motor unit properties
         self.mus_dr = Dataframe containing motor unit discharge rate
         self.mu_thresholds = Dataframe containing motor unit threshold values
         self.fig = Matplotlib figure to be plotted on Canvas
@@ -43,7 +43,7 @@ class GUI():
         self.head = NEW tk.toplevel instance created everytime upon opnening a new window
         self.mu_to_remove = Selected number of motor unit to be removed
         self.mu_to_edit = Selected motor unit to be visuallized and edited individually
-        self.filter_order = Specified order of Butterworth low pass filter 
+        self.filter_order = Specified order of Butterworth low pass filter
         self.cutoff_freq = Specified cutt-off frequency used for low pass
         self.offset_val = Specified/Determined offset value for reference signal
         self.auto_eval = Variable that if > 0 leads to automatic determination of offset
@@ -54,12 +54,16 @@ class GUI():
         self.mvifvalue = MVIF values used for further analysis
         self.ct_event = Specified event for firing threshold calculation
         self.firings_rec = Number of firings used for discharge rate calculation
-        self.firings_ste = Number of firings at start/end of steady state 
+        self.firings_ste = Number of firings at start/end of steady state
         self.dr_event = Specified event for discharge rate calculation
         self.b_firings_rec = Number of firings used for discharge rate calculation
                              when assessing basic motor unit properties
-        self.b_firings_ste = Number of firings at start/end of steady state 
-                             when assessing basic motor unit properties 
+        self.b_firings_ste = Number of firings at start/end of steady state
+                             when assessing basic motor unit properties
+        self.channels = Number of channels used for emg signal plotting
+        self.linewidth = width of line used for motor unit pulse plotting
+        self.mu_numb = Number of motor units used for IPTS plotting
+        self.mu_numb_idr = Number of motor units used for IDR plotting
     """
 
     def __init__(self, root):
@@ -108,82 +112,91 @@ class GUI():
         load.grid(column=0, row=2, sticky=W)
 
         # File specifications
-        name = ttk.Label(self.left,
-                          text="Filespecs:").grid(column=1, row=1, sticky=(W,E))
-
-        n_channels = ttk.Label(self.left,
-                          text="N Channels:").grid(column=1, row=2, sticky=(W,E))
-
-        n_mus = ttk.Label(self.left,
-                          text="N° of MUs:").grid(column=1, row=3, sticky=(W,E))
-
-        file_length = ttk.Label(self.left,
-                          text="File length:").grid(column=1, row=4, sticky=(W,E))
+        ttk.Label(self.left, text="Filespecs:").grid(column=1, row=1, sticky=(W,E))
+        ttk.Label(self.left, text="N Channels:").grid(column=1, row=2, sticky=(W,E))
+        ttk.Label(self.left, text="N° of MUs:").grid(column=1, row=3, sticky=(W,E))
+        ttk.Label(self.left, text="File length:").grid(column=1, row=4, sticky=(W,E))
+        separator0 = ttk.Separator(self.left, orient="horizontal")
+        separator0.grid(column=0, columnspan=3, row=5, sticky=(W,E))
 
         # Save File
         save = ttk.Button(self.left,
                           text="Save file",
                           command=self.save_emgfile)
-        save.grid(column=0, row=5, sticky=W)
-        separator2 = ttk.Separator(self.left, orient="horizontal")
-        separator2.grid(column=0, columnspan=3, row=6, sticky=(W,E))
+        save.grid(column=0, row=6, sticky=W)
+        separator1 = ttk.Separator(self.left, orient="horizontal")
+        separator1.grid(column=0, columnspan=3, row=7, sticky=(W,E))
 
         # Export to Excel
         export = ttk.Button(self.left,
                             text="Save Results", command=self.export_to_excel)
-        export.grid(column=1, row=5, sticky=(W,E))
+        export.grid(column=1, row=6, sticky=(W,E))
 
         # View Motor Unit Firings
         firings = ttk.Button(self.left,
                              text="View MUs",
                              command=self.in_gui_plotting)
-        firings.grid(column=0, row=7, sticky=W)
+        firings.grid(column=0, row=8, sticky=W)
+
+        # Sort Motor Units
+        sorting = ttk.Button(self.left,
+                             text="Sort MUs",
+                             command=self.sort_mus)
+        sorting.grid(column=1, row=8, sticky=(W,E))
         separator2 = ttk.Separator(self.left, orient="horizontal")
-        separator2.grid(column=0, columnspan=3, row=8, sticky=(W,E))
+        separator2.grid(column=0, columnspan=3, row=9, sticky=(W,E))
 
         # Remove Motor Units
         remove_mus = ttk.Button(self.left,
                               text="Remove MUs",
                               command=self.remove_mus)
-        remove_mus.grid(column=0, row=9, sticky=W)
+        remove_mus.grid(column=0, row=10, sticky=W)
 
         # Edit Motor Units
         edit_mus = ttk.Button(self.left,
                               text="Edit MUs",
                               command=self.editing_mus)
-        edit_mus.grid(column=1, row=9, sticky=W)
+        edit_mus.grid(column=1, row=10, sticky=W)
         separator3 = ttk.Separator(self.left, orient="horizontal")
-        separator3.grid(column=0, columnspan=3, row=10, sticky=(W,E))
+        separator3.grid(column=0, columnspan=3, row=11, sticky=(W,E))
 
         # Filter Reference Signal
         reference = ttk.Button(self.left,
                                text="RefSig Editing",
                                command=self.edit_refsig)
-        reference.grid(column=0, row=11, sticky=W)
+        reference.grid(column=0, row=12, sticky=W)
 
         # Resize File
         resize = ttk.Button(self.left,
                             text="Resize File",
                             command=self.resize_file)
-        resize.grid(column=1, row=11, sticky=(W,E))
+        resize.grid(column=1, row=12, sticky=(W,E))
         separator4 = ttk.Separator(self.left, orient="horizontal")
-        separator4.grid(column=0, columnspan=3, row=12, sticky=(W,E))
+        separator4.grid(column=0, columnspan=3, row=13, sticky=(W,E))
 
         # Force Analysis
         force = ttk.Button(self.left,
                            text="Analyse force",
                            command=self.analyze_force)
-        force.grid(column=0, row=13, sticky=W)
+        force.grid(column=0, row=14, sticky=W)
         separator5 = ttk.Separator(self.left, orient="horizontal")
-        separator5.grid(column=0, columnspan=3, row=14, sticky=(W,E))
+        separator5.grid(column=0, columnspan=3, row=15, sticky=(W,E))
 
         # Motor Unit properties
         mus = ttk.Button(self.left,
                          text="MU properties",
                          command=self.mu_analysis)
-        mus.grid(column=0, row=15, sticky=W)
+        mus.grid(column=0, row=16, sticky=W)
         separator6 = ttk.Separator(self.left, orient="horizontal")
-        separator6.grid(column=0, columnspan=3, row=16, sticky=(W,E))
+        separator6.grid(column=0, columnspan=3, row=17, sticky=(W,E))
+
+        # Plot EMG
+        plots = ttk.Button(self.left,
+                           text="Plot EMG",
+                           command=self.plot_emg)
+        plots.grid(column=0, row=18, sticky=W)
+        separator7 = ttk.Separator(self.left, orient="horizontal")
+        separator7.grid(column=0, columnspan=3, row=19, sticky=(W,E))
 
         # Reset Analysis
         reset = ttk.Button(self.left,
@@ -230,47 +243,44 @@ class GUI():
             self.resdict = openhdemg.emg_from_otb(file=self.file_path)
 
             # Add filespecs
-            n_channels_value = ttk.Label(self.left,
-                              text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
-
-            n_mus_value = ttk.Label(self.left,
-                              text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
-
-            file_length_value = ttk.Label(self.left,
-                              text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
+            ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
+            ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
+            ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
 
         elif self.filetype.get() == "DEMUSE":
             # load DEMUSE
             self.resdict = openhdemg.emg_from_demuse(file=self.file_path)
 
             # Add filespecs
-            n_channels_value = ttk.Label(self.left,
-                              text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
-
-            n_mus_value = ttk.Label(self.left,
-                              text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
-
-            file_length_value = ttk.Label(self.left,
-                              text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
+            ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
+            ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
+            ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
 
         else:
             # load refsig
             self.resdict = openhdemg.refsig_from_otb(file=self.file_path)
             # Recondifgure labels for refsig
-            n_channels_value = ttk.Label(self.left,
-                                 text=str(len(self.resdict["REF_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
-
-            n_mus_value = ttk.Label(self.left,
-                              text="NA").grid(column=2, row=3, sticky=(W,E))
-
-            file_length_value = ttk.Label(self.left,
-                              text="        ").grid(column=2, row=4, sticky=(W,E))
+            ttk.Label(self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
+            ttk.Label(self.left, text="NA").grid(column=2, row=3, sticky=(W,E))
+            ttk.Label(self.left, text="        ").grid(column=2, row=4, sticky=(W,E))
 
     def save_emgfile(self):
         """Function to save the edited emgfile.
-           Not implemented yet.
+           Results are saves in .json file.
         """
-        pass
+        try:
+            # Ask user to select the directory
+            save_path = filedialog.askdirectory()
+            save_filepath = save_path + "/" + self.filename + "_saved.json"
+
+            # Get emgfile
+            save_emg = self.resdict
+
+            # Save json file
+            openhdemg.save_json_emgfile(emgfile=save_emg, path=save_filepath)
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
     def export_to_excel(self):
         """Function to export any prior analysis results.
@@ -304,6 +314,9 @@ class GUI():
         except IndexError:
             tk.messagebox.showerror("Information", "Please conduct at least one analysis before saving")
 
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
+
     def reset_analysis(self):
         """Funktion to restore the base file.
            Any analysis progress will be deleted by reloading the base file.
@@ -313,56 +326,42 @@ class GUI():
 
             # user decided to rest analysis
             try:
- 
+
                 # reload original file
                 if self.filetype.get() == "OTB":
                     self.resdict = openhdemg.emg_from_otb(file=self.file_path)
 
                     # Update Filespecs
-                    n_channels_value = ttk.Label(self.left,
-                                      text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
-
-                    n_mus_value = ttk.Label(self.left,
-                                      text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
-
-                    file_length_value = ttk.Label(self.left,
-                                      text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
+                    ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
+                    ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
+                    ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
 
                 elif self.filetype.get() == "DEMUSE":
                     self.resdict = openhdemg.emg_from_demuse(file=self.file_path)
 
                     # Update Filespecs
-                    n_channels_value = ttk.Label(self.left,
-                                      text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
-
-                    n_mus_value = ttk.Label(self.left,
-                                      text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
-
-                    file_length_value = ttk.Label(self.left,
-                                      text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
+                    ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
+                    ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
+                    ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
 
                 else:
                     # load refsig
                     self.resdict = openhdemg.refsig_from_otb(file=self.file_path)
                     # Recondifgure labels for refsig
-                    n_channels_value = ttk.Label(self.left,
-                                         text=str(len(self.resdict["REF_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
-
-                    n_mus_value = ttk.Label(self.left,
-                                      text="NA").grid(column=2, row=3, sticky=(W,E))
-
-                    file_length_value = ttk.Label(self.left,
-                                      text="        ").grid(column=2, row=4, sticky=(W,E))
+                    ttk.Label(self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
+                    ttk.Label(self.left, text="NA").grid(column=2, row=3, sticky=(W,E))
+                    ttk.Label(self.left, text="        ").grid(column=2, row=4, sticky=(W,E))
 
                 # Update Plot
                 if hasattr(self, "fig"):
                     self.in_gui_plotting()
 
                 # Clear frame for output
-                terminal = ttk.LabelFrame(root, text="Result Output",
-                                          height=100, relief="ridge")
-                terminal.grid(column=0, row=21, columnspan=2, pady=8, padx=10,
-                              sticky=(N,S,W,E))
+                if hasattr(self, "terminal"):
+                    self.terminal = ttk.LabelFrame(root, text="Result Output",
+                                              height=100, relief="ridge")
+                    self.terminal.grid(column=0, row=21, columnspan=2, pady=8, padx=10,
+                                  sticky=(N,S,W,E))
 
             except AttributeError:
                 tk.messagebox.showerror("Information", "Make sure a file is loaded.")
@@ -376,7 +375,7 @@ class GUI():
 
         try:
             if self.filetype.get() == "REFSIG":
-                self.fig = openhdemg.plot_refsig(emgfile=self.resdict, showimmediately=False, tight_layout=False) 
+                self.fig = openhdemg.plot_refsig(emgfile=self.resdict, showimmediately=False, tight_layout=False)
             elif plot == "idr":
                 self.fig = openhdemg.plot_idr(emgfile=self.resdict, munumber=[*range(0, int(self.resdict["NUMBER_OF_MUS"]))], showimmediately=False, tight_layout=False)
             elif plot == "refsig_fil":
@@ -394,7 +393,25 @@ class GUI():
             tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
 #-----------------------------------------------------------------------------------------------
-# Removal of single motor Units
+# Sorting of motor units
+
+    def sort_mus(self):
+        """Function to sort motor units ascending according to recruitement order.
+           Return sorted emgfile.
+        """
+        try:
+            # Sort emgfile
+            self.resdict = openhdemg.sort_mus(emgfile=self.resdict)
+
+            # Update plot
+            if hasattr(self, "fig"):
+                self.in_gui_plotting()
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
+
+#-----------------------------------------------------------------------------------------------
+# Removal of single motor units
 
     def remove_mus(self):
         """Function to remove single motor units from analysis.
@@ -428,8 +445,7 @@ class GUI():
         self.resdict = openhdemg.delete_mus(emgfile=self.resdict,
                                             munumber=int(self.mu_to_remove.get()))
         # Upate MU number
-        n_mus_value = ttk.Label(self.left,
-                          text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
+        ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
 
         # Update selection field
         self.mu_to_remove = StringVar()
@@ -502,7 +518,7 @@ class GUI():
         self.head.title("Reference Signal Eiditing Window")
         self.head.grab_set()
 
-        # Fillter Refsig
+        # Filter Refsig
         # Define Labels
         ttk.Label(self.head, text="Filter Order").grid(column=1, row=0, sticky=(W,E))
         ttk.Label(self.head, text="Cutoff Freq").grid(column=2, row=0, sticky=(W,E))
@@ -561,7 +577,6 @@ class GUI():
     def filter_refsig(self):
         """Function that filters the refig based on specs.
         """
-
         try:
             # Filter refsig
             self.resdict = openhdemg.filter_refsig(emgfile=self.resdict,
@@ -590,8 +605,6 @@ class GUI():
 
 #-----------------------------------------------------------------------------------------------
 # Resize EMG File
-
-# See if the update of the file length is working in the original code!
 
     def resize_file(self):
         """Function to resize the EMG. A new window is openend.
@@ -661,8 +674,7 @@ class GUI():
         self.display_results(df)
 
         # Update file length value
-        file_length_value = ttk.Label(self.left,
-                              text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
+        ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
 
         # Update plot
         self.in_gui_plotting()
@@ -725,7 +737,7 @@ class GUI():
         # Display results
         self.display_results(self.rfd)
 #-----------------------------------------------------------------------------------------------
-# Analysis of motor unit properties 
+# Analysis of motor unit properties
 
     def mu_analysis(self):
         """Function to analyse motor unit properties.
@@ -905,17 +917,165 @@ class GUI():
 #-----------------------------------------------------------------------------------------------
 # Plot EMG
 
-# NOT FUNCTIONAL YET
-
     def plot_emg(self):
         """Function that creates several plots from the emg file.
-           This is currently not used.
         """
-        openhdemg.plot_emgsig(self.resdict, 4) # Add channel number
-        openhdemg.plot_refsig(self.resdict)
-        openhdemg.plot_mupulses(self.resdict)
-        openhdemg.plot_ipts(self.resdict, 2) # Add MU number selection
-        openhdemg.plot_idr(self.resdict, 2) # Add MU number selection
+        # Create new window
+        self.head = tk.Toplevel(bg='LightBlue4')
+        self.head.title("Plot Window")
+        self.head.grab_set()
+
+        # Plot emgsig
+        plt_emgsig = ttk.Button(self.head,
+                                text="Plot EMGsig",
+                                command=self.plt_emgsignal)
+        plt_emgsig.grid(column=0, row=0, sticky=W)
+
+        self.channels = StringVar()
+        channel_entry = ttk.Combobox(self.head,
+                                     width=15,
+                                     textvariable=self.channels)
+        channel_entry["values"] = ("1", "12", "123", "1234")
+        channel_entry.grid(column=1, row=0, sticky=(W,E))
+        self.channels.set("Channel Numbers")
+
+        separator0 = ttk.Separator(self.head, orient="horizontal")
+        separator0.grid(column=0, columnspan=4, row=1, sticky=(W,E))
+
+        # Plot refsig
+        plt_refsig = ttk.Button(self.head,
+                                text="Plot REFsig",
+                                command=self.plt_refsignal)
+        plt_refsig.grid(column=0, row=2, sticky=W)
+
+        separator1 = ttk.Separator(self.head, orient="horizontal")
+        separator1.grid(column=0, columnspan=4, row=3, sticky=(W,E))
+
+        # Plot motor unit pulses
+        plt_pulses = ttk.Button(self.head,
+                                text="Plot MUpulses",
+                                command=self.plt_mupulses)
+        plt_pulses.grid(column=0, row=4, sticky=W)
+
+        self.linewidth = StringVar()
+        linewidth_entry = ttk.Combobox(self.head,
+                                       width=15,
+                                       textvariable=self.linewidth)
+        linewidth_entry["values"] = ("0.25", "0.5", "0.75", "1")
+        linewidth_entry.grid(column=1, row=4, sticky=(W,E))
+        self.linewidth.set("Linewidth")
+        separator2 = ttk.Separator(self.head, orient="horizontal")
+        separator2.grid(column=0, columnspan=4, row=5, sticky=(W,E))
+
+        # Plot impulse train
+        plt_ipts = ttk.Button(self.head,
+                              text="Plot IPTS",
+                              command=self.plt_ipts)
+        plt_ipts.grid(column=0, row=6, sticky=W)
+
+        self.mu_numb = StringVar()
+        munumb_entry = ttk.Combobox(self.head,
+                                    width=15,
+                                    textvariable=self.mu_numb)
+        munumb_entry["values"] = ("1", "12", "123", "1234")
+        munumb_entry.grid(column=1, row=6, sticky=(W,E))
+        self.mu_numb.set("MU Number")
+        separator3 = ttk.Separator(self.head, orient="horizontal")
+        separator3.grid(column=0, columnspan=4, row=7, sticky=(W,E))
+
+        # Plot instantaneous discharge rate
+        plt_idr = ttk.Button(self.head,
+                              text="Plot IDR",
+                              command=self.plt_idr)
+        plt_idr.grid(column=0, row=8, sticky=W)
+
+        self.mu_numb_idr = StringVar()
+        munumb_entry_idr = ttk.Combobox(self.head,
+                                    width=15,
+                                    textvariable=self.mu_numb_idr)
+        munumb_entry_idr["values"] = ("1", "12", "123", "1234")
+        munumb_entry_idr.grid(column=1, row=8, sticky=(W,E))
+        self.mu_numb_idr.set("MU Number")
+
+        for child in self.head.winfo_children():
+            child.grid_configure(padx=5, pady=5)
+
+    ### Define functions for motor unit plotting
+
+    def plt_emgsignal(self):
+        """Function to plot the raw emg signal in an seperate plot window.
+           The plot can be saved and partly edited using the matplotlib options.
+        """
+        try:
+            # Create list of channels to be plotted
+            channel_list = [int(chan) for chan in self.channels.get()]
+            # Plot raw emg signal
+            openhdemg.plot_emgsig(emgfile=self.resdict, channels=channel_list)
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Load file prior to computation.")
+
+        except ValueError:
+            tk.messagebox.showerror("Information", "Enter valid channel number.")
+
+    def plt_refsignal(self):
+        """Function to plot the reference signal in an seperate plot window.
+           The plot can be saved and partly edited using the matplotlib options.
+        """
+        try:
+            # Plot reference signal
+            openhdemg.plot_refsig(emgfile=self.resdict)
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Load file prior to computation.")
+
+    def plt_mupulses(self):
+        """Function to plot the motor unit pulses in an seperate plot window.
+           The plot can be saved and partly edited using the matplotlib options.
+        """
+        try:
+            # Plot motor unig pulses
+            openhdemg.plot_mupulses(emgfile=self.resdict, linewidths=float(self.linewidth.get()))
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Load file prior to computation.")
+
+        except ValueError:
+            tk.messagebox.showerror("Information", "Enter valid linewidth number.")
+
+
+    def plt_ipts(self):
+        """Function to plot the motor unit puls train (i.e., non-binary firing) in an seperate plot window.
+           The plot can be saved and partly edited using the matplotlib options.
+        """
+        try:
+            # Create list contaning motor units to be plotted
+            mu_list = [int(mu) for mu in self.mu_numb.get()]
+            # Plot motor unit puls train
+            openhdemg.plot_ipts(emgfile=self.resdict, munumber=mu_list)
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Load file prior to computation.")
+
+        except ValueError:
+            tk.messagebox.showerror("Information", "Enter valid motor unit number.")
+
+
+    def plt_idr(self):
+        """Function to plot the instanteous discharge rate in an seperate plot window.
+           The plot can be saved and partly edited using the matplotlib options.
+        """
+        try:
+            # Create list containing motor units to be plotted
+            mu_list_idr = [int(mu) for mu in self.mu_numb_idr.get()]
+            # Plot instanteous discharge rate
+            openhdemg.plot_idr(emgfile=self.resdict, munumber=mu_list_idr)
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Load file prior to computation.")
+
+        except ValueError:
+            tk.messagebox.showerror("Information", "Enter valid motor unit number.")
 
 #-----------------------------------------------------------------------------------------------
 # Analysis results display
@@ -926,13 +1086,13 @@ class GUI():
            Pandas dataframe.
         """
         # Create frame for output
-        terminal = ttk.LabelFrame(root, text="Result Output",
+        self.terminal = ttk.LabelFrame(root, text="Result Output",
                                        height=100, relief="ridge")
-        terminal.grid(column=0, row=21, columnspan=2, pady=8, padx=10,
+        self.terminal.grid(column=0, row=21, columnspan=2, pady=8, padx=10,
                            sticky=(N,S,W,E))
 
         # Display results
-        table = Table(terminal,
+        table = Table(self.terminal,
                           dataframe=input_df,
                           showtoolbar=False,
                           showstatusbar=False,
