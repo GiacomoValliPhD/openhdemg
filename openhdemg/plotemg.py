@@ -13,13 +13,12 @@ from openhdemg.mathtools import min_max_scaling
 
 def showgoodlayout(tight_layout=True, despined=False):
     """
-    This function is a simple shortcut to despine the plots and show them with a good layout.
+    Despine and show plots with a good layout.
 
     Parameters
     ----------
     tight_layout: bool, default True
         If true (default), plt.tight_layout() is applied to the figure.
-
     despined: bool or str, default False
         False: left and bottom is not despined (standard plotting)
         True: all the sides are despined
@@ -56,35 +55,30 @@ def plot_emgsig(
     tight_layout=True,
 ):
     """
-    This function plots the raw EMG signal. It can plot a single or multiple channels.
+    Pot the RAW_SIGNAL. Single or multiple channels.
 
     Parameters
     ----------
     emgfile: dict
         The dictionary containing the emgfile.
-    
     channels: int or list
         The channel (int) or channels (list of int) to plot. 
         The list can be passed as a manually-written list or with: channels=[*range(0, 12)],
         We need the "*" operator to unpack the results of range and build a list.
         channels is expected to be with base 0 (i.e., the first channel in the file is the number 0).
-
     timeinseconds: bool, default True
         Whether to show the time on the x-axes in seconds (True) or in samples (False).
-    
     figsize: list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    
     showimmediately: bool, default True
         If True (default), plt.show() is called and the figure showed to the user.
         It is useful to set it to False when calling the function from the GUI.
-
     tight_layout: bool, default True
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
     """
 
-    # Check to have the raw EMG signal in a pandas dataframe
+    # Check to have the RAW_SIGNAL in a pandas dataframe
     if isinstance(emgfile["RAW_SIGNAL"], pd.DataFrame):
         # Transpose it for quick plotting by column
         emgsig = emgfile["RAW_SIGNAL"]
@@ -161,30 +155,28 @@ def plot_refsig(
     tight_layout=True,
 ):
     """
-    This function plots the reference (force) signal. The reference signal is expected to be expressed as % MViF
-    for submaximal contractions or as Kilograms (Kg) or Newtons (N) for maximal contractions.
+    Plot the REF_SIGNAL.
+    
+    The REF_SIGNAL is expected to be expressed as % MViF for submaximal 
+    contractions or as Kilograms (Kg) or Newtons (N) for maximal contractions.
 
     Parameters
     ----------
     emgfile: dict
         The dictionary containing the emgfile.
-
     timeinseconds: bool, default True
         Whether to show the time on the x-axes in seconds (True) or in samples (False).
-    
     figsize: list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    
     showimmediately: bool, default True
         If True (default), plt.show() is called and the figure showed to the user.
         It is useful to set it to False when calling the function from the GUI.
-
     tight_layout: bool, default True
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
     """
 
-    # Check to have the reference signal in a pandas dataframe
+    # Check to have the REF_SIGNAL in a pandas dataframe
     if isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
         refsig = emgfile["REF_SIGNAL"]
 
@@ -225,32 +217,27 @@ def plot_mupulses(
     tight_layout=True,
 ):
     """
-    This function plots the MUs pulses (i.e., binary representation of the firings).
+    Plot all the MUPULSES.
+    
+    MUPULSES are the binary representation of the firings.
 
     Parameters
     ----------
     emgfile: dict
         The dictionary containing the emgfile.
-    
     linewidths: float, default 0.5
         The width of the vertical lines representing the MU firing.
-    
     order: bool, default False
         If True, MUs are sorted and plotted based on the order of recruitment.
-    
     addrefsig: bool, default True
-        If True, the reference signal is plotted in front of the MUs pulses with a separated y-axes.
-
+        If True, the REF_SIGNAL is plotted in front of the MUs pulses with a separated y-axes.
     timeinseconds: bool, default True
         Whether to show the time on the x-axes in seconds (True) or in samples (False).
-    
     figsize: list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    
     showimmediately: bool, default True
         If True (default), plt.show() is called and the figure showed to the user.
         It is useful to set it to False when calling the function from the GUI.
-
     tight_layout: bool, default True
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
@@ -272,7 +259,7 @@ def plot_mupulses(
             )
 
     # Convert x axes in seconds if timeinseconds==True
-    # This has to be done both for the reference signal and the mupulses, for the mupulses
+    # This has to be done both for the REF_SIGNAL and the mupulses, for the mupulses
     # we need to convert the point of firing from samples to seconds
     if timeinseconds:
         mupulses = [n / emgfile["FSAMP"] for i, n in enumerate(emgfile["MUPULSES"])]
@@ -352,40 +339,35 @@ def plot_ipts(
     tight_layout=True,
 ):
     """
-    This function plots the pulse train (i.e., non-binary firing).
+    Plot the IPTS. Single or multiple MUs.
 
     Parameters
     ----------
     emgfile: dict
         The dictionary containing the emgfile.
-
     munumber: int or list
         The MU (int) or MUs (list of int) to plot. 
         The list can be passed as a manually-written list or with: munumber=[*range(0, 12)],
         We need the "*" operator to unpack the results of range and build a list.
         munumber is expected to be with base 0 (i.e., the first MU in the file is the number 0).
-
     timeinseconds: bool, default True
         Whether to show the time on the x-axes in seconds (True) or in samples (False).
-    
     figsize: list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    
     showimmediately: bool, default True
         If True (default), plt.show() is called and the figure showed to the user.
         It is useful to set it to False when calling the function from the GUI.
-
     tight_layout: bool, default True
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
     
-    Tips
-    ----
+    Notes
+    -----
     If you want to plot all the MUs in the file use:
         munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
     """
     
-    # Check to have the raw EMG signal in a pandas dataframe
+    # Check to have the RAW_SIGNAL in a pandas dataframe
     if isinstance(emgfile["IPTS"], pd.DataFrame):
         ipts = emgfile["IPTS"]
 
@@ -464,38 +446,32 @@ def plot_idr(
     tight_layout=True,
 ):
     """
-    This function plots the instantaneous discharge rate (IDR, the DR calculated between two adiacent firings).
+    This function plots the IDR.
 
     Parameters
     ----------
     emgfile: dict
         The dictionary containing the emgfile.
-
     munumber: int or list
         The MU (int) or MUs (list of int) to plot. 
         The list can be passed as a manually-written list or with: munumber=[*range(0, 12)],
         We need the "*" operator to unpack the results of range and build a list.
         munumber is expected to be with base 0 (i.e., the first MU in the file is the number 0).
-    
     addrefsig: bool, default True
-        If True, the reference signal is plotted in front of the MUs IDR with a separated y-axes.
-
+        If True, the REF_SIGNAL is plotted in front of the MUs IDR with a separated y-axes.
     timeinseconds: bool, default True
         Whether to show the time on the x-axes in seconds (True) or in samples (False).
-    
     figsize: list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    
     showimmediately: bool, default True
         If True (default), plt.show() is called and the figure showed to the user.
         It is useful to set it to False when calling the function from the GUI.
-
     tight_layout: bool, default True
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
     
-    Tips
-    ----
+    Notes
+    -----
     If you want to plot all the MUs in the file use:
         munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
     """

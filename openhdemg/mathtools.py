@@ -8,6 +8,8 @@ import pandas as pd
 
 def min_max_scaling(series_or_df):
     """
+    Min-max scaling of pd.series or pd.dataframes.
+
     Min-max feature scaling is often simply referred to as normalization,
     which rescales the dataset feature to a range of 0 - 1.
     It's calculated by subtracting the feature's minimum value from the value
