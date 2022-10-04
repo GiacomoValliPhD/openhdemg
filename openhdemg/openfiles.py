@@ -1,6 +1,6 @@
 """
-DESCRIPTION:
-
+Description
+-----------
     This module contains all the functions that are necessary to open or save MATLAB (.mat) and JSON (.json) files. 
     MATLAB files are used to store data from the DEMUSE and the OTBiolab+ software while JSON files are used to 
     save and load files from this library.
@@ -10,25 +10,39 @@ DESCRIPTION:
     Most of the functions contained in this file are called internally and should not be exposed to the final user.
 
     Functions should be exposed as:
-        from openhdemg.openfiles import emg_from_otb, emg_from_demuse, refsig_from_otb, askopenfile, save_json_emgfile, emg_from_json
+        from openhdemg.openfiles import emg_from_otb, emg_from_demuse, refsig_from_otb, save_json_emgfile, emg_from_json, askopenfile
 
-FUNCTIONS' SCOPE:
-
+Function's scope
+----------------
     emg_from_otb and emg_from_demuse:
         are used to load .mat files coming from the DEMUSE or the OTBiolab+ software. Demuse has a fixed file structure while
         the OTB file, in order to be compatible with this library should be exported with a strict structure as described in the
         function emg_from_otb. In both cases, the input file is a .mat file.
     refsig_from_otb:
         is used to load files from the OTBiolab+ software that contain only the REF_SIGNAL.
-    
     askopenfile:
         is a quick GUI implementation that allows users to select the file to open.
-
     save_json_emgfile, emg_from_json:
         are used to save the working file to a .json file or to load the .json file.
 
-#TODO
-Add here structure of emgfile and refsig file
+Notes
+-----
+Once opened, the file is returned as a dict with keys:
+    "SOURCE" : source of the file (i.e., "DEMUSE", "OTB")
+    "RAW_SIGNAL" : the raw EMG signal.
+    "REF_SIGNAL" : the reference signal
+    "PNR" : pulse to noise ratio for file coming from DEMUSE
+    "IPTS" : pulse train
+    "MUPULSES" : instant of firing
+    "FSAMP" : sampling frequency
+    "IED" : interelectrode distance
+    "EMG_LENGTH" : length of the emg file (in samples)
+    "NUMBER_OF_MUS" : total number of MUs
+    "BINARY_MUS_FIRING" : binary representation of MUs firings
+The only exception when OTB files are loaded with just the reference signal:
+    "SOURCE": source of the file (i.e., "OTB_refsig")
+    "FSAMP": sampling frequency
+    "REF_SIGNAL": the reference signal
 
 Additional informations can be found in the official documentation and in the function's description.
 """
@@ -405,7 +419,7 @@ def get_otb_refsignal(df, refsig):
         if refsig[1] == "filtered":
             # Extract the performed path (filtered data)
             REF_SIGNAL_FILTERED = df.filter(regex="performed path")
-            if not REF_SIGNAL_FILTERED.empty:  # Check if the ref signal is available
+            if not REF_SIGNAL_FILTERED.empty:  # Check if the REF_SIGNAL is available
                 REF_SIGNAL_FILTERED = REF_SIGNAL_FILTERED.rename(
                     columns={REF_SIGNAL_FILTERED.columns[0]: 0}
                 )
@@ -491,7 +505,7 @@ def get_otb_decomposition(df):
     return IPTS, BINARY_MUS_FIRING
 
 
-def get_otb_mupulses(binarymusfiring, numberofMUs):
+def get_otb_mupulses(binarymusfiring):
     """
     Extract the MUPULSES from the OTB .mat file.
 
@@ -499,16 +513,15 @@ def get_otb_mupulses(binarymusfiring, numberofMUs):
     ----------
     binarymusfiring: pd.DataFrame
         A pd.DataFrame containing the binary representation of MUs firings.
-    numberofMUs: int
-        The total number of available MUs.
         
     Returns
     -------
     MUPULSES: list
         A list of ndarrays containing the firing time of each MU.
     """
-
+    
     # Create empty list of lists to fill with ndarrays containing the MUPULSES (point of firing)
+    numberofMUs = len(binarymusfiring.columns)
     MUPULSES = [[] for _ in range(numberofMUs)]
 
     for i in binarymusfiring:  # Loop all the MUs
@@ -522,8 +535,7 @@ def get_otb_mupulses(binarymusfiring, numberofMUs):
 
     return MUPULSES
 
-#TODO
-# Check also all the names in capitals and describe them somewhere
+
 def get_otb_ied(df):
     """
     Extract the IED from the OTB .mat file.
@@ -561,7 +573,7 @@ def get_otb_rawsignal(df):
     Returns
     -------
     RAW_SIGNAL: pd.DataFrame
-        A pd.DataFrame containing the raw signal.
+        A pd.DataFrame containing the RAW_SIGNAL.
     """
 
     # Drop all the known columns different from the raw EMG signal.
@@ -661,9 +673,7 @@ def emg_from_otb(filepath, refsig=[True, "filtered"]):
     PNR = pd.DataFrame({0: np.nan}, index=[0])
     IPTS, BINARY_MUS_FIRING = get_otb_decomposition(df=df)
     EMG_LENGTH, NUMBER_OF_MUS = IPTS.shape
-    MUPULSES = get_otb_mupulses(
-        binarymusfiring=BINARY_MUS_FIRING, numberofMUs=NUMBER_OF_MUS
-    )
+    MUPULSES = get_otb_mupulses(binarymusfiring=BINARY_MUS_FIRING)
     FSAMP = int(mat_file["SamplingFrequency"])
     IED = get_otb_ied(df=df)
     RAW_SIGNAL = get_otb_rawsignal(df)
@@ -695,7 +705,7 @@ def refsig_from_otb(filepath, refsig="filtered"):
     This function is used to import the .mat file exportable by the OTBiolab+ software 
     as a dictionary of Python objects (mainly pandas dataframes).
     Compared to the function emg_from_otb, this function only imports the REF_SIGNAL 
-    and, therefore, it can be used for special cases where only the ref signal is necessary.
+    and, therefore, it can be used for special cases where only the REF_SIGNAL is necessary.
     This will allow a faster execution of the script and to avoid exceptions for missing data.
 
     Parameters
@@ -925,11 +935,11 @@ def emg_from_json(filepath):
     11
     """
     # Access the dictionaries and extract the data
-    # jsonemgfile[0] contains the source in a dictionary
+    # jsonemgfile[0] contains the SOURCE in a dictionary
     source_dict = json.loads(jsonemgfile[0])
     source = source_dict["SOURCE"]
     if source in ["DEMUSE", "OTB"]:
-        # jsonemgfile[1] contains the raw signal in a dictionary, i can extract the raw signal in a new dictionary and convert it to a df
+        # jsonemgfile[1] contains the RAW_SIGNAL in a dictionary, i can extract the RAW_SIGNAL in a new dictionary and convert it to a df
         # index and columns are imported as str, so we need to convert it to int
         raw_signal_dict = json.loads(jsonemgfile[1])
         raw_signal_dict = json.loads(raw_signal_dict["RAW_SIGNAL"])
@@ -965,13 +975,13 @@ def emg_from_json(filepath):
         # jsonemgfile[6] contains the fsamp to be treated as jsonemgfile[0]
         fsamp_dict = json.loads(jsonemgfile[6])
         fsamp = int(fsamp_dict["FSAMP"])
-        # jsonemgfile[7] contains the ied to be treated as jsonemgfile[0]
+        # jsonemgfile[7] contains the IED to be treated as jsonemgfile[0]
         ied_dict = json.loads(jsonemgfile[7])
         ied = int(ied_dict["IED"])
-        # jsonemgfile[8] contains the ied to be treated as jsonemgfile[0]
+        # jsonemgfile[8] contains the EMG_LENGTH to be treated as jsonemgfile[0]
         emg_length_dict = json.loads(jsonemgfile[8])
         emg_length = int(emg_length_dict["EMG_LENGTH"])
-        # jsonemgfile[9] contains the ied to be treated as jsonemgfile[0]
+        # jsonemgfile[9] contains the NUMBER_OF_MUS to be treated as jsonemgfile[0]
         number_of_mus_dict = json.loads(jsonemgfile[9])
         number_of_mus = int(number_of_mus_dict["NUMBER_OF_MUS"])
         # jsonemgfile[10] contains the binary_mus_firing to be treated as jsonemgfile[1]
@@ -1090,12 +1100,12 @@ def askopenfile(
 
     # Open file depending on file origin
     if filesource == "DEMUSE":
-        emgfile = emg_from_demuse(file=file_toOpen)
+        emgfile = emg_from_demuse(filepath=file_toOpen)
     elif filesource == "OTB":
-        emgfile = emg_from_otb(file=file_toOpen, refsig=otb_refsig_type)
+        emgfile = emg_from_otb(filepath=file_toOpen, refsig=otb_refsig_type)
     elif filesource == "OTB_refsig":
-        emgfile = refsig_from_otb(file=file_toOpen, refsig=otb_refsig_type[1])
+        emgfile = refsig_from_otb(filepath=file_toOpen, refsig=otb_refsig_type[1])
     elif filesource == "Open_HD-EMG":
-        emgfile = emg_from_json(path=file_toOpen)
+        emgfile = emg_from_json(filepath=file_toOpen)
 
     return emgfile

@@ -146,7 +146,8 @@ def plot_emgsig(
             "RAW_SIGNAL is probably absent or it is not contained in a dataframe"
         )
 
-
+# BUG left y axes as the right y axes
+# TODO pass munumber = [*range(0, emgfile["NUMBER_OF_MUS"])] as default here and to other functions
 def plot_refsig(
     emgfile,
     timeinseconds=True,
