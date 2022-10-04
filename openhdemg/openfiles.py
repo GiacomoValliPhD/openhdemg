@@ -272,14 +272,15 @@ def raw_sig_from_demuse(variable_name, mat_file, transpose_=False):
 # Main function to open decomposed files coming from DEMUSE.
 # This function calls the functions defined above
 
-def emg_from_demuse(file):
+def emg_from_demuse(filepath):
     """
     Import the .mat file used in DEMUSE.
     
     Parameters
     ----------
-    file: str or Path
+    filepath: str or Path
         The directory and the name of the file to load (including file extension .mat).
+        This can be a simple string, the use of Path is not necessary.
     
     Returns
     -------
@@ -308,7 +309,7 @@ def emg_from_demuse(file):
         }
     """
 
-    mat_file = loadmat(file, simplify_cells=True)
+    mat_file = loadmat(filepath, simplify_cells=True)
 
     # Parse .mat obtained from DEMUSE to see the available variables
     # First: see the variables name
@@ -592,7 +593,7 @@ def get_otb_rawsignal(df):
 # Main function to open decomposed files coming from OTBiolab+.
 # This function calls the functions defined above
 
-def emg_from_otb(file, refsig=[True, "filtered"]):
+def emg_from_otb(filepath, refsig=[True, "filtered"]):
     """
     Import the .mat file exportable by OTBiolab+.   
     
@@ -601,9 +602,10 @@ def emg_from_otb(file, refsig=[True, "filtered"]):
 
     Parameters
     ----------
-    file: str or Path
+    filepath: str or Path
         The directory and the name of the file to load (including file extension .mat).
-    refsig: list
+        This can be a simple string, the use of Path is not necessary.
+    refsig: list, default [True, "filtered"]
         Whether to seacrh also for the REF_SIGNAL and
         whether to load the filtered or unfiltered one.
         The list is composed as [bool, str]. str can be "filtered" or "unfiltered".
@@ -643,7 +645,7 @@ def emg_from_otb(file, refsig=[True, "filtered"]):
         }
     """
 
-    mat_file = loadmat(file, simplify_cells=True)
+    mat_file = loadmat(filepath, simplify_cells=True)
 
     # Parse .mat obtained from DEMUSE to see the available variables
     print(
@@ -686,7 +688,7 @@ def emg_from_otb(file, refsig=[True, "filtered"]):
     return resdict
 
 
-def refsig_from_otb(file, refsig="filtered"):
+def refsig_from_otb(filepath, refsig="filtered"):
     """
     Import REF_SIGNAL in the .mat file exportable by OTBiolab+.   
     
@@ -698,8 +700,9 @@ def refsig_from_otb(file, refsig="filtered"):
 
     Parameters
     ----------
-    file: str or Path
+    filepath: str or Path
         The directory and the name of the file to load (including file extension .mat).
+        This can be a simple string, the use of Path is not necessary.
     refsig: list
         Whether to seacrh also for the REF_SIGNAL and
         whether to load the filtered or unfiltered one.
@@ -726,7 +729,7 @@ def refsig_from_otb(file, refsig="filtered"):
         }
     """
 
-    mat_file = loadmat(file, simplify_cells=True)
+    mat_file = loadmat(filepath, simplify_cells=True)
 
     # Parse .mat obtained from DEMUSE to see the available variables
     print(
@@ -754,9 +757,9 @@ def refsig_from_otb(file, refsig="filtered"):
 
     return resdict
 
-#TODO check use of path and filepath 
+
 # ---------------------------------------------------------------------
-# Main function to convert and save the emgfile to JSON.
+# Functions to convert and save the emgfile to JSON.
 
 def save_json_emgfile(emgfile, filepath):
     """
@@ -889,7 +892,7 @@ def save_json_emgfile(emgfile, filepath):
         raise Exception("File source not recognised")
 
 
-def emg_from_json(path):
+def emg_from_json(filepath):
     """
     Load the emgfile or emg_refsig stored in json format.
 
@@ -897,7 +900,7 @@ def emg_from_json(path):
     ----------
     filepath: str or Path
         The directory and the name of the file to load (including file extension .mat).
-        This can be a simple string; The use of Path is not necessary. 
+        This can be a simple string, the use of Path is not necessary. 
     
     Returns
     -------
@@ -909,7 +912,7 @@ def emg_from_json(path):
     The returned file is called ``emgfile`` for convention (or ``emg_refsig`` if SOURCE = "OTB_refsig").
     """
     # Read and decompress json file
-    with gzip.open(path, "r") as fin:
+    with gzip.open(filepath, "r") as fin:
         json_bytes = fin.read()
         # Decode json file
         json_str = json_bytes.decode("utf-8")
@@ -1016,45 +1019,39 @@ def emg_from_json(path):
     return resdict
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-#TODO document this
-# -----------------------------------------------------------------------------------------------
-
+# ---------------------------------------------------------------------
+# Function to open files from a GUI in a single line of code.
 
 def askopenfile(
     initialdir="/", filesource="DEMUSE", otb_refsig_type=[True, "filtered"]
 ):
     """
-    This function is a shortcut to select and open files with a GUI in a single line of code.
+    Select and open files with a GUI.
 
-    Input:
-    initialdir = Path("/Decomposed Test files/") by default, any other path can be specified,
-        both as string or as Path.
+    Parameters
+    ----------
+    initialdir: str or Path, default "/"
+        The directory of the file to load (excluding file name).
+        This can be a simple string, the use of Path is not necessary.
+        It can be omitted.
+    filesource: str, default "DEMUSE"
+        Can be one of "DEMUSE", "OTB", "OTB_refsig" (.mat) or "Open_HD-EMG" (.json).
+    otb_refsig_type: list, default [True, "filtered"]
+        Whether to seacrh also for the REF_SIGNAL and
+        whether to load the filtered or unfiltered one.
+        The list is composed as [bool, str]. str can be "filtered" or "unfiltered".
+        This applies only if filesource="OTB_refsig".
 
-    filesource = "DEMUSE" by default, one of "OTB", "OTB_refsig", "Open_HD-EMG" (json file) can be specified.
-
-    otb_refsig_type = [True, "filtered"] by default, refsig can be used to specify if REF_SIGNAL is present
-        and if you want to import the filtered or the unfiltered signal. In OTBioLab+ the "performed path" refers
-        to the filtered signal, the "acquired data" to the unfiltered signal. A list should be passed to refsig.
-        The first element can be True or False, if False, the REF_SIGNAL is not imported (returns nan).
-        The second element can be one of "filtered" or "unfiltered" depending on what you want to import.
-        This input is necessery only if loading files from OTBiolab+.
-
-    Return:
-    The returned file is called emgfile for convention (or refsig if filesource = "OTB_refsig").
-
+    Returns
+    -------
+    emgfile: dict
+        The dictionary containing the emgfile.
+    
+    Notes
+    -----
+    The returned file is called ``emgfile`` for convention (or ``emg_refsig`` if SOURCE = "OTB_refsig").
     """
+
     # If initialdir == str, check if a string path is passed. If not, use a path to sample files.
     # elif initialdir == Path, use that path
     if isinstance(initialdir, str):
@@ -1075,13 +1072,13 @@ def askopenfile(
         file_toOpen = filedialog.askopenfilename(
             initialdir=initialdir,
             title="Select a file",
-            filetypes=[("MATLAB files", ".mat")],  # Change once the .pyemg is available
+            filetypes=[("MATLAB files", ".mat")],
         )
     elif filesource == "Open_HD-EMG":
         file_toOpen = filedialog.askopenfilename(
             initialdir=initialdir,
             title="Select a file",
-            filetypes=[("JSON files", ".json")],  # Change once the .pyemg is available
+            filetypes=[("JSON files", ".json")],
         )
     else:
         raise Exception(
