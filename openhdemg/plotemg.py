@@ -80,7 +80,6 @@ def plot_emgsig(
 
     # Check to have the RAW_SIGNAL in a pandas dataframe
     if isinstance(emgfile["RAW_SIGNAL"], pd.DataFrame):
-        # Transpose it for quick plotting by column
         emgsig = emgfile["RAW_SIGNAL"]
 
         # Here we produce an x axis in seconds or samples
@@ -146,8 +145,7 @@ def plot_emgsig(
             "RAW_SIGNAL is probably absent or it is not contained in a dataframe"
         )
 
-# BUG left y axes as the right y axes
-# TODO pass munumber = [*range(0, emgfile["NUMBER_OF_MUS"])] as default here and to other functions
+
 def plot_refsig(
     emgfile,
     timeinseconds=True,
@@ -198,7 +196,7 @@ def plot_refsig(
         if showimmediately:
             plt.show()
 
-        # Needed for the GUI? To check the other plot functions
+        #TODO Needed for the GUI? To check the other plot functions
         return fig
 
     else:
@@ -260,12 +258,12 @@ def plot_mupulses(
             )
 
     # Convert x axes in seconds if timeinseconds==True
-    # This has to be done both for the REF_SIGNAL and the mupulses, for the mupulses
+    # This has to be done both for the REF_SIGNAL and the mupulses, for the MUPULSES
     # we need to convert the point of firing from samples to seconds
     if timeinseconds:
         mupulses = [n / emgfile["FSAMP"] for i, n in enumerate(emgfile["MUPULSES"])]
 
-    # Sort the mupulses based on order of recruitment. If True mupulses are sorted in ascending order
+    # Sort the MUPULSES based on order of recruitment. If True, MUPULSES are sorted in ascending order
     if order and emgfile["NUMBER_OF_MUS"] > 1:
         mupulses = sorted(mupulses, key=min, reverse=False)
 
@@ -278,28 +276,19 @@ def plot_mupulses(
     )
 
     if addrefsig:
-        # Assign 90% of the space in the plot to linelengths and 8% to lineoffsets, 2% free
-        linelengths = (max(emgfile["REF_SIGNAL"][0]) * 0.9) / emgfile["NUMBER_OF_MUS"]
-        lineoffsets = (
-            linelengths
-            + (max(emgfile["REF_SIGNAL"][0]) * 0.08) / emgfile["NUMBER_OF_MUS"]
-        )
+        # Create the second (right) y axes
+        ax2 = ax1.twinx()
 
-        if emgfile["NUMBER_OF_MUS"] == 1:
-            # Specify a different lineoffset if I have only 1 MU
-            lineoffsets = linelengths / 2
-
-        # Plot the mupulses. Use ax1.plot to allow the use of twinx, instead of ax1=plt.eventplot
+        # Plot the MUPULSES.
         ax1.eventplot(
             mupulses,
             linewidths=linewidths,
-            linelengths=linelengths,
-            lineoffsets=lineoffsets,
+            linelengths=0.9, # Assign 90% of the space in the plot to linelengths
+            lineoffsets=1,
             colors=colors1,
         )
 
-        # Create the second (right) y axes
-        ax2 = ax1.twinx()
+        # Plot REF_SIGNAL on the right y axes
         xref = (
             emgfile["REF_SIGNAL"].index / emgfile["FSAMP"]
             if timeinseconds
@@ -333,7 +322,7 @@ def plot_mupulses(
 
 def plot_ipts(
     emgfile,
-    munumber,
+    munumber="all",
     timeinseconds=True,
     figsize=[20, 15],
     showimmediately=True,
@@ -346,11 +335,13 @@ def plot_ipts(
     ----------
     emgfile: dict
         The dictionary containing the emgfile.
-    munumber: int or list
-        The MU (int) or MUs (list of int) to plot. 
+    munumber: str, int or list, default "all"
+        By default, IPTS of all the MUs is plotted.
+        Otherwise, a single MU (int) or multiple MUs (list of int) can be specified.
         The list can be passed as a manually-written list or with: munumber=[*range(0, 12)],
         We need the "*" operator to unpack the results of range and build a list.
         munumber is expected to be with base 0 (i.e., the first MU in the file is the number 0).
+
     timeinseconds: bool, default True
         Whether to show the time on the x-axes in seconds (True) or in samples (False).
     figsize: list, default [20, 15]
@@ -364,11 +355,17 @@ def plot_ipts(
     
     Notes
     -----
-    If you want to plot all the MUs in the file use:
-        munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
+    munumber = "all" corresponds to munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
     """
+
+    # Check if all the MUs have to be plotted
+    if isinstance(munumber, str):
+        if emgfile["NUMBER_OF_MUS"] == 1: # Manage exception of single MU
+            munumber = 0
+        else:
+            munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
     
-    # Check to have the RAW_SIGNAL in a pandas dataframe
+    # Check to have the IPTS in a pandas dataframe
     if isinstance(emgfile["IPTS"], pd.DataFrame):
         ipts = emgfile["IPTS"]
 
@@ -394,12 +391,7 @@ def plot_ipts(
             if showimmediately:
                 plt.show()
 
-        elif isinstance(munumber, list):
-            """
-            A list can be passed in input as a manually-written list or with:
-            munumber=[*range(0, 12)]
-            We need the "*" operator to unpack the results of range and build a list
-            """
+        elif isinstance(munumber, (list, str)):
             figname = "Motor unit n.{}".format(munumber)
             fig, axes = plt.subplots(
                 len(munumber),
@@ -430,7 +422,7 @@ def plot_ipts(
 
         else:
             raise Exception(
-                "While calling the plot_ipts function, you should pass an integer or a list in munumber= "
+                "While calling the plot_ipts function, you should pass an integer or a list to munumber"
             )
 
     else:
@@ -439,7 +431,7 @@ def plot_ipts(
 
 def plot_idr(
     emgfile,
-    munumber,
+    munumber="all",
     addrefsig=True,
     timeinseconds=True,
     figsize=[20, 15],
@@ -453,8 +445,9 @@ def plot_idr(
     ----------
     emgfile: dict
         The dictionary containing the emgfile.
-    munumber: int or list
-        The MU (int) or MUs (list of int) to plot. 
+    munumber: str, int or list, default "all"
+        By default, IDR of all the MUs is plotted.
+        Otherwise, a single MU (int) or multiple MUs (list of int) can be specified.
         The list can be passed as a manually-written list or with: munumber=[*range(0, 12)],
         We need the "*" operator to unpack the results of range and build a list.
         munumber is expected to be with base 0 (i.e., the first MU in the file is the number 0).
@@ -473,8 +466,7 @@ def plot_idr(
     
     Notes
     -----
-    If you want to plot all the MUs in the file use:
-        munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
+    munumber = "all" corresponds to munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
     """
 
     # Compute the instantaneous discharge rate (IDR) from the MUPULSES and check the input
@@ -485,6 +477,13 @@ def plot_idr(
             raise Exception(
                 "REF_SIGNAL is probably absent or it is not contained in a dataframe"
             )
+
+    # Check if all the MUs have to be plotted
+    if isinstance(munumber, str):
+        if emgfile["NUMBER_OF_MUS"] == 1: # Manage exception of single MU
+            munumber = 0
+        else:
+            munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
 
     # Check if we have a single MU or a list of MUs to plot
     if isinstance(munumber, int):
@@ -518,12 +517,7 @@ def plot_idr(
         if showimmediately:
             plt.show()
 
-    elif isinstance(munumber, list):
-        """
-        A list can be passed in input as a manually-written list or with:
-        munumber=[*range(0, 12)]
-        We need the "*" operator to unpack the results of range and build a list
-        """
+    elif isinstance(munumber, (list, str)):
         # Behave differently if you plot both the ref signal and the idr or only the idr
         if not addrefsig:
             figname = "Motor unit n.{}".format(munumber)
@@ -606,7 +600,7 @@ def plot_idr(
 
     else:
         raise Exception(
-            "While calling the plot_idr function, you should pass an integer or a list in munumber= "
+            "While calling the plot_idr function, you should pass an integer or a list to munumber"
         )
 
     return fig
