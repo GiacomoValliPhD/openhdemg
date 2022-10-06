@@ -240,7 +240,7 @@ class GUI():
         # Check filetype for processing
         if self.filetype.get() == "OTB":
             # load OTB
-            self.resdict = openhdemg.emg_from_otb(file=self.file_path)
+            self.resdict = openhdemg.emg_from_otb(filepath=self.file_path)
 
             # Add filespecs
             ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
@@ -249,7 +249,7 @@ class GUI():
 
         elif self.filetype.get() == "DEMUSE":
             # load DEMUSE
-            self.resdict = openhdemg.emg_from_demuse(file=self.file_path)
+            self.resdict = openhdemg.emg_from_demuse(filepath=self.file_path)
 
             # Add filespecs
             ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
@@ -258,7 +258,7 @@ class GUI():
 
         else:
             # load refsig
-            self.resdict = openhdemg.refsig_from_otb(file=self.file_path)
+            self.resdict = openhdemg.refsig_from_otb(filepath=self.file_path)
             # Recondifgure labels for refsig
             ttk.Label(self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
             ttk.Label(self.left, text="NA").grid(column=2, row=3, sticky=(W,E))
@@ -329,7 +329,7 @@ class GUI():
 
                 # reload original file
                 if self.filetype.get() == "OTB":
-                    self.resdict = openhdemg.emg_from_otb(file=self.file_path)
+                    self.resdict = openhdemg.emg_from_otb(filepath=self.file_path)
 
                     # Update Filespecs
                     ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
@@ -337,7 +337,7 @@ class GUI():
                     ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
 
                 elif self.filetype.get() == "DEMUSE":
-                    self.resdict = openhdemg.emg_from_demuse(file=self.file_path)
+                    self.resdict = openhdemg.emg_from_demuse(filepath=self.file_path)
 
                     # Update Filespecs
                     ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
@@ -346,7 +346,7 @@ class GUI():
 
                 else:
                     # load refsig
-                    self.resdict = openhdemg.refsig_from_otb(file=self.file_path)
+                    self.resdict = openhdemg.refsig_from_otb(filepath=self.file_path)
                     # Recondifgure labels for refsig
                     ttk.Label(self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
                     ttk.Label(self.left, text="NA").grid(column=2, row=3, sticky=(W,E))
