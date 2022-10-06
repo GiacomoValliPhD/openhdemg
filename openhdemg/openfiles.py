@@ -53,7 +53,6 @@ import numpy as np
 from openhdemg.otbelectrodes import *
 from tkinter import *
 from tkinter import filedialog
-from pathlib import Path
 import json, gzip
 
 # ---------------------------------------------------------------------
@@ -1043,7 +1042,6 @@ def askopenfile(
     initialdir: str or Path, default "/"
         The directory of the file to load (excluding file name).
         This can be a simple string, the use of Path is not necessary.
-        It can be omitted.
     filesource: str, default "DEMUSE"
         Can be one of "DEMUSE", "OTB", "OTB_refsig" (.mat) or "Open_HD-EMG" (.json).
     otb_refsig_type: list, default [True, "filtered"]
@@ -1062,17 +1060,11 @@ def askopenfile(
     The returned file is called ``emgfile`` for convention (or ``emg_refsig`` if SOURCE = "OTB_refsig").
     """
 
-    # If initialdir == str, check if a string path is passed. If not, use a path to sample files.
-    # elif initialdir == Path, use that path
+    #BUG initialdir not working on Windows
+    # If initialdir == "/", redirect to /Decomposed Test files/
     if isinstance(initialdir, str):
         if initialdir == "/":
-            initialdir = Path("/Decomposed Test files/")
-        else:
-            initialdir = Path(initialdir)
-    elif isinstance(initialdir, Path):
-        pass
-    else:
-        raise Exception("initialdir must be a string or a Path")
+            initialdir = "/Decomposed Test files/"
 
     # Create and hide the tkinter root window necessary for the GUI based open-file function
     root = Tk()
