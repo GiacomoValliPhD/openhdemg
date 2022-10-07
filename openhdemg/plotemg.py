@@ -137,7 +137,7 @@ def plot_emgsig(
 
         else:
             raise Exception(
-                "While calling the plot_emgsig function, you should pass an integer or a list to channels= "
+                "While calling the plot_emgsig function, you should pass an integer, a list or 'all' to channels"
             )
 
     else:
@@ -422,7 +422,7 @@ def plot_ipts(
 
         else:
             raise Exception(
-                "While calling the plot_ipts function, you should pass an integer or a list to munumber"
+                "While calling the plot_ipts function, you should pass an integer, a list or 'all' to munumber"
             )
 
     else:
@@ -517,7 +517,7 @@ def plot_idr(
         if showimmediately:
             plt.show()
 
-    elif isinstance(munumber, (list, str)):
+    elif isinstance(munumber, list):
         # Behave differently if you plot both the ref signal and the idr or only the idr
         if not addrefsig:
             figname = "Motor unit n.{}".format(munumber)
@@ -568,15 +568,14 @@ def plot_idr(
             # Apply twinx to ax2, which is the second y axis.
             ax2 = ax1.twinx()
 
-            # Plot every MUs. The MUs IDR is normalised in a range 0-1 to allow efficient plotting of the various MUs in the y axes.
-            for num, col in enumerate(idr):
+            for count, thisMU in enumerate(munumber):
                 # Normalise the series
-                norm_idr = min_max_scaling(idr[col]["idr"])
+                norm_idr = min_max_scaling(idr[thisMU]["idr"])
                 # Add 1 compare to the previous MUs to avoid overlapping of the MUs
-                norm_idr = norm_idr + num
+                norm_idr = norm_idr + count
 
                 sns.scatterplot(
-                    x=idr[num]["timesec" if timeinseconds else "mupulses"],
+                    x=idr[thisMU]["timesec" if timeinseconds else "mupulses"],
                     y=norm_idr,
                     ax=ax1,
                 )
@@ -600,7 +599,7 @@ def plot_idr(
 
     else:
         raise Exception(
-            "While calling the plot_idr function, you should pass an integer or a list to munumber"
+            "While calling the plot_idr function, you should pass an integer, a list or 'all' to munumber"
         )
 
     return fig
