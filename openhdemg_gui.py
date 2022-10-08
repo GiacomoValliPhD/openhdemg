@@ -19,8 +19,10 @@ import openhdemg
 
 
 class GUI():
-    """GUI class for the openEMG package.
-       The included functions can not be used singularily.
+    """
+    A class representing a Tkinter TK instance.
+
+    This class is used to 
 
        Attributes:
         self.left = Left frame inside of root
@@ -66,14 +68,14 @@ class GUI():
         self.mu_numb_idr = Number of motor units used for IDR plotting
     """
 
-    def __init__(self, root):
+    def __init__(self, master):
 
         # Set up GUI
-        root.title("openHD-EMG")
-        root.iconbitmap("logo.ico")
+        master.title("openHD-EMG")
+        master.iconbitmap("logo.ico")
 
         # Create left side framing for functionalities
-        self.left = ttk.Frame(root, padding="10 10 12 12")
+        self.left = ttk.Frame(master, padding="10 10 12 12")
         self.left.grid(column=0, row=0, sticky=(N, S, W))
         self.left.columnconfigure(0, weight=1)
         self.left.columnconfigure(1, weight=1)
@@ -204,7 +206,7 @@ class GUI():
         reset.grid(column=1, row=20, sticky=(W,E))
 
         # Create right side framing for functionalities
-        self.right = ttk.Frame(root, padding="10 10 12 12")
+        self.right = ttk.Frame(master, padding="10 10 12 12")
         self.right.grid(column=1, row=0, sticky=(N, S, E))
 
         # Create empty figure
@@ -1106,5 +1108,5 @@ class GUI():
 if __name__ == "__main__":
     root = Tk()
     root['bg'] = 'LightBlue4'
-    GUI(root)
+    gui = GUI(root)
     root.mainloop()
