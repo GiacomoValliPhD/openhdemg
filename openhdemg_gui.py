@@ -6,7 +6,7 @@ import os
 import tkinter as tk
 from tkinter import ttk, filedialog, Canvas
 from tkinter import StringVar, Tk, N, S, W, E
-from pandastable import Table
+from pandastable import Table, config
 
 import matplotlib.pyplot as plt
 import matplotlib
@@ -19,61 +19,224 @@ import openhdemg
 
 
 class GUI():
-    """GUI class for the openEMG package.
-       The included functions can not be used singularily.
-
-       Attributes:
-        self.left = Left frame inside of root
-        self.filetype = Filetype of import EMG file
-        self.right = Right frame insinde of root
-        self.first_fig = Figure frame determinining size of all figures
-        self.logo = Path to file containing logo of OpenHDemg
-        self.logo_canvas = Canvas to display logo
-        self.terminal = Terminal to display calculation results
-        self.filename = Name of the file to be analysed
-        self.filepath = Path to EMG file selected for analysis
-        self.resdict = Dictionary derived from input EMG file for further analysis
-        self.mvif_df = Dataframe containing MVIF values
-        self.rfd_df = Dataframe containing RFD values
-        self.exportable_df = Dataframe containing ALL basic motor unit properties
-        self.mus_dr = Dataframe containing motor unit discharge rate
-        self.mu_thresholds = Dataframe containing motor unit threshold values
-        self.fig = Matplotlib figure to be plotted on Canvas
-        self.canvas = General canvas for plotting figures
-        self.head = NEW tk.toplevel instance created everytime upon opnening a new window
-        self.mu_to_remove = Selected number of motor unit to be removed
-        self.mu_to_edit = Selected motor unit to be visuallized and edited individually
-        self.filter_order = Specified order of Butterworth low pass filter
-        self.cutoff_freq = Specified cutt-off frequency used for low pass
-        self.offset_val = Specified/Determined offset value for reference signal
-        self.auto_eval = Variable that if > 0 leads to automatic determination of offset
-        self.start_area = Startpoint fo resizing of EMG file
-        self.end_area = Endpoint for resizing of EMG file
-        self.rfds = Selection of timepoints to calculate rfd
-        self.mvif = Determined MVIF value
-        self.mvifvalue = MVIF values used for further analysis
-        self.ct_event = Specified event for firing threshold calculation
-        self.firings_rec = Number of firings used for discharge rate calculation
-        self.firings_ste = Number of firings at start/end of steady state
-        self.dr_event = Specified event for discharge rate calculation
-        self.b_firings_rec = Number of firings used for discharge rate calculation
-                             when assessing basic motor unit properties
-        self.b_firings_ste = Number of firings at start/end of steady state
-                             when assessing basic motor unit properties
-        self.channels = Number of channels used for emg signal plotting
-        self.linewidth = width of line used for motor unit pulse plotting
-        self.mu_numb = Number of motor units used for IPTS plotting
-        self.mu_numb_idr = Number of motor units used for IDR plotting
     """
+    A class representing a Tkinter TK instance.
 
-    def __init__(self, root):
+    This class is used to create a graphical user interface for
+    the Open_HD-EMG library.
 
+    Attributes
+    ----------
+    self.auto_eval : int, default 0
+        If auto > 0, the script automatically removes the offset based on the number
+        of samples passed in input.
+    self.b_firings_rec : int, default 4
+        The number of firings at recruitment and derecruitment to consider for the
+        calculation of the DR.
+    self.b_firings_ste : int, default 10
+        The number of firings to consider for the calculation of the DR at the start and at the end
+        of the steady-state phase.
+    self.canvas : matplotlib.backends.backend_tkagg
+        Canvas for plotting figures inside the GUI.
+    self.channels : int or list
+        The channel (int) or channels (list of int) to plot.
+        The list can be passed as a manually-written with: "0,1,2,3,4,5...,n",
+        channels is expected to be with base 0.
+    self.cutoff_freq : int, default 20
+        The cut-off frequency in Hz.
+    self.ct_event : str, default "rt_dert"
+        When to calculate the thresholds. Input parameters for event_ are:
+            "rt_dert" means that both recruitment and derecruitment tresholds will be calculated.
+            "rt" means that only recruitment tresholds will be calculated.
+            "dert" means that only derecruitment tresholds will be calculated.
+    self.dr_event : str, default "rec_derec_steady"
+        When to calculate the DR. Input parameters for event_ are:
+            "rec_derec_steady" means that the DR is calculated at recruitment, derecruitment and
+            during the steady-state phase.
+            "rec" means that the DR is calculated at recruitment.
+            "derec" means that the DR is calculated at derecruitment.
+            "rec_derec" means that the DR is calculated at recruitment and derecruitment.
+            "steady" means that the DR is calculated during the steady-state phase.
+    self.end_area, self.start_area : int
+        The start and end of the selection for file resizing (can be used for code automation).
+    self.exportable_df : pd.DataFrame
+        A pd.DataFrame containing the results of the analysis.
+    self.fig : matplotlib.figure
+        Figure to be plotted on Canvas.
+    self.filename : str
+        String and name of the file to be analysed.
+    self.filepath : str
+        String containing the path to EMG file selected for analysis.
+    self.filetype : str
+        String containing the filetype of import EMG file.
+        Filetype can be "OTB", "Demuse", or "Refsig".
+    self.filter_order : int, default 4
+        The filter order.
+    self.firings_rec : int, default 4
+        The number of firings at recruitment and derecruitment to consider for the calculation
+        of the DR.
+    self.firings_ste : int, default 10
+        The number of firings to consider for the calculation of the DR at the start and at the end
+        of the steady-state phase.
+    self.first_fig : matplotlib.figure
+        Figure frame determinining size of all figures that are plotted on canvas.
+    self.head : tk.toplevel
+        New tk.toplevel instance created everytime upon opnening a new window. This is needed
+        for having a seperate window open.
+    self.left : tk.frame
+        Left frame inside of master that contains all buttons and filespecs.
+    self.linewidth : float, default 0.5
+        The width of the vertical lines representing the MU firing.
+    self.logo :
+        String containing the path to image file containing logo of Open_HD-EMG.
+    self.logo_canvas : tk.canvas
+        Canvas to display logo of Open_HG-EMG when openend.
+    self.master: tk
+        TK master window containing all widget children for this GUI.
+    self.mus_dr: pd.DataFrame
+        A pd.DataFrame containing the requested DR.
+    self.mu_numb : int or list, default "all"
+        By default, IPTS of all the MUs is plotted.
+        Otherwise, a single MU (int) or multiple MUs (list of int) can be specified.
+        The list can be passed as a manually-written list: "0,1,2,3,4,5,...,n",
+        self.m_numb is expected to be with base 0 (i.e., the first MU in the file is the number 0).
+    self.mu_numb_idr : int or list, default "all"
+        By default, IDR of all the MUs is plotted.
+        Otherwise, a single MU (int) or multiple MUs (list of int) can be specified.
+        The list can be passed as a manually-written list: "0,1,2,3,4,5,...,n",
+        self.m_numb_idr is expected to be with base 0 (i.e., the first MU in the
+        file is the number 0).
+    self.mu_to_remove : int
+        The MUs to remove. If a single MU has to be removed, this should be an
+        int (number of the MU).
+        self.mu_to_remove is expected to be with base 0
+        (i.e., the first MU in the file is the number 0).
+    self.mu_to_edit : int
+        The MUs to edit singularly. If a single MU has to be edited, this should be an
+        int (number of the MU).
+        self.mu_to_edit is expected to be with base 0
+        (i.e., the first MU in the file is the number 0).
+    self.mu_thresholds : pd.DataFrame
+        A DataFrame containing the requested thresholds.
+    self.mvif : float
+        The MViF value in the original unit of measurement.
+    self.mvif_df : pd.DataFrame
+        A Dataframe containing the detected MVIF value.
+    self.offsetval: float, default 0
+        Value of the offset. If offsetval is 0 (default), the user will be asked to manually
+        select an aerea to compute the offset value.
+        Otherwise, the value passed to offsetval will be used. Negative offsetval can be passed.
+    self.resdict : dict
+        Dictionary derived from input EMG file for further analysis.
+    self.rfd_df : pd.DataFrame
+        A Dataframe containing the calculated RFD values.
+    self.rfdms : list, default [50, 100, 150, 200]
+        Milliseconds (ms). A list containing the ranges in ms to calculate the RFD.
+    self.right : tk.frame
+        Left frame inside of master that contains plotting canvas.
+    self.terminal : ttk.Labelframe
+        Tkinter labelframe that is used to display the results table in the GUI.
+
+    Methods
+    -------
+    __init__(master)
+        Initializes GUI class and main GUI window (master).
+    get_file_input()
+        Gets emgfile location and respective file is loaded.
+        Executed when button "Load File" in master GUI window pressed.
+    save_emgfile()
+        Saves the edited emgfile dictionary to a .json file.
+        Executed when button "Save File" in master GUI window pressed.
+    export_to_excel()
+        Saves the analysis results to a .xlsx file.
+        Executed when button "Save Results" in master GUI window pressed.
+    reset_analysis()
+        Resets the whole analysis, restores the original input file and the graph.
+        Executed when button "Reset analysis" in master GUI window pressed.
+    in_gui_plotting()
+        Method used for creating plot inside the GUI (on the GUI canvas).
+        Executed when button "View MUs" in master GUI window pressed.
+    sort_mus()
+        Method used to sort motor units in Plot according to recruitement order.
+        Executed when button "Sort MUs" in master GUI window pressed.
+    remove_mus()
+        Opens seperate window to select motor units to be removed.
+        Executed when button "Remove MUs" in master GUI window pressed.
+    remove()
+        Method used to remove single motor units.
+    edit_refsig()
+        Opens seperate window to edit emg reference signal.
+        Executed when button "RefSig Editing" in master GUI window pressed.
+    filter_refsig()
+        Method used to filter the emg reference signal.
+    remove_offset()
+        Method used to remove offset of emg reference signal.
+    resize_file()
+        Opens seperate window to resize emg file / reference signal.
+        Executed when button "Resize File" in master GUI window pressed.
+    select_resize()
+        Method used to select start/end of resizing area manually on plot.
+    resize_emgfile()
+        Method used to resize the emg file according to specified start/end.
+    analyze_force()
+        Opens seperate window to analyze force signal/values.
+        Executed when button "Analyze force" in master GUI window pressed.
+    get_mvif()
+        Method used to calculate/select MVIF.
+    det_rfd()
+        Method used to calculated RFD based on selected startpoint.
+    mu_analysis()
+        Opens seperate window to calculated specific motor unit properties.
+        Executed when button "MU properties" in master GUI window pressed.
+    compute_mu_threshold()
+        Method used to calculate motor unit recruitement thresholds.
+    compute_mu_dr()
+       Method used to calculate motor unit discharge rate.
+    basic_mus_analysis()
+        Method used to calculate basic motor unit properties.
+    plot_emg()
+        Opens seperate window to plot emgsignal/motor unit properties.
+        Executed when button "Plot EMG" in master GUI window pressed.
+    plt_emgsignal()
+        Method used to plot emgsignal.
+    plt_idr()
+        Method used to plot instanteous discharge rate.
+    plt_ipts()
+        Method used to plot the motor unit puls train (i.e., non-binary firing)
+    plt_refsignal()
+        Method used to plot the motor unit reference signal.
+    plt_mupulses()
+        Method used to plot the motor unit pulses.
+    display_results()
+        Method used to display result table containing analysis results.
+
+    Notes
+    -----
+    Please note that altough we created a GUI class, the included methods/
+    instances are highly specific. We did not conceptualize the methods/instances
+    to be used seperately. Similar functionalities are available in the library
+    and were specifically coded to be used seperately/singularly.
+
+    Most instance methods of this class heavily rely on the functions provided in
+    the library. In the section "See Also" at each instance method, the reader is
+    referred to the corresponding function and extensive documentation in the library.
+    """
+    def __init__(self, master):
+        """
+        Initialization of master GUI window upon calling.
+
+        Parameters
+        ----------
+        master: tk
+            tk class object
+        """
         # Set up GUI
-        root.title("openHD-EMG")
-        root.iconbitmap("logo.ico")
+        self.master = master
+        self.master.title("Open_HD-EMG")
+        self.master.iconbitmap("logo.ico")
 
         # Create left side framing for functionalities
-        self.left = ttk.Frame(root, padding="10 10 12 12")
+        self.left = ttk.Frame(self.master, padding="10 10 12 12")
         self.left.grid(column=0, row=0, sticky=(N, S, W))
         self.left.columnconfigure(0, weight=1)
         self.left.columnconfigure(1, weight=1)
@@ -107,7 +270,7 @@ class GUI():
 
         # Load file
         load = ttk.Button(self.left,
-                          text="Load file",
+                          text="Load File",
                           command=self.get_file_input)
         load.grid(column=0, row=2, sticky=W)
 
@@ -121,7 +284,7 @@ class GUI():
 
         # Save File
         save = ttk.Button(self.left,
-                          text="Save file",
+                          text="Save File",
                           command=self.save_emgfile)
         save.grid(column=0, row=6, sticky=W)
         separator1 = ttk.Separator(self.left, orient="horizontal")
@@ -152,11 +315,13 @@ class GUI():
                               command=self.remove_mus)
         remove_mus.grid(column=0, row=10, sticky=W)
 
+        # COMMENT: This is commented because it is not fully functional
         # Edit Motor Units
-        edit_mus = ttk.Button(self.left,
-                              text="Edit MUs",
-                              command=self.editing_mus)
-        edit_mus.grid(column=1, row=10, sticky=W)
+        #edit_mus = ttk.Button(self.left,
+        #                      text="Edit MUs",
+        #                      command=self.editing_mus)
+        #edit_mus.grid(column=1, row=10, sticky=W)
+
         separator3 = ttk.Separator(self.left, orient="horizontal")
         separator3.grid(column=0, columnspan=3, row=11, sticky=(W,E))
 
@@ -176,7 +341,7 @@ class GUI():
 
         # Force Analysis
         force = ttk.Button(self.left,
-                           text="Analyse force",
+                           text="Analyse Force",
                            command=self.analyze_force)
         force.grid(column=0, row=14, sticky=W)
         separator5 = ttk.Separator(self.left, orient="horizontal")
@@ -184,7 +349,7 @@ class GUI():
 
         # Motor Unit properties
         mus = ttk.Button(self.left,
-                         text="MU properties",
+                         text="MU Properties",
                          command=self.mu_analysis)
         mus.grid(column=0, row=16, sticky=W)
         separator6 = ttk.Separator(self.left, orient="horizontal")
@@ -200,11 +365,11 @@ class GUI():
 
         # Reset Analysis
         reset = ttk.Button(self.left,
-                           text="Reset analysis", command=self.reset_analysis)
+                           text="Reset Analysis", command=self.reset_analysis)
         reset.grid(column=1, row=20, sticky=(W,E))
 
         # Create right side framing for functionalities
-        self.right = ttk.Frame(root, padding="10 10 12 12")
+        self.right = ttk.Frame(self.master, padding="10 10 12 12")
         self.right.grid(column=1, row=0, sticky=(N, S, E))
 
         # Create empty figure
@@ -221,11 +386,17 @@ class GUI():
         for child in self.left.winfo_children():
             child.grid_configure(padx=5, pady=5)
 
-    ## Define functionalities for buttons used in GUI
+    ## Define functionalities for buttons used in GUI master window
 
     def get_file_input(self):
-        """Funktion to load the file for analysis.
-           The user is asked to select the file.
+        """
+        Instance Method to load the file for analysis. The user is asked to select the file.
+
+        Executed when the button "Load File" in master GUI window is pressed.
+
+        See Also
+        --------
+        emg_from_demuse, emg_from_otb in library.
         """
         # Ask user to select the file
         file_path = filedialog.askopenfilename()
@@ -235,7 +406,7 @@ class GUI():
         self.filename = filename
 
         # Add filename to label
-        root.title(self.filename)
+        self.master.title(self.filename)
 
         # Check filetype for processing
         if self.filetype.get() == "OTB":
@@ -265,8 +436,19 @@ class GUI():
             ttk.Label(self.left, text="        ").grid(column=2, row=4, sticky=(W,E))
 
     def save_emgfile(self):
-        """Function to save the edited emgfile.
-           Results are saves in .json file.
+        """
+        Instance method to save the edited emgfile. Results are saves in .json file.
+
+        Executed when the button "Save File" in master GUI window is pressed.
+
+        Raises
+        ------
+        AttributeError
+            When file was not loaded in the GUI.
+
+        See Also
+        --------
+        save_json_emgfile in library.
         """
         try:
             # Ask user to select the directory
@@ -283,12 +465,22 @@ class GUI():
             tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
     def export_to_excel(self):
-        """Function to export any prior analysis results.
-           Results are saved in an excel sheet.
+        """
+        Instnace method to export any prior analysis results. Results are saved in an excel sheet
+        in a directory specified by the user.
+
+        Executed when button "Save Results" in master GUI window is pressed.
+
+        Raises
+        ------
+        IndexError
+            When no analysis has been performed prior to attempted savig.
+        AttributeError
+            When no file was loaded in the GUI.
         """
         try:
-            # Get file directory
-            path = os.path.split(self.file_path)[0]
+            # Ask user to select the directory
+            path = filedialog.askdirectory()
 
             # Define excel writer
             writer = pd.ExcelWriter(path + "/" + "Results.xlsx")
@@ -317,9 +509,25 @@ class GUI():
         except AttributeError:
             tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
+        except PermissionError:
+            tk.messagebox.showerror("Information", "If /Results.xlsx already opened, please close." +
+                                    "\nOtherwise ignore as you propably canceled the saving progress.")
+
+
     def reset_analysis(self):
-        """Funktion to restore the base file.
-           Any analysis progress will be deleted by reloading the base file.
+        """
+        Instance method to restore the GUI to base data. Any analysis progress will be deleted by
+        reloading the original file.
+
+        Executed when button "Reset Analysis" in master GUI window is pressed. The emgfile is
+        updated to its original state.
+
+        Raises
+        ------
+        AttributeError
+            When no file was loaded in the GUI.
+        FileNotFoundError
+            When no file was loaded in the GUI.
         """
         # Get user input and check whether analysis wants to be truly resetted
         if tk.messagebox.askokcancel("Attention", "Do you really want to reset the analysis?"):
@@ -358,21 +566,37 @@ class GUI():
 
                 # Clear frame for output
                 if hasattr(self, "terminal"):
-                    self.terminal = ttk.LabelFrame(root, text="Result Output",
+                    self.terminal = ttk.LabelFrame(self.master, text="Result Output",
                                               height=100, relief="ridge")
                     self.terminal.grid(column=0, row=21, columnspan=2, pady=8, padx=10,
                                   sticky=(N,S,W,E))
 
             except AttributeError:
                 tk.messagebox.showerror("Information", "Make sure a file is loaded.")
+
+            except FileNotFoundError:
+                tk.messagebox.showerror("Information", "Make sure a file is loaded.")
+
 #-----------------------------------------------------------------------------------------------
 # Plotting inside of GUI
 
     def in_gui_plotting(self, plot="idr"):
-        """Function to plot any analysis results in the GUI for inspection.
-           Plots are updated during the analysis process.
         """
+        Instance method to plot any analysis results in the GUI for inspection. Plots are updated
+        during the analysis process.
 
+        Executed when button "View MUs" in master GUI window is pressed or when the original
+        input file is changed.
+
+        Raises
+        ------
+        AttributeError
+            When no file was loaded in the GUI.
+
+        See Also
+        --------
+        plot_refsig, plot_idr in the library.
+        """
         try:
             if self.filetype.get() == "REFSIG":
                 self.fig = openhdemg.plot_refsig(emgfile=self.resdict, showimmediately=False, tight_layout=False)
@@ -396,8 +620,20 @@ class GUI():
 # Sorting of motor units
 
     def sort_mus(self):
-        """Function to sort motor units ascending according to recruitement order.
-           Return sorted emgfile.
+        """
+        Instance method to sort motor units ascending according to recruitement order.
+
+        Executed when button "Sort MUs" in master GUI window is pressed. The plot of the MUs
+        and the emgfile are subsequently updated.
+
+        Raises
+        ------
+        AttributeError
+            When no file was loaded in the GUI.
+
+        See Also
+        --------
+        sort_mus in library.
         """
         try:
             # Sort emgfile
@@ -414,32 +650,53 @@ class GUI():
 # Removal of single motor units
 
     def remove_mus(self):
-        """Function to remove single motor units from analysis.
-           MUs can be recovered by reseting the analysis progress.
         """
-        # Create new window
-        self.head = tk.Toplevel(bg='LightBlue4')
-        self.head.title("Motor Unit Removal Window")
-        self.head.grab_set()
+        Instance method to open "Motor Unit Removal Window". Further option to select and
+        remove MUs are displayed.
 
-        # Select Motor Unit
-        ttk.Label(self.head, text="Select MU:").grid(column=0, row=0, padx=5, pady=5)
+        Executed when button "Remove MUs" in master GUI window is pressed.
 
-        self.mu_to_remove = StringVar()
-        removed_mu_value = [*range(0, self.resdict["NUMBER_OF_MUS"])]
-        removed_mu = ttk.Combobox(self.head, width=10, textvariable=self.mu_to_remove)
-        removed_mu["values"] = removed_mu_value
-        removed_mu["state"] = "readonly"
-        removed_mu.grid(column=1, row=0, sticky=(W,E), padx=5, pady=5)
+        Raises
+        ------
+        AttributeError
+            When no file is loaded prior to analysis.
+        """
+        try:
+            # Create new window
+            self.head = tk.Toplevel(bg='LightBlue4')
+            self.head.title("Motor Unit Removal Window")
+            self.head.iconbitmap("logo.ico")
+            self.head.grab_set()
 
-        # Remove Motor unit
-        remove = ttk.Button(self.head,
-                            text="Remove MU",
-                            command=self.remove)
-        remove.grid(column=1, row=1, sticky=(W,E), padx=5, pady=5)
+            # Select Motor Unit
+            ttk.Label(self.head, text="Select MU:").grid(column=0, row=0, padx=5, pady=5)
+
+            self.mu_to_remove = StringVar()
+            removed_mu_value = [*range(0, self.resdict["NUMBER_OF_MUS"])]
+            removed_mu = ttk.Combobox(self.head, width=10, textvariable=self.mu_to_remove)
+            removed_mu["values"] = removed_mu_value
+            removed_mu["state"] = "readonly"
+            removed_mu.grid(column=1, row=0, sticky=(W,E), padx=5, pady=5)
+
+            # Remove Motor unit
+            remove = ttk.Button(self.head,
+                                text="Remove MU",
+                                command=self.remove)
+            remove.grid(column=1, row=1, sticky=(W,E), padx=5, pady=5)
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
     def remove(self):
-        """Function that actually removes the motor unit.
+        """
+        Instance methof that actually removes a selected motor unit based on user specification.
+
+        Executed when button "Remove MU" in Motor Unit Removal Window is pressed.
+        The emgfile and the plot are subsequently updated.
+
+        See Also
+        --------
+        delete_mus in library.
         """
         # Get resdict with MU removed
         self.resdict = openhdemg.delete_mus(emgfile=self.resdict,
@@ -462,60 +719,69 @@ class GUI():
 #-----------------------------------------------------------------------------------------------
 # Editing of single motor Units
 
-    def editing_mus(self):
-        """Function to edit sindle motor units.
-           For now, this contains only plotting single MUs.
-           More options will be added.
-        """
+    # def editing_mus(self):
+    #     """
+    #     Instance method to edit sindle motor units. For now, this contains only plotting single MUs.
+    #     More options will be added.
 
-        # Create new window
-        self.head = tk.Toplevel(bg='LightBlue4')
-        self.head.title("Motor Unit Eiditing Window")
-        self.head.grab_set()
+    #     THIS PART IS NOT YET INTEGRATED IN THE GUI.
+    #     """
 
-        # Select Motor Unit
-        ttk.Label(self.head, text="Select MU:").grid(column=0, row=0, sticky=W, padx=5, pady=5)
+    #     # Create new window
+    #     self.head = tk.Toplevel(bg='LightBlue4')
+    #     self.head.title("Motor Unit Eiditing Window")
+    #     self.head.grab_set()
 
-        self.mu_to_edit = StringVar()
-        edit_mu_value = [*range(0, self.resdict["NUMBER_OF_MUS"])]
-        edit_mu = ttk.Combobox(self.head, width=10, textvariable=self.mu_to_edit)
-        edit_mu["values"] = edit_mu_value
-        edit_mu["state"] = "readonly"
-        edit_mu.grid(column=1, row=0, sticky=(W,E), padx=5, pady=5)
+    #     # Select Motor Unit
+    #     ttk.Label(self.head, text="Select MU:").grid(column=0, row=0, sticky=W, padx=5, pady=5)
 
-        # Button to plot MU
-        single_mu = ttk.Button(self.head,
-                              text="View single MU",
-                              command=self.view_single_mu)
-        single_mu.grid(column=1, row=1, sticky=(W,E), padx=5, pady=5)
+    #     self.mu_to_edit = StringVar()
+    #     edit_mu_value = [*range(0, self.resdict["NUMBER_OF_MUS"])]
+    #     edit_mu = ttk.Combobox(self.head, width=10, textvariable=self.mu_to_edit)
+    #     edit_mu["values"] = edit_mu_value
+    #     edit_mu["state"] = "readonly"
+    #     edit_mu.grid(column=1, row=0, sticky=(W,E), padx=5, pady=5)
 
-    def view_single_mu(self):
-        """Funktion that plots single selected MU.
-        """
-        # Make figure
-        fig = openhdemg.plot_idr(emgfile=self.resdict,
-                                 munumber=int(self.mu_to_edit.get()),
-                                 showimmediately=False)
-        # Create canvas and plot
-        canvas = FigureCanvasTkAgg(fig, master=self.head)
-        canvas_plot = canvas.get_tk_widget()
-        canvas_plot.grid(column=1, row=2, sticky=(W,E))
-        # Place matplotlib toolbar
-        toolbar = NavigationToolbar2Tk(canvas, self.head, pack_toolbar=False)
-        toolbar.grid(row=3, column=1)
-        # terminate matplotlib to ensure GUI shutdown when closed
-        plt.close()
+    #     # Button to plot MU
+    #     single_mu = ttk.Button(self.head,
+    #                           text="View single MU",
+    #                           command=self.view_single_mu)
+    #     single_mu.grid(column=1, row=1, sticky=(W,E), padx=5, pady=5)
+
+    # def view_single_mu(self):
+    #     """
+    #     Instance method that plots single selected MU.
+
+    #     THIS PART IS NOT YET INTEGRATED IN THE GUI.
+    #     """
+    #     # Make figure
+    #     fig = openhdemg.plot_idr(emgfile=self.resdict,
+    #                              munumber=int(self.mu_to_edit.get()),
+    #                              showimmediately=False)
+    #     # Create canvas and plot
+    #     canvas = FigureCanvasTkAgg(fig, master=self.head)
+    #     canvas_plot = canvas.get_tk_widget()
+    #     canvas_plot.grid(column=1, row=2, sticky=(W,E))
+    #     # Place matplotlib toolbar
+    #     toolbar = NavigationToolbar2Tk(canvas, self.head, pack_toolbar=False)
+    #     toolbar.grid(row=3, column=1)
+    #     # terminate matplotlib to ensure GUI shutdown when closed
+    #     plt.close()
 
 #-----------------------------------------------------------------------------------------------
 # Editing of Reference EMG Signal
 
     def edit_refsig(self):
-        """Function to edit the emg reference signal. A new window is openend.
-           This funtion provides two options, refsig filtering and offset removal.
+        """
+        Instance method to open "Reference Signal Editing Window". Options for
+        refsig filtering and offset removal are displayed.
+
+        Executed when button "RefSig Editing" in master GUI window is pressed.
         """
         # Create new window
         self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Reference Signal Eiditing Window")
+        self.head.iconbitmap("logo.ico")
         self.head.grab_set()
 
         # Filter Refsig
@@ -575,7 +841,20 @@ class GUI():
     ### Define functions for Refsig editing
 
     def filter_refsig(self):
-        """Function that filters the refig based on specs.
+        """
+        Instance method that filters the refig based on user selected specs.
+
+        Executed when button "Filter Refsig" in Reference Signal Editing Window is pressed.
+        The emgfile and the GUI plot are updated.
+
+        Raises
+        ------
+        TypeError
+            When no reference signal file is available.
+
+        See Also
+        --------
+        filter_refsig in library.
         """
         try:
             # Filter refsig
@@ -590,7 +869,20 @@ class GUI():
 
 
     def remove_offset(self):
-        """Function that removes Refsig offset.
+        """
+        Instance Method that remves user specified/selected Refsig offset.
+
+        Executed when button "Remove offset" in Reference Signal Editing Window is pressed.
+        The emgfile and the GUI plot are updated.
+
+        Raises
+        ------
+        TypeError
+            When no reference signal file is available
+
+        See Also
+        --------
+        remove_offset in library.
         """
         try:
             # Remove offset
@@ -607,11 +899,16 @@ class GUI():
 # Resize EMG File
 
     def resize_file(self):
-        """Function to resize the EMG. A new window is openend.
+        """
+        Instance method to open "Resize EMG File Window". Options to resize
+        the emgfile by specified area are displayed.
+
+        Executed when button "Resize File" in master GUI window is pressed.
         """
         # Create new window
         self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Resize EMG File Window")
+        self.head.iconbitmap("logo.ico")
         self.head.grab_set()
 
         # Enter start point of resizing area
@@ -648,47 +945,88 @@ class GUI():
     ### Define function for resizing
 
     def select_resize(self):
-        """ Function to get resize selection from user.
         """
-        # Open selection window for user
-        start, end = openhdemg.showselect(emgfile=self.resdict, title="Select the start/end area to consider then press enter")
-        self.resdict, start_, end_ = openhdemg.resize_emgfile(emgfile=self.resdict,
-                                                              area=[start, end])
-        # Update Plot
-        self.in_gui_plotting()
+        Instance method to get resize area from user specification on plot and
+        resize emgfile.
+
+        Executed when button "Select Resize" is pressed in Resize file window.
+        The emgfile and the GUI plot are updated.
+
+        Raises
+        ------
+        AttributeError
+            When no file is loaded prior to analysis.
+
+        See Also
+        --------
+        showselect, resize_emgfile in library.
+        """
+        try:
+            # Open selection window for user
+            start, end = openhdemg.showselect(emgfile=self.resdict,
+                                              title="Select the start/end area to consider then press enter")
+            self.resdict, start_, end_ = openhdemg.resize_emgfile(emgfile=self.resdict,
+                                                                  area=[start, end])
+            # Update Plot
+            self.in_gui_plotting()
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
     def resize_emgfile(self):
-        """Function that actually resizes the file.
         """
-        # Resize the file.
-        self.resdict, start_, end_ = openhdemg.resize_emgfile(emgfile=self.resdict,
-                                                              area=[int(self.start_area.get()),
-                                                                   int(self.end_area.get())])
-        # Define dictionary for pandas
-        mvf_dic = {"Length": [self.resdict["EMG_LENGTH"]],
-                   "Start": [start_],
-                   "End": [end_]}
-        df = pd.DataFrame(data=mvf_dic)
+        Instance method to get resize are from user specification and
+        resize the emgfile.
 
-        # Display resizing specs
-        self.display_results(df)
+        Executed when button "Resize File" in Resize file window is pressed.
+        The emgfile and the GUI plot are updated.
 
-        # Update file length value
-        ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
+        Raises
+        ------
+        AttributeError
+            When no file is loaded prior to analysis.
 
-        # Update plot
-        self.in_gui_plotting()
+        See Also
+        --------
+        resize_emgfile in library.
+        """
+        try:
+            # Resize the file.
+            self.resdict, start_, end_ = openhdemg.resize_emgfile(emgfile=self.resdict,
+                                                                  area=[int(self.start_area.get()),
+                                                                       int(self.end_area.get())])
+            # Define dictionary for pandas
+            res_dic = {"Length": [self.resdict["EMG_LENGTH"]],
+                       "Start": [start_],
+                       "End": [end_]}
+            df = pd.DataFrame(data=res_dic)
+
+            # Display resizing specs
+            self.display_results(df)
+
+            # Update file length value
+            ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
+
+            # Update plot
+            self.in_gui_plotting()
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
 #-----------------------------------------------------------------------------------------------
 # Analysis of Force
 
     def analyze_force(self):
-        """Function to analyse force singal. A new window is opened.
-           The user can calculate the MVC of the steady state and the RFD.
+        """
+        Instance method to open "Force analysis Window".
+        Options to analyse force singal are displayed.
+
+        Executed when "Analyse Force" button in master GUI window is pressed.
         """
         # Create new window
         self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Force Analysis Window")
+        self.head.iconbitmap("logo.ico")
         self.head.grab_set()
 
         # Get MVIF
@@ -715,38 +1053,79 @@ class GUI():
     ### Define functions for force analysis
 
     def get_mvif(self):
-        """Function that retrieves calculated MVIF.
         """
-        self.mvif = openhdemg.get_mvif(emgfile=self.resdict)
-        # Define dictionary for pandas
-        mvf_dic = {"MVIF": [self.mvif]}
-        self.mvif_df = pd.DataFrame(data=mvf_dic)
-        # Display results
-        self.display_results(self.mvif_df)
+        Instance methof to retrieve calculated MVIF based on user selection.
+
+        Executed when button "Get MVIF" in Analyze Force window is pressed.
+        The Results of the analysis are displayed in the results terminal.
+
+        Raises
+        ------
+        AttributeError
+            When no file is loaded prior to analysis.
+
+        See Also
+        --------
+        get_mvif in library
+        """
+        try:
+            #get MVIF
+            self.mvif = openhdemg.get_mvif(emgfile=self.resdict)
+            # Define dictionary for pandas
+            mvf_dic = {"MVIF": [self.mvif]}
+            self.mvif_df = pd.DataFrame(data=mvf_dic)
+            # Display results
+            self.display_results(self.mvif_df)
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
     def get_rfd(self):
-        """Function that retrieves calculated RFD.
         """
-        # Define list for RFD computation
-        ms = str(self.rfdms.get())
-        ms_list = ms.split(",")
-        ms_list = [int(i) for i in ms_list]
-        # Calculate rfd
-        self.rfd = openhdemg.compute_rfd(emgfile=self.resdict,
-                                         ms=ms_list)
-        # Display results
-        self.display_results(self.rfd)
+        Instance method to calculate RFD at specified timepoints based on user selection.
+
+        Executed when button "Get RFD" in Analyze Force window is pressed.
+        The Results of the analysis are displayed in the results terminal.
+
+        Raises
+        ------
+        AttributeError
+            When no file is loaded prior to analysis.
+
+        See Also
+        --------
+        get_rfd in library
+        """
+        try:
+            # Define list for RFD computation
+            ms = str(self.rfdms.get())
+            # Split the string at ,
+            ms_list = ms.split(",")
+            # Use comprehension to iterate through
+            ms_list = [int(i) for i in ms_list]
+            # Calculate rfd
+            self.rfd = openhdemg.compute_rfd(emgfile=self.resdict,
+                                             ms=ms_list)
+            # Display results
+            self.display_results(self.rfd)
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 #-----------------------------------------------------------------------------------------------
 # Analysis of motor unit properties
 
     def mu_analysis(self):
-        """Function to analyse motor unit properties.
-           The user can select between recruitement threshold,
-           discharge rate or basic properties computing.
+        """
+        Instance method to open "Motor Unit Properties Window". Options to analyse motor
+        unit properties such as recruitement threshold, discharge rate or
+        basic properties computing are displayed.
+
+        Executed when button "MU Properties" button in master GUI window is pressed.
         """
         # Create new window
         self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Motor Unit Properties Window")
+        self.head.iconbitmap("logo.ico")
         self.head.grab_set()
 
         # MVIF Entry
@@ -849,8 +1228,25 @@ class GUI():
     ### Define functions for motor unit property calculation
 
     def compute_mu_threshold(self):
-        """Function that actually computes the motor unit
-           recruitement thresholds.
+        """
+        Instance method to compute the motor unit recruitement thresholds
+        based on user selection of events and types.
+
+        Executed when button "Compute threshold" in Motor Unit Properties Window
+        is pressed. The analysis results are displayed in the result terminal.
+
+        Raises
+        ------
+        AttributeError
+            When no file is loaded prior to calculation.
+        ValueError
+            When entered MVIF is not valid (inexistent).
+        AssertionError
+            When types/events are not specified.
+
+        See Also
+        --------
+        compute_thresholds in library.
         """
         try:
             # Compute thresholds
@@ -871,8 +1267,25 @@ class GUI():
             tk.messagebox.showerror("Information", "Specify Event and/or Type.")
 
     def compute_mu_dr(self):
-        """Function that actually computes the motor unit
-           discharge rates.
+        """
+        Instance method to compute the motor unit discharge rate
+        based on user selection of Firings and Events.
+
+        Executed when button "Compute discharge rate" in Motor Unit Properties Window
+        is pressed. The analysis results are displayed in the result terminal.
+
+        Raises
+        ------
+        AttributeError
+            When no file is loaded prior to calculation.
+        ValueError
+            When entered Firings values are not valid (inexistent).
+        AssertionError
+            When types/events are not specified.
+
+        See Also
+        --------
+        compute_dr in library.
         """
         try:
             # Compute discharge rates
@@ -893,8 +1306,27 @@ class GUI():
             tk.messagebox.showerror("Information", "Specify Event and/or Type.")
 
     def basic_mus_properties(self):
-        """Function that actually computes several basic motor unit
-           properties.
+        """
+        Instance method to compute basic motor unit properties based in user
+        selection in plot.
+
+        Executed when button "Basic MU properties" in Motor Unit Properties Window
+        is pressed. The analysis results are displayed in the result terminal.
+
+        Raises
+        ------
+        AttributeError
+            When no file is loaded prior to calculation.
+        ValueError
+            When entered Firings values are not valid (inexistent).
+        AssertionError
+            When types/events are not specified.
+        UnboundLocalError
+            When start/end area for calculations are specified wrongly.
+
+        See Also
+        --------
+        basic_mus_properties in library.
         """
         try:
             # Calculate properties
@@ -914,15 +1346,24 @@ class GUI():
         except AssertionError:
             tk.messagebox.showerror("Information", "Specify Event and/or Type.")
 
+        except UnboundLocalError:
+            tk.messagebox.showerror("Information", "Select start/end area again.")
+
 #-----------------------------------------------------------------------------------------------
 # Plot EMG
 
     def plot_emg(self):
-        """Function that creates several plots from the emg file.
+        """
+        Instance method to open "Plot Window". Options to create
+        several plots from the emgfile are displayed.
+
+        Executed when button "Plot EMG" in master GUI window is pressed.
+        The plots are displayed in seperate windows.
         """
         # Create new window
         self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Plot Window")
+        self.head.iconbitmap("logo.ico")
         self.head.grab_set()
 
         # Plot emgsig
@@ -935,7 +1376,7 @@ class GUI():
         channel_entry = ttk.Combobox(self.head,
                                      width=15,
                                      textvariable=self.channels)
-        channel_entry["values"] = ("1", "12", "123", "1234")
+        channel_entry["values"] = ("0", "0,1,2", "0,1,2,3")
         channel_entry.grid(column=1, row=0, sticky=(W,E))
         self.channels.set("Channel Numbers")
 
@@ -977,7 +1418,7 @@ class GUI():
         munumb_entry = ttk.Combobox(self.head,
                                     width=15,
                                     textvariable=self.mu_numb)
-        munumb_entry["values"] = ("1", "12", "123", "1234")
+        munumb_entry["values"] = ("0", "0,1,2", "0,1,2,3", "all")
         munumb_entry.grid(column=1, row=6, sticky=(W,E))
         self.mu_numb.set("MU Number")
         separator3 = ttk.Separator(self.head, orient="horizontal")
@@ -993,7 +1434,7 @@ class GUI():
         munumb_entry_idr = ttk.Combobox(self.head,
                                     width=15,
                                     textvariable=self.mu_numb_idr)
-        munumb_entry_idr["values"] = ("1", "12", "123", "1234")
+        munumb_entry_idr["values"] = ("0", "0,1,2", "0,1,2,3", "all")
         munumb_entry_idr.grid(column=1, row=8, sticky=(W,E))
         self.mu_numb_idr.set("MU Number")
 
@@ -1003,14 +1444,40 @@ class GUI():
     ### Define functions for motor unit plotting
 
     def plt_emgsignal(self):
-        """Function to plot the raw emg signal in an seperate plot window.
-           The plot can be saved and partly edited using the matplotlib options.
+        """
+        Instance method to plot the raw emg signal in an seperate plot window. 
+        The channels selected by the user are plotted. The plot can be saved and
+        partly edited using the matplotlib options.
+
+        Executed when button "Plot EMGsig" in Plot Window is pressed.
+
+        Raises
+        ------
+        AttributeError
+            When no file is loaded prior to calculation.
+        ValueError
+            When entered channel number is not valid (inexistent).
+        KeyError
+            When entered channel number is out of bounds.
+
+        See Also
+        --------
+        plot_emgsignal in library.
         """
         try:
             # Create list of channels to be plotted
-            channel_list = [int(chan) for chan in self.channels.get()]
-            # Plot raw emg signal
-            openhdemg.plot_emgsig(emgfile=self.resdict, channels=channel_list)
+            channels = self.channels.get()
+
+            if len(channels) > 1:
+                chan_list = channels.split(",")
+                chan_list = [int(i) for i in chan_list]
+
+                # Plot raw emg signal
+                openhdemg.plot_emgsig(emgfile=self.resdict, channels=chan_list)
+
+            else:
+                # Plot raw emg signal
+                openhdemg.plot_emgsig(emgfile=self.resdict, channels=int(channels))
 
         except AttributeError:
             tk.messagebox.showerror("Information", "Load file prior to computation.")
@@ -1018,9 +1485,24 @@ class GUI():
         except ValueError:
             tk.messagebox.showerror("Information", "Enter valid channel number.")
 
+        except KeyError:
+            tk.messagebox.showerror("Information", "Enter valid channel number.")
+
     def plt_refsignal(self):
-        """Function to plot the reference signal in an seperate plot window.
-           The plot can be saved and partly edited using the matplotlib options.
+        """
+        Instance method to plot the reference signal in an seperate plot window.
+        The plot can be saved and partly edited using the matplotlib options.
+
+        Executed when button "Plot REFsig" in Plot Window is pressed.
+
+        Raises
+        ------
+        AttributeError
+            When no file is loaded prior to calculation.
+
+        See Also
+        --------
+        plot_refsig in library.
         """
         try:
             # Plot reference signal
@@ -1030,8 +1512,23 @@ class GUI():
             tk.messagebox.showerror("Information", "Load file prior to computation.")
 
     def plt_mupulses(self):
-        """Function to plot the motor unit pulses in an seperate plot window.
-           The plot can be saved and partly edited using the matplotlib options.
+        """
+        Instance method to plot the mu pulses in an seperate plot window. 
+        The linewidth selected by the user is used. The plot can be saved and
+        partly edited using the matplotlib options.
+
+        Executed when button "Plot MUpulses" in Plot Window is pressed.
+
+        Raises
+        ------
+        AttributeError
+            When no file is loaded prior to calculation.
+        ValueError
+            When entered channel number is not valid (inexistent).
+        
+        See Also
+        --------
+        plot_mupulses in library.
         """
         try:
             # Plot motor unig pulses
@@ -1045,14 +1542,45 @@ class GUI():
 
 
     def plt_ipts(self):
-        """Function to plot the motor unit puls train (i.e., non-binary firing) in an seperate plot window.
-           The plot can be saved and partly edited using the matplotlib options.
+        """
+        Instance method to plot the motor unit pulse train in an seperate plot window.
+        The motor units selected by the user are plotted. The plot can be saved and
+        partly edited using the matplotlib options.
+
+        Executed when button "Plot IPTS" in Plot Window is pressed.
+
+        Raises
+        ------
+        AttributeError
+            When no file is loaded prior to calculation.
+        ValueError
+            When entered motor unit number is not valid (inexistent).
+        KeyError
+            When entered motor number is out of bounds.
+
+        See Also
+        --------
+        plot_ipts in library.
         """
         try:
             # Create list contaning motor units to be plotted
-            mu_list = [int(mu) for mu in self.mu_numb.get()]
-            # Plot motor unit puls train
-            openhdemg.plot_ipts(emgfile=self.resdict, munumber=mu_list)
+            mu_numb = self.mu_numb.get()
+
+            if mu_numb == "all":
+                # Plot motor unit puls train in default
+                openhdemg.plot_ipts(emgfile=self.resdict)
+
+            elif len(mu_numb) > 2:
+                # Split at ,
+                mu_list = mu_numb.split(",")
+                # Use comprehension to loop troug mu_list
+                mu_list = [int(i) for i in mu_list]
+                # Plot motor unit puls train in default
+                openhdemg.plot_ipts(emgfile=self.resdict, munumber=mu_list)
+
+            else:
+                # Plot motor unit puls train in default
+                openhdemg.plot_ipts(emgfile=self.resdict, munumber=int(mu_numb))
 
         except AttributeError:
             tk.messagebox.showerror("Information", "Load file prior to computation.")
@@ -1060,30 +1588,71 @@ class GUI():
         except ValueError:
             tk.messagebox.showerror("Information", "Enter valid motor unit number.")
 
+        except KeyError:
+            tk.messagebox.showerror("Information", "Enter valid motor unit number.")
+
 
     def plt_idr(self):
-        """Function to plot the instanteous discharge rate in an seperate plot window.
-           The plot can be saved and partly edited using the matplotlib options.
+        """
+        Instance method to plot the instanteous discharge rate in an seperate plot window.
+        The motor units selected by the user are plotted. The plot can be saved and
+        partly edited using the matplotlib options.
+
+        Executed when button "Plot IDR" in Plot Window is pressed.
+
+        Raises
+        ------
+        AttributeError
+            When no file is loaded prior to calculation.
+        ValueError
+            When entered channel number is not valid (inexistent).
+        KeyError
+            When entered channel number is out of bounds.
+
+        See Also
+        --------
+        plot_idr in library.
         """
         try:
-            # Create list containing motor units to be plotted
-            mu_list_idr = [int(mu) for mu in self.mu_numb_idr.get()]
-            # Plot instanteous discharge rate
-            openhdemg.plot_idr(emgfile=self.resdict, munumber=mu_list_idr)
+            mu_idr = self.mu_numb_idr.get()
+
+            if mu_idr == "all":
+                # Plot instanteous discharge rate
+                openhdemg.plot_idr(emgfile=self.resdict)
+
+            elif len(mu_idr) > 2:
+                mu_list_idr = mu_idr.split(",")
+                mu_list_idr = [int(mu) for mu in mu_list_idr ]
+                # Plot instanteous discharge rate
+                openhdemg.plot_idr(emgfile=self.resdict, munumber=mu_list_idr)
+
+            else:
+                # Plot instanteous discharge rate
+                openhdemg.plot_idr(emgfile=self.resdict, munumber=int(mu_idr))
 
         except AttributeError:
             tk.messagebox.showerror("Information", "Load file prior to computation.")
 
         except ValueError:
+            tk.messagebox.showerror("Information", "Enter valid motor unit number.")
+
+        except KeyError:
             tk.messagebox.showerror("Information", "Enter valid motor unit number.")
 
 #-----------------------------------------------------------------------------------------------
 # Analysis results display
 
     def display_results(self, input_df):
-        """Functions that displays all analysis results in the
-           output labelframe using Pandastable. Input must be a
-           Pandas dataframe.
+        """
+        Instance method that displays all analysis results in the
+        output terminal using Pandastable. Input must be a Pandas dataframe.
+
+        Executed trough functions with calculated anylsis results.
+
+        Parameters
+        ----------
+        input_df : pd.DataFrame
+            Dataftame containing the analysis results.
         """
         # Create frame for output
         self.terminal = ttk.LabelFrame(root, text="Result Output",
@@ -1098,6 +1667,10 @@ class GUI():
                           showstatusbar=False,
                           height=100)
 
+        # Resize column width
+        options = {"cellwidth": 10}
+        config.apply_options(options, table)
+
         # Show results
         table.show()
 #-----------------------------------------------------------------------------------------------
@@ -1105,6 +1678,5 @@ class GUI():
 # Run GUI upon calling
 if __name__ == "__main__":
     root = Tk()
-    root['bg'] = 'LightBlue4'
-    GUI(root)
+    gui = GUI(root)
     root.mainloop()
