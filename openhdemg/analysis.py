@@ -15,25 +15,25 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
 
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
-    event_: str, default "rt_dert"
+    event_ : str, default "rt_dert"
         When to calculate the thresholds. Input parameters for event_ are:
             "rt_dert" means that both recruitment and derecruitment tresholds will be calculated.
             "rt" means that only recruitment tresholds will be calculated.
             "dert" means that only derecruitment tresholds will be calculated.
-    type_: str, default "abs_rel"
+    type_ : str, default "abs_rel"
         The tipe of value to calculate. Input parameters for type_ are:
             "abs_rel" means that both absolute and relative tresholds will be calculated.
             "rel" means that only relative tresholds will be calculated.
             "abs" means that only absolute tresholds will be calculated.
-    mvif: float, default 0
+    mvif : float, default 0
         The maximum voluntary isometric force (MViF).
         if mvif is 0, the user is asked to input mvif; otherwise, the value passed is used.
 
     Returns
     -------
-    mus_thresholds: pd.DataFrame
+    mus_thresholds : pd.DataFrame
         A DataFrame containing the requested thresholds.
     """
 
@@ -133,17 +133,17 @@ def compute_dr(
 
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
-    n_firings_RecDerec: int, default 4
+    n_firings_RecDerec : int, default 4
         The number of firings at recruitment and derecruitment to consider for the calculation of the DR.
-    n_firings_steady: int, default 10
+    n_firings_steady : int, default 10
         The number of firings to consider for the calculation of the DR at the start and at the end
         of the steady-state phase.
-    start_steady, end_steady: int, default -1
+    start_steady, end_steady : int, default -1
         The start and end point (in samples) of the steady-state phase.
         If < 0 (default), the user will need to manually select the start and end of the steady-state phase.
-    event_: str, default "rec_derec_steady"
+    event_ : str, default "rec_derec_steady"
         When to calculate the DR. Input parameters for event_ are:
             "rec_derec_steady" means that the DR is calculated at recruitment, derecruitment and during the steady-state phase.
             "rec" means that the DR is calculated at recruitment.
@@ -153,7 +153,7 @@ def compute_dr(
 
     Returns
     -------
-    mus_dr: pd.DataFrame
+    mus_dr : pd.DataFrame
         A pd.DataFrame containing the requested DR.
     
     Notes
@@ -291,24 +291,24 @@ def basic_mus_properties(
 
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
-    n_firings_RecDerec: int, default 4
+    n_firings_RecDerec : int, default 4
         The number of firings at recruitment and derecruitment to consider for the calculation of the DR.
-    n_firings_steady: int, default 10
+    n_firings_steady : int, default 10
         The number of firings to consider for the calculation of the DR at the start and at the end
         of the steady-state phase.
-    start_steady, end_steady: int, default -1
+    start_steady, end_steady : int, default -1
         The start and end point (in samples) of the steady-state phase.
         If < 0 (default), the user will need to manually select the start and end of the steady-state phase.
-    mvif: float, default 0
+    mvif : float, default 0
         The maximum voluntary isometric force (MViF). It is suggest to report MViF in Newton (N).
         If 0 (default), the user will be asked to imput it manually.
         Otherwise, the passed value will be used.
 
     Returns
     -------
-    mus_dr: pd.DataFrame
+    mus_dr : pd.DataFrame
         A pd.DataFrame containing the results of the analysis.
     """
 
@@ -416,28 +416,28 @@ def compute_covisi(
     This function calculates the coefficient of variation of interspike interval (COVisi).
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
-    n_firings_RecDerec: int, default 4
+    n_firings_RecDerec : int, default 4
         The number of firings at recruitment and derecruitment to consider for the calculation of the COVisi.
-    start_steady, end_steady: int, default -1
+    start_steady, end_steady : int, default -1
         The start and end point (in samples) of the steady-state phase.
         If < 0 (default), the user will need to manually select the start and end of the steady-state phase.
-    event_: str, default "rec_derec_steady"
+    event_ : str, default "rec_derec_steady"
         When to calculate the COVisi. Input parameters for event_ are:
             "rec_derec_steady" means that the covisi is calculated at recruitment, derecruitment and during the steady-state phase.
             "rec" means that the covisi is calculated at recruitment.
             "derec" means that the covisi is calculated at derecruitment.
             "rec_derec" means that the covisi is calculated at recruitment and derecruitment.
             "steady" means that the covisi is calculated during the steady-state phase.
-    single_mu_number: int, default -1
+    single_mu_number : int, default -1
         Number of the specific MU to compute the COVisi.
         If single_mu_number >= 0, only the COVisi of the entire contraction will be returned.
         If -1 (default), COVisi will be calculated for all the MUs.
     
     Returns
     -------
-    covisi: pd.DataFrame
+    covisi : pd.DataFrame
         A pd.DataFrame containing the requested COVisi.
     
     Notes
@@ -558,14 +558,14 @@ def compute_drvariability(
 
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
-    n_firings_RecDerec: int, default 4
+    n_firings_RecDerec : int, default 4
         The number of firings at recruitment and derecruitment to consider for the calculation of the DR variability.
-    start_steady, end_steady: int, default -1
+    start_steady, end_steady : int, default -1
         The start and end point (in samples) of the steady-state phase.
         If < 0 (default), the user will need to manually select the start and end of the steady-state phase.
-    event_: str, default "rec_derec_steady"
+    event_ : str, default "rec_derec_steady"
         When to calculate the COVisi. Input parameters for event_ are:
             "rec_derec_steady" means that the DR variability is calculated at recruitment, derecruitment and during the steady-state phase.
             "rec" means that the DR variability is calculated at recruitment.
@@ -575,7 +575,7 @@ def compute_drvariability(
     
     Returns
     -------
-    drvariability: pd.DataFrame
+    drvariability : pd.DataFrame
         A pd.DataFrame containing the requested DR variability.
 
     Notes

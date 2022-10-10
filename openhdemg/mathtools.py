@@ -21,7 +21,7 @@ def min_max_scaling(series_or_df):
 
     Parameters
     ----------
-    series_or_df: pd.Series or pd.DataFrame
+    series_or_df : pd.Series or pd.DataFrame
         The min-max scaling is performed on the entire series, or to single columns in a pd.DataFrame.
 
     Returns
