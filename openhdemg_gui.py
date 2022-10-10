@@ -1573,7 +1573,7 @@ class GUI():
         plot_ipts in library.
         """
         try:
-            # Create list contaning motor units to be plottedplt_ipts
+            # Create list contaning motor units to be plotted
             mu_numb = self.mu_numb.get()
 
             if mu_numb == "all":
