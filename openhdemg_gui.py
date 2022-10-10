@@ -258,7 +258,7 @@ class GUI():
 
         # Specify Signal
         self.filetype = StringVar()
-        signal_value = ("OTB", "DEMUSE", "REFSIG")
+        signal_value = ("OTB", "DEMUSE", "REFSIG", "JSON")
         signal_entry = ttk.Combobox(self.left,
                                     text="Signal",
                                     width=10,
@@ -396,7 +396,7 @@ class GUI():
 
         See Also
         --------
-        emg_from_demuse, emg_from_otb in library.
+        emg_from_demuse, emg_from_otb, refsig_from_otb and emg_from_json in library.
         """
         # Ask user to select the file
         file_path = filedialog.askopenfilename()
@@ -421,6 +421,15 @@ class GUI():
         elif self.filetype.get() == "DEMUSE":
             # load DEMUSE
             self.resdict = openhdemg.emg_from_demuse(filepath=self.file_path)
+
+            # Add filespecs
+            ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
+            ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W,E))
+            ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W,E))
+        
+        elif self.filetype.get() == "JSON":
+            # load Open_HD-EMG (.json)
+            self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
 
             # Add filespecs
             ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
@@ -451,15 +460,16 @@ class GUI():
         save_json_emgfile in library.
         """
         try:
-            # Ask user to select the directory
-            save_path = filedialog.askdirectory()
-            save_filepath = save_path + "/" + self.filename + "_saved.json"
+            # Ask user to select the directory and file name
+            save_filepath = filedialog.asksaveasfilename(
+                defaultextension=".*",filetypes = (("JSON files","*.json"),('all files','*.*'))
+            )
 
             # Get emgfile
             save_emg = self.resdict
 
             # Save json file
-            openhdemg.save_json_emgfile(emgfile=save_emg, path=save_filepath)
+            openhdemg.save_json_emgfile(emgfile=save_emg, filepath=save_filepath)
 
         except AttributeError:
             tk.messagebox.showerror("Information", "Make sure a file is loaded.")
@@ -483,7 +493,7 @@ class GUI():
             path = filedialog.askdirectory()
 
             # Define excel writer
-            writer = pd.ExcelWriter(path + "/" + "Results.xlsx")
+            writer = pd.ExcelWriter(path + "/Results_" + self.filename + ".xlsx")
 
             # Check for attributes and write sheets
             if hasattr(self, "mvif_df"):
