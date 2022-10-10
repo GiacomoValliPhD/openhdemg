@@ -114,17 +114,17 @@ We can load files coming from OTBiolab+ (as seen), but also form the DEMUSE soft
 Also in this case, files can be loaded using a GUI or by specific functions.
 
 Available functions to load files are:
-    emg_from_otb: load file exported from OTB (please refer to the official documentation
+    emg_from_otb : load file exported from OTB (please refer to the official documentation
         of this function to know how to export files from OTBiolab+)
-    refsig_from_otb: load file exported from OTB containing only the reference signal
+    refsig_from_otb : load file exported from OTB containing only the reference signal
         (please refer to the official documentation of this function to know how to export 
         files from OTBiolab+)
-    emg_from_demuse: load decomposed DEMUSE file
-    emg_from_json: load files in JSON format. .json files are created with this library.
+    emg_from_demuse : load decomposed DEMUSE file
+    emg_from_json : load files in JSON format. .json files are created with this library.
         They can be used to save original files modified by the user (see below).
 
 Files that have modified by the user, can be save with:
-    save_json_emgfile: saves the file in JSON format (.json)
+    save_json_emgfile : saves the file in JSON format (.json)
 """
 
 # Now, try to modify the original file and save the changes in a new file

@@ -14,15 +14,15 @@ Description
 
 Function's scope
 ----------------
-    emg_from_otb and emg_from_demuse:
+    emg_from_otb and emg_from_demuse :
         are used to load .mat files coming from the DEMUSE or the OTBiolab+ software. Demuse has a fixed file structure while
         the OTB file, in order to be compatible with this library should be exported with a strict structure as described in the
         function emg_from_otb. In both cases, the input file is a .mat file.
-    refsig_from_otb:
+    refsig_from_otb :
         is used to load files from the OTBiolab+ software that contain only the REF_SIGNAL.
-    askopenfile:
+    askopenfile :
         is a quick GUI implementation that allows users to select the file to open.
-    save_json_emgfile, emg_from_json:
+    save_json_emgfile, emg_from_json :
         are used to save the working file to a .json file or to load the .json file.
 
 Notes
@@ -65,16 +65,16 @@ def oned_mat_to_pd(variable_name, mat_file, transpose_=False):
 
     Parameters
     ----------
-    variable_name: str
+    variable_name : str
         Name of the variable to extract from the .mat file.
-    mat_file: dict
+    mat_file : dict
         The .mat file loaded with loadmat.
-    transpose_: bool, default False
+    transpose_ : bool, default False
         Whether to transpose the pd.DataFrame containing the extracted variable.
     
     Returns
     -------
-    mat: pd.DataFrame or np.nan
+    mat : pd.DataFrame or np.nan
         A pd.DataFrame containing the requested variable
         or np.nan if the variable was not found.
     """
@@ -113,16 +113,16 @@ def twod_mat_to_pd(variable_name, mat_file, transpose_=True):
 
     Parameters
     ----------
-    variable_name: str
+    variable_name : str
         Name of the variable to extract from the .mat file.
-    mat_file: dict
+    mat_file : dict
         The .mat file loaded with loadmat.
-    transpose_: bool, default True
+    transpose_ : bool, default True
         Whether to transpose the pd.DataFrame containing the extracted variable.
     
     Returns
     -------
-    mat: pd.DataFrame or np.nan
+    mat : pd.DataFrame or np.nan
         A pd.DataFrame containing the requested variable
         or np.nan if the variable was not found.
     """
@@ -158,16 +158,16 @@ def threed_mat_to_list(variable_name, mat_file, transpose_=False):
 
     Parameters
     ----------
-    variable_name: str
+    variable_name : str
         Name of the variable to extract from the .mat file.
-    mat_file: dict
+    mat_file : dict
         The .mat file loaded with loadmat.
-    transpose_: bool, default True
+    transpose_ : bool, default True
         Whether to transpose the pd.DataFrame containing the extracted variable.
     
     Returns
     -------
-    mat: list
+    mat : list
         A list of numpy.ndarrays containing the requested variable
         or np.nan if the variable was not found.
     """
@@ -196,16 +196,16 @@ def create_binary_firings(EMG_LENGTH, NUMBER_OF_MUS, MUPULSES):
 
     Parameters
     ----------
-    EMG_LENGTH: int
+    EMG_LENGTH : int
         Number of samples (length) in the emg file.
-    NUMBER_OF_MUS: int
+    NUMBER_OF_MUS : int
         Number of MUs in the emg file.
-    MUPULSES: list
+    MUPULSES : list
         The times of firing of each MU.
     
     Returns
     -------
-    mat: pd.DataFrame
+    mat : pd.DataFrame
         A pd.DataFrame containing the requested variable
         or np.nan if the variable was not found.
     """
@@ -245,16 +245,16 @@ def raw_sig_from_demuse(variable_name, mat_file, transpose_=False):
 
     Parameters
     ----------
-    variable_name: str
+    variable_name : str
         The name of the variable containing the REF_SIGNAL (usually "SIG").
-    mat_file: dict
+    mat_file : dict
         The file loaded with loadmat containing the REF_SIGNAL.
-    transpose_: bool, default False
+    transpose_ : bool, default False
         Whether to transpose the pd.DataFrame containing the extracted variable.
     
     Returns
     -------
-    mat: pd.DataFrame
+    mat : pd.DataFrame
         A pd.DataFrame containing the requested variable
         or np.nan if the variable was not found.
     """
@@ -291,13 +291,13 @@ def emg_from_demuse(filepath):
     
     Parameters
     ----------
-    filepath: str or Path
+    filepath : str or Path
         The directory and the name of the file to load (including file extension .mat).
         This can be a simple string, the use of Path is not necessary.
     
     Returns
     -------
-    emgfile: dict
+    emgfile : dict
         A dictionary containing all the useful variables.
 
     Notes
@@ -390,17 +390,17 @@ def get_otb_refsignal(df, refsig):
 
     Parameters
     ----------
-    df: pd.DataFrame
+    df : pd.DataFrame
         A pd.DataFrame containing all the informations extracted
         from the OTB .mat file.
-    refsig: list
+    refsig : list
         Whether to seacrh also for the REF_SIGNAL and
         whether to load the filtered or unfiltered one.
         The list is composed as [bool, str]. str can be "filtered" or "unfiltered".
         
     Returns
     -------
-    REF_SIGNAL: pd.DataFrame or np.nan
+    REF_SIGNAL : pd.DataFrame or np.nan
         A pd.DataFrame containing the requested variable
         or np.nan if the variable was not found.
     """
@@ -476,13 +476,13 @@ def get_otb_decomposition(df):
 
     Parameters
     ----------
-    df: pd.DataFrame
+    df : pd.DataFrame
         A pd.DataFrame containing all the informations extracted
         from the OTB .mat file.
         
     Returns
     -------
-    IPTS, BINARY_MUS_FIRING: pd.DataFrame or np.nan
+    IPTS, BINARY_MUS_FIRING : pd.DataFrame or np.nan
         pd.DataFrames containing the requested variables
         or np.nan if the variables were not found.
     """
@@ -510,12 +510,12 @@ def get_otb_mupulses(binarymusfiring):
 
     Parameters
     ----------
-    binarymusfiring: pd.DataFrame
+    binarymusfiring : pd.DataFrame
         A pd.DataFrame containing the binary representation of MUs firings.
         
     Returns
     -------
-    MUPULSES: list
+    MUPULSES : list
         A list of ndarrays containing the firing time of each MU.
     """
     
@@ -541,13 +541,13 @@ def get_otb_ied(df):
 
     Parameters
     ----------
-    df: pd.DataFrame
+    df : pd.DataFrame
         A pd.DataFrame containing all the informations extracted
         from the OTB .mat file.
         
     Returns
     -------
-    IED: int
+    IED : int
         The interelectrode distance in millimeters.
     """
     
@@ -565,13 +565,13 @@ def get_otb_rawsignal(df):
 
     Parameters
     ----------
-    df: pd.DataFrame
+    df : pd.DataFrame
         A pd.DataFrame containing all the informations extracted
         from the OTB .mat file.
         
     Returns
     -------
-    RAW_SIGNAL: pd.DataFrame
+    RAW_SIGNAL : pd.DataFrame
         A pd.DataFrame containing the RAW_SIGNAL.
     """
 
@@ -613,17 +613,17 @@ def emg_from_otb(filepath, refsig=[True, "filtered"]):
 
     Parameters
     ----------
-    filepath: str or Path
+    filepath : str or Path
         The directory and the name of the file to load (including file extension .mat).
         This can be a simple string, the use of Path is not necessary.
-    refsig: list, default [True, "filtered"]
+    refsig : list, default [True, "filtered"]
         Whether to seacrh also for the REF_SIGNAL and
         whether to load the filtered or unfiltered one.
         The list is composed as [bool, str]. str can be "filtered" or "unfiltered".
     
     Returns
     -------
-    emgfile: dict
+    emgfile : dict
         A dictionary containing all the useful variables.
     
     Notes
@@ -709,17 +709,17 @@ def refsig_from_otb(filepath, refsig="filtered"):
 
     Parameters
     ----------
-    filepath: str or Path
+    filepath : str or Path
         The directory and the name of the file to load (including file extension .mat).
         This can be a simple string, the use of Path is not necessary.
-    refsig: list
+    refsig : list
         Whether to seacrh also for the REF_SIGNAL and
         whether to load the filtered or unfiltered one.
         The list is composed as [bool, str]. str can be "filtered" or "unfiltered".
     
     Returns
     -------
-    emgfile: dict
+    emgfile : dict
         A dictionary containing all the useful variables.
     
     Notes
@@ -776,10 +776,10 @@ def save_json_emgfile(emgfile, filepath):
 
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
-    filepath: str or Path
-        The directory and the name of the file to save (including file extension .mat).
+    filepath : str or Path
+        The directory and the name of the file to save (including file extension .json).
         This can be a simple string; The use of Path is not necessary.
     """
 
@@ -907,13 +907,13 @@ def emg_from_json(filepath):
 
     Parameters
     ----------
-    filepath: str or Path
-        The directory and the name of the file to load (including file extension .mat).
+    filepath : str or Path
+        The directory and the name of the file to load (including file extension .json).
         This can be a simple string, the use of Path is not necessary. 
     
     Returns
     -------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
     
     Notes
@@ -1039,12 +1039,12 @@ def askopenfile(
 
     Parameters
     ----------
-    initialdir: str or Path, default "/"
+    initialdir : str or Path, default "/"
         The directory of the file to load (excluding file name).
         This can be a simple string, the use of Path is not necessary.
-    filesource: str, default "DEMUSE"
+    filesource : str, default "DEMUSE"
         Can be one of "DEMUSE", "OTB", "OTB_refsig" (.mat) or "Open_HD-EMG" (.json).
-    otb_refsig_type: list, default [True, "filtered"]
+    otb_refsig_type : list, default [True, "filtered"]
         Whether to seacrh also for the REF_SIGNAL and
         whether to load the filtered or unfiltered one.
         The list is composed as [bool, str]. str can be "filtered" or "unfiltered".
@@ -1052,7 +1052,7 @@ def askopenfile(
 
     Returns
     -------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
     
     Notes

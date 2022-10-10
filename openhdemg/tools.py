@@ -169,12 +169,12 @@ def compute_idr(emgfile):
     
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
 
     Returns
     -------
-    idr: dict
+    idr : dict
         A dict containing a pd.DataFrame for each MU (keys are integers).
         Accessing the key, we have a pd.DataFrame containing:
             mupulses: firing sample
@@ -244,9 +244,9 @@ def delete_mus(emgfile, munumber):
     
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
-    munumber: int, list
+    munumber : int, list
         The MUs to remove. If a single MU has to be removed, this should be an int (number of the MU). 
         If multiple MUs have to be removed, a list of int should be passed.
         An unpacked (*) range can also be passed as munumber=[*range(0, 5)].
@@ -254,7 +254,7 @@ def delete_mus(emgfile, munumber):
 
     Returns
     -------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile without the unwanted MUs.
     """
 
@@ -328,12 +328,12 @@ def sort_mus(emgfile):
     
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
 
     Returns
     -------
-    sorted_emgfile: dict
+    sorted_emgfile : dict
         The dictionary containing the sorted emgfile.
     """
 
@@ -403,15 +403,15 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
 
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
-    start_steady, end_steady: int, default -1
+    start_steady, end_steady : int, default -1
         The start and end point (in samples) of the steady-state phase.
         If < 0 (default), the user will need to manually select the start and end of the steady-state phase.
     
     Returns
     -------
-    covsteady: pd.Series
+    covsteady : pd.Series
         The coefficient of variation of the steady-state phase in % (accessible as covsteady[0])
     """
 
@@ -435,16 +435,16 @@ def filter_refsig(emgfile, order=4, cutoff=20):
     
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
-    order: int, default 4
+    order : int, default 4
         The filter order.
-    cutoff: int, default 20
+    cutoff : int, default 20
         The cut-off frequency in Hz.
 
     Returns
     -------
-    filteredrefsig: dict
+    filteredrefsig : dict
         The dictionary containing the emgfile with a filtered REF_SIGNAL.
     """
 
@@ -465,18 +465,18 @@ def remove_offset(emgfile, offsetval=0, auto=0):
 
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
-    offsetval: float, default 0
+    offsetval : float, default 0
         Value of the offset. If offsetval is 0 (default), the user will be asked to manually 
         select an aerea to compute the offset value.
         Otherwise, the value passed to offsetval will be used. Negative offsetval can be passed.
-    auto: int, default 0
+    auto : int, default 0
         If auto > 0, the script automatically removes the offset based on the number of samples passed in input.
 
     Returns
     -------
-    offs_emgfile: dict
+    offs_emgfile : dict
         The dictionary containing the emgfile with a corrected offset of the REF_SIGNAL.
     """
 
@@ -525,12 +525,12 @@ def get_mvif(emgfile):
 
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
     
     Returns
     -------
-    mvif: float
+    mvif : float
         The MViF value in the original unit of measurement.
     """
 
@@ -553,11 +553,11 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None):
 
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
-    ms: list, default [50, 100, 150, 200]
+    ms : list, default [50, 100, 150, 200]
         Milliseconds (ms). A list containing the ranges in ms to calculate the RFD.
-    startpoint: None or int, default None
+    startpoint : None or int, default None
         The starting point to calculate the RFD in samples,
         If None, the user will be requested to manually select the starting point.
     

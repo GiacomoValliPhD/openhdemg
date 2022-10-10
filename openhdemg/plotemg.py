@@ -17,9 +17,9 @@ def showgoodlayout(tight_layout=True, despined=False):
 
     Parameters
     ----------
-    tight_layout: bool, default True
+    tight_layout : bool, default True
         If true (default), plt.tight_layout() is applied to the figure.
-    despined: bool or str, default False
+    despined : bool or str, default False
         False: left and bottom is not despined (standard plotting)
         True: all the sides are despined
         "2yaxes": only the top is despined. This is used for y axes both on the right and left side at the same time
@@ -59,21 +59,21 @@ def plot_emgsig(
 
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
-    channels: int or list
+    channels : int or list
         The channel (int) or channels (list of int) to plot. 
         The list can be passed as a manually-written list or with: channels=[*range(0, 12)],
         We need the "*" operator to unpack the results of range and build a list.
         channels is expected to be with base 0 (i.e., the first channel in the file is the number 0).
-    timeinseconds: bool, default True
+    timeinseconds : bool, default True
         Whether to show the time on the x-axes in seconds (True) or in samples (False).
-    figsize: list, default [20, 15]
+    figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    showimmediately: bool, default True
+    showimmediately : bool, default True
         If True (default), plt.show() is called and the figure showed to the user.
         It is useful to set it to False when calling the function from the GUI.
-    tight_layout: bool, default True
+    tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
     """
@@ -161,16 +161,16 @@ def plot_refsig(
 
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
-    timeinseconds: bool, default True
+    timeinseconds : bool, default True
         Whether to show the time on the x-axes in seconds (True) or in samples (False).
-    figsize: list, default [20, 15]
+    figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    showimmediately: bool, default True
+    showimmediately : bool, default True
         If True (default), plt.show() is called and the figure showed to the user.
         It is useful to set it to False when calling the function from the GUI.
-    tight_layout: bool, default True
+    tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
     """
@@ -222,22 +222,22 @@ def plot_mupulses(
 
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
-    linewidths: float, default 0.5
+    linewidths : float, default 0.5
         The width of the vertical lines representing the MU firing.
-    order: bool, default False
+    order : bool, default False
         If True, MUs are sorted and plotted based on the order of recruitment.
-    addrefsig: bool, default True
+    addrefsig : bool, default True
         If True, the REF_SIGNAL is plotted in front of the MUs pulses with a separated y-axes.
-    timeinseconds: bool, default True
+    timeinseconds : bool, default True
         Whether to show the time on the x-axes in seconds (True) or in samples (False).
-    figsize: list, default [20, 15]
+    figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    showimmediately: bool, default True
+    showimmediately : bool, default True
         If True (default), plt.show() is called and the figure showed to the user.
         It is useful to set it to False when calling the function from the GUI.
-    tight_layout: bool, default True
+    tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
     """
@@ -333,23 +333,22 @@ def plot_ipts(
 
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
-    munumber: str, int or list, default "all"
+    munumber : str, int or list, default "all"
         By default, IPTS of all the MUs is plotted.
         Otherwise, a single MU (int) or multiple MUs (list of int) can be specified.
         The list can be passed as a manually-written list or with: munumber=[*range(0, 12)],
         We need the "*" operator to unpack the results of range and build a list.
         munumber is expected to be with base 0 (i.e., the first MU in the file is the number 0).
-
-    timeinseconds: bool, default True
+    timeinseconds : bool, default True
         Whether to show the time on the x-axes in seconds (True) or in samples (False).
-    figsize: list, default [20, 15]
+    figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    showimmediately: bool, default True
+    showimmediately : bool, default True
         If True (default), plt.show() is called and the figure showed to the user.
         It is useful to set it to False when calling the function from the GUI.
-    tight_layout: bool, default True
+    tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
     
@@ -443,24 +442,24 @@ def plot_idr(
 
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile.
-    munumber: str, int or list, default "all"
+    munumber : str, int or list, default "all"
         By default, IDR of all the MUs is plotted.
         Otherwise, a single MU (int) or multiple MUs (list of int) can be specified.
         The list can be passed as a manually-written list or with: munumber=[*range(0, 12)],
         We need the "*" operator to unpack the results of range and build a list.
         munumber is expected to be with base 0 (i.e., the first MU in the file is the number 0).
-    addrefsig: bool, default True
+    addrefsig : bool, default True
         If True, the REF_SIGNAL is plotted in front of the MUs IDR with a separated y-axes.
-    timeinseconds: bool, default True
+    timeinseconds : bool, default True
         Whether to show the time on the x-axes in seconds (True) or in samples (False).
-    figsize: list, default [20, 15]
+    figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    showimmediately: bool, default True
+    showimmediately : bool, default True
         If True (default), plt.show() is called and the figure showed to the user.
         It is useful to set it to False when calling the function from the GUI.
-    tight_layout: bool, default True
+    tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
     
