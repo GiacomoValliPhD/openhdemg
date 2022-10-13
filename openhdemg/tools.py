@@ -20,16 +20,16 @@ def showselect(emgfile, title="", nclic=2):
 
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile and in particular the REF_SIGNAL (which is used for the selection).
-    title: str
+    title : str
         The title of the plot. It is optional but strongly recommended. It should describe the task to do.
     nclic: int, default 2
         The number of clics to be collected. 1 and 4 clics can also be specified with nclic.
     
     Returns
     -------
-    points: int
+    points : int
         The selected points (sorted in ascending order).
 
     Examples
@@ -98,17 +98,17 @@ def resize_emgfile(emgfile, area=None):
     
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile to resize.
-    area: None or list, default None
+    area : None or list, default None
         The resizing area. If already known, it can be passed in samples, as a list (e.g., [120,2560]).
         If None, the user can select the area of interest manually.
 
     Returns
     -------
-    rs_emgfile: dict
+    rs_emgfile : dict
         the new (resized) emgfile.
-    start_, end_: int
+    start_, end_ : int
         the start and end of the selection (can be used for code automation).
     
     Notes
@@ -563,7 +563,7 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None):
     
     Returns
     -------
-    rfd: pd.DataFrame
+    rfd : pd.DataFrame
         A pd.DataFrame containing the RFD at the different times.
     """
 

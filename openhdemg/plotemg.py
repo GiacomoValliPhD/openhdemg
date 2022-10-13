@@ -602,3 +602,124 @@ def plot_idr(
         )
 
     return fig
+
+
+def plot_muaps(sta_dict, munumber, figsize=[20, 15], showimmediately=True):
+    """
+    Plot MUAPs obtained from STA from one or multiple MUs.
+
+    Parameters
+    ----------
+    sta_dict : dict or list
+        dict containing STA for every MUs or a list of dicts containing STA.
+        If a list is passed, different MUs are overlayed. This is useful for
+        visualisation of MUAPs during tracking or duplicates removal.
+    munumber : int or list
+        int representing the MU to plot or a list of integers.
+        If a list is passed, different MUs are overlayed. This is useful for
+        visualisation of MUAPs during tracking or duplicates removal.
+        munumber and sta_dict are linked. If we pass a list in one, also
+        the other one should receive a list (see notes).
+        munumber is expected to be with base 0 (i.e., the first MU in the file is the number 0).
+    figsize : list, default [20, 15]
+        Size of the figure in centimeters [width, height].
+    showimmediately : bool, default True
+        If True (default), plt.show() is called and the figure showed to the user.
+        It is useful to set it to False when calling the function from the GUI.
+
+    Notes
+    -----
+    munumber tells us what MU to plot from the sta_dict. However, this is not so
+        straightforward if a list is passed to sta_dict and munumber.
+    Assume we pass sta_dict=[sta_filePre, sta_filePost] and munumber=[1,3], we
+        will plot the MU 1 from the sta_filePre and the MU 3 from the sta_filePost.
+    If we want to plot different MUs from the same STA file we can use
+        sta_dict=[sta_filePre, sta_filePre] and munumber=[1,3].
+    There is no limit to the number of MUs and STA files that can be overplotted.
+    ``Remember: the different STAs should be matched`` with same number of electrode,
+        processing (i.e., differential) and computed on the same timewindow.
+    """
+
+    # Check the input and get y axes limits
+    if isinstance(sta_dict, dict) and isinstance(munumber, int):
+        # Find the largest and smallest value to define y axis limits.
+        xmax = 0
+        xmin = 0
+        # Loop each MU, c means matrix columns
+        for c in sta_dict[munumber]:
+            max_ = sta_dict[munumber][c].max().max()
+            min_ = sta_dict[munumber][c].min().min()
+            if max_ > xmax:
+                xmax = max_
+            if min_ < xmin:
+                xmin = min_
+
+        # Obtain number of columns and rows, this changes if we use differential derivations
+        cols = len(sta_dict[munumber])
+        rows = len(sta_dict[munumber]["col0"].columns)
+        fig, axs = plt.subplots(
+            rows,
+            cols,
+            figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
+            num="MUAPs from STA",
+            sharex=True,
+        )
+
+        # Plot all the MUAPs, c means matrix columns
+        for r in range(rows):
+            for pos, c in enumerate(sta_dict[munumber].keys()):
+                axs[r, pos].plot(sta_dict[munumber][c].iloc[:, r])
+
+                axs[r, pos].set_ylim(xmin, xmax)
+                axs[r, pos].xaxis.set_visible(False)
+                axs[r, pos].set(yticklabels=[])
+                axs[r, pos].tick_params(left=False)
+
+        showgoodlayout(tight_layout=False, despined=True)
+        if showimmediately:
+            plt.show()
+
+    elif isinstance(sta_dict, list) and isinstance(munumber, list):
+        # Find the largest and smallest value to define y axis limits.
+        xmax = 0
+        xmin = 0
+        # Loop each sta_dict and MU, c means matrix columns
+        for pos, thisdict in enumerate(sta_dict):
+            for c in thisdict[munumber[pos]]:
+                max_ = thisdict[munumber[pos]][c].max().max()
+                min_ = thisdict[munumber[pos]][c].min().min()
+                if max_ > xmax:
+                    xmax = max_
+                if min_ < xmin:
+                    xmin = min_
+
+        # Obtain number of columns and rows, this changes if we use differential derivations
+        cols = len(sta_dict[0][munumber[0]])
+        rows = len(sta_dict[0][munumber[0]]["col0"].columns)
+        fig, axs = plt.subplots(
+            rows,
+            cols,
+            figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
+            num="MUAPs from STA",
+            sharex=True,
+        )
+
+        for posmu, thisdict in enumerate(sta_dict):
+            # Plot all the MUAPs, c means matrix columns, r rows
+            for r in range(rows):
+                for pos, c in enumerate(thisdict[munumber[posmu]].keys()):
+                    axs[r, pos].plot(thisdict[munumber[posmu]][c].iloc[:, r])
+
+                    axs[r, pos].set_ylim(xmin, xmax)
+                    axs[r, pos].xaxis.set_visible(False)
+                    axs[r, pos].set(yticklabels=[])
+                    axs[r, pos].tick_params(left=False)
+
+        showgoodlayout(tight_layout=False, despined=True)
+        if showimmediately:
+            plt.show()
+
+    else:
+        raise Exception(
+            "sta_dict and munumber must be both dict and int or list and list"
+        )
