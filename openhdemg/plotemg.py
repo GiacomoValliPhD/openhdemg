@@ -661,7 +661,7 @@ def plot_muaps(sta_dict, munumber, figsize=[20, 15], showimmediately=True):
             rows,
             cols,
             figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-            num="MUAPs from STA",
+            num=f"MUAPs from STA, munumber={munumber}",
             sharex=True,
         )
 
@@ -700,7 +700,7 @@ def plot_muaps(sta_dict, munumber, figsize=[20, 15], showimmediately=True):
             rows,
             cols,
             figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-            num="MUAPs from STA",
+            num=f"MUAPs from different STAs, munumber={munumber}",
             sharex=True,
         )
 

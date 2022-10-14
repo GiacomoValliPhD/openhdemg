@@ -5,39 +5,29 @@ This module contains functions to produce MUs anction potentials (MUAP).
 import pandas as pd
 
 
-def double_diff(sorted_rawemg):
+def diff(sorted_rawemg):
+    """
+    Calculate single differential (SD) of RAW_SIGNAL on matrix rows.
 
-    # Create a dict of pd.DataFrames for the double differential
-    dd = {"col0": {}, "col1": {}, "col2": {}, "col3": {}, "col4": {}}
+    Parameters
+    ----------
+    sorted_rawemg : dict
+        A dict containing the sorted electrodes.
+        Every key of the dictionary represents a different column of the matrix.
+        Rows are stored in the dict as a pd.DataFrame.
+    
+    Returns
+    -------
+    sd : dict
+        A dict containing the double differential signal.
+        Every key of the dictionary represents a different column of the matrix.
+        Rows are stored in the dict as a pd.DataFrame.
+    
+    Notes
+    -----
+    The returned sd will contain one less matrix row.
+    """
 
-    # Loop matrix columns
-    for col in sorted_rawemg.keys():
-        # Loop matrix rows
-        # TODO check this part for compatibility with different sorting orders
-        for pos, row in enumerate(sorted_rawemg[col].columns):
-            # TODO check with a demuse file
-            if col in ["col0", "col2", "col4"] and pos > 1:
-                res = (
-                    -sorted_rawemg[col].loc[:, row - 2]
-                    + 2 * sorted_rawemg[col].loc[:, row - 1]
-                    - sorted_rawemg[col].loc[:, row]
-                )
-                dd[col][row] = res
-
-            elif pos > 1:
-                res = (
-                    -sorted_rawemg[col].loc[:, row + 2]
-                    + 2 * sorted_rawemg[col].loc[:, row + 1]
-                    - sorted_rawemg[col].loc[:, row]
-                )
-                dd[col][row] = res
-
-        dd[col] = pd.DataFrame(dd[col])
-
-    return dd
-
-
-def diff(emgfile, sorted_rawemg):
     # Create a dict of pd.DataFrames for the single differential
     sd = {"col0": {}, "col1": {}, "col2": {}, "col3": {}, "col4": {}}
 
@@ -46,32 +36,60 @@ def diff(emgfile, sorted_rawemg):
         # Loop matrix rows
         # TODO check this part for compatibility with different sorting orders
         for pos, row in enumerate(sorted_rawemg[col].columns):
-            # TODO check with a demuse file
-            if emgfile["SOURCE"] == "OTB":
-                if col in ["col0", "col2", "col4"] and pos > 0:
-                    res = (
-                        sorted_rawemg[col].loc[:, row - 1]
-                        - sorted_rawemg[col].loc[:, row]
-                    )
-                    sd[col][row] = res
-                elif pos > 0:
-                    res = (
-                        sorted_rawemg[col].loc[:, row + 1]
-                        - sorted_rawemg[col].loc[:, row]
-                    )
-                    sd[col][row] = res
-
-            elif emgfile["SOURCE"] == "DEMUSE":
-                if pos > 0:
-                    res = (
-                        sorted_rawemg[col].loc[:, row - 1]
-                        - sorted_rawemg[col].loc[:, row]
-                    )
-                    sd[col][row] = res
+            if pos > 0:
+                res = (
+                    sorted_rawemg[col].loc[:, row - 1]
+                    - sorted_rawemg[col].loc[:, row]
+                )
+                sd[col][row] = res
 
         sd[col] = pd.DataFrame(sd[col])
 
     return sd
+
+
+def double_diff(sorted_rawemg):
+    """
+    Calculate double differential (DD) of RAW_SIGNAL on matrix rows.
+
+    Parameters
+    ----------
+    sorted_rawemg : dict
+        A dict containing the sorted electrodes.
+        Every key of the dictionary represents a different column of the matrix.
+        Rows are stored in the dict as a pd.DataFrame.
+    
+    Returns
+    -------
+    dd : dict
+        A dict containing the double differential signal.
+        Every key of the dictionary represents a different column of the matrix.
+        Rows are stored in the dict as a pd.DataFrame.
+    
+    Notes
+    -----
+    The returned dd will contain two less matrix rows.
+    """
+    
+    # Create a dict of pd.DataFrames for the double differential
+    dd = {"col0": {}, "col1": {}, "col2": {}, "col3": {}, "col4": {}}
+
+    # Loop matrix columns
+    for col in sorted_rawemg.keys():
+        # Loop matrix rows
+        # TODO check this part for compatibility with different sorting orders
+        for pos, row in enumerate(sorted_rawemg[col].columns):
+            if pos > 1:
+                res = (
+                    -sorted_rawemg[col].loc[:, row - 2]
+                    + 2 * sorted_rawemg[col].loc[:, row - 1]
+                    - sorted_rawemg[col].loc[:, row]
+                )
+                dd[col][row] = res
+
+        dd[col] = pd.DataFrame(dd[col])
+
+    return dd
 
 
 def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
@@ -82,9 +100,10 @@ def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    sorted_rawemg : pd.DataFrame
-        Same as emgfile["RAW_SIGNAL"] but with sorted columns.
-        A custom-sorted file can be also passed.
+    sorted_rawemg : dict
+        A dict containing the sorted electrodes.
+        Every key of the dictionary represents a different column of the matrix.
+        Rows are stored in the dict as a pd.DataFrame.
     firings : list, default [0, 50]
         The range of firnings to be used for the STA.
         If a MU has less firings than the range, the upper limit
