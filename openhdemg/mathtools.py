@@ -4,6 +4,9 @@ This module contains all the mathematical functions that are necessary for the l
 
 import copy
 import pandas as pd
+from functools import reduce
+from scipy import signal
+import numpy as np
 
 
 def min_max_scaling(series_or_df):
@@ -15,9 +18,7 @@ def min_max_scaling(series_or_df):
     It's calculated by subtracting the feature's minimum value from the value
     and then dividing it by the difference between the maximum and minimum value.
 
-    The formula looks like this: xnorm = x - xmin / xmax - xmin
-
-    Pandas makes it quite easy to apply the normalization via the min-max feature scaling method.
+    The formula looks like this: xnorm = x - xmin / xmax - xmin.
 
     Parameters
     ----------
@@ -26,9 +27,10 @@ def min_max_scaling(series_or_df):
 
     Returns
     -------
-    pd.Series or pd.DataFrame
-        The function returns the normalised pd.Series or pd.DataFrame (normalised by column).
+    object : pd.Series or pd.DataFrame
+        The normalised pd.Series or pd.DataFrame (normalised by column).
     """
+
     # Create a deepcopy to avoid modifying the original series or df
     object = copy.deepcopy(series_or_df)
 
@@ -38,7 +40,9 @@ def min_max_scaling(series_or_df):
 
     elif isinstance(object, pd.DataFrame):
         for col in object.columns:
-            object[col] = (object[col] - object[col].min()) / (object[col].max() - object[col].min())
+            object[col] = (object[col] - object[col].min()) / (
+                object[col].max() - object[col].min()
+            )
 
         return object
 
@@ -46,3 +50,72 @@ def min_max_scaling(series_or_df):
         raise Exception(
             f"series_or_df must a pandas series or a dataframe. {type(series_or_df)} was passed instead."
         )
+
+
+def norm_twod_xcorr(sta_mu1, sta_mu2):
+    """
+    Normalised cross-correlation of two 2-dimensional matrices.
+
+    Any pre-processing of the RAW_SIGNAL (i.e., normal, differential or double differential)
+    can be passed as long as the two inputs have same shape.
+
+    Parameters
+    ----------
+    sta_mu1: dict
+        A dictionary containing the STA of the first MU.
+    sta_mu2 : dict
+        A dictionary containing the STA of the second MU.
+
+    Returns
+    -------
+    normxcorr_df : pd.DataFrame
+        The results of the normalised 2d cross-correlation.
+    normxcorr_max: float
+        The maximum value of the 2d cross-correlation.
+    
+    """
+
+    # Build a common pd.DataFrame from the sta dict containing all the channels
+    dfs = [
+        sta_mu1["col0"],
+        sta_mu1["col1"],
+        sta_mu1["col2"],
+        sta_mu1["col3"],
+        sta_mu1["col4"],
+    ]
+    df1 = reduce(
+        lambda left, right: pd.merge(left, right, left_index=True, right_index=True),
+        dfs,
+    )
+    df1.dropna(axis=1, inplace=True)
+
+    dfs = [
+        sta_mu2["col0"],
+        sta_mu2["col1"],
+        sta_mu2["col2"],
+        sta_mu2["col3"],
+        sta_mu2["col4"],
+    ]
+    df2 = reduce(
+        lambda left, right: pd.merge(left, right, left_index=True, right_index=True),
+        dfs,
+    )
+    df2.dropna(axis=1, inplace=True)
+
+    # Perform 2d xcorr
+    correlate2d = signal.correlate2d(in1=df1, in2=df2)
+
+    # Normalise the result of 2d xcorr for the different energy levels
+    # MATLAB equivalent: acor_norm = xcorr(x,y)/sqrt(sum(abs(x).^2)*sum(abs(y).^2))
+    absx = df1.abs()
+    absy = df2.abs()
+    expex = absx**2
+    expey = absy**2
+    sumx = expex.sum().sum()
+    sumy = expey.sum().sum()
+    acor_norm = correlate2d / np.sqrt(sumx * sumy)
+
+    normxcorr_df = pd.DataFrame(acor_norm)
+    normxcorr_max = normxcorr_df.max().max()
+
+    return normxcorr_df, normxcorr_max

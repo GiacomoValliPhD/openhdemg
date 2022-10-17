@@ -2,6 +2,7 @@
 This module contains informations about the electrodes sold by OTB and commonly used for HD-EMG recordings.
 Functions to sort the electrode position are also included. These functions are used only for the OTBiolab+
 software since DEMUSE already provides sorted channels.
+Built-in sorting functions have been implemented for "GR08MM1305" and "GR04MM1305" matrices with 0 or 180° orientation.
 """
 #TODO check str inputs and describe allowed cases allover the different modules
 import numpy as np
@@ -65,7 +66,8 @@ Number of electrodes for each matrix
 # ---------------------------------------------------------------------
 # Sort the electrodes of different matrices.
 # Sorting orders have been implemented for name(orientation):
-# - GR08MM1305(180)
+# - GR08MM1305(0, 180)
+# - GR04MM1305(0, 180)
 
 def get_rawemg_sortingorder(code, orientation):
     """
@@ -91,7 +93,7 @@ def get_rawemg_sortingorder(code, orientation):
     The returned files are called ``base0_sorting_order, base0_nanpos``.
     """
 
-    if code == "GR08MM1305":
+    if code == "GR08MM1305" or code == "GR04MM1305":
         if orientation == 0:
             """
             MUST REMEMBER: python loops from 0 and the emg channels start from 0
@@ -256,7 +258,7 @@ def sort_rawemg(emgfile, code="GR08MM1305", orientation=180):
 
     if emgfile["SOURCE"] == "OTB":
         # Separate columns of the matrix
-        if code == "GR08MM1305":
+        if code == "GR08MM1305" or code == "GR04MM1305":
             if orientation == 0:
                 sorted_rawemg = {
                     "col0":sorted_rawemg.loc[:,64:52],
