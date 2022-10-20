@@ -54,7 +54,7 @@ def min_max_scaling(series_or_df):
 
 def norm_twod_xcorr(sta_mu1, sta_mu2):
     """
-    Normalised cross-correlation of two 2-dimensional matrices.
+    Normalised cross-correlation of two 2-dimensional STA matrices.
 
     Any pre-processing of the RAW_SIGNAL (i.e., normal, differential or double differential)
     can be passed as long as the two inputs have same shape.
@@ -103,16 +103,16 @@ def norm_twod_xcorr(sta_mu1, sta_mu2):
     df2.dropna(axis=1, inplace=True)
 
     # Perform 2d xcorr
-    correlate2d = signal.correlate2d(in1=df1, in2=df2)
+    correlate2d = signal.correlate2d(in1=df1, in2=df2)#TODO check inputs eg.mode
 
     # Normalise the result of 2d xcorr for the different energy levels
     # MATLAB equivalent: acor_norm = xcorr(x,y)/sqrt(sum(abs(x).^2)*sum(abs(y).^2))
     absx = df1.abs()
     absy = df2.abs()
-    expex = absx**2
-    expey = absy**2
-    sumx = expex.sum().sum()
-    sumy = expey.sum().sum()
+    expx = absx**2
+    expy = absy**2
+    sumx = expx.sum().sum()
+    sumy = expy.sum().sum()
     acor_norm = correlate2d / np.sqrt(sumx * sumy)
 
     normxcorr_df = pd.DataFrame(acor_norm)

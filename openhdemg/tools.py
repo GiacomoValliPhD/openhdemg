@@ -426,18 +426,17 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
     return covsteady
 
 
-def filter_refsig(emgfile, order=4, cutoff=20):
+def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
     """
-    Filter REF_SIGNAL with low-pass filter.
+    Band-pass filter RAW_SIGNAL.
 
-    This function is used to low-pass filter the REF_SIGNAL and remove noise.
-    The filter is a Zero-lag low-pass Butterworth.
+    The filter is a Zero-lag band-pass Butterworth.
     
     Parameters
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    order : int, default 4
+    order : int, default 2
         The filter order.
     cutoff : int, default 20
         The cut-off frequency in Hz.
@@ -448,13 +447,45 @@ def filter_refsig(emgfile, order=4, cutoff=20):
         The dictionary containing the emgfile with a filtered REF_SIGNAL.
     """
 
-    # Create the object to store the filtered refsig.
-    # Create a deepcopy to avoid changing the original refsig
+    filteredrawsig = copy.deepcopy(emgfile)
+
+    # Calculate the components of the filter and apply them with filtfilt to obtain Zero-lag filtering
+    # sos should be preferred over filtfilt as second-order sections have fewer numerical problems.
+    sos = signal.butter(N=order, Wn=[lowcut, highcut], btype="bandpass", output="sos", fs=filteredrawsig["FSAMP"])
+    for col in filteredrawsig["RAW_SIGNAL"]:
+        filteredrawsig["RAW_SIGNAL"][col] = signal.sosfiltfilt(sos, x=filteredrawsig["RAW_SIGNAL"][col])
+
+    return filteredrawsig
+
+
+def filter_refsig(emgfile, order=4, cutoff=15):
+    """
+    Low-pass filter REF_SIGNAL.
+
+    This function is used to low-pass filter the REF_SIGNAL and remove noise.
+    The filter is a Zero-lag low-pass Butterworth.
+    
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+    order : int, default 4
+        The filter order.
+    cutoff : int, default 15
+        The cut-off frequency in Hz.
+
+    Returns
+    -------
+    filteredrefsig : dict
+        The dictionary containing the emgfile with a filtered REF_SIGNAL.
+    """
+
     filteredrefsig = copy.deepcopy(emgfile)
 
     # Calculate the components of the filter and apply them with filtfilt to obtain Zero-lag filtering
-    b, a = signal.butter(N=order, Wn=cutoff, fs=filteredrefsig["FSAMP"], btype="lowpass")
-    filteredrefsig["REF_SIGNAL"][0] = signal.filtfilt(b, a, filteredrefsig["REF_SIGNAL"][0])
+    # sos should be preferred over filtfilt as second-order sections have fewer numerical problems.
+    sos = signal.butter(N=order, Wn=cutoff, btype="lowpass", output="sos", fs=filteredrefsig["FSAMP"])
+    filteredrefsig["REF_SIGNAL"][0] = signal.sosfiltfilt(sos, x=filteredrefsig["REF_SIGNAL"][0])
 
     return filteredrefsig
 
@@ -596,7 +627,7 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None):
     return rfd
 
 """ #TODO input by= to remove duplicates by correlation between firings
-def remove_duplicated_mus(emgfile1, emgfile2, by="MUAP"):
+def remove_duplicated_mus(files, **kwargs):
 
     
     # Need to compare all the MUs in the two emgfiles
