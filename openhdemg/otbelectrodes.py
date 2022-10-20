@@ -4,7 +4,7 @@ Functions to sort the electrode position are also included. These functions are 
 software since DEMUSE already provides sorted channels.
 Built-in sorting functions have been implemented for "GR08MM1305" and "GR04MM1305" matrices with 0 or 180° orientation.
 """
-#TODO check str inputs and describe allowed cases allover the different modules
+#TODO check str inputs and describe allowed cases allover the different modules, check also raise
 import numpy as np
 import copy
 
@@ -281,8 +281,6 @@ def sort_rawemg(emgfile, code="GR08MM1305", orientation=180):
                     "col3":sorted_rawemg.loc[:,51:39],
                     "col4":sorted_rawemg.loc[:,52:64]
                 }
-                # Then convert all the columns going backward to
-                # obtain the same format of the DEMUSE file
                 sorted_rawemg["col1"].columns = [*range(13,25+1)]
                 sorted_rawemg["col3"].columns = [*range(39,51+1)]
 

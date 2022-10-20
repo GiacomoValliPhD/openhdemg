@@ -45,10 +45,10 @@ def showgoodlayout(tight_layout=True, despined=False):
     if tight_layout == True:
         plt.tight_layout()
 
-
 def plot_emgsig(
     emgfile,
     channels,
+    addrefsig=False,
     timeinseconds=True,
     figsize=[20, 15],
     showimmediately=True,
@@ -56,6 +56,8 @@ def plot_emgsig(
 ):
     """
     Pot the RAW_SIGNAL. Single or multiple channels.
+
+    Up to 12 channels can be easily observed togheter (but more can be plotted of course).
 
     Parameters
     ----------
@@ -66,6 +68,8 @@ def plot_emgsig(
         The list can be passed as a manually-written list or with: channels=[*range(0, 12)],
         We need the "*" operator to unpack the results of range and build a list.
         channels is expected to be with base 0 (i.e., the first channel in the file is the number 0).
+    addrefsig : bool, default True
+        If True, the REF_SIGNAL is plotted in front of the signal with a separated y-axes.
     timeinseconds : bool, default True
         Whether to show the time on the x-axes in seconds (True) or in samples (False).
     figsize : list, default [20, 15]
@@ -88,52 +92,144 @@ def plot_emgsig(
         else:
             x_axis = emgsig.index
 
+        figname = "Channels n.{}".format(channels)
+        fig, ax1 = plt.subplots(
+            figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
+            num=figname,
+        )
+        
         # Check if we have a single channel or a list of channels to plot
         if isinstance(channels, int):
-            fig = plt.figure(
-                f"Channel n.{channels}", figsize=(figsize[0] / 2.54, figsize[1] / 2.54)
-            )
             ax = sns.lineplot(x=x_axis, y=emgsig[channels])
             ax.set_ylabel("Ch {}".format(channels))  # Useful because if the channe is empty it won't show the channel number
             ax.set_xlabel("Time (s)" if timeinseconds else "Samples")
 
-            showgoodlayout(tight_layout)
-            if showimmediately:
-                plt.show()
-
         elif isinstance(channels, list):
-            """
-            A list can be passed in input as a manually-written list or with:
-            channels=[*range(0, 12)]
-            We need the "*" operator to unpack the results of range and build a list
-            """
-            figname = "Channels n.{}".format(channels)
-            fig, axes = plt.subplots(
-                len(channels),
-                1,
-                figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-                num=figname,
+            # Plot all the channels in the subplots, up to 12 channels are clearly visible
+            for count, thisChannel in enumerate(channels):
+                # Normalise the series
+                norm_raw = min_max_scaling(emgfile["RAW_SIGNAL"][thisChannel])
+                # Add 1 to the previous channel to avoid overlapping
+                norm_raw = norm_raw + count
+                ax = sns.lineplot(x=x_axis, y=norm_raw)
+            
+            # Ensure correct and complete ticks on the left y axis
+            ax1.set_yticks([*range(len(channels))])
+            ax1.set_yticklabels([str(x) for x in channels])
+            # Set axes labels
+            ax1.set_ylabel("Channels")
+            ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+
+        if addrefsig:
+            ax2 = ax1.twinx()
+            # Plot the ref signal
+            xref = (
+                emgfile["REF_SIGNAL"].index / emgfile["FSAMP"]
+                if timeinseconds
+                else emgfile["REF_SIGNAL"].index
+            )
+            sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
+            ax2.set_ylabel("MViF (%)")
+        
+        showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)    
+        if showimmediately:
+            plt.show()
+
+        else:
+            raise Exception(
+                "While calling the plot_emgsig function, you should pass an integer, a list or 'all' to channels"
             )
 
-            # Plot all the channels in the subplots, up to 12 channels are clearly visible
-            for count, channel in enumerate(reversed(channels)):
-                ax = sns.lineplot(x=x_axis, y=emgsig[channel], ax=axes[count])
-                ax.set_ylabel(channel)
+    else:
+        raise Exception(
+            "RAW_SIGNAL is probably absent or it is not contained in a dataframe"
+        )
 
-                # Remove all the unnecessary for nice and clear plotting
-                if channel != channels[0]:
-                    ax.xaxis.set_visible(False)
-                    ax.set(yticklabels=[])
-                    ax.tick_params(left=False)
 
-                else:
-                    ax.set(yticklabels=[])
-                    ax.tick_params(left=False)
-                    ax.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+def plot_differentials(
+    emgfile,
+    differential,
+    column="col0",
+    addrefsig=False,
+    timeinseconds=True,
+    figsize=[20, 15],
+    showimmediately=True,
+    tight_layout=True,
+):
+    """
+    Plot the differential derivation of the RAW_SIGNAL.
 
-            showgoodlayout(tight_layout, despined=True)
-            if showimmediately:
-                plt.show()
+    Both the single and the double differencials can be plotted.
+    This function is used to plot also the sorted RAW_SIGNAL.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the original emgfile.
+    differential : dict
+        The dictionary containing the differential derivation of the RAW_SIGNAL.
+    column : str, default "col0"
+        The matrix column to plot. 
+        Options are usyally "col0", "col1", "col2", "col3", "col4".
+    addrefsig : bool, default True
+        If True, the REF_SIGNAL is plotted in front of the signal with a separated y-axes.
+    timeinseconds : bool, default True
+        Whether to show the time on the x-axes in seconds (True) or in samples (False).
+    figsize : list, default [20, 15]
+        Size of the figure in centimeters [width, height].
+    showimmediately : bool, default True
+        If True (default), plt.show() is called and the figure showed to the user.
+        It is useful to set it to False when calling the function from the GUI.
+    tight_layout : bool, default True
+        If True (default), the plt.tight_layout() is called and the figure's layout is improved.
+        It is useful to set it to False when calling the function from the GUI.
+    """
+
+    # Check to have the RAW_SIGNAL in a pandas dataframe
+    if isinstance(differential[column], pd.DataFrame):
+        emgsig = differential[column]
+
+        # Here we produce an x axis in seconds or samples
+        if timeinseconds:
+            x_axis = emgsig.index / emgfile["FSAMP"]
+        else:
+            x_axis = emgsig.index
+
+        figname = "Column n.{}".format(column)
+        fig, ax1 = plt.subplots(
+            figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
+            num=figname,
+        )
+        
+        # Plot all the channels of every column in the subplots
+        for count, thisChannel in enumerate(emgsig.columns):
+            # Normalise the series
+            norm_raw = min_max_scaling(emgsig[thisChannel])
+            # Add 1 to the previous channel to avoid overlapping
+            norm_raw = norm_raw + count
+            ax = sns.lineplot(x=x_axis, y=norm_raw)
+        
+        # Ensure correct and complete ticks on the left y axis
+        ax1.set_yticks([*range(len(emgsig.columns))])
+        ax1.set_yticklabels([str(x) for x in emgsig.columns])
+        # Set axes labels
+        ax1.set_ylabel("Channels")
+        ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+
+        if addrefsig:
+            ax2 = ax1.twinx()
+            # Plot the ref signal
+            xref = (
+                emgfile["REF_SIGNAL"].index / emgfile["FSAMP"]
+                if timeinseconds
+                else emgfile["REF_SIGNAL"].index
+            )
+            sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
+            ax2.set_ylabel("MViF (%)")
+        
+        showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)    
+        if showimmediately:
+            plt.show()
 
         else:
             raise Exception(
@@ -275,19 +371,26 @@ def plot_mupulses(
         figsize=(figsize[0] / 2.54, figsize[1] / 2.54), num="MUs pulses"
     )
 
+    # Plot the MUPULSES.
+    ax1.eventplot(
+        mupulses,
+        linewidths=linewidths,
+        linelengths=0.9, # Assign 90% of the space in the plot to linelengths
+        lineoffsets=1,
+        colors=colors1,
+    )
+    
+    # Ensure correct and complete ticks on the left y axis
+    ax1.set_yticks([*range(emgfile["NUMBER_OF_MUS"])])
+    ax1.set_yticklabels([str(x) for x in [*range(emgfile["NUMBER_OF_MUS"])]])
+    # Set axes labels
+    ax1.set_ylabel("MUs")
+    ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+    
     if addrefsig:
         # Create the second (right) y axes
         ax2 = ax1.twinx()
-
-        # Plot the MUPULSES.
-        ax1.eventplot(
-            mupulses,
-            linewidths=linewidths,
-            linelengths=0.9, # Assign 90% of the space in the plot to linelengths
-            lineoffsets=1,
-            colors=colors1,
-        )
-
+        
         # Plot REF_SIGNAL on the right y axes
         xref = (
             emgfile["REF_SIGNAL"].index / emgfile["FSAMP"]
@@ -295,27 +398,9 @@ def plot_mupulses(
             else emgfile["REF_SIGNAL"].index
         )
         sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
-
         ax2.set_ylabel("MViF (%)")
 
-    else:
-        ax1.eventplot(
-            mupulses,
-            linewidths=linewidths,
-            linelengths=0.9,
-            lineoffsets=1,
-            colors=colors1,
-        )
-
-    # Set axes labels
-    ax1.set_ylabel("MUs")
-    ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
-
-    if addrefsig:
-        showgoodlayout(tight_layout, despined="2yaxes")
-    else:
-        showgoodlayout(tight_layout)
-
+    showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
     if showimmediately:
         plt.show()
 
@@ -323,6 +408,7 @@ def plot_mupulses(
 def plot_ipts(
     emgfile,
     munumber="all",
+    addrefsig=False,
     timeinseconds=True,
     figsize=[20, 15],
     showimmediately=True,
@@ -373,51 +459,46 @@ def plot_ipts(
             x_axis = ipts.index / emgfile["FSAMP"]
         else:
             x_axis = ipts.index
+        
+        # Use the subplot function to allow for the use of twinx()
+        fig, ax1 = plt.subplots(
+            figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
+            num="IPTS",
+        )
 
         # Check if we have a single MU or a list of MUs to plot
         if isinstance(munumber, int):
-            fig = plt.figure(
-                f"Motor unit n.{munumber}",
-                figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-            )
-            ax = sns.lineplot(x=x_axis, y=ipts[munumber])
-            ax.set_ylabel(
+            ax1 = sns.lineplot(x=x_axis, y=ipts[munumber])
+            ax1.set_ylabel(
                 "MU {}".format(munumber)
             )  # Useful because if the MU is empty it won't show the channel number
-            ax.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+            ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
-            showgoodlayout(tight_layout)
-            if showimmediately:
-                plt.show()
-
-        elif isinstance(munumber, (list, str)):
-            figname = "Motor unit n.{}".format(munumber)
-            fig, axes = plt.subplots(
-                len(munumber),
-                1,
-                figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-                num=figname,
+        elif isinstance(munumber, list):
+            # Plot all the MUs.
+            for count, thisMU in enumerate(munumber):
+                y_axis = ipts[thisMU] + count
+                sns.lineplot(x=x_axis, y=y_axis, ax=ax1)
+                
+                # Ensure correct and complete ticks on the left y axis
+                ax1.set_yticks([*range(len(munumber))])
+                ax1.set_yticklabels([str(x) for x in munumber])
+                ax1.set_ylabel("Motor units")
+            
+        if addrefsig:
+            ax2 = ax1.twinx()
+            # Plot the ref signal
+            xref = (
+                emgfile["REF_SIGNAL"].index / emgfile["FSAMP"]
+                if timeinseconds
+                else emgfile["REF_SIGNAL"].index
             )
-
-            # Plot all the MUs in the subplots. Enumerate reversed munumber to show the first MUs below
-            for count, thisMU in enumerate(reversed(munumber)):
-                ax = sns.lineplot(x=x_axis, y=ipts[thisMU], ax=axes[count])
-                ax.set_ylabel(thisMU)
-
-                # Remove all the unnecessary for nice and clear plotting
-                if thisMU != munumber[0]:
-                    ax.xaxis.set_visible(False)
-                    ax.set(yticklabels=[])
-                    ax.tick_params(left=False)
-
-                else:
-                    ax.set(yticklabels=[])
-                    ax.tick_params(left=False)
-                    ax.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
-
-            showgoodlayout(tight_layout, despined=True)
-            if showimmediately:
-                plt.show()
+            sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
+            ax2.set_ylabel("MViF (%)")
+        
+        showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
+        if showimmediately:
+            plt.show()
 
         else:
             raise Exception(
@@ -483,118 +564,56 @@ def plot_idr(
             munumber = 0
         else:
             munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
+        
+    # Use the subplot function to allow for the use of twinx()
+    fig, ax1 = plt.subplots(
+        figsize=(figsize[0] / 2.54, figsize[1] / 2.54), num="IDR"
+    )
 
     # Check if we have a single MU or a list of MUs to plot
+    # In this case, the use of plt.figure has been preferred to plt.subplots for implementation  the MUs cleaning.
     if isinstance(munumber, int):
-        fig = plt.figure(
-            f"Motor unit n.{munumber}", figsize=(figsize[0] / 2.54, figsize[1] / 2.54)
-        )
-        ax = sns.scatterplot(
+        ax1 = sns.scatterplot(
             x=idr[munumber]["timesec" if timeinseconds else "mupulses"],
             y=idr[munumber]["idr"],
         )
 
-        if addrefsig:
-            ax2 = ax.twinx()
-            # Plot the ref signal
-            xref = (
-                emgfile["REF_SIGNAL"].index / emgfile["FSAMP"]
-                if timeinseconds
-                else emgfile["REF_SIGNAL"].index
-            )
-            sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
-            ax2.set_ylabel("MViF (%)")
-
-        ax.set_ylabel("MU {} (pps)".format(munumber))  # Useful because if the MU is empty it won't show the channel number
-        ax.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
-
-        if addrefsig:
-            showgoodlayout(tight_layout, despined="2yaxes")
-        else:
-            showgoodlayout(tight_layout)
-
-        if showimmediately:
-            plt.show()
+        ax1.set_ylabel("MU {} (pps)".format(munumber))  # Useful because if the MU is empty it won't show the channel number
+        ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
     elif isinstance(munumber, list):
-        # Behave differently if you plot both the ref signal and the idr or only the idr
-        if not addrefsig:
-            figname = "Motor unit n.{}".format(munumber)
-            # sharex is fundamental to ensure correct representation of the idr over the different subplots
-            fig, axes = plt.subplots(
-                len(munumber),
-                1,
-                figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-                num=figname,
-                sharex=True,
+        for count, thisMU in enumerate(munumber):
+            # Normalise the series
+            norm_idr = min_max_scaling(idr[thisMU]["idr"])
+            # Add 1 to the previous MUs to avoid overlapping of the MUs
+            norm_idr = norm_idr + count
+            sns.scatterplot(
+                x=idr[thisMU]["timesec" if timeinseconds else "mupulses"],
+                y=norm_idr,
+                ax=ax1,
             )
-            # Create colors list for the firings and plot them. Loop backward because then you are plotting MUs in reversed order
-            colors1 = [
-                "C{}".format(i) for i in range(emgfile["NUMBER_OF_MUS"] - 1, -1, -1)
-            ]
-            # Plot all the MUs in the subplots. Enumerate reversed munumber to show the first MUs below
-            for count, thisMU in enumerate(reversed(munumber)):
-                ax = sns.scatterplot(
-                    x=idr[thisMU]["timesec" if timeinseconds else "mupulses"],
-                    y=idr[thisMU]["idr"],
-                    color=colors1[count],
-                    ax=axes[count],
-                )
-                ax.set_ylabel(thisMU)
+              
+        # Ensure correct and complete ticks on the left y axis
+        ax1.set_yticks([*range(len(munumber))])
+        ax1.set_yticklabels([str(x) for x in munumber])
+        # Set axes labels
+        ax1.set_ylabel("Motor units")
+        ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
-                # Remove all the unnecessary for nice and clear plotting
-                if thisMU != munumber[0]:
-                    ax.xaxis.set_visible(False)
-                    ax.set(yticklabels=[])
-                    ax.tick_params(left=False)
-                else:
-                    ax.set(yticklabels=[])
-                    ax.tick_params(left=False)
-
-            # Set axes labels
-            ax.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
-
-            showgoodlayout(tight_layout, despined=True)
-            if showimmediately:
-                plt.show()
-
-        else:
-            # Initialise figure and plots
-            figname = "Motor unit n.{}".format(munumber)
-            fig, ax1 = plt.subplots(
-                figsize=(figsize[0] / 2.54, figsize[1] / 2.54), num=figname
-            )
-            # Apply twinx to ax2, which is the second y axis.
-            ax2 = ax1.twinx()
-
-            for count, thisMU in enumerate(munumber):
-                # Normalise the series
-                norm_idr = min_max_scaling(idr[thisMU]["idr"])
-                # Add 1 compare to the previous MUs to avoid overlapping of the MUs
-                norm_idr = norm_idr + count
-
-                sns.scatterplot(
-                    x=idr[thisMU]["timesec" if timeinseconds else "mupulses"],
-                    y=norm_idr,
-                    ax=ax1,
-                )
-
-            # Then plot the ref signal
-            xref = (
-                emgfile["REF_SIGNAL"].index / emgfile["FSAMP"]
-                if timeinseconds
-                else emgfile["REF_SIGNAL"].index
-            )
-            sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, ax=ax2)
-
-            # Set axes labels
-            ax2.set_ylabel("MViF (%)")
-            ax1.set_ylabel("MUs number")
-            ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
-
-            showgoodlayout(tight_layout, despined="2yaxes")
-            if showimmediately:
-                plt.show()
+    if addrefsig:
+        ax2 = ax1.twinx()
+        # Plot the ref signal
+        xref = (
+            emgfile["REF_SIGNAL"].index / emgfile["FSAMP"]
+            if timeinseconds
+            else emgfile["REF_SIGNAL"].index
+        )
+        sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
+        ax2.set_ylabel("MViF (%)")
+    
+    showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)    
+    if showimmediately:
+        plt.show()
 
     else:
         raise Exception(
@@ -604,23 +623,17 @@ def plot_idr(
     return fig
 
 
-def plot_muaps(sta_dict, munumber, figsize=[20, 15], showimmediately=True):
+def plot_muaps(sta_dict, figsize=[20, 15], showimmediately=True):
     """
     Plot MUAPs obtained from STA from one or multiple MUs.
 
     Parameters
     ----------
     sta_dict : dict or list
-        dict containing STA for every MUs or a list of dicts containing STA.
+        dict containing STA of the specified MU or a list of dicts containing STA
+        of specified MUs.
         If a list is passed, different MUs are overlayed. This is useful for
         visualisation of MUAPs during tracking or duplicates removal.
-    munumber : int or list
-        int representing the MU to plot or a list of integers.
-        If a list is passed, different MUs are overlayed. This is useful for
-        visualisation of MUAPs during tracking or duplicates removal.
-        munumber and sta_dict are linked. If we pass a list in one, also
-        the other one should receive a list (see notes).
-        munumber is expected to be with base 0 (i.e., the first MU in the file is the number 0).
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     showimmediately : bool, default True
@@ -629,86 +642,44 @@ def plot_muaps(sta_dict, munumber, figsize=[20, 15], showimmediately=True):
 
     Notes
     -----
-    munumber tells us what MU to plot from the sta_dict. However, this is not so
-        straightforward if a list is passed to sta_dict and munumber.
-    Assume we pass sta_dict=[sta_filePre, sta_filePost] and munumber=[1,3], we
-        will plot the MU 1 from the sta_filePre and the MU 3 from the sta_filePost.
-    If we want to plot different MUs from the same STA file we can use
-        sta_dict=[sta_filePre, sta_filePre] and munumber=[1,3].
     There is no limit to the number of MUs and STA files that can be overplotted.
     ``Remember: the different STAs should be matched`` with same number of electrode,
         processing (i.e., differential) and computed on the same timewindow.
     """
 
-    # Check the input and get y axes limits
-    if isinstance(sta_dict, dict) and isinstance(munumber, int):
-        # Find the largest and smallest value to define y axis limits.
-        xmax = 0
-        xmin = 0
-        # Loop each MU, c means matrix columns
-        for c in sta_dict[munumber]:
-            max_ = sta_dict[munumber][c].max().max()
-            min_ = sta_dict[munumber][c].min().min()
-            if max_ > xmax:
-                xmax = max_
-            if min_ < xmin:
-                xmin = min_
+    if isinstance(sta_dict, dict):
+        sta_dict = [sta_dict]
 
-        # Obtain number of columns and rows, this changes if we use differential derivations
-        cols = len(sta_dict[munumber])
-        rows = len(sta_dict[munumber]["col0"].columns)
-        fig, axs = plt.subplots(
-            rows,
-            cols,
-            figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-            num=f"MUAPs from STA, munumber={munumber}",
-            sharex=True,
-        )
-
-        # Plot all the MUAPs, c means matrix columns
-        for r in range(rows):
-            for pos, c in enumerate(sta_dict[munumber].keys()):
-                axs[r, pos].plot(sta_dict[munumber][c].iloc[:, r])
-
-                axs[r, pos].set_ylim(xmin, xmax)
-                axs[r, pos].xaxis.set_visible(False)
-                axs[r, pos].set(yticklabels=[])
-                axs[r, pos].tick_params(left=False)
-
-        showgoodlayout(tight_layout=False, despined=True)
-        if showimmediately:
-            plt.show()
-
-    elif isinstance(sta_dict, list) and isinstance(munumber, list):
+    if isinstance(sta_dict, list):
         # Find the largest and smallest value to define y axis limits.
         xmax = 0
         xmin = 0
         # Loop each sta_dict and MU, c means matrix columns
-        for pos, thisdict in enumerate(sta_dict):
-            for c in thisdict[munumber[pos]]:
-                max_ = thisdict[munumber[pos]][c].max().max()
-                min_ = thisdict[munumber[pos]][c].min().min()
+        for thisdict in sta_dict:
+            for c in thisdict:
+                max_ = thisdict[c].max().max()
+                min_ = thisdict[c].min().min()
                 if max_ > xmax:
                     xmax = max_
                 if min_ < xmin:
                     xmin = min_
 
         # Obtain number of columns and rows, this changes if we use differential derivations
-        cols = len(sta_dict[0][munumber[0]])
-        rows = len(sta_dict[0][munumber[0]]["col0"].columns)
+        cols = len(sta_dict[0])
+        rows = len(sta_dict[0]["col0"].columns)
         fig, axs = plt.subplots(
             rows,
             cols,
             figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-            num=f"MUAPs from different STAs, munumber={munumber}",
+            num=f"MUAPs from STA",
             sharex=True,
         )
 
-        for posmu, thisdict in enumerate(sta_dict):
+        for thisdict in sta_dict:
             # Plot all the MUAPs, c means matrix columns, r rows
             for r in range(rows):
-                for pos, c in enumerate(thisdict[munumber[posmu]].keys()):
-                    axs[r, pos].plot(thisdict[munumber[posmu]][c].iloc[:, r])
+                for pos, c in enumerate(thisdict.keys()):
+                    axs[r, pos].plot(thisdict[c].iloc[:, r])
 
                     axs[r, pos].set_ylim(xmin, xmax)
                     axs[r, pos].xaxis.set_visible(False)

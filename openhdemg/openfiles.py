@@ -1101,3 +1101,4 @@ def askopenfile(
         emgfile = emg_from_json(filepath=file_toOpen)
 
     return emgfile
+#TODO consenti di passare solo il canale raw di forza e poi te lo filtri

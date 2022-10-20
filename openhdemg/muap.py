@@ -166,3 +166,7 @@ def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
         sta_dict[mu] = sorted_rawemg_sta
 
     return sta_dict
+
+
+def tracking():
+    1#TODO

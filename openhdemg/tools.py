@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
+#from mathtools import norm_twod_xcorr
 
 
 def showselect(emgfile, title="", nclic=2):
@@ -197,7 +198,7 @@ def compute_idr(emgfile):
                 else np.transpose(np.array(emgfile["MUPULSES"]))
             )
 
-            # Calculate difference in MUPULSES it in column 1
+            # Calculate difference in MUPULSES and add it in column 1
             df[1] = df[0].diff()
             # Calculate time in seconds and add it in column 2
             df[2] = df[0] / emgfile["FSAMP"]
@@ -208,10 +209,9 @@ def compute_idr(emgfile):
                 columns={0: "mupulses", 1: "diff_mupulses", 2: "timesec", 3: "idr"},
                 inplace=True,
             )
-
+            #TODO check idr, maybe low??
             # Add the idr to the idr dict
             idr[mu] = df
-
             """ 
             idr is a dict with a key for every MU
             idr[mu] is a DataFrame
@@ -316,7 +316,7 @@ def delete_mus(emgfile, munumber):
 
     else:
         raise Exception(
-            "While calling the delete_mus function, you should pass an integer or a list in munumber= "
+            "While calling the delete_mus function, you should pass an integer or a list to munumber= "
         )
 
     return del_emgfile
@@ -594,3 +594,21 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None):
     rfd = pd.DataFrame(rfd_dict)
 
     return rfd
+
+""" #TODO input by= to remove duplicates by correlation between firings
+def remove_duplicated_mus(emgfile1, emgfile2, by="MUAP"):
+
+    
+    # Need to compare all the MUs in the two emgfiles
+    # To do this we need: RAW_SIGNAL and MUPULSES
+    # Check with isinstance
+    # Then we need to loop all the MUs of emgfile 1 and compute their STA
+    # Then we need to loop all the MUs of emgfile 2 and compute their STA
+    # Then compute norm_twod_xcorr and evaluate if >= threshold
+    # build a df of normxcorr_max and retain only highest?
+    # remove duplicated mus to which file? pass a list to delete_mus
+    
+    
+    
+    if by=="MUAP":
+        normxcorr_df, normxcorr_max = norm_twod_xcorr() """
