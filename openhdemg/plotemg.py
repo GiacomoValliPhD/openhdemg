@@ -45,6 +45,7 @@ def showgoodlayout(tight_layout=True, despined=False):
     if tight_layout == True:
         plt.tight_layout()
 
+
 def plot_emgsig(
     emgfile,
     channels,
@@ -64,7 +65,7 @@ def plot_emgsig(
     emgfile : dict
         The dictionary containing the emgfile.
     channels : int or list
-        The channel (int) or channels (list of int) to plot. 
+        The channel (int) or channels (list of int) to plot.
         The list can be passed as a manually-written list or with: channels=[*range(0, 12)],
         We need the "*" operator to unpack the results of range and build a list.
         channels is expected to be with base 0 (i.e., the first channel in the file is the number 0).
@@ -97,11 +98,13 @@ def plot_emgsig(
             figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
             num=figname,
         )
-        
+
         # Check if we have a single channel or a list of channels to plot
         if isinstance(channels, int):
             ax = sns.lineplot(x=x_axis, y=emgsig[channels])
-            ax.set_ylabel("Ch {}".format(channels))  # Useful because if the channe is empty it won't show the channel number
+            ax.set_ylabel(
+                "Ch {}".format(channels)
+            )  # Useful because if the channe is empty it won't show the channel number
             ax.set_xlabel("Time (s)" if timeinseconds else "Samples")
 
         elif isinstance(channels, list):
@@ -112,13 +115,18 @@ def plot_emgsig(
                 # Add 1 to the previous channel to avoid overlapping
                 norm_raw = norm_raw + count
                 ax = sns.lineplot(x=x_axis, y=norm_raw)
-            
+
             # Ensure correct and complete ticks on the left y axis
             ax1.set_yticks([*range(len(channels))])
             ax1.set_yticklabels([str(x) for x in channels])
             # Set axes labels
             ax1.set_ylabel("Channels")
             ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+
+        else:
+            raise Exception(
+                "While calling the plot_emgsig function, you should pass an integer, a list or 'all' to channels"
+            )
 
         if addrefsig:
             ax2 = ax1.twinx()
@@ -130,15 +138,10 @@ def plot_emgsig(
             )
             sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
             ax2.set_ylabel("MViF (%)")
-        
-        showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)    
+
+        showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
         if showimmediately:
             plt.show()
-
-        else:
-            raise Exception(
-                "While calling the plot_emgsig function, you should pass an integer, a list or 'all' to channels"
-            )
 
     else:
         raise Exception(
@@ -157,7 +160,7 @@ def plot_differentials(
     tight_layout=True,
 ):
     """
-    Plot the differential derivation of the RAW_SIGNAL.
+    Plot the differential derivation of the RAW_SIGNAL by matrix column.
 
     Both the single and the double differencials can be plotted.
     This function is used to plot also the sorted RAW_SIGNAL.
@@ -169,7 +172,7 @@ def plot_differentials(
     differential : dict
         The dictionary containing the differential derivation of the RAW_SIGNAL.
     column : str, default "col0"
-        The matrix column to plot. 
+        The matrix column to plot.
         Options are usyally "col0", "col1", "col2", "col3", "col4".
     addrefsig : bool, default True
         If True, the REF_SIGNAL is plotted in front of the signal with a separated y-axes.
@@ -200,7 +203,7 @@ def plot_differentials(
             figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
             num=figname,
         )
-        
+
         # Plot all the channels of every column in the subplots
         for count, thisChannel in enumerate(emgsig.columns):
             # Normalise the series
@@ -208,7 +211,7 @@ def plot_differentials(
             # Add 1 to the previous channel to avoid overlapping
             norm_raw = norm_raw + count
             ax = sns.lineplot(x=x_axis, y=norm_raw)
-        
+
         # Ensure correct and complete ticks on the left y axis
         ax1.set_yticks([*range(len(emgsig.columns))])
         ax1.set_yticklabels([str(x) for x in emgsig.columns])
@@ -226,15 +229,10 @@ def plot_differentials(
             )
             sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
             ax2.set_ylabel("MViF (%)")
-        
-        showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)    
+
+        showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
         if showimmediately:
             plt.show()
-
-        else:
-            raise Exception(
-                "While calling the plot_emgsig function, you should pass an integer, a list or 'all' to channels"
-            )
 
     else:
         raise Exception(
@@ -251,8 +249,8 @@ def plot_refsig(
 ):
     """
     Plot the REF_SIGNAL.
-    
-    The REF_SIGNAL is expected to be expressed as % MViF for submaximal 
+
+    The REF_SIGNAL is expected to be expressed as % MViF for submaximal
     contractions or as Kilograms (Kg) or Newtons (N) for maximal contractions.
 
     Parameters
@@ -292,7 +290,7 @@ def plot_refsig(
         if showimmediately:
             plt.show()
 
-        #TODO Needed for the GUI? To check the other plot functions
+        # TODO Needed for the GUI? To check the other plot functions
         return fig
 
     else:
@@ -313,7 +311,7 @@ def plot_mupulses(
 ):
     """
     Plot all the MUPULSES.
-    
+
     MUPULSES are the binary representation of the firings.
 
     Parameters
@@ -375,22 +373,22 @@ def plot_mupulses(
     ax1.eventplot(
         mupulses,
         linewidths=linewidths,
-        linelengths=0.9, # Assign 90% of the space in the plot to linelengths
+        linelengths=0.9,  # Assign 90% of the space in the plot to linelengths
         lineoffsets=1,
         colors=colors1,
     )
-    
+
     # Ensure correct and complete ticks on the left y axis
     ax1.set_yticks([*range(emgfile["NUMBER_OF_MUS"])])
     ax1.set_yticklabels([str(x) for x in [*range(emgfile["NUMBER_OF_MUS"])]])
     # Set axes labels
     ax1.set_ylabel("MUs")
     ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
-    
+
     if addrefsig:
         # Create the second (right) y axes
         ax2 = ax1.twinx()
-        
+
         # Plot REF_SIGNAL on the right y axes
         xref = (
             emgfile["REF_SIGNAL"].index / emgfile["FSAMP"]
@@ -437,7 +435,7 @@ def plot_ipts(
     tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
-    
+
     Notes
     -----
     munumber = "all" corresponds to munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
@@ -445,11 +443,11 @@ def plot_ipts(
 
     # Check if all the MUs have to be plotted
     if isinstance(munumber, str):
-        if emgfile["NUMBER_OF_MUS"] == 1: # Manage exception of single MU
+        if emgfile["NUMBER_OF_MUS"] == 1:  # Manage exception of single MU
             munumber = 0
         else:
             munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
-    
+
     # Check to have the IPTS in a pandas dataframe
     if isinstance(emgfile["IPTS"], pd.DataFrame):
         ipts = emgfile["IPTS"]
@@ -459,7 +457,7 @@ def plot_ipts(
             x_axis = ipts.index / emgfile["FSAMP"]
         else:
             x_axis = ipts.index
-        
+
         # Use the subplot function to allow for the use of twinx()
         fig, ax1 = plt.subplots(
             figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
@@ -479,12 +477,17 @@ def plot_ipts(
             for count, thisMU in enumerate(munumber):
                 y_axis = ipts[thisMU] + count
                 sns.lineplot(x=x_axis, y=y_axis, ax=ax1)
-                
+
                 # Ensure correct and complete ticks on the left y axis
                 ax1.set_yticks([*range(len(munumber))])
                 ax1.set_yticklabels([str(x) for x in munumber])
                 ax1.set_ylabel("Motor units")
-            
+
+        else:
+            raise Exception(
+                "While calling the plot_ipts function, you should pass an integer, a list or 'all' to munumber"
+            )
+
         if addrefsig:
             ax2 = ax1.twinx()
             # Plot the ref signal
@@ -495,15 +498,10 @@ def plot_ipts(
             )
             sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
             ax2.set_ylabel("MViF (%)")
-        
+
         showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
         if showimmediately:
             plt.show()
-
-        else:
-            raise Exception(
-                "While calling the plot_ipts function, you should pass an integer, a list or 'all' to munumber"
-            )
 
     else:
         raise Exception("IPTS is probably absent or it is not contained in a dataframe")
@@ -543,7 +541,7 @@ def plot_idr(
     tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
-    
+
     Notes
     -----
     munumber = "all" corresponds to munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
@@ -560,15 +558,13 @@ def plot_idr(
 
     # Check if all the MUs have to be plotted
     if isinstance(munumber, str):
-        if emgfile["NUMBER_OF_MUS"] == 1: # Manage exception of single MU
+        if emgfile["NUMBER_OF_MUS"] == 1:  # Manage exception of single MU
             munumber = 0
         else:
             munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
-        
+
     # Use the subplot function to allow for the use of twinx()
-    fig, ax1 = plt.subplots(
-        figsize=(figsize[0] / 2.54, figsize[1] / 2.54), num="IDR"
-    )
+    fig, ax1 = plt.subplots(figsize=(figsize[0] / 2.54, figsize[1] / 2.54), num="IDR")
 
     # Check if we have a single MU or a list of MUs to plot
     # In this case, the use of plt.figure has been preferred to plt.subplots for implementation  the MUs cleaning.
@@ -578,7 +574,9 @@ def plot_idr(
             y=idr[munumber]["idr"],
         )
 
-        ax1.set_ylabel("MU {} (pps)".format(munumber))  # Useful because if the MU is empty it won't show the channel number
+        ax1.set_ylabel(
+            "MU {} (pps)".format(munumber)
+        )  # Useful because if the MU is empty it won't show the channel number
         ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
     elif isinstance(munumber, list):
@@ -592,13 +590,18 @@ def plot_idr(
                 y=norm_idr,
                 ax=ax1,
             )
-              
+
         # Ensure correct and complete ticks on the left y axis
         ax1.set_yticks([*range(len(munumber))])
         ax1.set_yticklabels([str(x) for x in munumber])
         # Set axes labels
         ax1.set_ylabel("Motor units")
         ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+
+    else:
+        raise Exception(
+            "While calling the plot_idr function, you should pass an integer, a list or 'all' to munumber"
+        )
 
     if addrefsig:
         ax2 = ax1.twinx()
@@ -610,15 +613,10 @@ def plot_idr(
         )
         sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
         ax2.set_ylabel("MViF (%)")
-    
-    showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)    
+
+    showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
     if showimmediately:
         plt.show()
-
-    else:
-        raise Exception(
-            "While calling the plot_idr function, you should pass an integer, a list or 'all' to munumber"
-        )
 
     return fig
 
@@ -691,6 +689,4 @@ def plot_muaps(sta_dict, figsize=[20, 15], showimmediately=True):
             plt.show()
 
     else:
-        raise Exception(
-            "sta_dict and munumber must be both dict and int or list and list"
-        )
+        raise Exception("sta_dict must be dict or list")

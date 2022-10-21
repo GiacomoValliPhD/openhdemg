@@ -609,13 +609,13 @@ class GUI():
         """
         try:
             if self.filetype.get() == "REFSIG":
-                self.fig = openhdemg.plot_refsig(emgfile=self.resdict, showimmediately=False, tight_layout=False)
+                self.fig = openhdemg.plot_refsig(emgfile=self.resdict, showimmediately=False, tight_layout=True)
             elif plot == "idr":
-                self.fig = openhdemg.plot_idr(emgfile=self.resdict, munumber=[*range(0, int(self.resdict["NUMBER_OF_MUS"]))], showimmediately=False, tight_layout=False)
+                self.fig = openhdemg.plot_idr(emgfile=self.resdict, showimmediately=False, tight_layout=True)
             elif plot == "refsig_fil":
-                self.fig = openhdemg.plot_refsig(emgfile=self.resdict, showimmediately=False, tight_layout=False)
+                self.fig = openhdemg.plot_refsig(emgfile=self.resdict, showimmediately=False, tight_layout=True)
             elif plot == "refsig_off":
-                self.fig = openhdemg.plot_refsig(emgfile=self.resdict, showimmediately=False, tight_layout=False)
+                self.fig = openhdemg.plot_refsig(emgfile=self.resdict, showimmediately=False, tight_layout=True)
 
             self.canvas = FigureCanvasTkAgg(self.fig, master=self.right)
             self.canvas.get_tk_widget().grid(row=0, column=0)
@@ -816,7 +816,7 @@ class GUI():
                              width=10,
                              textvariable=self.cutoff_freq)
         cutoff.grid(column=2, row=1)
-        self.cutoff_freq.set(20)
+        self.cutoff_freq.set(15)
 
         # Remove offset of reference signal
         separator2 = ttk.Separator(self.head, orient="horizontal")

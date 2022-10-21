@@ -52,6 +52,10 @@ def min_max_scaling(series_or_df):
         )
 
 
+def align_by_xcorr():#TODO
+    return
+
+
 def norm_twod_xcorr(sta_mu1, sta_mu2):
     """
     Normalised cross-correlation of two 2-dimensional STA matrices.

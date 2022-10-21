@@ -169,4 +169,4 @@ def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
 
 
 def tracking():
-    1#TODO
+    return #TODO
