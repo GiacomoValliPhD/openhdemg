@@ -3,6 +3,10 @@ This module contains functions to produce MUs anction potentials (MUAP).
 """
 
 import pandas as pd
+from openhdemg.mathtools import norm_twod_xcorr
+from scipy import signal
+import matplotlib.pyplot as plt
+from functools import reduce
 
 
 def diff(sorted_rawemg):
@@ -114,7 +118,7 @@ def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
     Returns
     -------
     sta_dict : dict
-        dict containing a dict of STA for every MUs.
+        dict containing a dict of STA (pd.DataFrame) for every MUs.
 
     Notes
     -----
@@ -125,7 +129,7 @@ def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
     timewindow_samples = round((timewindow / 1000) * emgfile["FSAMP"])
     halftime = round(timewindow_samples / 2)
 
-    # Comtainer of the STA for every MUs
+    # Container of the STA for every MUs
     sta_dict = {}
     for mu in [*range(emgfile["NUMBER_OF_MUS"])]:
         sta_dict[mu] = {}
@@ -166,6 +170,143 @@ def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
         sta_dict[mu] = sorted_rawemg_sta
 
     return sta_dict
+
+
+def unpack_sta(sta_mu1):
+    """
+    Build a common pd.DataFrame from the sta dict containing all the channels
+
+    Parameters
+    ----------
+    sta_mu1 : dict
+        A dict containing the STA of the MU.
+    
+    Returns
+    -------
+    df1 : pd.DataFrame
+        A pd.DataFrame containing the STA of the MU (including the empty channel).
+    """
+    
+    dfs = [
+        sta_mu1["col0"],
+        sta_mu1["col1"],
+        sta_mu1["col2"],
+        sta_mu1["col3"],
+        sta_mu1["col4"],
+    ]
+    df1 = reduce(
+        lambda left, right: pd.merge(left, right, left_index=True, right_index=True),
+        dfs,
+    )
+
+    return df1
+
+
+def pack_sta(df_sta1):
+    """
+    Pack the pd.DataFrame containing STA to a dict.
+
+    Parameters
+    ----------
+    df_sta1 : A pd.DataFrame containing the STA of the MU (including the empty channel).
+    
+    Returns
+    -------
+    packed_sta : dict
+        dict containing STA of the input pd.DataFrame divided by matrix column.
+        Dict columns are "col0", col1", "col2", "col3", "col4".
+    """
+    
+    packed_sta = {
+            "col0":df_sta1.iloc[:,0:12],
+            "col1":df_sta1.iloc[:,13:25],
+            "col2":df_sta1.iloc[:,26:38],
+            "col3":df_sta1.iloc[:,39:51],
+            "col4":df_sta1.iloc[:,52:64]
+        }
+    
+    return packed_sta
+
+
+def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
+    """
+    Align the STA of 2 MUs by cross-correlation.
+
+    Any pre-processing of the RAW_SIGNAL 
+    (i.e., normal, differential or double differential)
+    can be passed as long as the two inputs have same shape.
+    Since the returned STA is cut based on finalduration,
+    the input STA should account for this.
+
+    Parameters
+    ----------
+    sta_mu1 : dict
+        A dictionary containing the STA of the first MU.
+    sta_mu2 : dict
+        A dictionary containing the STA of the second MU.
+    finalduration : float, default 0.5
+        Duration of the aligned STA compared to the original
+        in percent. (e.g., 0.5 corresponds to 50%).
+
+    Returns
+    -------
+    aligned_sta1 : dict
+        A dictionary containing the aligned and STA of the first MU
+        with the final expected timewindow (duration of sta_mu1 * finalduration).
+    aligned_sta2 : dict
+        A dictionary containing the aligned and STA of the second MU
+        with the final expected timewindow (duration of sta_mu1 * finalduration).
+    """
+    
+    # Obtain a pd.DataFrame for the 2d xcorr without empty column
+    # but mantain the original pd.DataFrame with empty column to return the aligned STAs
+    df1 = unpack_sta(sta_mu1)
+    no_nan_sta1 = df1.dropna(axis=1, inplace=False)
+    df2 = unpack_sta(sta_mu2)
+    no_nan_sta2 = df2.dropna(axis=1, inplace=False)
+
+    # Compute 2dxcorr to identify a common lag/delay
+    normxcorr_df, normxcorr_max = norm_twod_xcorr(no_nan_sta1, no_nan_sta2, mode="same")
+    
+    # Detect the time leads or lags from 2dxcorr
+    corr_lags = signal.correlation_lags(len(no_nan_sta1.index), len(no_nan_sta2.index), mode='same')
+    normxcorr_df.set_index(corr_lags, inplace=True)
+    lag = normxcorr_df.idxmax().median() # First signal compared to second
+
+    # Be sure that the lag/delay does not exceed values suitable for the final expected duration.
+    finalduration_samples = round(len(df1.index) * finalduration)
+    if lag > (finalduration_samples/2):
+        lag = finalduration_samples/2
+
+    # Align the signals
+    dfmin = normxcorr_df.index.min()
+    dfmax = normxcorr_df.index.max()
+    
+    start1 = dfmin + abs(lag) if lag > 0 else dfmin
+    stop1 = dfmax if lag > 0 else dfmax - abs(lag)
+    
+    start2 = dfmin + abs(lag) if lag < 0 else dfmin
+    stop2 = dfmax if lag < 0 else dfmax - abs(lag)
+
+    df1cut = df1.set_index(corr_lags).loc[start1:stop1 , :]
+    df2cut = df2.set_index(corr_lags).loc[start2:stop2 , :]
+    
+    # Cut the signal to respect the final duration
+    tocutstart = round((len(df1cut.index) - finalduration_samples)/2)
+    tocutend = round(len(df1cut.index) - tocutstart)
+
+    df1cut = df1cut.iloc[tocutstart:tocutend , :]
+    df2cut = df2cut.iloc[tocutstart:tocutend , :]
+    
+    # Reset index to have a common index
+    df1cut.reset_index(drop=True, inplace=True)
+    df2cut.reset_index(drop=True, inplace=True)
+    
+    # Convert the STA to the original dict structure
+    aligned_sta1 = pack_sta(df1cut)
+    aligned_sta2 = pack_sta(df2cut)
+
+    return aligned_sta1, aligned_sta2
 
 
 def tracking():

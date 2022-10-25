@@ -4,7 +4,6 @@ This module contains all the mathematical functions that are necessary for the l
 
 import copy
 import pandas as pd
-from functools import reduce
 from scipy import signal
 import numpy as np
 
@@ -52,62 +51,43 @@ def min_max_scaling(series_or_df):
         )
 
 
-def align_by_xcorr():#TODO
-    return
-
-
-def norm_twod_xcorr(sta_mu1, sta_mu2):
+def norm_twod_xcorr(df1, df2, mode="full"):
     """
-    Normalised cross-correlation of two 2-dimensional STA matrices.
+    Normalised 2-dimensional cross-correlation of STAs of two MUS.
 
     Any pre-processing of the RAW_SIGNAL (i.e., normal, differential or double differential)
     can be passed as long as the two inputs have same shape.
 
     Parameters
     ----------
-    sta_mu1: dict
-        A dictionary containing the STA of the first MU.
-    sta_mu2 : dict
-        A dictionary containing the STA of the second MU.
+    df1 : pd.DataFrame
+        A pd.DataFrame containing the STA of the first MU without np.nan column. 
+    df2 : pd.DataFrame
+        A pd.DataFrame containing the STA of the second MU without np.nan column.
+    mode : str {'full', 'valid', 'same'}, optional #TODO docs like this
+        A string indicating the size of the output:
+
+        ``full``
+           The output is the full discrete linear cross-correlation
+           of the inputs. (Default)
+        ``valid``
+           The output consists only of those elements that do not
+           rely on the zero-padding. In 'valid' mode, either `sta_mu1` or `sta_mu2`
+           must be at least as large as the other in every dimension.
+        ``same``
+           The output is the same size as `in1`, centered
+           with respect to the 'full' output.
 
     Returns
     -------
     normxcorr_df : pd.DataFrame
         The results of the normalised 2d cross-correlation.
-    normxcorr_max: float
+    normxcorr_max : float
         The maximum value of the 2d cross-correlation.
-    
     """
-
-    # Build a common pd.DataFrame from the sta dict containing all the channels
-    dfs = [
-        sta_mu1["col0"],
-        sta_mu1["col1"],
-        sta_mu1["col2"],
-        sta_mu1["col3"],
-        sta_mu1["col4"],
-    ]
-    df1 = reduce(
-        lambda left, right: pd.merge(left, right, left_index=True, right_index=True),
-        dfs,
-    )
-    df1.dropna(axis=1, inplace=True)
-
-    dfs = [
-        sta_mu2["col0"],
-        sta_mu2["col1"],
-        sta_mu2["col2"],
-        sta_mu2["col3"],
-        sta_mu2["col4"],
-    ]
-    df2 = reduce(
-        lambda left, right: pd.merge(left, right, left_index=True, right_index=True),
-        dfs,
-    )
-    df2.dropna(axis=1, inplace=True)
-
+    
     # Perform 2d xcorr
-    correlate2d = signal.correlate2d(in1=df1, in2=df2)#TODO check inputs eg.mode
+    correlate2d = signal.correlate2d(in1=df1, in2=df2, mode=mode)
 
     # Normalise the result of 2d xcorr for the different energy levels
     # MATLAB equivalent: acor_norm = xcorr(x,y)/sqrt(sum(abs(x).^2)*sum(abs(y).^2))

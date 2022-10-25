@@ -621,7 +621,7 @@ def plot_idr(
     return fig
 
 
-def plot_muaps(sta_dict, figsize=[20, 15], showimmediately=True):
+def plot_muaps(sta_dict, figsize=[20, 15], showimmediately=True):#TODO add align option
     """
     Plot MUAPs obtained from STA from one or multiple MUs.
 

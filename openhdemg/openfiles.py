@@ -384,7 +384,7 @@ def emg_from_demuse(filepath):
 # These functions are not exposed to the final user.
 
 # The user can decide if he/she wants the filtered or unfiltered REF_SIGNAL
-def get_otb_refsignal(df, refsig):#TODO fix subsampled and check askopenfile for refsig only
+def get_otb_refsignal(df, refsig):
     """
     Extract the REF_SIGNAL from the OTB .mat file.
 
