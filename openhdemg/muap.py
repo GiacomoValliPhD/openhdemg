@@ -331,11 +331,55 @@ def tracking(
     matrixcode="GR08MM1305",
     orientation=180,
     exclude_belowthreshold=True,
-    filter=True, #TODO
+    # filter=True, #TODO add also in docstring
     show=False,
-    runparallel=True,  # TODO
+    runparallel=True,
 ):
-    """ """
+    """
+    Track MUs across two different contractions.
+
+    Parameters
+    ----------
+    emgfile1 : dict
+        The dictionary containing the first emgfile.
+    emgfile2 : dict
+        The dictionary containing the second emgfile.
+    firings : list, default [0, 20]
+        The range of firnings to be used for the STA.
+        If a MU has less firings than the range, the upper limit
+        is adjusted accordingly.
+    timewindow : int, default 50
+        Timewindow to compute STA in milliseconds.
+    threshold : float, default 0.8
+        The 2-dimensional cross-correlation minimum value
+        to consider two MUs to be the same. Ranges 0-1.
+    matrixcode : str, default "GR08MM1305"
+        The code of the matrix used.
+    orientation : int, default 180
+        Orientation in degree of the matrix (same as in OTBiolab).
+        E.g. 180 corresponds to the matrix connection toward the user.
+    exclude_belowthreshold : bool, default True
+        Whether to exclude results with XCC below threshold.
+    show : bool, default False
+        Whether to plot ste STA of pairs of MUs with XCC above threshold.
+    runparallel : bool, default True
+        Whether to execute the tracking function exploiting parallel
+        processing for drastic performance improvements.
+
+    Returns
+    -------
+    tracking_res : pd.DataFrame
+        The results of the tracking including the MU from file 1,
+        MU from file 2 and the normalised cross-correlation value (XCC).
+
+    Notes
+    -----
+    Parallel processing can be disabled with runparallel=False.
+    This can be useful if some computers incur in execution errors.
+    However, wenever working, runparallel=True is recommended to
+    obtain a performance improvement of 5-10 times compared to serial
+    processing.
+    """
 
     # Get the STAs
     emgfile1_sorted = sort_rawemg(emgfile1, code=matrixcode, orientation=orientation)
@@ -349,7 +393,7 @@ def tracking(
 
     if not runparallel:
         # Serial implementation
-        # Meausere running time, about 5 times slower than parallel implementation
+        # Meausere running time
         t0 = time.time()
 
         # Dict to store tracking results
@@ -417,7 +461,7 @@ def tracking(
 
         if show:
             plt.show()
-        
+
         return tracking_res
 
     else:
@@ -454,8 +498,7 @@ def tracking(
             return res
 
         # Start parallel execution
-        # Meausere running time, parallel implementation is up to 10 times
-        # faster in a 16 core machine compared to single core performance.
+        # Meausere running time
         t0 = time.time()
 
         res = Parallel(n_jobs=-1)(
@@ -475,17 +518,17 @@ def tracking(
         tracking_res.reset_index(drop=True, inplace=True)
 
         # Filter the results
-        if filter:
-            pass #TODO
-        
+        """ if filter:
+            pass #TODO """
+
         # Print the full results
         pd.set_option("display.max_rows", None)
-        convert_dict = {"MU_file1": int,"MU_file2": int, "XCC": float}
+        convert_dict = {"MU_file1": int, "MU_file2": int, "XCC": float}
         tracking_res = tracking_res.astype(convert_dict)
         print("Tracking results:\n", tracking_res)
 
         # Plot the MUs pairs
-        if show: #TODO improve performance
+        if show:  # TODO improve performance
             t0 = time.time()
             for ind in tracking_res.index:
                 if tracking_res["XCC"].loc[ind] >= threshold:
@@ -504,10 +547,12 @@ def tracking(
                     plot_muaps(
                         [aligned_sta1, aligned_sta2], title=title, showimmediately=False
                     )
-            
+
             t1 = time.time()
-            print(f"\nTime of plotting: {round(t1-t0, 2)} Sec. Will be improved in the next releases\n")
-            
+            print(
+                f"\nTime of plotting: {round(t1-t0, 2)} Sec. Will be improved in the next releases\n"
+            )
+
             plt.show()
-    
+
     return tracking_res
