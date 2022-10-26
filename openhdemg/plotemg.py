@@ -621,7 +621,7 @@ def plot_idr(
     return fig
 
 
-def plot_muaps(sta_dict, figsize=[20, 15], showimmediately=True):#TODO add align option
+def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediately=True):#TODO add align option
     """
     Plot MUAPs obtained from STA from one or multiple MUs.
 
@@ -632,6 +632,8 @@ def plot_muaps(sta_dict, figsize=[20, 15], showimmediately=True):#TODO add align
         of specified MUs.
         If a list is passed, different MUs are overlayed. This is useful for
         visualisation of MUAPs during tracking or duplicates removal.
+    tile : str, default "MUAPs from STA"
+        Title of the plot.
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     showimmediately : bool, default True
@@ -669,7 +671,7 @@ def plot_muaps(sta_dict, figsize=[20, 15], showimmediately=True):#TODO add align
             rows,
             cols,
             figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-            num=f"MUAPs from STA",
+            num=title,
             sharex=True,
         )
 

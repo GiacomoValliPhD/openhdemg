@@ -84,6 +84,14 @@ def norm_twod_xcorr(df1, df2, mode="full"):
         The results of the normalised 2d cross-correlation.
     normxcorr_max : float
         The maximum value of the 2d cross-correlation.
+    
+    See also
+    --------
+    align_by_xcorr : to align the two STAs before calling norm_twod_xcorr.
+    unpack_sta : for unpacking the sta dict in a pd.DataFrame
+        before passing it to norm_twod_xcorr.
+    pack_sta : for packing the sta pd.DataFrame in a dict where
+        each matrix column corresponds to a dict key.
     """
     
     # Perform 2d xcorr

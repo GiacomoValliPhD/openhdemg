@@ -1,12 +1,17 @@
 """ 
-This module contains functions to produce MUs anction potentials (MUAP).
+This module contains functions to produce and analyse MUs anction potentials (MUAP).
 """
 
 import pandas as pd
 from openhdemg.mathtools import norm_twod_xcorr
+from openhdemg.otbelectrodes import sort_rawemg
+from openhdemg.plotemg import plot_muaps
 from scipy import signal
 import matplotlib.pyplot as plt
 from functools import reduce
+import numpy as np
+import time
+from joblib import Parallel, delayed
 
 
 def diff(sorted_rawemg):
@@ -19,14 +24,14 @@ def diff(sorted_rawemg):
         A dict containing the sorted electrodes.
         Every key of the dictionary represents a different column of the matrix.
         Rows are stored in the dict as a pd.DataFrame.
-    
+
     Returns
     -------
     sd : dict
         A dict containing the double differential signal.
         Every key of the dictionary represents a different column of the matrix.
         Rows are stored in the dict as a pd.DataFrame.
-    
+
     Notes
     -----
     The returned sd will contain one less matrix row.
@@ -42,8 +47,7 @@ def diff(sorted_rawemg):
         for pos, row in enumerate(sorted_rawemg[col].columns):
             if pos > 0:
                 res = (
-                    sorted_rawemg[col].loc[:, row - 1]
-                    - sorted_rawemg[col].loc[:, row]
+                    sorted_rawemg[col].loc[:, row - 1] - sorted_rawemg[col].loc[:, row]
                 )
                 sd[col][row] = res
 
@@ -62,19 +66,19 @@ def double_diff(sorted_rawemg):
         A dict containing the sorted electrodes.
         Every key of the dictionary represents a different column of the matrix.
         Rows are stored in the dict as a pd.DataFrame.
-    
+
     Returns
     -------
     dd : dict
         A dict containing the double differential signal.
         Every key of the dictionary represents a different column of the matrix.
         Rows are stored in the dict as a pd.DataFrame.
-    
+
     Notes
     -----
     The returned dd will contain two less matrix rows.
     """
-    
+
     # Create a dict of pd.DataFrames for the double differential
     dd = {"col0": {}, "col1": {}, "col2": {}, "col3": {}, "col4": {}}
 
@@ -180,13 +184,13 @@ def unpack_sta(sta_mu1):
     ----------
     sta_mu1 : dict
         A dict containing the STA of the MU.
-    
+
     Returns
     -------
     df1 : pd.DataFrame
         A pd.DataFrame containing the STA of the MU (including the empty channel).
     """
-    
+
     dfs = [
         sta_mu1["col0"],
         sta_mu1["col1"],
@@ -209,22 +213,24 @@ def pack_sta(df_sta1):
     Parameters
     ----------
     df_sta1 : A pd.DataFrame containing the STA of the MU (including the empty channel).
-    
+
     Returns
     -------
     packed_sta : dict
         dict containing STA of the input pd.DataFrame divided by matrix column.
         Dict columns are "col0", col1", "col2", "col3", "col4".
     """
-    
+
+    slice = int(np.ceil(len(df_sta1.columns) / 5))
+
     packed_sta = {
-            "col0":df_sta1.iloc[:,0:12],
-            "col1":df_sta1.iloc[:,13:25],
-            "col2":df_sta1.iloc[:,26:38],
-            "col3":df_sta1.iloc[:,39:51],
-            "col4":df_sta1.iloc[:,52:64]
-        }
-    
+        "col0": df_sta1.iloc[:, 0:slice],
+        "col1": df_sta1.iloc[:, slice : slice * 2],
+        "col2": df_sta1.iloc[:, slice * 2 : slice * 3],
+        "col3": df_sta1.iloc[:, slice * 3 : slice * 4],
+        "col4": df_sta1.iloc[:, slice * 4 : slice * 5],
+    }
+
     return packed_sta
 
 
@@ -232,7 +238,7 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     """
     Align the STA of 2 MUs by cross-correlation.
 
-    Any pre-processing of the RAW_SIGNAL 
+    Any pre-processing of the RAW_SIGNAL
     (i.e., normal, differential or double differential)
     can be passed as long as the two inputs have same shape.
     Since the returned STA is cut based on finalduration,
@@ -256,8 +262,13 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     aligned_sta2 : dict
         A dictionary containing the aligned and STA of the second MU
         with the final expected timewindow (duration of sta_mu1 * finalduration).
+
+    Notes
+    -----
+    STAs are aligned by a common lag/delay and not channel by channel because
+    this might lead to misleading results (and provides better performance).
     """
-    
+
     # Obtain a pd.DataFrame for the 2d xcorr without empty column
     # but mantain the original pd.DataFrame with empty column to return the aligned STAs
     df1 = unpack_sta(sta_mu1)
@@ -267,41 +278,43 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
 
     # Compute 2dxcorr to identify a common lag/delay
     normxcorr_df, normxcorr_max = norm_twod_xcorr(no_nan_sta1, no_nan_sta2, mode="same")
-    
+
     # Detect the time leads or lags from 2dxcorr
-    corr_lags = signal.correlation_lags(len(no_nan_sta1.index), len(no_nan_sta2.index), mode='same')
+    corr_lags = signal.correlation_lags(
+        len(no_nan_sta1.index), len(no_nan_sta2.index), mode="same"
+    )
     normxcorr_df.set_index(corr_lags, inplace=True)
-    lag = normxcorr_df.idxmax().median() # First signal compared to second
+    lag = normxcorr_df.idxmax().median()  # First signal compared to second
 
     # Be sure that the lag/delay does not exceed values suitable for the final expected duration.
     finalduration_samples = round(len(df1.index) * finalduration)
-    if lag > (finalduration_samples/2):
-        lag = finalduration_samples/2
+    if lag > (finalduration_samples / 2):
+        lag = finalduration_samples / 2
 
     # Align the signals
     dfmin = normxcorr_df.index.min()
     dfmax = normxcorr_df.index.max()
-    
+
     start1 = dfmin + abs(lag) if lag > 0 else dfmin
     stop1 = dfmax if lag > 0 else dfmax - abs(lag)
-    
+
     start2 = dfmin + abs(lag) if lag < 0 else dfmin
     stop2 = dfmax if lag < 0 else dfmax - abs(lag)
 
-    df1cut = df1.set_index(corr_lags).loc[start1:stop1 , :]
-    df2cut = df2.set_index(corr_lags).loc[start2:stop2 , :]
-    
+    df1cut = df1.set_index(corr_lags).loc[start1:stop1, :]
+    df2cut = df2.set_index(corr_lags).loc[start2:stop2, :]
+
     # Cut the signal to respect the final duration
-    tocutstart = round((len(df1cut.index) - finalduration_samples)/2)
+    tocutstart = round((len(df1cut.index) - finalduration_samples) / 2)
     tocutend = round(len(df1cut.index) - tocutstart)
 
-    df1cut = df1cut.iloc[tocutstart:tocutend , :]
-    df2cut = df2cut.iloc[tocutstart:tocutend , :]
-    
+    df1cut = df1cut.iloc[tocutstart:tocutend, :]
+    df2cut = df2cut.iloc[tocutstart:tocutend, :]
+
     # Reset index to have a common index
     df1cut.reset_index(drop=True, inplace=True)
     df2cut.reset_index(drop=True, inplace=True)
-    
+
     # Convert the STA to the original dict structure
     aligned_sta1 = pack_sta(df1cut)
     aligned_sta2 = pack_sta(df2cut)
@@ -309,5 +322,192 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     return aligned_sta1, aligned_sta2
 
 
-def tracking():
-    return #TODO
+def tracking(
+    emgfile1,
+    emgfile2,
+    firings=[0, 20],
+    timewindow=50,
+    threshold=0.8,
+    matrixcode="GR08MM1305",
+    orientation=180,
+    exclude_belowthreshold=True,
+    filter=True, #TODO
+    show=False,
+    runparallel=True,  # TODO
+):
+    """ """
+
+    # Get the STAs
+    emgfile1_sorted = sort_rawemg(emgfile1, code=matrixcode, orientation=orientation)
+    sta_emgfile1 = sta(
+        emgfile1, emgfile1_sorted, firings=firings, timewindow=timewindow * 2
+    )
+    emgfile2_sorted = sort_rawemg(emgfile2, code=matrixcode, orientation=orientation)
+    sta_emgfile2 = sta(
+        emgfile2, emgfile2_sorted, firings=firings, timewindow=timewindow * 2
+    )
+
+    if not runparallel:
+        # Serial implementation
+        # Meausere running time, about 5 times slower than parallel implementation
+        t0 = time.time()
+
+        # Dict to store tracking results
+        res = {"MU_file1": [], "MU_file2": [], "XCC": []}
+
+        # Loop all the MUs of file 1
+        for mu_file1 in range(emgfile1["NUMBER_OF_MUS"]):
+            # Compare mu_file1 against all the MUs in file2
+            for mu_file2 in range(emgfile2["NUMBER_OF_MUS"]):
+                # Firs, align the STAs
+                aligned_sta1, aligned_sta2 = align_by_xcorr(
+                    sta_emgfile1[mu_file1], sta_emgfile2[mu_file2], finalduration=0.5
+                )
+
+                # Second, compute 2d cross-correlation
+                df1 = unpack_sta(aligned_sta1)
+                df1.dropna(axis=1, inplace=True)
+                df2 = unpack_sta(aligned_sta2)
+                df2.dropna(axis=1, inplace=True)
+                normxcorr_df, normxcorr_max = norm_twod_xcorr(df1, df2, mode="full")
+
+                # Third, fill the tracking_res
+                if exclude_belowthreshold == False:
+                    res["MU_file1"].append(mu_file1)
+                    res["MU_file2"].append(mu_file2)
+                    res["XCC"].append(normxcorr_max)
+
+                    if show and normxcorr_max >= threshold:
+                        title = "MUAPs from MU '{}' in file 1 and MU '{}' in file 2, XCC = {}".format(
+                            int(mu_file1), int(mu_file2), round(normxcorr_max, 2)
+                        )
+                        plot_muaps(
+                            [aligned_sta1, aligned_sta2],
+                            title=title,
+                            showimmediately=False,
+                        )
+
+                elif exclude_belowthreshold and normxcorr_max >= threshold:
+                    res["MU_file1"].append(mu_file1)
+                    res["MU_file2"].append(mu_file2)
+                    res["XCC"].append(normxcorr_max)
+
+                    if show:
+                        title = "MUAPs from MU '{}' in file 1 and MU '{}' in file 2, XCC = {}".format(
+                            int(mu_file1), int(mu_file2), round(normxcorr_max, 2)
+                        )
+                        plot_muaps(
+                            [aligned_sta1, aligned_sta2],
+                            title=title,
+                            showimmediately=False,
+                        )
+
+        # Running time
+        t1 = time.time()
+        print(
+            "\nTime of tracking serial processing: {} Sec\nUse runparallel=True for better performance\n".format(
+                round(t1 - t0, 2)
+            )
+        )
+
+        # Print the full results
+        pd.set_option("display.max_rows", None)
+        tracking_res = pd.DataFrame(res)
+        print(tracking_res)
+
+        if show:
+            plt.show()
+        
+        return tracking_res
+
+    else:
+        # Function to run in parallel
+        def parallel(mu_file1):  # Loop all the MUs of file 1
+            # Dict to fill with the 2d cross-correlation results
+            res = {"MU_file1": [], "MU_file2": [], "XCC": []}
+
+            # Compare mu_file1 against all the MUs in file2
+            for mu_file2 in range(emgfile2["NUMBER_OF_MUS"]):
+                # Firs, align the STAs
+                aligned_sta1, aligned_sta2 = align_by_xcorr(
+                    sta_emgfile1[mu_file1], sta_emgfile2[mu_file2], finalduration=0.5
+                )
+
+                # Second, compute 2d cross-correlation
+                df1 = unpack_sta(aligned_sta1)
+                df1.dropna(axis=1, inplace=True)
+                df2 = unpack_sta(aligned_sta2)
+                df2.dropna(axis=1, inplace=True)
+                normxcorr_df, normxcorr_max = norm_twod_xcorr(df1, df2, mode="full")
+
+                # Third, fill the tracking_res
+                if exclude_belowthreshold == False:
+                    res["MU_file1"].append(mu_file1)
+                    res["MU_file2"].append(mu_file2)
+                    res["XCC"].append(normxcorr_max)
+
+                elif exclude_belowthreshold and normxcorr_max >= threshold:
+                    res["MU_file1"].append(mu_file1)
+                    res["MU_file2"].append(mu_file2)
+                    res["XCC"].append(normxcorr_max)
+
+            return res
+
+        # Start parallel execution
+        # Meausere running time, parallel implementation is up to 10 times
+        # faster in a 16 core machine compared to single core performance.
+        t0 = time.time()
+
+        res = Parallel(n_jobs=-1)(
+            delayed(parallel)(mu_file1) for mu_file1 in range(emgfile1["NUMBER_OF_MUS"])
+        )
+
+        t1 = time.time()
+        print(f"\nTime of tracking parallel processing: {round(t1-t0, 2)} Sec\n")
+
+        # Convert res to pd.DataFrame
+        tracking_res = []
+        for pos, i in enumerate(res):
+            if pos == 0:
+                tracking_res = pd.DataFrame(i)
+            else:
+                tracking_res = pd.concat([tracking_res, pd.DataFrame(i)])
+        tracking_res.reset_index(drop=True, inplace=True)
+
+        # Filter the results
+        if filter:
+            pass #TODO
+        
+        # Print the full results
+        pd.set_option("display.max_rows", None)
+        convert_dict = {"MU_file1": int,"MU_file2": int, "XCC": float}
+        tracking_res = tracking_res.astype(convert_dict)
+        print("Tracking results:\n", tracking_res)
+
+        # Plot the MUs pairs
+        if show: #TODO improve performance
+            t0 = time.time()
+            for ind in tracking_res.index:
+                if tracking_res["XCC"].loc[ind] >= threshold:
+                    # Align STA
+                    aligned_sta1, aligned_sta2 = align_by_xcorr(
+                        sta_emgfile1[tracking_res["MU_file1"].loc[ind]],
+                        sta_emgfile2[tracking_res["MU_file2"].loc[ind]],
+                        finalduration=0.5,
+                    )
+
+                    title = "MUAPs from MU '{}' in file 1 and MU '{}' in file 2, XCC = {}".format(
+                        tracking_res["MU_file1"].loc[ind],
+                        tracking_res["MU_file2"].loc[ind],
+                        round(tracking_res["XCC"].loc[ind], 2),
+                    )
+                    plot_muaps(
+                        [aligned_sta1, aligned_sta2], title=title, showimmediately=False
+                    )
+            
+            t1 = time.time()
+            print(f"\nTime of plotting: {round(t1-t0, 2)} Sec. Will be improved in the next releases\n")
+            
+            plt.show()
+    
+    return tracking_res
