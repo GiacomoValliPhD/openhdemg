@@ -100,7 +100,9 @@ def double_diff(sorted_rawemg):
     return dd
 
 
-def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
+def sta(
+    emgfile, sorted_rawemg, firings=[0, 50], timewindow=100
+):  # TODO performance improvements, parallel proc?
     """
     Computes the spike-triggered average (STA) of every MUs.
 
@@ -112,10 +114,11 @@ def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
         A dict containing the sorted electrodes.
         Every key of the dictionary represents a different column of the matrix.
         Rows are stored in the dict as a pd.DataFrame.
-    firings : list, default [0, 50]
+    firings : list or str, default [0, 50]
         The range of firnings to be used for the STA.
         If a MU has less firings than the range, the upper limit
         is adjusted accordingly.
+        If Firings="all" the STA is calculated over all the firings.
     timewindow : int, default 100
         Timewindow to compute STA in milliseconds.
 
@@ -145,15 +148,24 @@ def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
     # Calculate STA on sorted_rawemg for every mu and put it into sta_dict[mu]
     # Loop all the MUs to fill sta_dict
     for mu in sta_dict.keys():
+        # Set firings if firings="all"
+        if firings == "all":
+            firings_ = [0, len(emgfile["MUPULSES"][mu])]
+        else:
+            firings_ = firings
+
         # Loop the matrix columns
         sorted_rawemg_sta = {}
         for col in sorted_rawemg.keys():
+
             # Container of STA for matrix rows
             row_dict = {}
             # Loop the matrix rows
             for row in sorted_rawemg[col].columns:
+
                 # Find the mupulses
-                thismups = emgfile["MUPULSES"][mu][firings[0] : firings[1]]
+                thismups = emgfile["MUPULSES"][mu][firings_[0] : firings_[1]]
+
                 # Container of ST area for averaging
                 df = {}
                 for pos, pulse in enumerate(thismups):
@@ -232,6 +244,64 @@ def pack_sta(df_sta1):
     }
 
     return packed_sta
+
+
+def st_muap(emgfile, sorted_rawemg, timewindow=50):
+    """
+    #TODO
+    Function used for plot_muap
+
+    Function seems to work but it is extremely slow and must be documented 
+    well to understand how to access elements inside (this and other datasets as well)
+    """
+    # Compute half of the timewindow in samples
+    timewindow_samples = round((timewindow / 1000) * emgfile["FSAMP"])
+    halftime = round(timewindow_samples / 2)
+
+    # Container of the STA for every MUs
+    sta_dict = {}
+    for mu in [*range(emgfile["NUMBER_OF_MUS"])]:
+        sta_dict[mu] = {}
+        """
+        sta_dict
+        {0: {}, 1: {}, 2: {}, 3: {}}
+        """
+
+    # Calculate STA on sorted_rawemg for every mu and put it into sta_dict[mu]
+    # Loop all the MUs to fill sta_dict
+    for mu in sta_dict.keys():
+        # Loop the matrix columns
+        sorted_rawemg_sta = {}
+        for col in sorted_rawemg.keys():
+
+            # Container of STA for matrix rows
+            row_dict = {}
+            # Loop the matrix rows
+            for row in sorted_rawemg[col].columns:
+
+                # Find the mupulses
+                thismups = emgfile["MUPULSES"][mu]
+
+                # Container of ST area for averaging
+                df = {}
+                for pos, pulse in enumerate(thismups):
+                    df[pos] = (
+                        sorted_rawemg[col][row]
+                        .iloc[pulse - halftime : pulse + halftime]
+                        .reset_index(drop=True)
+                    )
+
+                # Average df columns and fill df
+                df = pd.DataFrame(df)
+                #df = df.mean(axis="columns")
+
+                row_dict[row] = df
+
+            sorted_rawemg_sta[col] = row_dict
+
+        sta_dict[mu] = sorted_rawemg_sta
+
+    return sta_dict
 
 
 def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
@@ -325,16 +395,15 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
 def tracking(
     emgfile1,
     emgfile2,
-    firings=[0, 20],
-    timewindow=50,
+    firings="all",
+    timewindow=25,
     threshold=0.8,
     matrixcode="GR08MM1305",
     orientation=180,
     exclude_belowthreshold=True,
-    # filter=True, #TODO add also in docstring
+    filter=True,
     show=False,
-    runparallel=True,
-):
+):  # TODO check tracking function implementation and performance overall
     """
     Track MUs across two different contractions.
 
@@ -344,11 +413,12 @@ def tracking(
         The dictionary containing the first emgfile.
     emgfile2 : dict
         The dictionary containing the second emgfile.
-    firings : list, default [0, 20]
+    firings : list or str, default "all"
         The range of firnings to be used for the STA.
         If a MU has less firings than the range, the upper limit
         is adjusted accordingly.
-    timewindow : int, default 50
+        If Firings="all" the STA is calculated over all the firings.
+    timewindow : int, default 25
         Timewindow to compute STA in milliseconds.
     threshold : float, default 0.8
         The 2-dimensional cross-correlation minimum value
@@ -360,11 +430,11 @@ def tracking(
         E.g. 180 corresponds to the matrix connection toward the user.
     exclude_belowthreshold : bool, default True
         Whether to exclude results with XCC below threshold.
+    filter : bool, default True
+        If true, when the same MU has a match of XCC > threshold with
+        multiple MUs, only the match with the highest XCC is returned.
     show : bool, default False
         Whether to plot ste STA of pairs of MUs with XCC above threshold.
-    runparallel : bool, default True
-        Whether to execute the tracking function exploiting parallel
-        processing for drastic performance improvements.
 
     Returns
     -------
@@ -374,185 +444,136 @@ def tracking(
 
     Notes
     -----
-    Parallel processing can be disabled with runparallel=False.
-    This can be useful if some computers incur in execution errors.
-    However, wenever working, runparallel=True is recommended to
-    obtain a performance improvement of 5-10 times compared to serial
-    processing.
+    Parallel processing can improve performances by 5-10 times compared to serial
+    processing. In this function, parallel processing has been implemented for the tasks
+    involving 2-dimensional cross-correlation but not jet for sta and plotting that still
+    constitute a bottlneck. Parallel processing of these features will be implemented
+    in the next releases.
     """
 
     # Get the STAs
     emgfile1_sorted = sort_rawemg(emgfile1, code=matrixcode, orientation=orientation)
+    t0 = time.time()
     sta_emgfile1 = sta(
         emgfile1, emgfile1_sorted, firings=firings, timewindow=timewindow * 2
     )
+    t1 = time.time()
+    print(f"sta time: {t1-t0}")  # TODO remove this after improving performance
     emgfile2_sorted = sort_rawemg(emgfile2, code=matrixcode, orientation=orientation)
     sta_emgfile2 = sta(
         emgfile2, emgfile2_sorted, firings=firings, timewindow=timewindow * 2
     )
 
-    if not runparallel:
-        # Serial implementation
-        # Meausere running time
-        t0 = time.time()
-
-        # Dict to store tracking results
+    # Tracking function to run in parallel
+    def parallel(mu_file1):  # Loop all the MUs of file 1
+        # Dict to fill with the 2d cross-correlation results
         res = {"MU_file1": [], "MU_file2": [], "XCC": []}
 
-        # Loop all the MUs of file 1
-        for mu_file1 in range(emgfile1["NUMBER_OF_MUS"]):
-            # Compare mu_file1 against all the MUs in file2
-            for mu_file2 in range(emgfile2["NUMBER_OF_MUS"]):
-                # Firs, align the STAs
+        # Compare mu_file1 against all the MUs in file2
+        for mu_file2 in range(emgfile2["NUMBER_OF_MUS"]):
+            # Firs, align the STAs
+            aligned_sta1, aligned_sta2 = align_by_xcorr(
+                sta_emgfile1[mu_file1], sta_emgfile2[mu_file2], finalduration=0.5
+            )
+
+            # Second, compute 2d cross-correlation
+            df1 = unpack_sta(aligned_sta1)
+            df1.dropna(axis=1, inplace=True)
+            df2 = unpack_sta(aligned_sta2)
+            df2.dropna(axis=1, inplace=True)
+            normxcorr_df, normxcorr_max = norm_twod_xcorr(df1, df2, mode="full")
+
+            # Third, fill the tracking_res
+            if exclude_belowthreshold == False:
+                res["MU_file1"].append(mu_file1)
+                res["MU_file2"].append(mu_file2)
+                res["XCC"].append(normxcorr_max)
+
+            elif exclude_belowthreshold and normxcorr_max >= threshold:
+                res["MU_file1"].append(mu_file1)
+                res["MU_file2"].append(mu_file2)
+                res["XCC"].append(normxcorr_max)
+
+        return res
+
+    # Start parallel execution
+    # Meausere running time
+    t0 = time.time()
+
+    res = Parallel(n_jobs=-1)(
+        delayed(parallel)(mu_file1) for mu_file1 in range(emgfile1["NUMBER_OF_MUS"])
+    )
+
+    t1 = time.time()
+    print(f"\nTime of tracking parallel processing: {round(t1-t0, 2)} Sec\n")
+
+    # Convert res to pd.DataFrame
+    tracking_res = []
+    for pos, i in enumerate(res):
+        if pos == 0:
+            tracking_res = pd.DataFrame(i)
+        else:
+            tracking_res = pd.concat([tracking_res, pd.DataFrame(i)])
+    tracking_res.reset_index(drop=True, inplace=True)
+
+    # Filter the results
+    if filter:
+        # Sort file by MUs in file 1 and XCC to have first the highest XCC
+        sorted_res = tracking_res.sort_values(by=["MU_file1", "XCC"], ascending=False)
+        # Get unique MUs from file 1
+        unique = sorted_res["MU_file1"].unique()
+
+        res_unique = pd.DataFrame(columns=sorted_res.columns)
+
+        # Get the combo uf unique MUs from file 1 with MUs from file 2
+        for pos, mu1 in enumerate(unique):
+            this_res = sorted_res[sorted_res["MU_file1"] == mu1]
+            # Fill the result df with the first row (highest XCC)
+            res_unique.loc[pos, :] = this_res.iloc[0, :]
+
+        # Now repeat the task with MUs from file 2
+        sorted_res = res_unique.sort_values(by=["MU_file2", "XCC"], ascending=False)
+        unique = sorted_res["MU_file2"].unique()
+        res_unique = pd.DataFrame(columns=sorted_res.columns)
+        for pos, mu2 in enumerate(unique):
+            this_res = sorted_res[sorted_res["MU_file2"] == mu2]
+            res_unique.loc[pos, :] = this_res.iloc[0, :]
+
+        tracking_res = res_unique.sort_values(by=["MU_file1"])
+
+    # Print the full results
+    pd.set_option("display.max_rows", None)
+    convert_dict = {"MU_file1": int, "MU_file2": int, "XCC": float}
+    tracking_res = tracking_res.astype(convert_dict)
+    text = "Filtered tracking results:\n" if filter else "Total tracking results:\n"
+    print(text, tracking_res)
+
+    # Plot the MUs pairs
+    if show:  # TODO improve performance
+        t0 = time.time()
+        for ind in tracking_res.index:
+            if tracking_res["XCC"].loc[ind] >= threshold:
+                # Align STA
                 aligned_sta1, aligned_sta2 = align_by_xcorr(
-                    sta_emgfile1[mu_file1], sta_emgfile2[mu_file2], finalduration=0.5
+                    sta_emgfile1[tracking_res["MU_file1"].loc[ind]],
+                    sta_emgfile2[tracking_res["MU_file2"].loc[ind]],
+                    finalduration=0.5,
                 )
 
-                # Second, compute 2d cross-correlation
-                df1 = unpack_sta(aligned_sta1)
-                df1.dropna(axis=1, inplace=True)
-                df2 = unpack_sta(aligned_sta2)
-                df2.dropna(axis=1, inplace=True)
-                normxcorr_df, normxcorr_max = norm_twod_xcorr(df1, df2, mode="full")
+                title = "MUAPs from MU '{}' in file 1 and MU '{}' in file 2, XCC = {}".format(
+                    tracking_res["MU_file1"].loc[ind],
+                    tracking_res["MU_file2"].loc[ind],
+                    round(tracking_res["XCC"].loc[ind], 2),
+                )
+                plot_muaps(
+                    [aligned_sta1, aligned_sta2], title=title, showimmediately=False
+                )
 
-                # Third, fill the tracking_res
-                if exclude_belowthreshold == False:
-                    res["MU_file1"].append(mu_file1)
-                    res["MU_file2"].append(mu_file2)
-                    res["XCC"].append(normxcorr_max)
-
-                    if show and normxcorr_max >= threshold:
-                        title = "MUAPs from MU '{}' in file 1 and MU '{}' in file 2, XCC = {}".format(
-                            int(mu_file1), int(mu_file2), round(normxcorr_max, 2)
-                        )
-                        plot_muaps(
-                            [aligned_sta1, aligned_sta2],
-                            title=title,
-                            showimmediately=False,
-                        )
-
-                elif exclude_belowthreshold and normxcorr_max >= threshold:
-                    res["MU_file1"].append(mu_file1)
-                    res["MU_file2"].append(mu_file2)
-                    res["XCC"].append(normxcorr_max)
-
-                    if show:
-                        title = "MUAPs from MU '{}' in file 1 and MU '{}' in file 2, XCC = {}".format(
-                            int(mu_file1), int(mu_file2), round(normxcorr_max, 2)
-                        )
-                        plot_muaps(
-                            [aligned_sta1, aligned_sta2],
-                            title=title,
-                            showimmediately=False,
-                        )
-
-        # Running time
         t1 = time.time()
         print(
-            "\nTime of tracking serial processing: {} Sec\nUse runparallel=True for better performance\n".format(
-                round(t1 - t0, 2)
-            )
+            f"\nTime of plotting: {round(t1-t0, 2)} Sec. Will be improved in the next releases\n"
         )
 
-        # Print the full results
-        pd.set_option("display.max_rows", None)
-        tracking_res = pd.DataFrame(res)
-        print(tracking_res)
-
-        if show:
-            plt.show()
-
-        return tracking_res
-
-    else:
-        # Function to run in parallel
-        def parallel(mu_file1):  # Loop all the MUs of file 1
-            # Dict to fill with the 2d cross-correlation results
-            res = {"MU_file1": [], "MU_file2": [], "XCC": []}
-
-            # Compare mu_file1 against all the MUs in file2
-            for mu_file2 in range(emgfile2["NUMBER_OF_MUS"]):
-                # Firs, align the STAs
-                aligned_sta1, aligned_sta2 = align_by_xcorr(
-                    sta_emgfile1[mu_file1], sta_emgfile2[mu_file2], finalduration=0.5
-                )
-
-                # Second, compute 2d cross-correlation
-                df1 = unpack_sta(aligned_sta1)
-                df1.dropna(axis=1, inplace=True)
-                df2 = unpack_sta(aligned_sta2)
-                df2.dropna(axis=1, inplace=True)
-                normxcorr_df, normxcorr_max = norm_twod_xcorr(df1, df2, mode="full")
-
-                # Third, fill the tracking_res
-                if exclude_belowthreshold == False:
-                    res["MU_file1"].append(mu_file1)
-                    res["MU_file2"].append(mu_file2)
-                    res["XCC"].append(normxcorr_max)
-
-                elif exclude_belowthreshold and normxcorr_max >= threshold:
-                    res["MU_file1"].append(mu_file1)
-                    res["MU_file2"].append(mu_file2)
-                    res["XCC"].append(normxcorr_max)
-
-            return res
-
-        # Start parallel execution
-        # Meausere running time
-        t0 = time.time()
-
-        res = Parallel(n_jobs=-1)(
-            delayed(parallel)(mu_file1) for mu_file1 in range(emgfile1["NUMBER_OF_MUS"])
-        )
-
-        t1 = time.time()
-        print(f"\nTime of tracking parallel processing: {round(t1-t0, 2)} Sec\n")
-
-        # Convert res to pd.DataFrame
-        tracking_res = []
-        for pos, i in enumerate(res):
-            if pos == 0:
-                tracking_res = pd.DataFrame(i)
-            else:
-                tracking_res = pd.concat([tracking_res, pd.DataFrame(i)])
-        tracking_res.reset_index(drop=True, inplace=True)
-
-        # Filter the results
-        """ if filter:
-            pass #TODO """
-
-        # Print the full results
-        pd.set_option("display.max_rows", None)
-        convert_dict = {"MU_file1": int, "MU_file2": int, "XCC": float}
-        tracking_res = tracking_res.astype(convert_dict)
-        print("Tracking results:\n", tracking_res)
-
-        # Plot the MUs pairs
-        if show:  # TODO improve performance
-            t0 = time.time()
-            for ind in tracking_res.index:
-                if tracking_res["XCC"].loc[ind] >= threshold:
-                    # Align STA
-                    aligned_sta1, aligned_sta2 = align_by_xcorr(
-                        sta_emgfile1[tracking_res["MU_file1"].loc[ind]],
-                        sta_emgfile2[tracking_res["MU_file2"].loc[ind]],
-                        finalduration=0.5,
-                    )
-
-                    title = "MUAPs from MU '{}' in file 1 and MU '{}' in file 2, XCC = {}".format(
-                        tracking_res["MU_file1"].loc[ind],
-                        tracking_res["MU_file2"].loc[ind],
-                        round(tracking_res["XCC"].loc[ind], 2),
-                    )
-                    plot_muaps(
-                        [aligned_sta1, aligned_sta2], title=title, showimmediately=False
-                    )
-
-            t1 = time.time()
-            print(
-                f"\nTime of plotting: {round(t1-t0, 2)} Sec. Will be improved in the next releases\n"
-            )
-
-            plt.show()
+        plt.show()
 
     return tracking_res
