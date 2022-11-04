@@ -220,6 +220,9 @@ def sort_rawemg(emgfile, code="GR08MM1305", orientation=180):
     """
     Sort RAW_SIGNAL based on matrix type and orientation.
 
+    Built-in sorting functions have been implemented for 
+    "GR08MM1305" and "GR04MM1305" matrices with 0 or 180° orientation.
+
     Parameters
     ----------
     emgfile : dict

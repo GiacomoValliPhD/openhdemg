@@ -621,7 +621,7 @@ def plot_idr(
     return fig
 
 
-def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediately=True):#TODO add align option
+def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediately=True):
     """
     Plot MUAPs obtained from STA from one or multiple MUs.
 
@@ -645,6 +645,11 @@ def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediate
     There is no limit to the number of MUs and STA files that can be overplotted.
     ``Remember: the different STAs should be matched`` with same number of electrode,
         processing (i.e., differential) and computed on the same timewindow.
+
+    See also
+    --------
+    plot_muap : for overplotting all the STAs and the average STA of a single MU.
+    align_by_xcorr : for alignin the STAs of two different MUs before plotting them.
     """
 
     if isinstance(sta_dict, dict):
@@ -692,3 +697,12 @@ def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediate
 
     else:
         raise Exception("sta_dict must be dict or list")
+
+
+def plot_muap(emgfile, munumber, timeinseconds=True, figsize=[20, 15], showimmediately=True, tight_layout=True,):
+    """
+    See also
+    --------
+    plot_muap : for overplotting all the STAs and the average STA of a single MU.
+    align_by_xcorr : for alignin the STAs of two different MUs before plotting them.
+    """
