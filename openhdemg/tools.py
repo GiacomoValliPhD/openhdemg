@@ -625,6 +625,7 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None):
 
     return rfd
 
+#TODO remove duplicates
 """ #TODO input by= to remove duplicates by correlation between firings
 def remove_duplicated_mus(files, **kwargs):
 

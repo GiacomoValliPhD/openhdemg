@@ -54,7 +54,7 @@ from openhdemg.otbelectrodes import *
 from tkinter import *
 from tkinter import filedialog
 import json, gzip
-
+#TODO otb functions based on otb version, performance of JSON
 # ---------------------------------------------------------------------
 # Define functions used in the DEMUSE openfile function.
 # These functions are not exposed to the final user.

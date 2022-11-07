@@ -245,36 +245,59 @@ def pack_sta(df_sta1):
 
     return packed_sta
 
-
+#TODO incredibly slow and must be documented well to understand how to access elements inside (this and other datasets as well)
 def st_muap(emgfile, sorted_rawemg, timewindow=50):
     """
-    #TODO
-    Function used for plot_muap
+    Generate spike triggered MUAPs of every MUs.
 
-    Function seems to work but it is extremely slow and must be documented 
-    well to understand how to access elements inside (this and other datasets as well)
+    Generate single spike triggered (ST) MUs action potentials (MUAPs)
+    over the entire spike train of every MUs.
+    
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+    sorted_rawemg : dict
+        A dict containing the sorted electrodes.
+        Every key of the dictionary represents a different column of the matrix.
+        Rows are stored in the dict as a pd.DataFrame.
+    timewindow : int, default 50
+        Timewindow to compute ST MUAPs in milliseconds.
+
+    Returns
+    -------
+    stmuap : dict
+        dict containing a dict of ST MUAPs (pd.DataFrame) for every MUs.
+        pd.DataFrames containing the ST MUAPs are organised based on matrix
+        rows (dict) and matrix channel.
+        For example, the ST MUAPs of the first MU (0), in the second electrode 
+        of the matrix can be accessed as stmuap[0]["col0"][1].#TODO provide dataset and examples for all the functions
+
+    Notes
+    -----
+    The returned file is called ``stmuap`` for convention. #TODO armonize use of conventional names
     """
     # Compute half of the timewindow in samples
     timewindow_samples = round((timewindow / 1000) * emgfile["FSAMP"])
     halftime = round(timewindow_samples / 2)
 
     # Container of the STA for every MUs
-    sta_dict = {}
+    stmuap = {}
     for mu in [*range(emgfile["NUMBER_OF_MUS"])]:
-        sta_dict[mu] = {}
+        stmuap[mu] = {}
         """
         sta_dict
         {0: {}, 1: {}, 2: {}, 3: {}}
         """
 
-    # Calculate STA on sorted_rawemg for every mu and put it into sta_dict[mu]
+    # Calculate ST MUAPs on sorted_rawemg for every mu and put it into sta_dict[mu]
     # Loop all the MUs to fill sta_dict
-    for mu in sta_dict.keys():
+    for mu in stmuap.keys():
         # Loop the matrix columns
-        sorted_rawemg_sta = {}
+        sorted_rawemg_st = {}
         for col in sorted_rawemg.keys():
 
-            # Container of STA for matrix rows
+            # Container of ST MUAPs for matrix rows
             row_dict = {}
             # Loop the matrix rows
             for row in sorted_rawemg[col].columns:
@@ -291,17 +314,16 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
                         .reset_index(drop=True)
                     )
 
-                # Average df columns and fill df
+                # Fill df with ST MUAPs
                 df = pd.DataFrame(df)
-                #df = df.mean(axis="columns")
 
                 row_dict[row] = df
 
-            sorted_rawemg_sta[col] = row_dict
+            sorted_rawemg_st[col] = row_dict
 
-        sta_dict[mu] = sorted_rawemg_sta
+        stmuap[mu] = sorted_rawemg_st
 
-    return sta_dict
+    return stmuap
 
 
 def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):

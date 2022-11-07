@@ -20,7 +20,7 @@ OTBelectrodes_tuple = (
     "HD10MM0808",
 )
 """
-Electrodes name
+Electrodes name.
 
 >>> OTBelectrodes_tuple
 ('GR04MM1305', 'GR08MM1305', 'GR100ML1305', 'GR10MM0804', 'GR10MM0808', 'HD04MM1305', 'HD08MM1305', 'HD10MM0804', 'HD10MM0808')
@@ -38,7 +38,7 @@ OTBelectrodes_ied = {
     "HD10MM0808": 10,
 }
 """
-Interelectrode distance for each matrix
+Interelectrode distance for each matrix.
 
 >>> OTBelectrodes_ied
 {'GR04MM1305': 4, 'GR08MM1305': 8, 'GR100ML1305': 2.5, 'GR10MM0804': 10, 'GR10MM0808': 10, 'HD04MM1305': 4, 'HD08MM1305': 8, 'HD10MM0804': 10, 'HD10MM0808': 10}
@@ -56,7 +56,7 @@ OTBelectrodes_Nelectrodes = {
     "HD10MM0808": 64,
 }
 """
-Number of electrodes for each matrix
+Number of electrodes for each matrix.
 
 >>> OTBelectrodes_Nelectrodes
 {'GR04MM1305': 64, 'GR08MM1305': 64, 'GR100ML1305': 64, 'GR10MM0804': 32, 'GR10MM0808': 64, 'HD04MM1305': 64, 'HD08MM1305': 64, 'HD10MM0804': 32, 'HD10MM0808': 64}
@@ -220,8 +220,9 @@ def sort_rawemg(emgfile, code="GR08MM1305", orientation=180):
     """
     Sort RAW_SIGNAL based on matrix type and orientation.
 
-    Built-in sorting functions have been implemented for 
-    "GR08MM1305" and "GR04MM1305" matrices with 0 or 180° orientation.
+    Built-in sorting functions have been implemented for code(orientation):
+        GR08MM1305(0, 180)
+        GR04MM1305(0, 180)
 
     Parameters
     ----------

@@ -290,7 +290,7 @@ def plot_refsig(
         if showimmediately:
             plt.show()
 
-        # TODO Needed for the GUI? To check the other plot functions
+        # TODO Needed for the GUI? To check the other plot functions and add to the returned
         return fig
 
     else:
@@ -699,10 +699,120 @@ def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediate
         raise Exception("sta_dict must be dict or list")
 
 
-def plot_muap(emgfile, munumber, timeinseconds=True, figsize=[20, 15], showimmediately=True, tight_layout=True,):
+def plot_muap(
+    emgfile,
+    stmuap,
+    munumber,
+    column,
+    channel,
+    channelprog=False,
+    average=True,
+    timeinseconds=True,
+    figsize=[20, 15],
+    showimmediately=True,
+    tight_layout=True,
+):
     """
+    Plot the MUAPs of a specific matrix channel.
+
+    Plot the MUs action potential (MUAPs) shapes with or without average.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+    stmuap : dict
+        dict containing a dict of ST MUAPs (pd.DataFrame) for every MUs.
+    munumber : int
+        The number of MU to plot.
+    column : str {"col0", col1", "col2", "col3", "col4"}
+        The matrix columns.
+    channel : int
+        The channel of the matrix to plot.
+        This can be the real channel number if channelprog=False (default),
+        or a progressive number (from 0 to the length of the matrix column)
+        if channelprog=True.
+    channelprog : bool, default False
+        Whether to use the real channel number or a progressive number
+        (see channel).
+    average : bool, default True 
+        Whether to plot also the MUAPs average obtained by spyke triggered average.
+    timeinseconds : bool, default True
+        Whether to show the time on the x-axes in seconds (True) or in samples (False).
+    figsize : list, default [20, 15]
+        Size of the figure in centimeters [width, height].
+    showimmediately : bool, default True
+        If True (default), plt.show() is called and the figure showed to the user.
+        It is useful to set it to False when calling the function from the GUI.
+    tight_layout : bool, default True
+        If True (default), the plt.tight_layout() is called and the figure's layout is improved.
+        It is useful to set it to False when calling the function from the GUI.
+    
     See also
     --------
-    plot_muap : for overplotting all the STAs and the average STA of a single MU.
-    align_by_xcorr : for alignin the STAs of two different MUs before plotting them.
+    plot_muaps : Plot MUAPs obtained from STA from one or multiple MUs.
+    st_muap : Generate spike triggered MUAPs of every MUs (as input to this function).
     """
+
+    # Check if munumber is within the number of MUs
+    if munumber >= emgfile["NUMBER_OF_MUS"]:
+        raise Exception(
+            "munumber exceeds the the number of MUs in the emgfile ({})".format(
+                emgfile["NUMBER_OF_MUS"]
+            )
+        )#TODO Check if these exceptions are necessary also in other STA functions/plot
+    
+    # Get the MUAPs to plot
+    if channelprog:
+        keys = list(stmuap[munumber][column].keys())
+
+        # Check that the specified channel is within the matrix column range
+        if channel > len(keys):
+            raise Exception(
+                "Channel exceeds the the length of the matrix column, verify the use of channelprog"
+            )
+        
+        my_muap = stmuap[munumber][column][keys[channel]]
+        channelnumb = keys[channel]
+
+    else:
+        keys = list(stmuap[munumber][column].keys())
+
+        # Check that the specified channel is within the matrix channels
+        if not channel in keys:
+            raise Exception(
+                "Channel is not included in this matrix column, please check"
+            )#TODO Check if these exceptions are necessary also in other STA functions/plot
+
+        my_muap = stmuap[munumber][column][channel]
+        channelnumb = channel
+
+    # Here we produce an x axis in milliseconds or samples
+    if timeinseconds:
+        x_axis = (my_muap.index / emgfile["FSAMP"]) * 1000
+    else:
+        x_axis = my_muap.index
+
+    # Set figure and name based on original channel number
+    figname = "ST MUAPs of MU {}, column {}, channel {}".format(
+        munumber, column, channelnumb
+    )
+    fig, ax1 = plt.subplots(
+        figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
+        num=figname,
+    )
+
+    # Plot all the MUAPs
+    if average:
+        plt.plot(x_axis, my_muap, color="0.6", linewidth=0.2)
+        plt.plot(x_axis, my_muap.mean(axis="columns"), color="red")
+
+    else:
+        plt.plot(x_axis, my_muap, linewidth=0.2)
+
+    ax1.set_ylabel("Amplitude")
+    ax1.set_xlabel("Time (ms)" if timeinseconds else "Samples")
+
+    showgoodlayout(tight_layout)
+    if showimmediately:
+        plt.show()
