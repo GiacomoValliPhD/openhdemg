@@ -20,16 +20,16 @@ def showselect(emgfile, title="", nclic=2):
 
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile and in particular the REF_SIGNAL (which is used for the selection).
-    title: str
+    title : str
         The title of the plot. It is optional but strongly recommended. It should describe the task to do.
     nclic: int, default 2
         The number of clics to be collected. 1 and 4 clics can also be specified with nclic.
     
     Returns
     -------
-    points: int
+    points : int
         The selected points (sorted in ascending order).
 
     Examples
@@ -98,17 +98,17 @@ def resize_emgfile(emgfile, area=None):
     
     Parameters
     ----------
-    emgfile: dict
+    emgfile : dict
         The dictionary containing the emgfile to resize.
-    area: None or list, default None
+    area : None or list, default None
         The resizing area. If already known, it can be passed in samples, as a list (e.g., [120,2560]).
         If None, the user can select the area of interest manually.
 
     Returns
     -------
-    rs_emgfile: dict
+    rs_emgfile : dict
         the new (resized) emgfile.
-    start_, end_: int
+    start_, end_ : int
         the start and end of the selection (can be used for code automation).
     
     Notes
@@ -197,7 +197,7 @@ def compute_idr(emgfile):
                 else np.transpose(np.array(emgfile["MUPULSES"]))
             )
 
-            # Calculate difference in MUPULSES it in column 1
+            # Calculate difference in MUPULSES and add it in column 1
             df[1] = df[0].diff()
             # Calculate time in seconds and add it in column 2
             df[2] = df[0] / emgfile["FSAMP"]
@@ -208,10 +208,9 @@ def compute_idr(emgfile):
                 columns={0: "mupulses", 1: "diff_mupulses", 2: "timesec", 3: "idr"},
                 inplace=True,
             )
-
+            #TODO check idr, maybe low??
             # Add the idr to the idr dict
             idr[mu] = df
-
             """ 
             idr is a dict with a key for every MU
             idr[mu] is a DataFrame
@@ -316,7 +315,7 @@ def delete_mus(emgfile, munumber):
 
     else:
         raise Exception(
-            "While calling the delete_mus function, you should pass an integer or a list in munumber= "
+            "While calling the delete_mus function, you should pass an integer or a list to munumber= "
         )
 
     return del_emgfile
@@ -426,18 +425,17 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
     return covsteady
 
 
-def filter_refsig(emgfile, order=4, cutoff=20):
+def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
     """
-    Filter REF_SIGNAL with low-pass filter.
+    Band-pass filter RAW_SIGNAL.
 
-    This function is used to low-pass filter the REF_SIGNAL and remove noise.
-    The filter is a Zero-lag low-pass Butterworth.
+    The filter is a Zero-lag band-pass Butterworth.
     
     Parameters
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    order : int, default 4
+    order : int, default 2
         The filter order.
     cutoff : int, default 20
         The cut-off frequency in Hz.
@@ -448,13 +446,45 @@ def filter_refsig(emgfile, order=4, cutoff=20):
         The dictionary containing the emgfile with a filtered REF_SIGNAL.
     """
 
-    # Create the object to store the filtered refsig.
-    # Create a deepcopy to avoid changing the original refsig
+    filteredrawsig = copy.deepcopy(emgfile)
+
+    # Calculate the components of the filter and apply them with filtfilt to obtain Zero-lag filtering
+    # sos should be preferred over filtfilt as second-order sections have fewer numerical problems.
+    sos = signal.butter(N=order, Wn=[lowcut, highcut], btype="bandpass", output="sos", fs=filteredrawsig["FSAMP"])
+    for col in filteredrawsig["RAW_SIGNAL"]:
+        filteredrawsig["RAW_SIGNAL"][col] = signal.sosfiltfilt(sos, x=filteredrawsig["RAW_SIGNAL"][col])
+
+    return filteredrawsig
+
+
+def filter_refsig(emgfile, order=4, cutoff=15):
+    """
+    Low-pass filter REF_SIGNAL.
+
+    This function is used to low-pass filter the REF_SIGNAL and remove noise.
+    The filter is a Zero-lag low-pass Butterworth.
+    
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+    order : int, default 4
+        The filter order.
+    cutoff : int, default 15
+        The cut-off frequency in Hz.
+
+    Returns
+    -------
+    filteredrefsig : dict
+        The dictionary containing the emgfile with a filtered REF_SIGNAL.
+    """
+
     filteredrefsig = copy.deepcopy(emgfile)
 
     # Calculate the components of the filter and apply them with filtfilt to obtain Zero-lag filtering
-    b, a = signal.butter(N=order, Wn=cutoff, fs=filteredrefsig["FSAMP"], btype="lowpass")
-    filteredrefsig["REF_SIGNAL"][0] = signal.filtfilt(b, a, filteredrefsig["REF_SIGNAL"][0])
+    # sos should be preferred over filtfilt as second-order sections have fewer numerical problems.
+    sos = signal.butter(N=order, Wn=cutoff, btype="lowpass", output="sos", fs=filteredrefsig["FSAMP"])
+    filteredrefsig["REF_SIGNAL"][0] = signal.sosfiltfilt(sos, x=filteredrefsig["REF_SIGNAL"][0])
 
     return filteredrefsig
 
@@ -563,7 +593,7 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None):
     
     Returns
     -------
-    rfd: pd.DataFrame
+    rfd : pd.DataFrame
         A pd.DataFrame containing the RFD at the different times.
     """
 
@@ -594,3 +624,22 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None):
     rfd = pd.DataFrame(rfd_dict)
 
     return rfd
+
+#TODO remove duplicates
+""" #TODO input by= to remove duplicates by correlation between firings
+def remove_duplicated_mus(files, **kwargs):
+
+    
+    # Need to compare all the MUs in the two emgfiles
+    # To do this we need: RAW_SIGNAL and MUPULSES
+    # Check with isinstance
+    # Then we need to loop all the MUs of emgfile 1 and compute their STA
+    # Then we need to loop all the MUs of emgfile 2 and compute their STA
+    # Then compute norm_twod_xcorr and evaluate if >= threshold
+    # build a df of normxcorr_max and retain only highest?
+    # remove duplicated mus to which file? pass a list to delete_mus
+    
+    
+    
+    if by=="MUAP":
+        normxcorr_df, normxcorr_max = norm_twod_xcorr() """

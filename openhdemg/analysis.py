@@ -185,7 +185,7 @@ def compute_dr(
     if event_ == "rec_derec_steady" or event_ == "steady":
         if start_steady < 0 and end_steady < 0:
             start_steady, end_steady = showselect(
-                emgfile, title="Select the start/end area to consider then press enter"
+                emgfile, title="Select the start/end of the steady-state then press enter"
             )
 
     # Create an object to append the results

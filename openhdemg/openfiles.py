@@ -54,7 +54,7 @@ from openhdemg.otbelectrodes import *
 from tkinter import *
 from tkinter import filedialog
 import json, gzip
-
+#TODO otb functions based on otb version, performance of JSON
 # ---------------------------------------------------------------------
 # Define functions used in the DEMUSE openfile function.
 # These functions are not exposed to the final user.
@@ -394,9 +394,9 @@ def get_otb_refsignal(df, refsig):
         A pd.DataFrame containing all the informations extracted
         from the OTB .mat file.
     refsig : list
-        Whether to seacrh also for the REF_SIGNAL and
-        whether to load the filtered or unfiltered one.
-        The list is composed as [bool, str]. str can be "filtered" or "unfiltered".
+        Whether to seacrh also for the REF_SIGNAL and whether to load the full or sub-sampled one.
+        The list is composed as [bool, str]. str can be "fullsampled" or "subsampled".
+        Please read the documentation of emg_from_otb.
         
     Returns
     -------
@@ -410,25 +410,25 @@ def get_otb_refsignal(df, refsig):
         False,
     ], f"refsig[0] must be true or false. {refsig[0]} was passed instead."
     assert refsig[1] in [
-        "filtered",
-        "unfiltered",
-    ], f"refsig[1] must be filtered or unfiltered. {refsig[1]} was passed instead."
+        "fullsampled",
+        "subsampled",
+    ], f"refsig[1] must be fullsampled or subsampled. {refsig[1]} was passed instead."
 
     if refsig[0] == True:
-        if refsig[1] == "filtered":
-            # Extract the performed path (filtered data)
-            REF_SIGNAL_FILTERED = df.filter(regex="performed path")
-            if not REF_SIGNAL_FILTERED.empty:  # Check if the REF_SIGNAL is available
-                REF_SIGNAL_FILTERED = REF_SIGNAL_FILTERED.rename(
-                    columns={REF_SIGNAL_FILTERED.columns[0]: 0}
+        if refsig[1] == "subsampled":
+            # Extract the performed path (subsampled data)
+            REF_SIGNAL_SUBSAMPLED = df.filter(regex="performed path")
+            if not REF_SIGNAL_SUBSAMPLED.empty:  # Check if the REF_SIGNAL is available
+                REF_SIGNAL_SUBSAMPLED = REF_SIGNAL_SUBSAMPLED.rename(
+                    columns={REF_SIGNAL_SUBSAMPLED.columns[0]: 0}
                 )
                 # Verify that there is no value above 100% since the REF_SIGNAL is expected to be expressed as % of the MViF
-                if max(REF_SIGNAL_FILTERED[0]) > 100:
+                if max(REF_SIGNAL_SUBSAMPLED[0]) > 100:
                     print(
                         "\nALERT! Ref signal grater than 100, did you use values normalised to the MViF?\n"
                     )
 
-                return REF_SIGNAL_FILTERED
+                return REF_SIGNAL_SUBSAMPLED
 
             else:
                 print(
@@ -437,20 +437,20 @@ def get_otb_refsignal(df, refsig):
 
                 return np.nan
 
-        elif refsig[1] == "unfiltered":
+        elif refsig[1] == "fullsampled":
             # Extract the acquired path (raw data)
-            REF_SIGNAL_UNFILTERED = df.filter(regex="acquired data")
-            if not REF_SIGNAL_UNFILTERED.empty:
-                REF_SIGNAL_UNFILTERED = REF_SIGNAL_UNFILTERED.rename(
-                    columns={REF_SIGNAL_UNFILTERED.columns[0]: 0}
+            REF_SIGNAL_FULLSAMPLED = df.filter(regex="acquired data")
+            if not REF_SIGNAL_FULLSAMPLED.empty:
+                REF_SIGNAL_FULLSAMPLED = REF_SIGNAL_FULLSAMPLED.rename(
+                    columns={REF_SIGNAL_FULLSAMPLED.columns[0]: 0}
                 )
                 # Verify that there is no value above 100% since the REF_SIGNAL is expected to be expressed as % of the MViF
-                if max(REF_SIGNAL_UNFILTERED[0]) > 100:
+                if max(REF_SIGNAL_FULLSAMPLED[0]) > 100:
                     print(
                         "\nALERT! Ref signal grater than 100, did you use values normalised to the MViF?\n"
                     )
 
-                return REF_SIGNAL_UNFILTERED
+                return REF_SIGNAL_FULLSAMPLED
 
             else:
                 print(
@@ -458,14 +458,9 @@ def get_otb_refsignal(df, refsig):
                 )
 
                 return np.nan
-
-        else:
-            raise Exception(
-                'Wrong input in the get_OTB_refsignal function, you can use ref="filtered" or ref="unfiltered"'
-            )
 
     else:
-        print("\nReference signal not found, it might be necessary for some analysis\n")
+        print("\nNot searched for reference signal, it might be necessary for some analysis\n")
 
         return np.nan
 
@@ -604,7 +599,7 @@ def get_otb_rawsignal(df):
 # Main function to open decomposed files coming from OTBiolab+.
 # This function calls the functions defined above
 
-def emg_from_otb(filepath, refsig=[True, "filtered"]):
+def emg_from_otb(filepath, refsig=[True, "fullsampled"]):
     """
     Import the .mat file exportable by OTBiolab+.   
     
@@ -616,10 +611,10 @@ def emg_from_otb(filepath, refsig=[True, "filtered"]):
     filepath : str or Path
         The directory and the name of the file to load (including file extension .mat).
         This can be a simple string, the use of Path is not necessary.
-    refsig : list, default [True, "filtered"]
-        Whether to seacrh also for the REF_SIGNAL and
-        whether to load the filtered or unfiltered one.
-        The list is composed as [bool, str]. str can be "filtered" or "unfiltered".
+    refsig : list, default [True, "fullsampled"]
+        Whether to seacrh also for the REF_SIGNAL and whether to load the full or sub-sampled one.
+        The list is composed as [bool, str]. str can be "fullsampled" or "subsampled".
+        Please read notes section.
     
     Returns
     -------
@@ -631,16 +626,16 @@ def emg_from_otb(filepath, refsig=[True, "filtered"]):
     The returned file is called ``emgfile`` for convention.
 
     The input .mat file exported from the OTBiolab+ software should have a specific content:
-    - refsig signal is optional but, if present, there should be both the filtered and the unfiltered version
-        (in OTBioLab+ the "performed path" refers to the filtered signal, the "acquired data" to the unfiltered signal),
-        REF_SIGNAL is expected to be expressed as % of the MViF.
+    - refsig signal is optional but, if present, there should be both the fullsampled and the subsampled version
+        (in OTBioLab+ the "performed path" refers to the subsampled signal, the "acquired data" to the fullsampled signal),
+        REF_SIGNAL is expected to be expressed as % of the MViF (but not compulsory).
     - Both the IPTS ('Source for decomposition...' in OTBioLab+) and the BINARY_MUS_FIRING
         ('Decomposition of...' in OTBioLab+) should be present.
     - The raw EMG signal should be present (it has no specific name in OTBioLab+) with all the channels.
         Don't exclude unwanted channels before exporting the .mat file.
     - NO OTHER ELEMENTS SHOULD BE PRESENT!
 
-    Structure of the emgfile:
+    Structure of the returned emgfile:
         emgfile = {
             "SOURCE": SOURCE,
             "RAW_SIGNAL": RAW_SIGNAL,
@@ -697,7 +692,7 @@ def emg_from_otb(filepath, refsig=[True, "filtered"]):
     return resdict
 
 
-def refsig_from_otb(filepath, refsig="filtered"):
+def refsig_from_otb(filepath, refsig="fullsampled"):
     """
     Import REF_SIGNAL in the .mat file exportable by OTBiolab+.   
     
@@ -712,10 +707,10 @@ def refsig_from_otb(filepath, refsig="filtered"):
     filepath : str or Path
         The directory and the name of the file to load (including file extension .mat).
         This can be a simple string, the use of Path is not necessary.
-    refsig : list
-        Whether to seacrh also for the REF_SIGNAL and
-        whether to load the filtered or unfiltered one.
-        The list is composed as [bool, str]. str can be "filtered" or "unfiltered".
+    refsig : str, default "fullsampled"
+        Whether to seacrh also for the REF_SIGNAL and whether to load the full or sub-sampled one.
+        str can be "fullsampled" or "subsampled".
+        Please read notes section.
     
     Returns
     -------
@@ -727,10 +722,11 @@ def refsig_from_otb(filepath, refsig="filtered"):
     The returned file is called ``emg_refsig`` for convention.
 
     The input .mat file exported from the OTBiolab+ software should contain:
-    - refsig signal: there should be both the filtered and the unfiltered version (in OTBioLab+ 
-        the "performed path" refers to the filtered signal, the "acquired data" to the unfiltered signal),
+    - refsig signal: there should be both the fullsampled and the subsampled version
+        (in OTBioLab+ the "performed path" refers to the subsampled signal, the "acquired data" to the fullsampled signal),
+        REF_SIGNAL is expected to be expressed as % of the MViF (but not compulsory).
 
-    Structure of the emgfile:
+    Structure of the returned emg_refsig:
         emg_refsig = {
             "SOURCE": SOURCE,
             "FSAMP": FSAMP,
@@ -1032,7 +1028,7 @@ def emg_from_json(filepath):
 # Function to open files from a GUI in a single line of code.
 
 def askopenfile(
-    initialdir="/", filesource="DEMUSE", otb_refsig_type=[True, "filtered"]
+    initialdir="/", filesource="DEMUSE", otb_refsig_type=[True, "fullsampled"]
 ):
     """
     Select and open files with a GUI.
@@ -1044,11 +1040,10 @@ def askopenfile(
         This can be a simple string, the use of Path is not necessary.
     filesource : str, default "DEMUSE"
         Can be one of "DEMUSE", "OTB", "OTB_refsig" (.mat) or "Open_HD-EMG" (.json).
-    otb_refsig_type : list, default [True, "filtered"]
-        Whether to seacrh also for the REF_SIGNAL and
-        whether to load the filtered or unfiltered one.
-        The list is composed as [bool, str]. str can be "filtered" or "unfiltered".
-        This applies only if filesource="OTB_refsig".
+    otb_refsig_type : list, default [True, "fullsampled"]
+        Whether to seacrh also for the REF_SIGNAL and whether to load the full or sub-sampled one.
+        The list is composed as [bool, str]. str can be "fullsampled" or "subsampled".
+        Please read the documentation of emg_from_otb.
 
     Returns
     -------

@@ -6,3 +6,4 @@ from openhdemg.plotemg import *
 from openhdemg.tools import *
 from openhdemg.mathtools import *
 from openhdemg.otbelectrodes import *
+from openhdemg.muap import*
