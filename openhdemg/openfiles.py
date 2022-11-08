@@ -1055,8 +1055,7 @@ def askopenfile(
     The returned file is called ``emgfile`` for convention (or ``emg_refsig`` if SOURCE = "OTB_refsig").
     """
 
-    #BUG initialdir not working on Windows
-    # If initialdir == "/", redirect to /Decomposed Test files/
+    #BUG initialdir not working on Windows here and in asksavefiles
     if isinstance(initialdir, str):
         if initialdir == "/":
             initialdir = "/Decomposed Test files/"
@@ -1097,3 +1096,30 @@ def askopenfile(
 
     return emgfile
 
+
+def asksavefile(emgfile):
+    """
+    Select how to save files with a GUI.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile to save.
+    """
+
+    # Create and hide the tkinter root window necessary for the GUI based open-file function
+    root = Tk()
+    root.withdraw()
+
+    filepath = filedialog.asksaveasfilename(
+        defaultextension=".json",
+        filetypes=[("json files", "*.json")],
+        title="Save .json file",
+    )
+
+    # Destroy the root since it is no longer necessary
+    root.destroy()
+
+    save_json_emgfile(emgfile, filepath)
+
+    print("\n---------------\nJSON file saved\n---------------\n")
