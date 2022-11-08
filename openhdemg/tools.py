@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
+import warnings
 
 
 def showselect(emgfile, title="", nclic=2):
@@ -234,12 +235,9 @@ def compute_idr(emgfile):
         raise Exception("MUPULSES is probably absent or it is not contained in a list")
 
 
-def delete_mus(emgfile, munumber):
+def delete_mus(emgfile, munumber, if_single_mu="ignore"):
     """
     Delete unwanted MUs.
-
-    The function will not work if the emgfile only contains 1 motor unit,
-    since the entire file should be deleted instead. In this case, None will be returned.
     
     Parameters
     ----------
@@ -250,6 +248,15 @@ def delete_mus(emgfile, munumber):
         If multiple MUs have to be removed, a list of int should be passed.
         An unpacked (*) range can also be passed as munumber=[*range(0, 5)].
         munumber is expected to be with base 0 (i.e., the first MU in the file is the number 0).
+    if_single_mu : str {"ignore", "remove"}, default "ignore"
+        A string indicating how to behave in case of a file with a single MU.
+
+            ``ignore``
+            Ignore the process and return the original emgfile. (Default)
+            ``remove``
+            Remove the MU and return the emgfile without the MU. (Default)
+            This should allow full compatibility with the use of this file
+            in following processing (i.e., save/load and analyse).
 
     Returns
     -------
@@ -257,9 +264,25 @@ def delete_mus(emgfile, munumber):
         The dictionary containing the emgfile without the unwanted MUs.
     """
 
-    # Check how many MUs we have, if we only have 1 MU, the entire file should be deleted instead.
-    if emgfile["NUMBER_OF_MUS"] <= 1:
-        return
+    # Check how to behave in case of a single MU
+    if if_single_mu == "ignore":
+        # Check how many MUs we have, if we only have 1 MU, the entire file should be deleted instead.
+        if emgfile["NUMBER_OF_MUS"] <= 1:
+            warnings.warn(
+                "There is only 1 MU in the file, and it has not been removed. You can change this behaviour with if_single_mu='remove' in the function delete_mus"
+            )
+
+            return emgfile
+
+    elif if_single_mu == "remove":
+        pass
+
+    else:
+        raise Exception(
+            "if_single_mu must be one of 'ignore' or 'remove', {} was passed instead".format(
+                if_single_mu
+            )
+        )
 
     # Create the object to store the new emgfile without the specified MUs.
     # Create a deepcopy to avoid changing the original emgfile
@@ -283,16 +306,16 @@ def delete_mus(emgfile, munumber):
 
     # Common part working for all the possible inputs to munumber
     # Drop PNR values and rename the index
-    if (emgfile["SOURCE"] == "DEMUSE"):  # Modify once PNR calculation is implemented also for OTB files
+    if (emgfile["SOURCE"] == "DEMUSE"):  #TODO Modify once SIL is implemented for OTB files
         del_emgfile["PNR"] = del_emgfile["PNR"].drop(munumber)  # Works with lists and integers
         del_emgfile["PNR"].reset_index(inplace=True, drop=True)  # Drop the old index
 
     # Drop IPTS by columns and rename the columns
-    del_emgfile["IPTS"] = del_emgfile["IPTS"].drop(munumber, axis=1)  # Works with lists and integers
+    del_emgfile["IPTS"] = del_emgfile["IPTS"].drop(munumber, axis=1)
     del_emgfile["IPTS"].columns = range(del_emgfile["IPTS"].shape[1])
 
     # Drop BINARY_MUS_FIRING by columns and rename the columns
-    del_emgfile["BINARY_MUS_FIRING"] = del_emgfile["BINARY_MUS_FIRING"].drop(munumber, axis=1)  # Works with lists and integers
+    del_emgfile["BINARY_MUS_FIRING"] = del_emgfile["BINARY_MUS_FIRING"].drop(munumber, axis=1)
     del_emgfile["BINARY_MUS_FIRING"].columns = range(del_emgfile["BINARY_MUS_FIRING"].shape[1])
 
     if isinstance(munumber, int):
@@ -304,7 +327,7 @@ def delete_mus(emgfile, munumber):
 
     elif isinstance(munumber, list):
         # Delete all the content in the del_emgfile["MUPULSES"] and append only the MUs that we want to retain (exclude deleted MUs)
-        # This is a workaround to directly deleting elements
+        # This is a workaround to directly deleting, for safer implementation
         del_emgfile["MUPULSES"] = []
         for mu in range(emgfile["NUMBER_OF_MUS"]):
             if mu not in munumber:
@@ -624,22 +647,3 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None):
     rfd = pd.DataFrame(rfd_dict)
 
     return rfd
-
-#TODO remove duplicates
-""" #TODO input by= to remove duplicates by correlation between firings
-def remove_duplicated_mus(files, **kwargs):
-
-    
-    # Need to compare all the MUs in the two emgfiles
-    # To do this we need: RAW_SIGNAL and MUPULSES
-    # Check with isinstance
-    # Then we need to loop all the MUs of emgfile 1 and compute their STA
-    # Then we need to loop all the MUs of emgfile 2 and compute their STA
-    # Then compute norm_twod_xcorr and evaluate if >= threshold
-    # build a df of normxcorr_max and retain only highest?
-    # remove duplicated mus to which file? pass a list to delete_mus
-    
-    
-    
-    if by=="MUAP":
-        normxcorr_df, normxcorr_max = norm_twod_xcorr() """

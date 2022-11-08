@@ -3,6 +3,7 @@ This module contains functions to produce and analyse MUs anction potentials (MU
 """
 
 import pandas as pd
+from openhdemg.tools import delete_mus
 from openhdemg.mathtools import norm_twod_xcorr
 from openhdemg.otbelectrodes import sort_rawemg
 from openhdemg.plotemg import plot_muaps
@@ -12,6 +13,7 @@ from functools import reduce
 import numpy as np
 import time
 from joblib import Parallel, delayed
+import copy
 
 
 def diff(sorted_rawemg):
@@ -427,7 +429,7 @@ def tracking(
     show=False,
 ):  # TODO check tracking function implementation and performance overall
     """
-    Track MUs across two different contractions.
+    Track MUs across two different files.
 
     Parameters
     ----------
@@ -435,11 +437,13 @@ def tracking(
         The dictionary containing the first emgfile.
     emgfile2 : dict
         The dictionary containing the second emgfile.
-    firings : list or str, default "all"
+    firings : list or str {"all"}, default "all"
         The range of firnings to be used for the STA.
         If a MU has less firings than the range, the upper limit
         is adjusted accordingly.
         If Firings="all" the STA is calculated over all the firings.
+        A list can be passed as [start, stop] e.g., [0, 25]
+        to compute the STA on the first 25 firings.
     timewindow : int, default 25
         Timewindow to compute STA in milliseconds.
     threshold : float, default 0.8
@@ -468,7 +472,7 @@ def tracking(
     -----
     Parallel processing can improve performances by 5-10 times compared to serial
     processing. In this function, parallel processing has been implemented for the tasks
-    involving 2-dimensional cross-correlation but not jet for sta and plotting that still
+    involving 2-dimensional cross-correlation but not yet for sta and plotting that still
     constitute a bottlneck. Parallel processing of these features will be implemented
     in the next releases.
     """
@@ -567,8 +571,10 @@ def tracking(
     pd.set_option("display.max_rows", None)
     convert_dict = {"MU_file1": int, "MU_file2": int, "XCC": float}
     tracking_res = tracking_res.astype(convert_dict)
-    text = "Filtered tracking results:\n" if filter else "Total tracking results:\n"
-    print(text, tracking_res)
+    tracking_res.reset_index(drop=True, inplace=True)
+    text = "Filtered tracking results:\n\n" if filter else "Total tracking results:\n\n"
+    print(text, tracking_res, "\n")
+    pd.reset_option("display.max_rows")
 
     # Plot the MUs pairs
     if show:  # TODO improve performance
@@ -599,3 +605,134 @@ def tracking(
         plt.show()
 
     return tracking_res
+
+
+def remove_duplicates_between(
+    emgfile1,
+    emgfile2,
+    firings="all",
+    timewindow=25,
+    threshold=0.9,
+    matrixcode="GR08MM1305",
+    orientation=180,
+    exclude_belowthreshold=True,
+    filter=True,
+    show=False,
+    which="munumber",
+):
+    """
+    Remove duplicated MUs across two different files based on STA.
+
+    Parameters
+    ----------
+    emgfile1 : dict
+        The dictionary containing the first emgfile.
+    emgfile2 : dict
+        The dictionary containing the second emgfile.
+    firings : list or str {"all"}, default "all"
+        The range of firnings to be used for the STA.
+        If a MU has less firings than the range, the upper limit
+        is adjusted accordingly.
+        If Firings="all" the STA is calculated over all the firings.
+        A list can be passed as [start, stop] e.g., [0, 25]
+        to compute the STA on the first 25 firings.
+    timewindow : int, default 25
+        Timewindow to compute STA in milliseconds.
+    threshold : float, default 0.9
+        The 2-dimensional cross-correlation minimum value
+        to consider two MUs to be the same. Ranges 0-1.
+    matrixcode : str, default "GR08MM1305"
+        The code of the matrix used.
+    orientation : int, default 180
+        Orientation in degree of the matrix (same as in OTBiolab).
+        E.g. 180 corresponds to the matrix connection toward the user.
+    exclude_belowthreshold : bool, default True
+        Whether to exclude results with XCC below threshold.
+    filter : bool, default True
+        If true, when the same MU has a match of XCC > threshold with
+        multiple MUs, only the match with the highest XCC is returned.
+    show : bool, default False
+        Whether to plot ste STA of pairs of MUs with XCC above threshold.
+    which : str {"munumber", "PNR"}
+        How to remove the duplicated MUs. 
+        If "munumber", duplicated MUs are removed from the file with more MUs.
+        If "PNR", the MU with the lowest PNR is removed (valid only for DEMUSE files).
+    
+    Returns
+    -------
+    emgfile1, emgfile2 : dict
+        The original emgfiles without the duplicated MUs.
+    """
+
+    # Work on deepcopies to prevent changing the original file
+    emgfile1 = copy.deepcopy(emgfile1)
+    emgfile2 = copy.deepcopy(emgfile2)
+
+    # Get tracking results to identify duplicated MUs
+    tracking_res = tracking(
+        emgfile1,
+        emgfile2,
+        firings,
+        timewindow,
+        threshold,
+        matrixcode,
+        orientation,
+        exclude_belowthreshold,
+        filter,
+        show,
+    )
+
+    # Identify how to remove MUs
+    if which == "munumber":
+        if emgfile1["NUMBER_OF_MUS"] >= emgfile2["NUMBER_OF_MUS"]:
+            # Remove MUs from emgfile1
+            mus_to_remove = list(tracking_res["MU_file1"])
+            emgfile1 = delete_mus(
+                emgfile=emgfile1, munumber=mus_to_remove, if_single_mu="remove"
+            )
+
+            return emgfile1, emgfile2
+
+        else:
+            # Remove MUs from emgfile2
+            mus_to_remove = list(tracking_res["MU_file2"])
+
+            emgfile2 = delete_mus(
+                emgfile=emgfile2, munumber=mus_to_remove, if_single_mu="remove"
+            )
+
+            return emgfile1, emgfile2
+
+    elif which == "PNR":
+        if emgfile1["SOURCE"] == "DEMUSE" and emgfile2["SOURCE"] == "DEMUSE":
+            # Create a list containing which MU to remove in which file based on PNR
+            to_remove1 = []
+            to_remove2 = []
+            for i, row in tracking_res.iterrows():
+                pnr1 = emgfile1["PNR"].loc[int(row["MU_file1"])]
+                pnr2 = emgfile2["PNR"].loc[int(row["MU_file2"])]
+
+                if pnr1[0] <= pnr2[0]:
+                    # This MU should be removed from emgfile1
+                    to_remove1.append(int(row["MU_file1"]))
+                else:
+                    # This MU should be removed from emgfile2
+                    to_remove2.append(int(row["MU_file2"]))
+
+            # Delete the MUs
+            emgfile1 = delete_mus(
+                emgfile=emgfile1, munumber=to_remove1, if_single_mu="remove"
+            )
+            emgfile2 = delete_mus(
+                emgfile=emgfile2, munumber=to_remove2, if_single_mu="remove"
+            )
+
+            return emgfile1, emgfile2
+
+        else:
+            raise Exception(
+                "To remove duplicated MUs by PNR, you should load files from DEMUSE"
+            )
+
+    else:
+        pass  # TODO implement with SIL as with PNR

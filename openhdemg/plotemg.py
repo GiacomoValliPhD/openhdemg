@@ -767,7 +767,7 @@ def plot_muap(
         keys = list(stmuap[munumber][column].keys())
 
         # Check that the specified channel is within the matrix column range
-        if channel > len(keys):
+        if channel >= len(keys):
             raise Exception(
                 "Channel exceeds the the length of the matrix column, verify the use of channelprog"
             )
