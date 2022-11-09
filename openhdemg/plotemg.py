@@ -19,10 +19,12 @@ def showgoodlayout(tight_layout=True, despined=False):
     ----------
     tight_layout : bool, default True
         If true (default), plt.tight_layout() is applied to the figure.
-    despined : bool or str, default False
-        False: left and bottom is not despined (standard plotting)
-        True: all the sides are despined
-        "2yaxes": only the top is despined. This is used for y axes both on the right and left side at the same time
+    despined : bool or str {"2yaxes"}, default False
+        False: left and bottom is not despined (standard plotting).
+        True: all the sides are despined.
+        ``2yaxes``
+            Only the top is despined. 
+            This is used for y axes both on the right and left side at the same time.
     """
 
     # Check the input
@@ -171,9 +173,10 @@ def plot_differentials(
         The dictionary containing the original emgfile.
     differential : dict
         The dictionary containing the differential derivation of the RAW_SIGNAL.
-    column : str, default "col0"
+    column : str {"col0", "col1", "col2", "col3", "col4"}, default "col0"
         The matrix column to plot.
         Options are usyally "col0", "col1", "col2", "col3", "col4".
+        but might change based on the matrix used.
     addrefsig : bool, default True
         If True, the REF_SIGNAL is plotted in front of the signal with a separated y-axes.
     timeinseconds : bool, default True
@@ -419,8 +422,9 @@ def plot_ipts(
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    munumber : str, int or list, default "all"
-        By default, IPTS of all the MUs is plotted.
+    munumber : str {"all"}, int or list, default "all"
+        ``all``
+            IPTS of all the MUs is plotted.
         Otherwise, a single MU (int) or multiple MUs (list of int) can be specified.
         The list can be passed as a manually-written list or with: munumber=[*range(0, 12)],
         We need the "*" operator to unpack the results of range and build a list.
@@ -524,7 +528,8 @@ def plot_idr(
     emgfile : dict
         The dictionary containing the emgfile.
     munumber : str, int or list, default "all"
-        By default, IDR of all the MUs is plotted.
+        ``all"
+            IDR of all the MUs is plotted.
         Otherwise, a single MU (int) or multiple MUs (list of int) can be specified.
         The list can be passed as a manually-written list or with: munumber=[*range(0, 12)],
         We need the "*" operator to unpack the results of range and build a list.
@@ -727,6 +732,7 @@ def plot_muap(
         The number of MU to plot.
     column : str {"col0", col1", "col2", "col3", "col4"}
         The matrix columns.
+        Options are usyally "col0", "col1", "col2", "col3", "col4".
     channel : int
         The channel of the matrix to plot.
         This can be the real channel number if channelprog=False (default),

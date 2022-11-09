@@ -116,11 +116,12 @@ def sta(
         A dict containing the sorted electrodes.
         Every key of the dictionary represents a different column of the matrix.
         Rows are stored in the dict as a pd.DataFrame.
-    firings : list or str, default [0, 50]
+    firings : list or str {"all"}, default [0, 50]
         The range of firnings to be used for the STA.
         If a MU has less firings than the range, the upper limit
         is adjusted accordingly.
-        If Firings="all" the STA is calculated over all the firings.
+        ``all``
+            The STA is calculated over all the firings.
     timewindow : int, default 100
         Timewindow to compute STA in milliseconds.
 
@@ -415,7 +416,7 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
 
     return aligned_sta1, aligned_sta2
 
-
+#TODO update matrixcode and orientation in future releases here and in otbelectrodes
 def tracking(
     emgfile1,
     emgfile2,
@@ -441,7 +442,8 @@ def tracking(
         The range of firnings to be used for the STA.
         If a MU has less firings than the range, the upper limit
         is adjusted accordingly.
-        If Firings="all" the STA is calculated over all the firings.
+        ``all``
+            The STA is calculated over all the firings.
         A list can be passed as [start, stop] e.g., [0, 25]
         to compute the STA on the first 25 firings.
     timewindow : int, default 25
@@ -449,9 +451,9 @@ def tracking(
     threshold : float, default 0.8
         The 2-dimensional cross-correlation minimum value
         to consider two MUs to be the same. Ranges 0-1.
-    matrixcode : str, default "GR08MM1305"
+    matrixcode : str {"GR08MM1305", "GR04MM1305"}, default "GR08MM1305"
         The code of the matrix used.
-    orientation : int, default 180
+    orientation : int {0, 180}, default 180
         Orientation in degree of the matrix (same as in OTBiolab).
         E.g. 180 corresponds to the matrix connection toward the user.
     exclude_belowthreshold : bool, default True
@@ -633,7 +635,8 @@ def remove_duplicates_between(
         The range of firnings to be used for the STA.
         If a MU has less firings than the range, the upper limit
         is adjusted accordingly.
-        If Firings="all" the STA is calculated over all the firings.
+        ``all``
+            The STA is calculated over all the firings.
         A list can be passed as [start, stop] e.g., [0, 25]
         to compute the STA on the first 25 firings.
     timewindow : int, default 25
@@ -641,9 +644,9 @@ def remove_duplicates_between(
     threshold : float, default 0.9
         The 2-dimensional cross-correlation minimum value
         to consider two MUs to be the same. Ranges 0-1.
-    matrixcode : str, default "GR08MM1305"
+    matrixcode : str {"GR08MM1305", "GR04MM1305"}, default "GR08MM1305"
         The code of the matrix used.
-    orientation : int, default 180
+    orientation : int {0, 180}, default 180
         Orientation in degree of the matrix (same as in OTBiolab).
         E.g. 180 corresponds to the matrix connection toward the user.
     exclude_belowthreshold : bool, default True
@@ -655,8 +658,11 @@ def remove_duplicates_between(
         Whether to plot ste STA of pairs of MUs with XCC above threshold.
     which : str {"munumber", "PNR"}
         How to remove the duplicated MUs. 
-        If "munumber", duplicated MUs are removed from the file with more MUs.
-        If "PNR", the MU with the lowest PNR is removed (valid only for DEMUSE files).
+        
+        ``munumber``
+            Duplicated MUs are removed from the file with more MUs.
+        ``PNR``
+            The MU with the lowest PNR is removed (valid only for DEMUSE files).
     
     Returns
     -------

@@ -5,6 +5,8 @@ This module contains all the functions used to analyse the MUs properties.
 import pandas as pd
 import numpy as np
 from openhdemg.tools import showselect, compute_idr, compute_covsteady
+import warnings
+import math
 
 
 def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
@@ -17,16 +19,24 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    event_ : str, default "rt_dert"
-        When to calculate the thresholds. Input parameters for event_ are:
-            "rt_dert" means that both recruitment and derecruitment tresholds will be calculated.
-            "rt" means that only recruitment tresholds will be calculated.
-            "dert" means that only derecruitment tresholds will be calculated.
-    type_ : str, default "abs_rel"
-        The tipe of value to calculate. Input parameters for type_ are:
-            "abs_rel" means that both absolute and relative tresholds will be calculated.
-            "rel" means that only relative tresholds will be calculated.
-            "abs" means that only absolute tresholds will be calculated.
+    event_ : str {"rt_dert", "rt", "dert"}, default "rt_dert"
+        When to calculate the thresholds.
+        
+        ``rt_dert``
+            Both recruitment and derecruitment tresholds will be calculated.
+        ``rt``
+            Only recruitment tresholds will be calculated.
+        ``dert``
+            Only derecruitment tresholds will be calculated.
+    type_ : str {"abs_rel", "rel", "abs"}, default "abs_rel"
+        The tipe of value to calculate.
+
+        ``abs_rel`` 
+            Both absolute and relative tresholds will be calculated.
+        ``rel`` 
+            Only relative tresholds will be calculated.
+        ``abs`` 
+            Only absolute tresholds will be calculated.
     mvif : float, default 0
         The maximum voluntary isometric force (MViF).
         if mvif is 0, the user is asked to input mvif; otherwise, the value passed is used.
@@ -61,7 +71,7 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
     if type_ != "rel" and mvif == 0:
         # Ask the user to input MViF
         mvif = int(
-            input("--------------------------------\nEnter MVC value in newton: ")
+            input("--------------------------------\nEnter MViF value in newton: ")
         )
 
     # Create an object to append the results
@@ -73,8 +83,8 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
         mup_derec = MUPULSES[i][-1]
 
         # Calculate absolute and relative RT and DERT if requested
-        abs_RT = ((float(REF_SIGNAL.loc[mup_rec]) * float(mvif)) / 100) * 9.81
-        abs_DERT = ((float(REF_SIGNAL.loc[mup_derec]) * float(mvif)) / 100) * 9.81
+        abs_RT = ((float(REF_SIGNAL.loc[mup_rec]) * float(mvif)) / 100)
+        abs_DERT = ((float(REF_SIGNAL.loc[mup_derec]) * float(mvif)) / 100)
         rel_RT = float(REF_SIGNAL.loc[mup_rec])
         rel_DERT = float(REF_SIGNAL.loc[mup_derec])
 
@@ -143,13 +153,19 @@ def compute_dr(
     start_steady, end_steady : int, default -1
         The start and end point (in samples) of the steady-state phase.
         If < 0 (default), the user will need to manually select the start and end of the steady-state phase.
-    event_ : str, default "rec_derec_steady"
-        When to calculate the DR. Input parameters for event_ are:
-            "rec_derec_steady" means that the DR is calculated at recruitment, derecruitment and during the steady-state phase.
-            "rec" means that the DR is calculated at recruitment.
-            "derec" means that the DR is calculated at derecruitment.
-            "rec_derec" means that the DR is calculated at recruitment and derecruitment.
-            "steady" means that the DR is calculated during the steady-state phase.
+    event_ : str {"rec_derec_steady", "rec", "derec", "rec_derec", "steady"}, default "rec_derec_steady"
+        When to calculate the DR.
+
+            ``rec_derec_steady``
+                DR is calculated at recruitment, derecruitment and during the steady-state phase.
+            ``rec``
+                DR is calculated at recruitment.
+            ``derec``
+                DR is calculated at derecruitment.
+            ``rec_derec``
+                DR is calculated at recruitment and derecruitment.
+            ``steady``
+                DR is calculated during the steady-state phase.
 
     Returns
     -------
@@ -187,42 +203,68 @@ def compute_dr(
             start_steady, end_steady = showselect(
                 emgfile, title="Select the start/end of the steady-state then press enter"
             )
-
+    
     # Create an object to append the results
     toappend_dr = []
     for i in range(emgfile["NUMBER_OF_MUS"]):  # Loop all the MUs
+        
+        # DR rec/derec
+        if len(idr[i]["idr"]) >= n_firings_RecDerec:
+            selected_idr = idr[i]["idr"].iloc[0:n_firings_RecDerec]
+            drrec = selected_idr.mean()
 
-        # DR rec
-        selected_idr = idr[i]["idr"].iloc[0:n_firings_RecDerec]
-        drrec = selected_idr.mean()
+            length = len(idr[i]["idr"])
+            selected_idr = idr[i]["idr"].iloc[length - n_firings_RecDerec + 1 : length]  # +1 because len() counts position 0
+            drderec = selected_idr.mean()
 
-        # DR derec
-        length = len(idr[i]["idr"])
-        selected_idr = idr[i]["idr"].iloc[length - n_firings_RecDerec + 1 : length]  # +1 because len() counts position 0
-        drderec = selected_idr.mean()
+        else:
+            drrec = np.nan
+            drderec = np.nan
+
+            warnings.warn("Calculation of DR at rec/derec failed, not enough firings")
+
+        # Reset indexes of previous cycle
+        index_startsteady = np.nan
+        index_endsteady = np.nan
 
         # Find indexes of start and end steady
         for count, pulse in enumerate(idr[i]["mupulses"]):
-            if pulse >= start_steady:
+            if pulse >= start_steady and pulse <= end_steady:
                 index_startsteady = count
                 break
 
-        for count, pulse in enumerate(idr[i]["mupulses"]):
-            if pulse >= end_steady:
-                index_endsteady = count
-                break
+        if not math.isnan(index_startsteady):
+            for count, pulse in enumerate(idr[i]["mupulses"]):
+                if pulse >= end_steady:
+                    index_endsteady = count
+                    break
 
+                else:
+                    # Account for MUs that stop firing before the end of the steady-state phase
+                    index_endsteady = count
+
+        # But there can still be uncaught exceptions so use try-except
+        
         # DR startsteady
-        selected_idr = idr[i]["idr"].loc[index_startsteady + 1 : index_startsteady + n_firings_steady]  # +1 because to work only on the steady state
-        drstartsteady = selected_idr.mean()
+        try:
+            selected_idr = idr[i]["idr"].loc[index_startsteady + 1 : index_startsteady + n_firings_steady]  # +1 because to work only on the steady state
+            drstartsteady = selected_idr.mean()
+        except:
+            drstartsteady = np.nan
 
         # DR endsteady
-        selected_idr = idr[i]["idr"].loc[index_endsteady + 1 - n_firings_steady : index_endsteady]  # +1 because to work only on the steady state
-        drendsteady = selected_idr.mean()
+        try:
+            selected_idr = idr[i]["idr"].loc[index_endsteady + 1 - n_firings_steady : index_endsteady]  # +1 because to work only on the steady state
+            drendsteady = selected_idr.mean()
+        except:
+            drendsteady = np.nan
 
         # DR steady
-        selected_idr = idr[i]["idr"].loc[index_startsteady + 1 : index_endsteady]  # +1 because to work only on the steady state
-        drsteady = selected_idr.mean()
+        try:
+            selected_idr = idr[i]["idr"].loc[index_startsteady + 1 : index_endsteady]  # +1 because to work only on the steady state
+            drsteady = selected_idr.mean()
+        except:
+            drsteady = np.nan
 
         # DR all contraction
         selected_idr = idr[i]["idr"]
@@ -323,14 +365,14 @@ def basic_mus_properties(
     # First: create a dataframe that contains all the output
     exportable_df = []
 
-    # Second: add basic information (MVC, MU number, PNR, Average PNR)
+    # Second: add basic information (MViF, MU number, PNR/SIL, Average PNR/SIL)
     if mvif == 0:
         # Ask the user to input MViF
         mvif = int(
             input("--------------------------------\nEnter MViF value in newton: ")
         )
 
-    exportable_df.append({"MVC": mvif})
+    exportable_df.append({"MViF": mvif})
     exportable_df = pd.DataFrame(exportable_df)
 
     # Basically, we create an empty list, append values, convert the list in df and then concatenate to the exportable_df
@@ -340,7 +382,7 @@ def basic_mus_properties(
     toappend = pd.DataFrame(toappend)
     exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
-    # Only for DEMUSE files at this point (once we compute the PNR for the OTB decomposition, we can use it for both)
+    # Only for DEMUSE files at this point #TODO once we have the SIL for the OTB decomposition, we can use it
     if emgfile["SOURCE"] == "DEMUSE":
         # Repeat the task for every new column to fill and concatenate
         toappend = []
@@ -390,7 +432,7 @@ def basic_mus_properties(
 
     """ 
     print(exportable_df)
-        MVC  MU_number   PNR  avg_PNR      abs_RT    abs_DERT    rel_RT  rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady    DR_all  COVisi_steady  COVisi_all  COV_steady
+        MViF  MU_number   PNR  avg_PNR      abs_RT    abs_DERT    rel_RT  rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady    DR_all  COVisi_steady  COVisi_all  COV_steady
     0  333.0          1  33.7  32.0125  132.594422  203.150753  4.058934  6.218780  6.139581  4.751324         8.269338       6.507612       7.303444  7.225373      11.866565   15.450206    4.412715     
     1    NaN          2  36.9      NaN  205.666825  230.027668  6.295801  7.041527  5.212117  4.349304         5.619159       5.302997       5.739165  5.692758      12.424448   13.071500         NaN     
     2    NaN          3  29.5      NaN  139.899637  129.526535  4.282559  3.965021  6.154896  4.505799         7.613770       7.503886       7.789876  7.685846      10.322716   14.749926         NaN     
@@ -423,13 +465,19 @@ def compute_covisi(
     start_steady, end_steady : int, default -1
         The start and end point (in samples) of the steady-state phase.
         If < 0 (default), the user will need to manually select the start and end of the steady-state phase.
-    event_ : str, default "rec_derec_steady"
-        When to calculate the COVisi. Input parameters for event_ are:
-            "rec_derec_steady" means that the covisi is calculated at recruitment, derecruitment and during the steady-state phase.
-            "rec" means that the covisi is calculated at recruitment.
-            "derec" means that the covisi is calculated at derecruitment.
-            "rec_derec" means that the covisi is calculated at recruitment and derecruitment.
-            "steady" means that the covisi is calculated during the steady-state phase.
+    event_ : str {"rec_derec_steady", "rec", "derec", "rec_derec", "steady"}, default "rec_derec_steady"
+        When to calculate the COVisi.
+        
+            ``rec_derec_steady`` 
+                covisi is calculated at recruitment, derecruitment and during the steady-state phase.
+            ``rec`` 
+                covisi is calculated at recruitment.
+            ``derec`` 
+                covisi is calculated at derecruitment.
+            ``rec_derec`` 
+                covisi is calculated at recruitment and derecruitment.
+            ``steady`` 
+                covisi is calculated during the steady-state phase.
     single_mu_number : int, default -1
         Number of the specific MU to compute the COVisi.
         If single_mu_number >= 0, only the COVisi of the entire contraction will be returned.
@@ -550,7 +598,7 @@ def compute_drvariability(
     event_="rec_derec_steady",
 ):
     """
-    Claculate the IDR variability.
+    Claculate the DR variability.
     
     This function calculate the variability (as the coefficient of variation) of the 
     instantaneous discharge rate (DR) at recruitment, derecruitment, 
@@ -565,13 +613,19 @@ def compute_drvariability(
     start_steady, end_steady : int, default -1
         The start and end point (in samples) of the steady-state phase.
         If < 0 (default), the user will need to manually select the start and end of the steady-state phase.
-    event_ : str, default "rec_derec_steady"
-        When to calculate the COVisi. Input parameters for event_ are:
-            "rec_derec_steady" means that the DR variability is calculated at recruitment, derecruitment and during the steady-state phase.
-            "rec" means that the DR variability is calculated at recruitment.
-            "derec" means that the DR variability is calculated at derecruitment.
-            "rec_derec" means that the DR variability is calculated at recruitment and derecruitment.
-            "steady" means that the DR variability is calculated during the steady-state phase.
+    event_ : str {"rec_derec_steady", "rec", "derec", "rec_derec", "steady"}, default "rec_derec_steady"
+        When to calculate the DR variability.
+
+            ``rec_derec_steady``
+                DR variability is calculated at recruitment, derecruitment and during the steady-state phase.
+            ``rec``
+                DR variability is calculated at recruitment.
+            ``derec``
+                DR variability is calculated at derecruitment.
+            ``rec_derec``
+                DR variability is calculated at recruitment and derecruitment.
+            ``steady``
+                DR variability is calculated during the steady-state phase.
     
     Returns
     -------

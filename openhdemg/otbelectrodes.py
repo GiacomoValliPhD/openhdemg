@@ -75,9 +75,9 @@ def get_rawemg_sortingorder(code, orientation):
 
     Parameters
     ----------
-    code : str
-        The code of the matrix used.
-    orientation : int
+    code : str {"GR08MM1305", "GR04MM1305"}
+        The code of the matrix used (e.g., "GR08MM1305").
+    orientation : int {0, 180}
         Orientation in degree of the matrix (same as in OTBiolab).
         E.g. 180 corresponds to the matrix connection toward the user.
 
@@ -169,7 +169,7 @@ def rawemg_sortool(emgfile, orientation, base0_sorting_order, base0_nanpos):
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    orientation : int
+    orientation : int {0, 180}
         Orientation in degree of the matrix (same as in OTBiolab).
         E.g. 180 corresponds to the matrix connection toward the user.
     base0_sorting_order : list
@@ -228,9 +228,9 @@ def sort_rawemg(emgfile, code="GR08MM1305", orientation=180):
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    code : str, default "GR08MM1305"
+    code : str {"GR08MM1305", "GR04MM1305"}, default "GR08MM1305"
         The code of the matrix used.
-    orientation : int, default 180
+    orientation : int {0, 180}, default 180
         Orientation in degree of the matrix (same as in OTBiolab).
         E.g. 180 corresponds to the matrix connection toward the user.
 

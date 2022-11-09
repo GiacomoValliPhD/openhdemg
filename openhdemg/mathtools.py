@@ -64,7 +64,7 @@ def norm_twod_xcorr(df1, df2, mode="full"):
         A pd.DataFrame containing the STA of the first MU without np.nan column. 
     df2 : pd.DataFrame
         A pd.DataFrame containing the STA of the second MU without np.nan column.
-    mode : str {"full", "valid", "same"}, default "full" #TODO docs like this
+    mode : str {"full", "valid", "same"}, default "full"
         A string indicating the size of the output:
 
         ``full``

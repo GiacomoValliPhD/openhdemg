@@ -31,7 +31,8 @@ Once opened, the file is returned as a dict with keys:
     "SOURCE" : source of the file (i.e., "DEMUSE", "OTB")
     "RAW_SIGNAL" : the raw EMG signal.
     "REF_SIGNAL" : the reference signal
-    "PNR" : pulse to noise ratio for file coming from DEMUSE
+    "PNR" : pulse to noise ratio for files coming from DEMUSE
+    "SIL" : silouette threshold for files coming from OTBiolab+
     "IPTS" : pulse train
     "MUPULSES" : instant of firing
     "FSAMP" : sampling frequency
@@ -54,7 +55,9 @@ from openhdemg.otbelectrodes import *
 from tkinter import *
 from tkinter import filedialog
 import json, gzip
-#TODO otb functions based on otb version, performance of JSON, in open otb add possibility to load requested path
+
+#TODO performance of JSON, in open otb add possibility to load requested path in future releases
+
 # ---------------------------------------------------------------------
 # Define functions used in the DEMUSE openfile function.
 # These functions are not exposed to the final user.
@@ -326,11 +329,13 @@ def emg_from_demuse(filepath):
 
     # Parse .mat obtained from DEMUSE to see the available variables
     # First: see the variables name
+    """ 
     print(
         "\n--------------------------------\nAvailable dict keys are:\n\n{}\n".format(
             mat_file.keys()
         )
-    )
+    ) 
+    """
 
     # Second: collect the necessary variables in pandas dataframe (df) or list (for matlab cell arrays)   -variable_name must be a string (i.e., "name")
     REF_SIGNAL = oned_mat_to_pd(
@@ -465,7 +470,7 @@ def get_otb_refsignal(df, refsig):
         return np.nan
 
 
-def get_otb_decomposition(df):
+def get_otb_decomposition(df): #TODO verify that we don't extract everything base 1 here and in DEMUSE
     """
     Extract the IPTS and BINARY_MUS_FIRING from the OTB .mat file.
 
@@ -599,7 +604,7 @@ def get_otb_rawsignal(df):
 # Main function to open decomposed files coming from OTBiolab+.
 # This function calls the functions defined above
 
-def emg_from_otb(filepath, refsig=[True, "fullsampled"]):
+def emg_from_otb(filepath, refsig=[True, "fullsampled"], version="1.5.7.3"): #TODO test the latest release and change
     """
     Import the .mat file exportable by OTBiolab+.   
     
@@ -615,6 +620,12 @@ def emg_from_otb(filepath, refsig=[True, "fullsampled"]):
         Whether to seacrh also for the REF_SIGNAL and whether to load the full or sub-sampled one.
         The list is composed as [bool, str]. str can be "fullsampled" or "subsampled".
         Please read notes section.
+    version : str {"1.5.7.3"}, default "1.5.7.3"
+        Version of the OTBiolab+ software used.
+        If your specific version is not available, try with the closer one.
+
+        ``1.5.7.3``
+            Works for this and earlier versions.
     
     Returns
     -------
@@ -640,7 +651,7 @@ def emg_from_otb(filepath, refsig=[True, "fullsampled"]):
             "SOURCE": SOURCE,
             "RAW_SIGNAL": RAW_SIGNAL,
             "REF_SIGNAL": REF_SIGNAL,
-            "PNR": PNR,
+            "SIL": SIL,
             "IPTS": IPTS,
             "MUPULSES": MUPULSES,
             "FSAMP": FSAMP,
@@ -654,42 +665,45 @@ def emg_from_otb(filepath, refsig=[True, "fullsampled"]):
     mat_file = loadmat(filepath, simplify_cells=True)
 
     # Parse .mat obtained from DEMUSE to see the available variables
+    """ 
     print(
         "\n--------------------------------\nAvailable dict keys are:\n\n{}\n".format(
             mat_file.keys()
         )
-    )
+    ) 
+    """
 
-    # Simplify (rename) columns description and extract all the parameters in a pandas dataframe
-    df = pd.DataFrame(mat_file["Data"], columns=mat_file["Description"])
+    if version in ["1.5.7.3"]:
+        # Simplify (rename) columns description and extract all the parameters in a pandas dataframe
+        df = pd.DataFrame(mat_file["Data"], columns=mat_file["Description"])
 
-    REF_SIGNAL = get_otb_refsignal(df=df, refsig=refsig)
-    PNR = pd.DataFrame({0: np.nan}, index=[0])
-    IPTS, BINARY_MUS_FIRING = get_otb_decomposition(df=df)
-    EMG_LENGTH, NUMBER_OF_MUS = IPTS.shape
-    MUPULSES = get_otb_mupulses(binarymusfiring=BINARY_MUS_FIRING)
-    FSAMP = int(mat_file["SamplingFrequency"])
-    IED = get_otb_ied(df=df)
-    RAW_SIGNAL = get_otb_rawsignal(df)
+        REF_SIGNAL = get_otb_refsignal(df=df, refsig=refsig)
+        SIL = pd.DataFrame({0: np.nan}, index=[0])
+        IPTS, BINARY_MUS_FIRING = get_otb_decomposition(df=df)
+        EMG_LENGTH, NUMBER_OF_MUS = IPTS.shape
+        MUPULSES = get_otb_mupulses(binarymusfiring=BINARY_MUS_FIRING)
+        FSAMP = int(mat_file["SamplingFrequency"])
+        IED = get_otb_ied(df=df)
+        RAW_SIGNAL = get_otb_rawsignal(df)
 
-    # Use this to know what data you have or don't have
-    SOURCE = "OTB"
+        # Use this to know what data you have or don't have
+        SOURCE = "OTB"
 
-    resdict = {
-        "SOURCE": SOURCE,
-        "RAW_SIGNAL": RAW_SIGNAL,
-        "REF_SIGNAL": REF_SIGNAL,
-        "PNR": PNR,
-        "IPTS": IPTS,
-        "MUPULSES": MUPULSES,
-        "FSAMP": FSAMP,
-        "IED": IED,
-        "EMG_LENGTH": EMG_LENGTH,
-        "NUMBER_OF_MUS": NUMBER_OF_MUS,
-        "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
-    }
+        resdict = {
+            "SOURCE": SOURCE,
+            "RAW_SIGNAL": RAW_SIGNAL,
+            "REF_SIGNAL": REF_SIGNAL,
+            "SIL": SIL,
+            "IPTS": IPTS,
+            "MUPULSES": MUPULSES,
+            "FSAMP": FSAMP,
+            "IED": IED,
+            "EMG_LENGTH": EMG_LENGTH,
+            "NUMBER_OF_MUS": NUMBER_OF_MUS,
+            "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
+        }
 
-    return resdict
+        return resdict
 
 
 def refsig_from_otb(filepath, refsig="fullsampled"):
@@ -707,9 +721,8 @@ def refsig_from_otb(filepath, refsig="fullsampled"):
     filepath : str or Path
         The directory and the name of the file to load (including file extension .mat).
         This can be a simple string, the use of Path is not necessary.
-    refsig : str, default "fullsampled"
-        Whether to seacrh also for the REF_SIGNAL and whether to load the full or sub-sampled one.
-        str can be "fullsampled" or "subsampled".
+    refsig : str {"fullsampled", "subsampled"}, default "fullsampled"
+        Whether to load the full or sub-sampled one.
         Please read notes section.
     
     Returns
@@ -788,7 +801,7 @@ def save_json_emgfile(emgfile, filepath):
                     "SOURCE" : SOURCE,
                     "RAW_SIGNAL" : RAW_SIGNAL,
                     "REF_SIGNAL" : REF_SIGNAL,
-                    ==> "PNR" : PNR,
+                    ==> "PNR" : PNR OR "SIL" : SIL
                     ==> "IPTS" : IPTS,
                     ==> "MUPULSES" : MUPULSES,
                     "FSAMP" : FSAMP,
@@ -816,7 +829,10 @@ def save_json_emgfile(emgfile, filepath):
         # We use dict converted to json to locate better the objects while re-importing them in python
         raw_signal = emgfile["RAW_SIGNAL"]
         ref_signal = emgfile["REF_SIGNAL"]
-        pnr = emgfile["PNR"]
+        if emgfile["SOURCE"] == "DEMUSE":
+            pnr = emgfile["PNR"]
+        else:
+            pnr = emgfile["SIL"]
         ipts = emgfile["IPTS"]
         binary_mus_firing = emgfile["BINARY_MUS_FIRING"]
         raw_signal = raw_signal.to_json()
@@ -826,7 +842,10 @@ def save_json_emgfile(emgfile, filepath):
         binary_mus_firing = binary_mus_firing.to_json()
         raw_signal = {"RAW_SIGNAL": raw_signal}
         ref_signal = {"REF_SIGNAL": ref_signal}
-        pnr = {"PNR": pnr}
+        if emgfile["SOURCE"] == "DEMUSE":
+            pnr = {"PNR": pnr}
+        else:
+            pnr = {"SIL": pnr}
         ipts = {"IPTS": ipts}
         binary_mus_firing = {"BINARY_MUS_FIRING": binary_mus_firing}
         raw_signal = json.dumps(raw_signal)
@@ -951,7 +970,10 @@ def emg_from_json(filepath):
         ref_signal.sort_index(inplace=True)
         # jsonemgfile[3] contains the pnr to be treated as jsonemgfile[1]
         pnr_dict = json.loads(jsonemgfile[3])
-        pnr_dict = json.loads(pnr_dict["PNR"])
+        if source == "DEMUSE":
+            pnr_dict = json.loads(pnr_dict["PNR"])
+        else:
+            pnr_dict = json.loads(pnr_dict["SIL"])
         pnr = pd.DataFrame(pnr_dict)
         pnr.columns = pnr.columns.astype(int)
         pnr.index = pnr.index.astype(int)
@@ -990,7 +1012,7 @@ def emg_from_json(filepath):
             "SOURCE": source,
             "RAW_SIGNAL": raw_signal,
             "REF_SIGNAL": ref_signal,
-            "PNR": pnr,
+            "PNR" if source == "DEMUSE" else "SIL" : pnr,
             "IPTS": ipts,
             "MUPULSES": mupulses,
             "FSAMP": fsamp,
@@ -1038,12 +1060,20 @@ def askopenfile(
     initialdir : str or Path, default "/"
         The directory of the file to load (excluding file name).
         This can be a simple string, the use of Path is not necessary.
-    filesource : str, default "DEMUSE"
-        Can be one of "DEMUSE", "OTB", "OTB_refsig" (.mat) or "Open_HD-EMG" (.json).
+    filesource : str {"DEMUSE", "OTB", "OTB_refsig", "Open_HD-EMG"}, default "DEMUSE"
+        See notes for how files should be exported from OTB.
+        
+        ``DEMUSE``
+            File saved from DEMUSE (.mat).
+        ``OTB``
+            File exported from OTB with decomposition and reference signal (.mat).
+        ``OTB_refsig``
+            File exported from OTB with only the reference signal (.mat).
+        ``Open_HD-EMG``
+            File saved from openhdemg (.json).
     otb_refsig_type : list, default [True, "fullsampled"]
         Whether to seacrh also for the REF_SIGNAL and whether to load the full or sub-sampled one.
         The list is composed as [bool, str]. str can be "fullsampled" or "subsampled".
-        Please read the documentation of emg_from_otb.
 
     Returns
     -------
@@ -1053,9 +1083,38 @@ def askopenfile(
     Notes
     -----
     The returned file is called ``emgfile`` for convention (or ``emg_refsig`` if SOURCE = "OTB_refsig").
-    """
 
-    #BUG initialdir not working on Windows here and in asksavefiles
+    The input .mat file exported from the OTBiolab+ software should have a specific content:
+    - refsig signal is optional but, if present, there should be both the fullsampled and the subsampled version
+        (in OTBioLab+ the "performed path" refers to the subsampled signal, the "acquired data" to the fullsampled signal),
+        REF_SIGNAL is expected to be expressed as % of the MViF (but not compulsory).
+    - Both the IPTS ('Source for decomposition...' in OTBioLab+) and the BINARY_MUS_FIRING
+        ('Decomposition of...' in OTBioLab+) should be present.
+    - The raw EMG signal should be present (it has no specific name in OTBioLab+) with all the channels.
+        Don't exclude unwanted channels before exporting the .mat file.
+    - NO OTHER ELEMENTS SHOULD BE PRESENT!
+
+    Structure of the returned emgfile:
+        emgfile = {
+            "SOURCE": SOURCE,
+            "RAW_SIGNAL": RAW_SIGNAL,
+            "REF_SIGNAL": REF_SIGNAL,
+            "PNR": PNR or "SIL": SIL,
+            "IPTS": IPTS,
+            "MUPULSES": MUPULSES,
+            "FSAMP": FSAMP,
+            "IED": IED,
+            "EMG_LENGTH": EMG_LENGTH,
+            "NUMBER_OF_MUS": NUMBER_OF_MUS,
+            "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
+        }
+
+    See also
+    --------
+    asksavefile : select where to save files with a GUI.
+    """#TODO see also in various functions
+
+    # Set initialdir (actually not working on Windows)
     if isinstance(initialdir, str):
         if initialdir == "/":
             initialdir = "/Decomposed Test files/"
@@ -1067,13 +1126,13 @@ def askopenfile(
     if filesource in ["DEMUSE", "OTB", "OTB_refsig"]:
         file_toOpen = filedialog.askopenfilename(
             initialdir=initialdir,
-            title="Select a file",
+            title=f"Select a {filesource} file to load",
             filetypes=[("MATLAB files", ".mat")],
         )
     elif filesource == "Open_HD-EMG":
         file_toOpen = filedialog.askopenfilename(
             initialdir=initialdir,
-            title="Select a file",
+            title="Select a Open_HD-EMG file to load",
             filetypes=[("JSON files", ".json")],
         )
     else:
@@ -1094,17 +1153,23 @@ def askopenfile(
     elif filesource == "Open_HD-EMG":
         emgfile = emg_from_json(filepath=file_toOpen)
 
+    print("\n-----------\nFile loaded\n-----------\n")
+    
     return emgfile
 
 
 def asksavefile(emgfile):
     """
-    Select how to save files with a GUI.
+    Select where to save files with a GUI.
 
     Parameters
     ----------
     emgfile : dict
         The dictionary containing the emgfile to save.
+    
+    See also
+    --------
+    askopenfile : select and open files with a GUI.
     """
 
     # Create and hide the tkinter root window necessary for the GUI based open-file function
@@ -1114,12 +1179,14 @@ def asksavefile(emgfile):
     filepath = filedialog.asksaveasfilename(
         defaultextension=".json",
         filetypes=[("json files", "*.json")],
-        title="Save .json file",
+        title="Save JSON file",
     )
 
     # Destroy the root since it is no longer necessary
     root.destroy()
 
+    print("\n-----------\nSaving file\n")
+    
     save_json_emgfile(emgfile, filepath)
 
-    print("\n---------------\nJSON file saved\n---------------\n")
+    print("File saved\n-----------\n")
