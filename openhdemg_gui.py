@@ -382,6 +382,7 @@ class GUI():
         self.logo_canvas = Canvas(self.right, height=590, width=800, bg="white")
         self.logo_canvas.grid(row=0, column=0)
         self.logo = tk.PhotoImage(file="logo.png")
+        #self.matrix = tk.PhotoImage(file="Matrix_illustration.png")
         self.logo_canvas.create_image(400,300,anchor="center", image=self.logo)
 
         for child in self.left.winfo_children():
@@ -1446,68 +1447,68 @@ class GUI():
         plt_emgsig = ttk.Button(self.head,
                                 text="Plot EMGsig",
                                 command=self.plt_emgsignal)
-        plt_emgsig.grid(column=0, row=4, sticky=W)
+        plt_emgsig.grid(column=0, row=3, sticky=W)
 
         self.channels = StringVar()
         channel_entry = ttk.Combobox(self.head,
                                      width=15,
                                      textvariable=self.channels)
         channel_entry["values"] = ("0", "0,1,2", "0,1,2,3")
-        channel_entry.grid(column=1, row=4, sticky=(W,E))
+        channel_entry.grid(column=1, row=3, sticky=(W,E))
         self.channels.set("Channel Numbers")
 
         # Plot refsig
         plt_refsig = ttk.Button(self.head,
                                 text="Plot REFsig",
                                 command=self.plt_refsignal)
-        plt_refsig.grid(column=0, row=5, sticky=W)
+        plt_refsig.grid(column=0, row=4, sticky=W)
 
         # Plot motor unit pulses
         plt_pulses = ttk.Button(self.head,
                                 text="Plot MUpulses",
                                 command=self.plt_mupulses)
-        plt_pulses.grid(column=0, row=6, sticky=W)
+        plt_pulses.grid(column=0, row=5, sticky=W)
 
         self.linewidth = StringVar()
         linewidth_entry = ttk.Combobox(self.head,
                                        width=15,
                                        textvariable=self.linewidth)
         linewidth_entry["values"] = ("0.25", "0.5", "0.75", "1")
-        linewidth_entry.grid(column=1, row=6, sticky=(W,E))
+        linewidth_entry.grid(column=1, row=5, sticky=(W,E))
         self.linewidth.set("Linewidth")
         
         # Plot impulse train
         plt_ipts = ttk.Button(self.head,
                               text="Plot IPTS",
                               command=self.plt_ipts)
-        plt_ipts.grid(column=0, row=7, sticky=W)
+        plt_ipts.grid(column=0, row=6, sticky=W)
 
         self.mu_numb = StringVar()
         munumb_entry = ttk.Combobox(self.head,
                                     width=15,
                                     textvariable=self.mu_numb)
         munumb_entry["values"] = ("0", "0,1,2", "0,1,2,3", "all")
-        munumb_entry.grid(column=1, row=7, sticky=(W,E))
+        munumb_entry.grid(column=1, row=6, sticky=(W,E))
         self.mu_numb.set("MU Number")
 
         # Plot instantaneous discharge rate
         plt_idr = ttk.Button(self.head,
                               text="Plot IDR",
                               command=self.plt_idr)
-        plt_idr.grid(column=0, row=8, sticky=W)
+        plt_idr.grid(column=0, row=7, sticky=W)
 
         self.mu_numb_idr = StringVar()
         munumb_entry_idr = ttk.Combobox(self.head,
                                     width=15,
                                     textvariable=self.mu_numb_idr)
         munumb_entry_idr["values"] = ("0", "0,1,2", "0,1,2,3", "all")
-        munumb_entry_idr.grid(column=1, row=8, sticky=(W,E))
+        munumb_entry_idr.grid(column=1, row=7, sticky=(W,E))
         self.mu_numb_idr.set("MU Number")
 
         # This section containes the code for column 3++
 
         # Separator
-        ttk.Separator(self.head, orient="vertical").grid(row=4, column=2, rowspan=5, ipady=100)
+        ttk.Separator(self.head, orient="vertical").grid(row=3, column=2, rowspan=6, ipady=120)
 
         # Matrix code
         ttk.Label(self.head, text="Matrix Code*").grid(row=0, column=3, sticky=(W))
@@ -1597,12 +1598,16 @@ class GUI():
         self.muap_time.set("Timewindow (ms)")
 
         # Matrix Illustration Graphic
-        #image = ImageTk.PhotoImage(Image.open("Matrix_illustration.jpeg"))
-        #tk.Label(self.head, image=image).grid(row=5, column=3)
+        # image = tk.PhotoImage("Matrix_illustration.png")
+        # img_label = tk.Label(self.head, image=image, bg="white")
+        # img_label.grid(row=5, column=3, columnspan=3, rowspan=3)
 
 
-
-
+        matrix_canvas = Canvas(self.head, height=150, width=600, bg="white")
+        matrix_canvas.grid(row=5, column=3, rowspan = 5, columnspan=5)
+        self.matrix = tk.PhotoImage(file="Matrix.png")
+        matrix_canvas.create_image(0, 0, anchor="nw", image=self.matrix)
+        
 
 
 
