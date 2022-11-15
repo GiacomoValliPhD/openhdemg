@@ -45,6 +45,39 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
     -------
     mus_thresholds : pd.DataFrame
         A DataFrame containing the requested thresholds.
+    
+    See also
+    --------
+    compute_dr : calculate the discharge rate.
+    basic_mus_properties : calculate basic MUs properties on a trapezoidal contraction.
+    compute_covisi : calculate the coefficient of variation of interspike interval.
+    compute_drvariability : claculate the DR variability.
+    
+    Examples
+    --------
+    Load the EMG file and compute the thresholds.
+    
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> mus_thresholds = emg.compute_thresholds(emgfile=emgfile, event_="rt_dert")
+    >>> mus_thresholds    
+           abs_RT    abs_DERT     rel_RT   rel_DERT
+    0  160.148294  137.682351  18.665302  16.046894
+    1   39.138554   49.860936   4.561603   5.811298
+    2   88.155160   95.133218  10.274494  11.087788
+    3   37.776982   41.010716   4.402912   4.779804
+
+    Type of output can be adjusted, e.g., to have only absolute values at recruitment.
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> mus_thresholds = emg.compute_thresholds(emgfile=emgfile, event_="rt", type_="abs")
+    >>> mus_thresholds 
+           abs_RT
+    0  160.148294
+    1   39.138554
+    2   88.155160
+    3   37.776982
     """
 
     # Extract the variables of interest from the EMG file
@@ -53,18 +86,18 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
     REF_SIGNAL = emgfile["REF_SIGNAL"]
 
     # Check that all the inputs are correct
-    assert event_ in [
-        "rt_dert",
-        "rt",
-        "dert",
-    ], f"event_ must be one of the following strings: rt_dert, rt, dert. {event_} was passed instead."
-    assert type_ in [
-        "abs_rel",
-        "rel",
-        "abs",
-    ], f"event_ must be one of the following strings: abs_rel, rel, abs. {event_} was passed instead."
+    if not event_ in ["rt_dert", "rt", "dert"]:
+        raise ValueError(
+            f"event_ must be one of : 'rt_dert', 'rt', 'dert'. {event_} was passed instead."
+        )
+
+    if not type_ in ["abs_rel", "rel", "abs"]:
+        raise ValueError(
+            f"event_ must be one of : 'abs_rel', 'rel', 'abs'. {event_} was passed instead."
+        )
+    
     if not isinstance(mvif, (float, int)):
-        raise Exception(
+        raise TypeError(
             f"mvif must be one of the following types: float, int. {type(mvif)} was passed instead."
         )
 
@@ -116,17 +149,6 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
 
     mus_thresholds = pd.DataFrame(toappend)
 
-    """ 
-    print(mus_thresholds)
-           abs_RT    abs_DERT    rel_RT  rel_DERT
-    0  220.990703  338.584589  4.058934  6.218780
-    1  342.778042  383.379447  6.295801  7.041527
-    2  233.166062  215.877558  4.282559  3.965021
-    3  296.928492  304.142582  5.453683  5.586184
-    4  409.113920  338.584589  7.514192  6.218780
-    ...
-    """
-
     return mus_thresholds
 
 
@@ -171,27 +193,80 @@ def compute_dr(
     -------
     mus_dr : pd.DataFrame
         A pd.DataFrame containing the requested DR.
+
+    Warns
+    -----
+    warning
+        When calculation of DR at rec/derec fails due to not enough firings.
     
+    See also
+    --------
+    compute_thresholds : calculates recruitment/derecruitment thresholds.
+    basic_mus_properties : calculate basic MUs properties on a trapezoidal contraction.
+    compute_covisi : calculate the coefficient of variation of interspike interval.
+    compute_drvariability : claculate the DR variability.
+
     Notes
     -----
     DR for all the contraction is automatically calculated and returned.
+
+    Examples
+    --------
+    Load the EMG file and compute the DR.
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> mus_dr = emg.compute_dr(emgfile=emgfile)
+    >>> mus_dr
+         DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady     DR_all
+    0  5.701081  4.662196         7.321255       6.420720       6.907559   6.814342
+    1  7.051127  6.752467        14.919066      10.245462      11.938671  11.683134
+    2  6.101529  4.789000         7.948740       6.133345       7.695189   8.055731
+    3  6.345692  5.333535        11.121785       9.265212      11.544140  11.109796
+
+    Type of output can be adjusted, e.g., to have only the DR at recruitment.
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> mus_dr = emg.compute_dr(emgfile=emgfile, event_="rec")
+    >>> mus_dr
+         DR_rec     DR_all
+    0  5.701081   6.814342
+    1  7.051127  11.683134
+    2  6.101529   8.055731
+    3  6.345692  11.109796
+
+    The manual selection of the steady state phase can be bypassed
+    if previously calculated with an automated method.
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> mus_dr = emg.compute_dr(emgfile=emgfile, start_steady=20000, end_steady=50000, event_="steady")
+    >>> mus_dr
+       DR_start_steady  DR_end_steady  DR_all_steady     DR_all
+    0         7.476697       6.271750       6.794170   6.814342
+    1        14.440561      10.019572      11.822081  11.683134
+    2         7.293547       5.846093       7.589531   8.055731
+    3        13.289651       9.694317      11.613640  11.109796
     """
 
     # Check that all the inputs are correct
     errormessage = f"event_ must be one of the following strings: rec, derec, rec_derec, steady, rec_derec_steady. {event_} was passed instead."
-    assert event_ in [
+    if not event_ in [
         "rec",
         "derec",
         "rec_derec",
         "steady",
         "rec_derec_steady",
-    ], errormessage
+    ]:
+        raise ValueError(errormessage)
+    
     if not isinstance(n_firings_RecDerec, int):
-        raise Exception(
+        raise TypeError(
             f"n_firings_RecDerec must be an integer. {type(n_firings_RecDerec)} was passed instead."
         )
     if not isinstance(n_firings_steady, int):
-        raise Exception(
+        raise TypeError(
             f"n_firings_steady must be an integer. {type(n_firings_steady)} was passed instead."
         )
 
@@ -300,17 +375,6 @@ def compute_dr(
     # Convert the dictionary in a DataFrame
     mus_dr = pd.DataFrame(toappend_dr)
 
-    """
-    print(mus_dr)
-         DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady    DR_all
-    0  6.139581  4.751324         8.269338       6.467472       7.308025  7.225373
-    1  5.212117  4.349304         5.619159       5.386972       5.742270  5.692758
-    2  6.154896  4.505799         7.613770       7.381648       7.788328  7.685846
-    3  5.019371  4.023208         6.660404       5.872341       6.465086  6.374818
-    4  4.304906  4.503785         5.744684       6.078921       6.428322  6.352171
-    ...
-    """
-
     return mus_dr
 
 
@@ -350,8 +414,43 @@ def basic_mus_properties(
 
     Returns
     -------
-    mus_dr : pd.DataFrame
+    exportable_df : pd.DataFrame
         A pd.DataFrame containing the results of the analysis.
+    
+    See also
+    --------
+    compute_thresholds : calculates recruitment/derecruitment thresholds.
+    compute_dr : calculate the discharge rate.
+    compute_covisi : calculate the coefficient of variation of interspike interval.
+    compute_drvariability : claculate the DR variability.
+    
+    Examples
+    --------
+    Get full summary of all the MUs properties.
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> df = emg.basic_mus_properties(emgfile=emgfile)
+    >>> df
+        MViF  MU_number      abs_RT    abs_DERT     rel_RT   rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady     DR_all  COVisi_steady  COVisi_all  COV_steady
+    0  786.0          1  146.709276  126.128587  18.665302  16.046894  5.701081  4.662196         7.467810       6.242360       6.902616   6.814342      11.296316   16.309681    1.423286
+    1    NaN          2   35.854200   45.676801   4.561603   5.811298  7.051127  6.752467        11.798908       9.977337      11.784061  11.683134      15.871254   21.233615         NaN
+    2    NaN          3   80.757524   87.150011  10.274494  11.087788  6.101529  4.789000         7.940926       5.846093       7.671361   8.055731      35.755090   35.308650         NaN
+    3    NaN          4   34.606886   37.569257   4.402912   4.779804  6.345692  5.333535        11.484875       9.636914      11.594712  11.109796      24.611246   29.372524         NaN
+    
+    We can bypass manual prompting the MViF by pre-specifying it and/or
+    bypass the manual selection of the steady state phase if previously 
+    calculated with an automated method.
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> df = emg.basic_mus_properties(emgfile=emgfile, start_steady=20000, end_steady=50000, mvif=786)
+    >>> df
+    MViF  MU_number      abs_RT    abs_DERT     rel_RT   rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady     DR_all  COVisi_steady  COVisi_all  COV_steady
+    0  786.0          1  146.709276  126.128587  18.665302  16.046894  5.701081  4.662196         7.476697       6.271750       6.794170   6.814342      11.066966   16.309681    1.431752
+    1    NaN          2   35.854200   45.676801   4.561603   5.811298  7.051127  6.752467        14.440561      10.019572      11.822081  11.683134      15.076819   21.233615         NaN
+    2    NaN          3   80.757524   87.150011  10.274494  11.087788  6.101529  4.789000         7.293547       5.846093       7.589531   8.055731      36.996894   35.308650         NaN
+    3    NaN          4   34.606886   37.569257   4.402912   4.779804  6.345692  5.333535        13.289651       9.694317      11.613640  11.109796      26.028689   29.372524         NaN
     """
 
     # Check if we need to select the steady-state phase
@@ -382,7 +481,7 @@ def basic_mus_properties(
     toappend = pd.DataFrame(toappend)
     exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
-    # Only for DEMUSE files at this point #TODO once we have the SIL for the OTB decomposition, we can use it
+    # Only for DEMUSE files at this point #TODO_NEXT_ use SIL for OTB
     if emgfile["SOURCE"] == "DEMUSE":
         # Repeat the task for every new column to fill and concatenate
         toappend = []
@@ -430,17 +529,6 @@ def basic_mus_properties(
     covsteady = pd.DataFrame(covsteady, columns=["COV_steady"])
     exportable_df = pd.concat([exportable_df, covsteady], axis=1)
 
-    """ 
-    print(exportable_df)
-        MViF  MU_number   PNR  avg_PNR      abs_RT    abs_DERT    rel_RT  rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady    DR_all  COVisi_steady  COVisi_all  COV_steady
-    0  333.0          1  33.7  32.0125  132.594422  203.150753  4.058934  6.218780  6.139581  4.751324         8.269338       6.507612       7.303444  7.225373      11.866565   15.450206    4.412715     
-    1    NaN          2  36.9      NaN  205.666825  230.027668  6.295801  7.041527  5.212117  4.349304         5.619159       5.302997       5.739165  5.692758      12.424448   13.071500         NaN     
-    2    NaN          3  29.5      NaN  139.899637  129.526535  4.282559  3.965021  6.154896  4.505799         7.613770       7.503886       7.789876  7.685846      10.322716   14.749926         NaN     
-    3    NaN          4  36.7      NaN  178.157095  182.485549  5.453683  5.586184  5.019371  4.023208         6.660404       5.960320       6.464689  6.374818      11.358656   14.974260         NaN     
-    4    NaN          5  28.8      NaN  245.468352  203.150753  7.514192  6.218780  4.304906  4.503785         5.744684       6.075250       6.426378  6.352171      13.747331   14.902565         NaN
-    ...
-    """
-
     return exportable_df
 
 
@@ -456,6 +544,7 @@ def compute_covisi(
     Calculate theCOVisi.
 
     This function calculates the coefficient of variation of interspike interval (COVisi).
+    
     Parameters
     ----------
     emgfile : dict
@@ -487,23 +576,68 @@ def compute_covisi(
     -------
     covisi : pd.DataFrame
         A pd.DataFrame containing the requested COVisi.
-    
+
+    See also
+    --------
+    compute_thresholds : calculates recruitment/derecruitment thresholds.
+    compute_dr : calculate the discharge rate.
+    basic_mus_properties : calculate basic MUs properties on a trapezoidal contraction.
+    compute_drvariability : claculate the DR variability.
+
     Notes
     -----
     COVisi for all the contraction is automatically calculated and returned.
+
+    Examples
+    --------
+    Compute covisi during the various parts of the trapezoidal contraction.
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> df = emg.compute_covisi(emgfile=emgfile)
+    >>> df
+       COVisi_rec  COVisi_derec  COVisi_steady  COVisi_all
+    0    8.600651     24.007405      11.230602   16.309681
+    1   46.874208     19.243432      16.657603   21.233615
+    2   32.212757     18.642514      35.421124   35.308650
+    3   62.995864     13.080768      24.966372   29.372524
+
+    If the steady-state phase has been pre-identified, the manual selection
+    of the area can be bypassed.
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> df = emg.compute_covisi(emgfile=emgfile, event_="rec_derec", start_steady=20000, end_steady=50000)
+    >>> df
+       COVisi_rec  COVisi_derec  COVisi_all
+    0    8.600651     24.007405   16.309681
+    1   46.874208     19.243432   21.233615
+    2   32.212757     18.642514   35.308650
+    3   62.995864     13.080768   29.372524
+
+    To access the covisi of the entire contraction of a single MU.
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> df = emg.compute_covisi(emgfile=emgfile, single_mu_number=2)
+    >>> df
+       COVisi_all
+    0    35.30865
     """
 
     # Check that all the inputs are correct
     errormessage = f"event_ must be one of the following strings: rec, derec, rec_derec, steady, rec_derec_steady. {event_} was passed instead."
-    assert event_ in [
+    if not event_ in [
         "rec",
         "derec",
         "rec_derec",
         "steady",
         "rec_derec_steady",
-    ], errormessage
+    ]:
+        raise ValueError(errormessage)
+    
     if not isinstance(n_firings_RecDerec, int):
-        raise Exception(
+        raise TypeError(
             f"n_firings_RecDerec must be an integer. {type(n_firings_RecDerec)} was passed instead."
         )
 
@@ -632,22 +766,59 @@ def compute_drvariability(
     drvariability : pd.DataFrame
         A pd.DataFrame containing the requested DR variability.
 
+    See also
+    --------
+    compute_thresholds : calculates recruitment/derecruitment thresholds.
+    compute_dr : calculate the discharge rate.
+    basic_mus_properties : calculate basic MUs properties on a trapezoidal contraction.
+    compute_covisi : calculate the coefficient of variation of interspike interval.
+
     Notes
     -----
     DR variability for all the contraction is automatically calculated and returned.
+
+    Examples
+    --------
+    Compute covisi during the various parts of the trapezoidal contraction.
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> df = emg.compute_covisi(emgfile=emgfile)
+    >>> df
+       DRvar_rec  DRvar_derec  DRvar_steady  DRvar_all
+    0   8.560971    21.662783     11.051780  13.937779
+    1  36.934213    17.714761     55.968609  52.726356
+    2  28.943139    17.263000     49.375100  54.420703
+    3  48.322396    12.873456     54.718482  48.019809
+
+    If the steady-state phase has been pre-identified, the manual selection
+    of the area can be bypassed.
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> df = emg.compute_covisi(emgfile=emgfile, event_="rec_derec", start_steady=20000, end_steady=50000)
+    >>> df
+       DRvar_rec  DRvar_derec  DRvar_all
+    0   8.560971    21.662783  13.937779
+    1  36.934213    17.714761  52.726356
+    2  28.943139    17.263000  54.420703
+    3  48.322396    12.873456  48.019809
     """
 
     # Check that all the inputs are correct
     errormessage = f"event_ must be one of the following strings: rec, derec, rec_derec, steady, rec_derec_steady. {event_} was passed instead."
-    assert event_ in [
+    if not event_ in [
         "rec",
         "derec",
         "rec_derec",
         "steady",
         "rec_derec_steady",
-    ], errormessage
+    ]:
+        raise ValueError(errormessage)
+    
+    
     if not isinstance(n_firings_RecDerec, int):
-        raise Exception(
+        raise type(
             f"n_firings_RecDerec must be an integer. {type(n_firings_RecDerec)} was passed instead."
         )
 

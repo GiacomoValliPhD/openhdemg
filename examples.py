@@ -23,7 +23,6 @@ MUs properties and force profile. Funtions for visualisation (plotting) specific
 users are also provided.
 
 Sample files necessary to test this code can be downloade from:
-#TODO
 """
 
 # Step 0: load the library and its functions

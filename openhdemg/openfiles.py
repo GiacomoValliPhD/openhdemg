@@ -9,8 +9,8 @@ Description
 
     Most of the functions contained in this file are called internally and should not be exposed to the final user.
 
-    Functions should be exposed as:
-        from openhdemg.openfiles import emg_from_otb, emg_from_demuse, refsig_from_otb, save_json_emgfile, emg_from_json, askopenfile
+    Functions should be exposed in the __init__ file as:
+        from openhdemg.openfiles import emg_from_otb, emg_from_demuse, refsig_from_otb, save_json_emgfile, emg_from_json, askopenfile, asksavefile
 
 Function's scope
 ----------------
@@ -20,10 +20,10 @@ Function's scope
         function emg_from_otb. In both cases, the input file is a .mat file.
     refsig_from_otb :
         is used to load files from the OTBiolab+ software that contain only the REF_SIGNAL.
-    askopenfile :
-        is a quick GUI implementation that allows users to select the file to open.
     save_json_emgfile, emg_from_json :
         are used to save the working file to a .json file or to load the .json file.
+    askopenfile, asksavefile :
+        is a quick GUI implementation that allows users to select the file to open or save.
 
 Notes
 -----
@@ -40,12 +40,13 @@ Once opened, the file is returned as a dict with keys:
     "EMG_LENGTH" : length of the emg file (in samples)
     "NUMBER_OF_MUS" : total number of MUs
     "BINARY_MUS_FIRING" : binary representation of MUs firings
+
 The only exception when OTB files are loaded with just the reference signal:
     "SOURCE": source of the file (i.e., "OTB_refsig")
     "FSAMP": sampling frequency
     "REF_SIGNAL": the reference signal
 
-Additional informations can be found in the official documentation and in the function's description.
+Additional informations can be found in the info module (emg.info()) and in the function's description.
 """
 
 from scipy.io import loadmat
@@ -302,6 +303,11 @@ def emg_from_demuse(filepath):
     -------
     emgfile : dict
         A dictionary containing all the useful variables.
+    
+    See also
+    --------
+    emg_from_otb : import the .mat file exportable by OTBiolab+.
+    refsig_from_otb : import REF_SIGNAL in the .mat file exportable by OTBiolab+.
 
     Notes
     -----
@@ -631,6 +637,11 @@ def emg_from_otb(filepath, refsig=[True, "fullsampled"], version="1.5.7.3"): #TO
     -------
     emgfile : dict
         A dictionary containing all the useful variables.
+
+    See also
+    --------
+    refsig_from_otb : import REF_SIGNAL in the .mat file exportable by OTBiolab+.
+    emg_from_demuse : import the .mat file used in DEMUSE.
     
     Notes
     ---------
@@ -729,6 +740,11 @@ def refsig_from_otb(filepath, refsig="fullsampled"):
     -------
     emgfile : dict
         A dictionary containing all the useful variables.
+    
+    See also
+    --------
+    emg_from_otb : import the .mat file exportable by OTBiolab+.
+    emg_from_demuse : import the .mat file used in DEMUSE.
     
     Notes
     ---------
@@ -1080,6 +1096,10 @@ def askopenfile(
     emgfile : dict
         The dictionary containing the emgfile.
     
+    See also
+    --------
+    asksavefile : select where to save files with a GUI.
+    
     Notes
     -----
     The returned file is called ``emgfile`` for convention (or ``emg_refsig`` if SOURCE = "OTB_refsig").
@@ -1108,11 +1128,7 @@ def askopenfile(
             "NUMBER_OF_MUS": NUMBER_OF_MUS,
             "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
         }
-
-    See also
-    --------
-    asksavefile : select where to save files with a GUI.
-    """#TODO see also in various functions
+    """
 
     # Set initialdir (actually not working on Windows)
     if isinstance(initialdir, str):
@@ -1137,7 +1153,7 @@ def askopenfile(
         )
     else:
         raise Exception(
-            "filesource not valid, it must be one of DEMUSE, OTB, OTB_refsig or Open_HD-EMG (as string)"
+            "filesource not valid, it must be one of 'DEMUSE', 'OTB', 'OTB_refsig' or 'Open_HD-EMG'"
         )
 
     # Destroy the root since it is no longer necessary
