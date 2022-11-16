@@ -4,9 +4,12 @@ This file contains the gui functionalities of openhdemg.
 
 import os
 import tkinter as tk
+import customtkinter
+import webbrowser
 from tkinter import ttk, filedialog, Canvas
 from tkinter import StringVar, Tk, N, S, W, E
 from pandastable import Table, config
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import matplotlib
@@ -234,7 +237,7 @@ class GUI():
         # Set up GUI
         self.master = master
         self.master.title("Open_HD-EMG")
-        self.master.iconbitmap("logo.ico")
+        self.master.iconbitmap("./gui_files/logo.ico")
 
         # Create left side framing for functionalities
         self.left = ttk.Frame(self.master, padding="10 10 12 12")
@@ -282,6 +285,12 @@ class GUI():
         ttk.Label(self.left, text="File length:").grid(column=1, row=4, sticky=(W,E))
         separator0 = ttk.Separator(self.left, orient="horizontal")
         separator0.grid(column=0, columnspan=3, row=5, sticky=(W,E))
+
+        # Decompose file
+        decompose = ttk.Button(self.left,
+                               text="Decompose",
+                               command=self.decompose_file)
+        decompose.grid(row=3, column=0, sticky=W)
 
         # Save File
         save = ttk.Button(self.left,
@@ -352,7 +361,7 @@ class GUI():
         mus = ttk.Button(self.left,
                          text="MU Properties",
                          command=self.mu_analysis)
-        mus.grid(column=0, row=16, sticky=W)
+        mus.grid(column=1, row=14, sticky=W)
         separator6 = ttk.Separator(self.left, orient="horizontal")
         separator6.grid(column=0, columnspan=3, row=17, sticky=(W,E))
 
@@ -360,14 +369,20 @@ class GUI():
         plots = ttk.Button(self.left,
                            text="Plot EMG",
                            command=self.plot_emg)
-        plots.grid(column=0, row=18, sticky=W)
+        plots.grid(column=0, row=16, sticky=W)
         separator7 = ttk.Separator(self.left, orient="horizontal")
         separator7.grid(column=0, columnspan=3, row=19, sticky=(W,E))
 
         # Reset Analysis
         reset = ttk.Button(self.left,
                            text="Reset Analysis", command=self.reset_analysis)
-        reset.grid(column=1, row=20, sticky=(W,E))
+        reset.grid(column=1, row=18, sticky=(W,E))
+
+        # Advanced tools
+        advanced = tk.Button(self.left, command=self.open_advanced_tools,
+                             text="Advanced Tools",
+                             fg="white", bg="black")
+        advanced.grid(row=20, column=0, columnspan=2, sticky=(W,E))
 
         # Create right side framing for functionalities
         self.right = ttk.Frame(self.master, padding="10 10 12 12")
@@ -381,7 +396,7 @@ class GUI():
         # Create logo figure
         self.logo_canvas = Canvas(self.right, height=590, width=800, bg="white")
         self.logo_canvas.grid(row=0, column=0)
-        self.logo = tk.PhotoImage(file="logo.png")
+        self.logo = tk.PhotoImage(file="./gui_files/logo.png")
         #self.matrix = tk.PhotoImage(file="Matrix_illustration.png")
         self.logo_canvas.create_image(400,300,anchor="center", image=self.logo)
 
@@ -485,6 +500,9 @@ class GUI():
             ttk.Label(self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W,E))
             ttk.Label(self.left, text="NA").grid(column=2, row=3, sticky=(W,E))
             ttk.Label(self.left, text="        ").grid(column=2, row=4, sticky=(W,E))
+
+    def decompose_file(self):
+        pass
 
     def save_emgfile(self):
         """
@@ -629,6 +647,29 @@ class GUI():
             except FileNotFoundError:
                 tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
+    def open_advanced_tools(self):
+        """
+        """
+        # Open window
+        self.head = tk.Toplevel(bg="LightBlue4", height=200)
+        self.head.title("Advanced Tools Window")
+        self.head.iconbitmap("./gui_files/logo.ico")
+        self.head.grab_set()
+
+        # Add Label
+        ttk.Label(self.head, text="Select the tool you need!",
+                  font=("Verdana", 16, "bold")).grid(row=0, column=0, pady=5)
+
+        # Add Selection Combobox
+        advanced = StringVar()
+        adv_box = ttk.Combobox(self.head,
+                               width=50)
+        adv_box["values"] = ("MUs tracking",
+                             "Duplicate Removal - Differnt contractions")
+        adv_box["state"] = "readonly"
+        adv_box.grid(row=2, column=0, padx=20, pady=5)
+        adv_box.set("MUs tracking")
+
 #-----------------------------------------------------------------------------------------------
 # Plotting inside of GUI
 
@@ -717,7 +758,7 @@ class GUI():
             # Create new window
             self.head = tk.Toplevel(bg='LightBlue4')
             self.head.title("Motor Unit Removal Window")
-            self.head.iconbitmap("logo.ico")
+            self.head.iconbitmap("./gui_files/logo.ico")
             self.head.grab_set()
 
             # Select Motor Unit
@@ -833,7 +874,7 @@ class GUI():
         # Create new window
         self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Reference Signal Eiditing Window")
-        self.head.iconbitmap("logo.ico")
+        self.head.iconbitmap("./gui_files/logo.ico")
         self.head.grab_set()
 
         # Filter Refsig
@@ -960,7 +1001,7 @@ class GUI():
         # Create new window
         self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Resize EMG File Window")
-        self.head.iconbitmap("logo.ico")
+        self.head.iconbitmap("./gui_files/logo.ico")
         self.head.grab_set()
 
         # Enter start point of resizing area
@@ -1078,7 +1119,7 @@ class GUI():
         # Create new window
         self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Force Analysis Window")
-        self.head.iconbitmap("logo.ico")
+        self.head.iconbitmap("./gui_files/logo.ico")
         self.head.grab_set()
 
         # Get MVIF
@@ -1177,7 +1218,7 @@ class GUI():
         # Create new window
         self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Motor Unit Properties Window")
-        self.head.iconbitmap("logo.ico")
+        self.head.iconbitmap("./gui_files/logo.ico")
         self.head.grab_set()
 
         # MVIF Entry
@@ -1415,7 +1456,7 @@ class GUI():
         # Create new window
         self.head = tk.Toplevel(bg='LightBlue4')
         self.head.title("Plot Window")
-        self.head.iconbitmap("logo.ico")
+        self.head.iconbitmap("./gui_files/logo.ico")
         self.head.grab_set()
 
         # Reference signal
@@ -1598,19 +1639,18 @@ class GUI():
         self.muap_time.set("Timewindow (ms)")
 
         # Matrix Illustration Graphic
-        # image = tk.PhotoImage("Matrix_illustration.png")
-        # img_label = tk.Label(self.head, image=image, bg="white")
-        # img_label.grid(row=5, column=3, columnspan=3, rowspan=3)
-
-
         matrix_canvas = Canvas(self.head, height=150, width=600, bg="white")
         matrix_canvas.grid(row=5, column=3, rowspan = 5, columnspan=5)
-        self.matrix = tk.PhotoImage(file="Matrix.png")
+        self.matrix = tk.PhotoImage(file="./gui_files/Matrix.png")
         matrix_canvas.create_image(0, 0, anchor="nw", image=self.matrix)
-        
 
-
-
+        # Information Button 
+        self.info = tk.PhotoImage(file="./gui_files/Info_B.png")
+        info_button = customtkinter.CTkButton(self.head, image=self.info,
+                                              text="", width=30, height=30,
+                                              bg_color="LightBlue4", fg_color="LightBlue4",
+                                              command=self.open_pdf)
+        info_button.grid(row=0, column=6, sticky=E)
 
         for child in self.head.winfo_children():
             child.grid_configure(padx=5, pady=5)
@@ -1819,6 +1859,24 @@ class GUI():
     def plot_muap(self):
         pass
 
+    def open_pdf(self):
+        """
+        Function to open a PDF file in a seperate window.
+
+        The standard program for opening PDF files is used.
+        The file can be handled independantly from the GUI.
+        The specific usecase here is to open a tutorial for the
+        "Plot Window" offline.
+        """
+        # Get file path
+        path = Path("./gui_files/test.pdf").resolve()
+        # Windows option
+        webbrowser.open_new(str(path))
+        # Mac option
+        os.system(f"{str(path)}")
+
+
+        
 #-----------------------------------------------------------------------------------------------
 # Analysis results display
 
