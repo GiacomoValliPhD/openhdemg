@@ -84,6 +84,10 @@ def plot_emgsig(
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
     
+    Returns
+    -------
+    fig : pyplot `~.figure.Figure`
+    
     See also
     --------
     plot_differentials : plot the differential derivation of the RAW_SIGNAL by matrix column.
@@ -166,6 +170,8 @@ def plot_emgsig(
         if showimmediately:
             plt.show()
 
+        return fig
+
     else:
         raise TypeError(
             "RAW_SIGNAL is probably absent or it is not contained in a dataframe"
@@ -210,6 +216,10 @@ def plot_differentials(
     tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
+
+    Returns
+    -------
+    fig : pyplot `~.figure.Figure`
     
     See also
     --------
@@ -283,6 +293,8 @@ def plot_differentials(
         showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
         if showimmediately:
             plt.show()
+        
+        return fig
 
     else:
         raise TypeError(
@@ -320,6 +332,10 @@ def plot_refsig(
     tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
+    
+    Returns
+    -------
+    fig : pyplot `~.figure.Figure`
     
     Examples
     --------
@@ -361,7 +377,6 @@ def plot_refsig(
         if showimmediately:
             plt.show()
 
-        # TODO Needed for the GUI? To check the other plot functions and add to the returned
         return fig
 
     else:
@@ -405,6 +420,10 @@ def plot_mupulses(
     tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
+    
+    Returns
+    -------
+    fig : pyplot `~.figure.Figure`
 
     See also
     --------
@@ -495,6 +514,8 @@ def plot_mupulses(
     showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
     if showimmediately:
         plt.show()
+    
+    return fig
 
 
 def plot_ipts(
@@ -530,6 +551,10 @@ def plot_ipts(
     tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
+    
+    Returns
+    -------
+    fig : pyplot `~.figure.Figure`
 
     See also
     --------
@@ -636,6 +661,8 @@ def plot_ipts(
         showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
         if showimmediately:
             plt.show()
+        
+        return fig
 
     else:
         raise TypeError("IPTS is probably absent or it is not contained in a dataframe")
@@ -676,6 +703,10 @@ def plot_idr(
     tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
+    
+    Returns
+    -------
+    fig : pyplot `~.figure.Figure`
 
     See also
     --------
@@ -811,6 +842,10 @@ def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediate
     showimmediately : bool, default True
         If True (default), plt.show() is called and the figure showed to the user.
         It is useful to set it to False when calling the function from the GUI.
+    
+    Returns
+    -------
+    fig : pyplot `~.figure.Figure`
 
     See also
     --------
@@ -901,6 +936,8 @@ def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediate
         showgoodlayout(tight_layout=False, despined=True)
         if showimmediately:
             plt.show()
+        
+        return fig
 
     else:
         raise TypeError("sta_dict must be dict or list")
@@ -955,6 +992,10 @@ def plot_muap(
     tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's layout is improved.
         It is useful to set it to False when calling the function from the GUI.
+    
+    Returns
+    -------
+    fig : pyplot `~.figure.Figure`
     
     See also
     --------
@@ -1040,7 +1081,7 @@ def plot_muap(
             "munumber exceeds the the number of MUs in the emgfile ({})".format(
                 emgfile["NUMBER_OF_MUS"]
             )
-        )#TODO Check if these exceptions are necessary also in other STA functions/plot and check all the exceptions to control inputs
+        )
     
     # Get the MUAPs to plot
     if channelprog:
@@ -1062,7 +1103,7 @@ def plot_muap(
         if not channel in keys:
             raise ValueError(
                 "Channel is not included in this matrix column, please check"
-            )#TODO Check if these exceptions are necessary also in other STA functions/plot
+            )
 
         my_muap = stmuap[munumber][column][channel]
         channelnumb = channel
@@ -1096,3 +1137,5 @@ def plot_muap(
     showgoodlayout(tight_layout)
     if showimmediately:
         plt.show()
+    
+    return fig

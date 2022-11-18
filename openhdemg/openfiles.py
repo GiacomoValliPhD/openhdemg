@@ -329,6 +329,11 @@ def emg_from_demuse(filepath):
             "NUMBER_OF_MUS": NUMBER_OF_MUS,
             "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
         }
+    
+    For an extended explanation of the imported emgfile use:
+        import openhdemg as emg
+        emgfile = emg.emg_from_demuse(filepath="path/filename.mat")
+        emg.info().data(emgfile)
     """
 
     mat_file = loadmat(filepath, simplify_cells=True)
@@ -671,6 +676,11 @@ def emg_from_otb(filepath, refsig=[True, "fullsampled"], version="1.5.7.3"): #TO
             "NUMBER_OF_MUS": NUMBER_OF_MUS,
             "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
         }
+    
+    For an extended explanation of the imported emgfile use:
+        import openhdemg as emg
+        emgfile = emg.emg_from_otb(filepath="path/filename.mat")
+        emg.info().data(emgfile)
     """
 
     mat_file = loadmat(filepath, simplify_cells=True)
@@ -761,6 +771,11 @@ def refsig_from_otb(filepath, refsig="fullsampled"):
             "FSAMP": FSAMP,
             "REF_SIGNAL": REF_SIGNAL,
         }
+    
+    For an extended explanation of the imported emgfile use:
+        import openhdemg as emg
+        emgfile = emg.refsig_from_otb(filepath="path/filename.mat")
+        emg.info().data(emgfile)
     """
 
     mat_file = loadmat(filepath, simplify_cells=True)
@@ -950,7 +965,15 @@ def emg_from_json(filepath):
     Notes
     -----
     The returned file is called ``emgfile`` for convention (or ``emg_refsig`` if SOURCE = "OTB_refsig").
+
+    For an extended explanation of the imported emgfile refer to the function:
+        info
+    Or to:
+        emg_from_otb
+        emg_from_demuse
+        refsig_from_otb
     """
+    
     # Read and decompress json file
     with gzip.open(filepath, "r") as fin:
         json_bytes = fin.read()
@@ -1128,6 +1151,11 @@ def askopenfile(
             "NUMBER_OF_MUS": NUMBER_OF_MUS,
             "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
         }
+    
+    For an extended explanation of the imported emgfile use:
+        import openhdemg as emg
+        emgfile = emg.askopenfile()
+        emg.info().data(emgfile)
     """
 
     # Set initialdir (actually not working on Windows)

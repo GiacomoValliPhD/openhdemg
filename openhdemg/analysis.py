@@ -111,15 +111,22 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
     toappend = []
     # Loop all the MUs
     for i in range(NUMBER_OF_MUS):
-        # Detect the first and last firing of the MU and manage the exception of a single MU
-        mup_rec = MUPULSES[i][0]
-        mup_derec = MUPULSES[i][-1]
-
-        # Calculate absolute and relative RT and DERT if requested
-        abs_RT = ((float(REF_SIGNAL.loc[mup_rec]) * float(mvif)) / 100)
-        abs_DERT = ((float(REF_SIGNAL.loc[mup_derec]) * float(mvif)) / 100)
-        rel_RT = float(REF_SIGNAL.loc[mup_rec])
-        rel_DERT = float(REF_SIGNAL.loc[mup_derec])
+        # Manage the exception of empty MUs
+        if len(MUPULSES[i]) > 0:
+        # Detect the first and last firing of the MU and
+            mup_rec = MUPULSES[i][0]
+            mup_derec = MUPULSES[i][-1]
+            # Calculate absolute and relative RT and DERT if requested
+            abs_RT = ((float(REF_SIGNAL.loc[mup_rec]) * float(mvif)) / 100)
+            abs_DERT = ((float(REF_SIGNAL.loc[mup_derec]) * float(mvif)) / 100)
+            rel_RT = float(REF_SIGNAL.loc[mup_rec])
+            rel_DERT = float(REF_SIGNAL.loc[mup_derec])
+        
+        else:
+            abs_RT = np.nan
+            abs_DERT = np.nan
+            rel_RT = np.nan
+            rel_DERT = np.nan
 
         if event_ == "rt_dert" and type_ == "abs_rel":
             toappend.append(
@@ -456,7 +463,7 @@ def basic_mus_properties(
     # Check if we need to select the steady-state phase
     if start_steady < 0 and end_steady < 0:
         start_steady, end_steady = showselect(
-            emgfile, title="Select the start/end area to consider then press enter"
+            emgfile, title="Select start/end area of the steady-state then press enter"
         )
 
     # Collect the information to export
