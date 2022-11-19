@@ -141,6 +141,38 @@ class GUI():
         Left frame inside of master that contains plotting canvas.
     self.terminal : ttk.Labelframe
         Tkinter labelframe that is used to display the results table in the GUI.
+    self.mat_code : str
+        The code containing the matrix identification number.
+    self.mat_orientation : int
+        The orientation of the matrix in degrees. Can be 0, 180.
+    self.deriv_config : str
+        The Method used to calculate the MUs deviation.
+    self.muap_config : str
+        The Method used to calculate the MUs deviation.
+    self.deriv_matrix : str
+        Column of the matrix to be plotted.
+    self.size_fig : str, default [20,15]
+        Size of the figure to be plotted in centimeter.
+    self.ref_but : str, default "False"
+        String value used to determine if reference signal should be
+        added to the plot.
+    self.time_but : str, default "False"
+        String value used to determine if time in seconds should be used
+        in x-axis of plotting.
+    muap_munum : int
+        Number of motor unit to be plotted.
+    muap_time : int
+        Time window to be plotted.
+    self.info : tk.PhotoImage
+        Information Icon displayed in GUI.
+    self.online : tk.Photoimage
+        Online Icon displayed in GUI.
+    self.redirect : tk.PhotoImage
+        Redirection Icon displayed in GUI.
+    self.contact : tk.PhotoImage
+        Contact Icon displayed in GUI.
+    self.cite : tk.PhotoImage
+        Citation Icon displayed in GUI.
 
     Methods
     -------
@@ -212,6 +244,14 @@ class GUI():
         Method used to plot the motor unit reference signal.
     plt_mupulses()
         Method used to plot the motor unit pulses.
+    plot_derivation()
+        Method to plot the differential derivation of the RAW_SIGNAL
+        by matrix column.
+    plot_muaps()
+        Method to plot motor unit action potenital obtained from STA
+        from one or multiple MUs.
+    open_pdf()
+        Method to open a PDF file in a seperate window.
     display_results()
         Method used to display result table containing analysis results.
 
@@ -287,11 +327,12 @@ class GUI():
         separator0 = ttk.Separator(self.left, orient="horizontal")
         separator0.grid(column=0, columnspan=3, row=5, sticky=(W,E))
 
+        # COMMENT: This is commented out because it is not yet functional.
         # Decompose file
-        decompose = ttk.Button(self.left,
-                               text="Decompose",
-                               command=self.decompose_file)
-        decompose.grid(row=3, column=0, sticky=W)
+        # decompose = ttk.Button(self.left,
+        #                        text="Decompose",
+        #                        command=self.decompose_file)
+        # decompose.grid(row=3, column=0, sticky=W)
 
         # Save File
         save = ttk.Button(self.left,
@@ -392,14 +433,54 @@ class GUI():
         # Create empty figure
         self.first_fig = Figure(figsize=(20/2.54,15/2.54))
         self.canvas = FigureCanvasTkAgg(self.first_fig, master=self.right)
-        self.canvas.get_tk_widget().grid(row=0, column=0)
+        self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=5)
 
         # Create logo figure
         self.logo_canvas = Canvas(self.right, height=590, width=800, bg="white")
-        self.logo_canvas.grid(row=0, column=0)
+        self.logo_canvas.grid(row=0, column=0, rowspan=5)
         self.logo = tk.PhotoImage(file="./gui_files/logo.png")
         #self.matrix = tk.PhotoImage(file="Matrix_illustration.png")
         self.logo_canvas.create_image(400,300,anchor="center", image=self.logo)
+
+        # Create info button
+        # Information Button 
+        self.info = tk.PhotoImage(file="./gui_files/Info.png")
+        info_button = customtkinter.CTkButton(self.right, image=self.info,
+                                                text="", width=30, height=30,
+                                                bg_color="LightBlue4", fg_color="LightBlue4",
+                                                command=self.open_pdf)
+        info_button.grid(row=0, column=1, sticky=E)
+
+        # Button for online tutorials
+        self.online = tk.PhotoImage(file="./gui_files/Online.png")
+        online_button = customtkinter.CTkButton(self.right, image=self.online,
+                                                text="", width=30, height=30,
+                                                bg_color="LightBlue4", fg_color="LightBlue4",
+                                                )
+        online_button.grid(row=1, column=1, sticky=E)
+
+        # Button for dev information
+        self.redirect = tk.PhotoImage(file="./gui_files/Redirect.png")
+        redirect_button = customtkinter.CTkButton(self.right, image=self.redirect,
+                                                text="", width=30, height=30,
+                                                bg_color="LightBlue4", fg_color="LightBlue4",
+                                                )
+        redirect_button.grid(row=2, column=1, sticky=E)
+
+        # Button for contact information
+        self.contact = tk.PhotoImage(file="./gui_files/Contact.png")
+        contact_button = customtkinter.CTkButton(self.right, image=self.contact,
+                                                text="", width=30, height=30,
+                                                bg_color="LightBlue4", fg_color="LightBlue4",
+                                                )
+        contact_button.grid(row=3, column=1, sticky=E)
+
+        self.cite = tk.PhotoImage(file="./gui_files/Cite.png")
+        cite_button = customtkinter.CTkButton(self.right, image=self.cite,
+                                                text="", width=30, height=30,
+                                                bg_color="LightBlue4", fg_color="LightBlue4",
+                                                )
+        cite_button.grid(row=4, column=1, sticky=E)
 
         for child in self.left.winfo_children():
             child.grid_configure(padx=5, pady=5)
@@ -670,6 +751,27 @@ class GUI():
         adv_box["state"] = "readonly"
         adv_box.grid(row=2, column=0, padx=20, pady=5)
         adv_box.set("MUs tracking")
+
+    def open_pdf(self):
+        """
+        Instance method to open a PDF file in a seperate window.
+
+        The standard program for opening PDF files is used.
+        The file can be handled independantly from the GUI.
+        The specific usecase here is to open a tutorial for the
+        "Plot Window" offline.
+        """
+        # Get file path
+        path = Path("./gui_files/test.pdf").resolve()
+        
+        # Check user OS for pdf opening
+        if platform in ("win32", "linux"):
+            # Windows/linux option
+            webbrowser.open_new(str(path))
+        
+        elif platform == "darwin":
+            # Mac option
+            os.system(f"open {str(path)}")
 
 #-----------------------------------------------------------------------------------------------
 # Plotting inside of GUI
@@ -1895,90 +1997,96 @@ class GUI():
 
     def plot_derivation(self):
         """
-        Plot the differential derivation of the RAW_SIGNAL by matrix column.
+        Instance method to plot the differential derivation of the RAW_SIGNAL by matrix column.
 
         Both the single and the double differencials can be plotted.
         This function is used to plot also the sorted RAW_SIGNAL.
         """
-        # Sort emg file
-        sorted_file = openhdemg.sort_rawemg(emgfile=self.resdict, code=self.mat_code.get(),
-                                            orientation=int(self.mat_orientation.get()))
+        try:
+            # Sort emg file
+            sorted_file = openhdemg.sort_rawemg(emgfile=self.resdict, code=self.mat_code.get(),
+                                                orientation=int(self.mat_orientation.get()))
 
-        # calcualte derivation
-        if self.deriv_config.get() == "Single differential":
-            diff_file = openhdemg.diff(sorted_rawemg=sorted_file)
+            # calcualte derivation
+            if self.deriv_config.get() == "Single differential":
+                diff_file = openhdemg.diff(sorted_rawemg=sorted_file)
 
-        elif self.deriv_config.get() == "Double differential":
-            diff_file = openhdemg.double_diff(sorted_rawemg=sorted_file)
+            elif self.deriv_config.get() == "Double differential":
+                diff_file = openhdemg.double_diff(sorted_rawemg=sorted_file)
 
-        # Create list of figsize
-        figsize = [int(i) for i in self.size_fig.get().split(",")]
+            # Create list of figsize
+            figsize = [int(i) for i in self.size_fig.get().split(",")]
 
-        # Plot deviation
-        openhdemg.plot_differentials(emgfile=self.resdict,
-                                     differential=diff_file,
-                                     column=self.deriv_matrix.get(),
-                                     addrefsig=eval(self.ref_but.get()),
-                                     timeinseconds=self.time_sec.get(),
-                                     figsize=figsize
-                                     )
+            # Plot deviation
+            openhdemg.plot_differentials(emgfile=self.resdict,
+                                         differential=diff_file,
+                                         column=self.deriv_matrix.get(),
+                                         addrefsig=eval(self.ref_but.get()),
+                                         timeinseconds=self.time_sec.get(),
+                                         figsize=figsize
+                                         )
+        except ValueError:
+            tk.messagebox.showerror("Information", "Enter valid input parameters." +
+                                    "\nPotenital error sources:" + 
+                                    "\n - Matrix Code" + "\n - Matrix Orientation" +
+                                    "\n - Figure size")
+        except UnboundLocalError:
+            tk.messagebox.showerror("Information", "Enter valid Configuration and Matrx Column.")
+
+        except KeyError:
+            tk.messagebox.showerror("Information", "Enter valid Matrx Column.")
 
     def plot_muaps(self):
         """
+        Instance methos to plot motor unit action potenital obtained from STA from one or
+        multiple MUs.
+
+        There is no limit to the number of MUs and STA files that can be overplotted.
+        ``Remember: the different STAs should be matched`` with same number of electrode,
+        processing (i.e., differential) and computed on the same timewindow.
         """
-        
-        # Sort emg file
-        sorted_file = openhdemg.sort_rawemg(emgfile=self.resdict, code=self.mat_code.get(),
-                                            orientation=int(self.mat_orientation.get()))
-        # calcualte derivation
-        if self.muap_config.get() == "Single differential":
-            diff_file = openhdemg.diff(sorted_rawemg=sorted_file)
+        try:
+            # Sort emg file
+            sorted_file = openhdemg.sort_rawemg(emgfile=self.resdict, code=self.mat_code.get(),
+                                                orientation=int(self.mat_orientation.get()))
+            # calcualte derivation
+            if self.muap_config.get() == "Single differential":
+                diff_file = openhdemg.diff(sorted_rawemg=sorted_file)
 
-        elif self.muap_config.get() == "Double differential":
-            diff_file = openhdemg.double_diff(sorted_rawemg=sorted_file)
+            elif self.muap_config.get() == "Double differential":
+                diff_file = openhdemg.double_diff(sorted_rawemg=sorted_file)
 
-        elif self.muap_config.get() == "Monopolar":
-            diff_file = sorted_file
+            elif self.muap_config.get() == "Monopolar":
+                diff_file = sorted_file
 
-        # Calculate STA dictionary
-        # Plot deviation
-        sta_dict = openhdemg.sta(emgfile=self.resdict,
-                                 sorted_rawemg=diff_file,
-                                 firings="all",
-                                 timewindow=int(self.muap_time.get())
-                                 )
-
-        # Create list of figsize
-        figsize = [int(i) for i in self.size_fig.get().split(",")]
-
-        # Plot MUAPS
-        openhdemg.plot_muaps(sta_dict[int(self.muap_munum.get())],
-                                     figsize=figsize
+            # Calculate STA dictionary
+            # Plot deviation
+            sta_dict = openhdemg.sta(emgfile=self.resdict,
+                                     sorted_rawemg=diff_file,
+                                     firings="all",
+                                     timewindow=int(self.muap_time.get())
                                      )
 
-    def open_pdf(self):
-        """
-        Function to open a PDF file in a seperate window.
+            # Create list of figsize
+            figsize = [int(i) for i in self.size_fig.get().split(",")]
 
-        The standard program for opening PDF files is used.
-        The file can be handled independantly from the GUI.
-        The specific usecase here is to open a tutorial for the
-        "Plot Window" offline.
-        """
-        # Get file path
-        path = Path("./gui_files/test.pdf").resolve()
-        
-        # Check user OS for pdf opening
-        if platform in ("win32", "linux"):
-            # Windows/linux option
-            webbrowser.open_new(str(path))
-        
-        elif platform == "darwin":
-            # Mac option
-            os.system(f"open {str(path)}")
+            # Plot MUAPS
+            openhdemg.plot_muaps(sta_dict[int(self.muap_munum.get())],
+                                         figsize=figsize
+                                         )
 
+        except ValueError:
+            tk.messagebox.showerror("Information", "Enter valid input parameters." +
+                                    "\nPotenital error sources:" + 
+                                    "\n - Matrix Code" + "\n - Matrix Orientation" +
+                                    "\n - Figure size" + "\n - Timewindow" + "\n - MU Number")
 
-        
+        except UnboundLocalError:
+            tk.messagebox.showerror("Information", "Enter valid Configuration.")
+
+        except KeyError:
+            tk.messagebox.showerror("Information", "Enter valid Matrx Column.")
+
 #-----------------------------------------------------------------------------------------------
 # Analysis results display
 
