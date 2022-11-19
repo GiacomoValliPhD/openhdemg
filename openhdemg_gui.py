@@ -10,6 +10,7 @@ from tkinter import ttk, filedialog, Canvas
 from tkinter import StringVar, Tk, N, S, W, E
 from pandastable import Table, config
 from pathlib import Path
+from sys import platform
 
 import matplotlib.pyplot as plt
 import matplotlib
@@ -1453,207 +1454,218 @@ class GUI():
         Executed when button "Plot EMG" in master GUI window is pressed.
         The plots are displayed in seperate windows.
         """
-        # Create new window
-        self.head = tk.Toplevel(bg='LightBlue4')
-        self.head.title("Plot Window")
-        self.head.iconbitmap("./gui_files/logo.ico")
-        self.head.grab_set()
+        try:
+            # Create new window
+            self.head = tk.Toplevel(bg='LightBlue4')
+            self.head.title("Plot Window")
+            self.head.iconbitmap("./gui_files/logo.ico")
+            self.head.grab_set()
 
-        # Reference signal
-        ttk.Label(self.head, text="Reference signal").grid(column=0, row=0, sticky=W)
-        self.ref_but = StringVar()
-        ref_button = tk.Checkbutton(self.head,
-                                    textvariable=self.ref_but,
-                                    bg="LightBlue4")
-        ref_button.grid(column=1, row=0, sticky=(W))
+            # Reference signal
+            ttk.Label(self.head, text="Reference signal").grid(column=0, row=0, sticky=W)
+            self.ref_but = StringVar()
+            ref_button = tk.Checkbutton(self.head,
+                                        variable=self.ref_but,
+                                        bg="LightBlue4",
+                                        onvalue="True",
+                                        offvalue="False")
+            ref_button.grid(column=1, row=0, sticky=(W))
+            self.ref_but.set(False)
 
-        # Time 
-        ttk.Label(self.head, text="Time in seconds").grid(column=0, row=1, sticky=W)
-        self.time_sec = StringVar()
-        time_button = tk.Checkbutton(self.head,
-                                    textvariable=self.time_sec,
-                                    bg="LightBlue4")
-        time_button.grid(column=1, row=1, sticky=W)
+            # Time 
+            ttk.Label(self.head, text="Time in seconds").grid(column=0, row=1, sticky=W)
+            self.time_sec = StringVar()
+            time_button = tk.Checkbutton(self.head,
+                                        variable=self.time_sec,
+                                        bg="LightBlue4",
+                                        onvalue="True",
+                                        offvalue="False")
+            time_button.grid(column=1, row=1, sticky=W)
+            self.time_sec.set(False)
 
-        # Figure Size
-        ttk.Label(self.head, text="Figure size in cm (h,w)").grid(column=0, row=2)
-        self.size_fig = StringVar()
-        fig_entry = ttk.Entry(self.head,
-                              width=7,
-                              textvariable=self.size_fig)
-        self.size_fig.set("20, 15")
-        fig_entry.grid(column=1, row=2, sticky=W)
+            # Figure Size
+            ttk.Label(self.head, text="Figure size in cm (h,w)").grid(column=0, row=2)
+            self.size_fig = StringVar()
+            fig_entry = ttk.Entry(self.head,
+                                  width=7,
+                                  textvariable=self.size_fig)
+            self.size_fig.set("20,15")
+            fig_entry.grid(column=1, row=2, sticky=W)
 
-        # Plot emgsig
-        plt_emgsig = ttk.Button(self.head,
-                                text="Plot EMGsig",
-                                command=self.plt_emgsignal)
-        plt_emgsig.grid(column=0, row=3, sticky=W)
+            # Plot emgsig
+            plt_emgsig = ttk.Button(self.head,
+                                    text="Plot EMGsig",
+                                    command=self.plt_emgsignal)
+            plt_emgsig.grid(column=0, row=3, sticky=W)
 
-        self.channels = StringVar()
-        channel_entry = ttk.Combobox(self.head,
-                                     width=15,
-                                     textvariable=self.channels)
-        channel_entry["values"] = ("0", "0,1,2", "0,1,2,3")
-        channel_entry.grid(column=1, row=3, sticky=(W,E))
-        self.channels.set("Channel Numbers")
+            self.channels = StringVar()
+            channel_entry = ttk.Combobox(self.head,
+                                         width=15,
+                                         textvariable=self.channels)
+            channel_entry["values"] = ("0", "0,1,2", "0,1,2,3")
+            channel_entry.grid(column=1, row=3, sticky=(W,E))
+            self.channels.set("Channel Numbers")
 
-        # Plot refsig
-        plt_refsig = ttk.Button(self.head,
-                                text="Plot REFsig",
-                                command=self.plt_refsignal)
-        plt_refsig.grid(column=0, row=4, sticky=W)
+            # Plot refsig
+            plt_refsig = ttk.Button(self.head,
+                                    text="Plot REFsig",
+                                    command=self.plt_refsignal)
+            plt_refsig.grid(column=0, row=4, sticky=W)
 
-        # Plot motor unit pulses
-        plt_pulses = ttk.Button(self.head,
-                                text="Plot MUpulses",
-                                command=self.plt_mupulses)
-        plt_pulses.grid(column=0, row=5, sticky=W)
+            # Plot motor unit pulses
+            plt_pulses = ttk.Button(self.head,
+                                    text="Plot MUpulses",
+                                    command=self.plt_mupulses)
+            plt_pulses.grid(column=0, row=5, sticky=W)
 
-        self.linewidth = StringVar()
-        linewidth_entry = ttk.Combobox(self.head,
+            self.linewidth = StringVar()
+            linewidth_entry = ttk.Combobox(self.head,
+                                           width=15,
+                                           textvariable=self.linewidth)
+            linewidth_entry["values"] = ("0.25", "0.5", "0.75", "1")
+            linewidth_entry.grid(column=1, row=5, sticky=(W,E))
+            self.linewidth.set("Linewidth")
+            
+            # Plot impulse train
+            plt_ipts = ttk.Button(self.head,
+                                  text="Plot IPTS",
+                                  command=self.plt_ipts)
+            plt_ipts.grid(column=0, row=6, sticky=W)
+
+            self.mu_numb = StringVar()
+            munumb_entry = ttk.Combobox(self.head,
+                                        width=15,
+                                        textvariable=self.mu_numb)
+            munumb_entry["values"] = ("0", "0,1,2", "0,1,2,3", "all")
+            munumb_entry.grid(column=1, row=6, sticky=(W,E))
+            self.mu_numb.set("MU Number")
+
+            # Plot instantaneous discharge rate
+            plt_idr = ttk.Button(self.head,
+                                  text="Plot IDR",
+                                  command=self.plt_idr)
+            plt_idr.grid(column=0, row=7, sticky=W)
+
+            self.mu_numb_idr = StringVar()
+            munumb_entry_idr = ttk.Combobox(self.head,
+                                        width=15,
+                                        textvariable=self.mu_numb_idr)
+            munumb_entry_idr["values"] = ("0", "0,1,2", "0,1,2,3", "all")
+            munumb_entry_idr.grid(column=1, row=7, sticky=(W,E))
+            self.mu_numb_idr.set("MU Number")
+
+            # This section containes the code for column 3++
+
+            # Separator
+            ttk.Separator(self.head, orient="vertical").grid(row=3, column=2, rowspan=6, ipady=120)
+
+            # Matrix code
+            ttk.Label(self.head, text="Matrix Code*").grid(row=0, column=3, sticky=(W))
+            self.mat_code = StringVar()
+            matrix_code = ttk.Combobox(self.head,
+                                        width=15,
+                                        textvariable=self.mat_code)
+            matrix_code["values"] = ("GR08MM1305", "GR04MM1305")
+            matrix_code["state"] = "readonly"
+            matrix_code.grid(row=0, column=4, sticky=(W,E))
+
+            # Matrix Orientation
+            ttk.Label(self.head, text="Orientation*").grid(row=1, column=3, sticky=(W))
+            self.mat_orientation= StringVar()
+            orientation = ttk.Combobox(self.head,
+                                        width=15,
+                                        textvariable=self.mat_orientation)
+            orientation["values"] = ("0", "180")
+            orientation["state"] = "readonly"
+            orientation.grid(row=1, column=4, sticky=(W,E))
+
+            # Instruction
+            ttk.Label(self.head, text="*Ignored for DEMUSE files", font=("Arial", 8)).grid(row=2, column=3, sticky=W)
+
+            # Plot derivation
+            # Button
+            deriv_button = ttk.Button(self.head,
+                                      text="Plot Derivation",
+                                      command=self.plot_derivation)
+            deriv_button.grid(row=3, column=3)
+
+            # Combobox Config
+            self.deriv_config= StringVar()
+            configuration = ttk.Combobox(self.head,
+                                         width=15,
+                                         textvariable=self.deriv_config)
+            configuration["values"] = ("Single differential", "Double differential")
+            configuration["state"] = "readonly"
+            configuration.grid(row=3, column=4, sticky=(W,E))
+            self.deriv_config.set("Configuration")
+
+            # Combobox Matrix
+            self.deriv_matrix = StringVar()
+            mat_column = ttk.Combobox(self.head,
+                                         width=15,
+                                         textvariable=self.deriv_matrix)
+            mat_column["values"] = ("col0", "col1", "col2", "col3", "col4")
+            mat_column["state"] = "readonly"
+            mat_column.grid(row=3, column=5, sticky=(W,E))
+            self.deriv_matrix.set("Matrix column")
+
+            # Motor unit action potential
+            # Button
+            muap_button = ttk.Button(self.head,
+                                      text="Plot MUAPs",
+                                      command=self.plot_muaps)
+            muap_button.grid(row=4, column=3)
+
+            # Combobox Config
+            self.muap_config = StringVar()
+            config_muap = ttk.Combobox(self.head,
                                        width=15,
-                                       textvariable=self.linewidth)
-        linewidth_entry["values"] = ("0.25", "0.5", "0.75", "1")
-        linewidth_entry.grid(column=1, row=5, sticky=(W,E))
-        self.linewidth.set("Linewidth")
-        
-        # Plot impulse train
-        plt_ipts = ttk.Button(self.head,
-                              text="Plot IPTS",
-                              command=self.plt_ipts)
-        plt_ipts.grid(column=0, row=6, sticky=W)
+                                       textvariable=self.muap_config)
+            config_muap["values"] = ("Monopolar", "Single differential", "Double differential")
+            config_muap["state"] = "readonly"
+            config_muap.grid(row=4, column=4, sticky=(W,E))
+            self.muap_config.set("Configuration")
 
-        self.mu_numb = StringVar()
-        munumb_entry = ttk.Combobox(self.head,
-                                    width=15,
-                                    textvariable=self.mu_numb)
-        munumb_entry["values"] = ("0", "0,1,2", "0,1,2,3", "all")
-        munumb_entry.grid(column=1, row=6, sticky=(W,E))
-        self.mu_numb.set("MU Number")
+            # Combobox MU Number
+            self.muap_munum = StringVar()
+            muap_munum = ttk.Combobox(self.head,
+                                         width=15,
+                                         textvariable=self.muap_munum)
+            mu_numbers = [*range(0, self.resdict["NUMBER_OF_MUS"])]
+            muap_munum["values"] = mu_numbers
+            muap_munum["state"] = "readonly"
+            muap_munum.grid(row=4, column=5, sticky=(W,E))
+            self.muap_munum.set("MU Number")
 
-        # Plot instantaneous discharge rate
-        plt_idr = ttk.Button(self.head,
-                              text="Plot IDR",
-                              command=self.plt_idr)
-        plt_idr.grid(column=0, row=7, sticky=W)
+            # Combobox Timewindow
+            self.muap_time = StringVar()
+            timewindow = ttk.Combobox(self.head,
+                                         width=15,
+                                         textvariable=self.muap_time)
+            timewindow["values"] = ("10", "50", "100", "200", "500")
+            timewindow.grid(row=4, column=6, sticky=(W,E))
+            self.muap_time.set("Timewindow (ms)")
 
-        self.mu_numb_idr = StringVar()
-        munumb_entry_idr = ttk.Combobox(self.head,
-                                    width=15,
-                                    textvariable=self.mu_numb_idr)
-        munumb_entry_idr["values"] = ("0", "0,1,2", "0,1,2,3", "all")
-        munumb_entry_idr.grid(column=1, row=7, sticky=(W,E))
-        self.mu_numb_idr.set("MU Number")
+            # Matrix Illustration Graphic
+            matrix_canvas = Canvas(self.head, height=150, width=600, bg="white")
+            matrix_canvas.grid(row=5, column=3, rowspan = 5, columnspan=5)
+            self.matrix = tk.PhotoImage(file="./gui_files/Matrix.png")
+            matrix_canvas.create_image(0, 0, anchor="nw", image=self.matrix)
 
-        # This section containes the code for column 3++
+            # Information Button 
+            self.info = tk.PhotoImage(file="./gui_files/Info_B.png")
+            info_button = customtkinter.CTkButton(self.head, image=self.info,
+                                                  text="", width=30, height=30,
+                                                  bg_color="LightBlue4", fg_color="LightBlue4",
+                                                  command=self.open_pdf)
+            info_button.grid(row=0, column=6, sticky=E)
 
-        # Separator
-        ttk.Separator(self.head, orient="vertical").grid(row=3, column=2, rowspan=6, ipady=120)
+            for child in self.head.winfo_children():
+                child.grid_configure(padx=5, pady=5)
 
-        # Matrix code
-        ttk.Label(self.head, text="Matrix Code*").grid(row=0, column=3, sticky=(W))
-        self.mat_code = StringVar()
-        matrix_code = ttk.Combobox(self.head,
-                                    width=15,
-                                    textvariable=self.mat_code)
-        matrix_code["values"] = ("GR08MM1305", "GR04MM1305")
-        matrix_code["state"] = "readonly"
-        matrix_code.grid(row=0, column=4, sticky=(W,E))
-
-        # Matrix Orientation
-        ttk.Label(self.head, text="Orientation*").grid(row=1, column=3, sticky=(W))
-        self.mat_orientation= StringVar()
-        orientation = ttk.Combobox(self.head,
-                                    width=15,
-                                    textvariable=self.mat_orientation)
-        orientation["values"] = ("0", "180")
-        orientation["state"] = "readonly"
-        orientation.grid(row=1, column=4, sticky=(W,E))
-
-        # Intstruction
-        ttk.Label(self.head, text="*Ignored for DEMUSE files", font=("Arial", 8)).grid(row=2, column=3, sticky=W)
-
-        # Plot derivation
-        # Button
-        deriv_button = ttk.Button(self.head,
-                                  text="Plot Derivation",
-                                  command=self.plot_derivation)
-        deriv_button.grid(row=3, column=3)
-
-        # Combobox Config
-        self.deriv_config= StringVar()
-        configuration = ttk.Combobox(self.head,
-                                     width=15,
-                                     textvariable=self.deriv_config)
-        configuration["values"] = ("Single differential", "Double differential")
-        configuration["state"] = "readonly"
-        configuration.grid(row=3, column=4, sticky=(W,E))
-        self.deriv_config.set("Configuration")
-
-        # Combobox Matrix
-        self.deriv_matrix = StringVar()
-        mat_column = ttk.Combobox(self.head,
-                                     width=15,
-                                     textvariable=self.deriv_matrix)
-        mat_column["values"] = ("col0", "col1", "col2", "col3", "col4")
-        mat_column["state"] = "readonly"
-        mat_column.grid(row=3, column=5, sticky=(W,E))
-        self.deriv_matrix.set("Matrix column")
-
-        # Motor unit action potential
-        # Button
-        muap_button = ttk.Button(self.head,
-                                  text="Plot MUAPs",
-                                  command=self.plot_muap)
-        muap_button.grid(row=4, column=3)
-
-        # Combobox Config
-        self.muap_config = StringVar()
-        config_muap = ttk.Combobox(self.head,
-                                   width=15,
-                                   textvariable=self.muap_config)
-        config_muap["values"] = ("Monopolar", "Single differential", "Double differential")
-        config_muap["state"] = "readonly"
-        config_muap.grid(row=4, column=4, sticky=(W,E))
-        self.muap_config.set("Configuration")
-
-        # Combobox MU Number
-        self.muap_munum= StringVar()
-        muap_munum = ttk.Combobox(self.head,
-                                     width=15,
-                                     textvariable=self.muap_munum)
-        # mu_numbers = [*range(0, self.resdict["NUMBER_OF_MUS"])]
-        # muap_munum["values"] = mu_numbers
-        muap_munum["values"] = ("1", "2", "3", "4", "5")
-        muap_munum.grid(row=4, column=5, sticky=(W,E))
-        self.muap_munum.set("MU Number")
-
-        # Combobox Timewindow
-        self.muap_time = StringVar()
-        timewindow = ttk.Combobox(self.head,
-                                     width=15,
-                                     textvariable=self.muap_time)
-        timewindow["values"] = ("10", "50", "100", "200", "500")
-        timewindow.grid(row=4, column=6, sticky=(W,E))
-        self.muap_time.set("Timewindow (ms)")
-
-        # Matrix Illustration Graphic
-        matrix_canvas = Canvas(self.head, height=150, width=600, bg="white")
-        matrix_canvas.grid(row=5, column=3, rowspan = 5, columnspan=5)
-        self.matrix = tk.PhotoImage(file="./gui_files/Matrix.png")
-        matrix_canvas.create_image(0, 0, anchor="nw", image=self.matrix)
-
-        # Information Button 
-        self.info = tk.PhotoImage(file="./gui_files/Info_B.png")
-        info_button = customtkinter.CTkButton(self.head, image=self.info,
-                                              text="", width=30, height=30,
-                                              bg_color="LightBlue4", fg_color="LightBlue4",
-                                              command=self.open_pdf)
-        info_button.grid(row=0, column=6, sticky=E)
-
-        for child in self.head.winfo_children():
-            child.grid_configure(padx=5, pady=5)
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Load file prior to computation.")
+            self.head.destroy()
 
     ### Define functions for motor unit plotting
 
@@ -1681,20 +1693,23 @@ class GUI():
         try:
             # Create list of channels to be plotted
             channels = self.channels.get()
+            # Create list of figsize
+            figsize = [int(i) for i in self.size_fig.get().split(",")]
 
             if len(channels) > 1:
                 chan_list = channels.split(",")
                 chan_list = [int(i) for i in chan_list]
 
                 # Plot raw emg signal
-                openhdemg.plot_emgsig(emgfile=self.resdict, channels=chan_list)
+                openhdemg.plot_emgsig(emgfile=self.resdict,
+                                      channels=chan_list,
+                                      addrefsig=eval(self.ref_but.get()),
+                                      timeinseconds=self.time_sec.get(),
+                                      figsize=figsize)
 
             else:
                 # Plot raw emg signal
                 openhdemg.plot_emgsig(emgfile=self.resdict, channels=int(channels))
-
-        except AttributeError:
-            tk.messagebox.showerror("Information", "Load file prior to computation.")
 
         except ValueError:
             tk.messagebox.showerror("Information", "Enter valid channel number.")
@@ -1718,12 +1733,13 @@ class GUI():
         --------
         plot_refsig in library.
         """
-        try:
-            # Plot reference signal
-            openhdemg.plot_refsig(emgfile=self.resdict)
+        # Create list of figsize
+        figsize = [int(i) for i in self.size_fig.get().split(",")]
 
-        except AttributeError:
-            tk.messagebox.showerror("Information", "Load file prior to computation.")
+        # Plot reference signal
+        openhdemg.plot_refsig(emgfile=self.resdict,
+                              timeinseconds=self.time_sec.get(),
+                              figsize=figsize)
 
     def plt_mupulses(self):
         """
@@ -1745,11 +1761,15 @@ class GUI():
         plot_mupulses in library.
         """
         try:
-            # Plot motor unig pulses
-            openhdemg.plot_mupulses(emgfile=self.resdict, linewidths=float(self.linewidth.get()))
+            # Create list of figsize
+            figsize = [int(i) for i in self.size_fig.get().split(",")]
 
-        except AttributeError:
-            tk.messagebox.showerror("Information", "Load file prior to computation.")
+            # Plot motor unig pulses
+            openhdemg.plot_mupulses(emgfile=self.resdict,
+                                    linewidths=float(self.linewidth.get()),
+                                    addrefsig=eval(self.ref_but.get()),
+                                    timeinseconds=self.time_sec.get(),
+                                    figsize=figsize)
 
         except ValueError:
             tk.messagebox.showerror("Information", "Enter valid linewidth number.")
@@ -1779,10 +1799,15 @@ class GUI():
         try:
             # Create list contaning motor units to be plotted
             mu_numb = self.mu_numb.get()
+            # Create list of figsize
+            figsize = [int(i) for i in self.size_fig.get().split(",")]
 
             if mu_numb == "all":
                 # Plot motor unit puls train in default
-                openhdemg.plot_ipts(emgfile=self.resdict)
+                openhdemg.plot_ipts(emgfile=self.resdict,
+                                    addrefsig=eval(self.ref_but.get()),
+                                    timeinseconds=self.time_sec.get(),
+                                    figsize=figsize)
 
             elif len(mu_numb) > 2:
                 # Split at ,
@@ -1790,14 +1815,19 @@ class GUI():
                 # Use comprehension to loop troug mu_list
                 mu_list = [int(i) for i in mu_list]
                 # Plot motor unit puls train in default
-                openhdemg.plot_ipts(emgfile=self.resdict, munumber=mu_list)
+                openhdemg.plot_ipts(emgfile=self.resdict,
+                                    munumber=mu_list,
+                                    addrefsig=eval(self.ref_but.get()),
+                                    timeinseconds=self.time_sec.get(),
+                                    figsize=figsize)
 
             else:
                 # Plot motor unit puls train in default
-                openhdemg.plot_ipts(emgfile=self.resdict, munumber=int(mu_numb))
-
-        except AttributeError:
-            tk.messagebox.showerror("Information", "Load file prior to computation.")
+                openhdemg.plot_ipts(emgfile=self.resdict,
+                                    munumber=int(mu_numb),
+                                    addrefsig=eval(self.ref_but.get()),
+                                    timeinseconds=self.time_sec.get(),
+                                    figsize=figsize)
 
         except ValueError:
             tk.messagebox.showerror("Information", "Enter valid motor unit number.")
@@ -1829,23 +1859,33 @@ class GUI():
         """
         try:
             mu_idr = self.mu_numb_idr.get()
+            # Create list of figsize
+            figsize = [int(i) for i in self.size_fig.get().split(",")]
 
             if mu_idr == "all":
                 # Plot instanteous discharge rate
-                openhdemg.plot_idr(emgfile=self.resdict)
+                openhdemg.plot_idr(emgfile=self.resdict,
+                                   addrefsig=eval(self.ref_but.get()),
+                                   timeinseconds=self.time_sec.get(),
+                                   figsize=figsize)
 
             elif len(mu_idr) > 2:
                 mu_list_idr = mu_idr.split(",")
                 mu_list_idr = [int(mu) for mu in mu_list_idr ]
                 # Plot instanteous discharge rate
-                openhdemg.plot_idr(emgfile=self.resdict, munumber=mu_list_idr)
+                openhdemg.plot_idr(emgfile=self.resdict,
+                                   munumber=mu_list_idr,
+                                   addrefsig=eval(self.ref_but.get()),
+                                   timeinseconds=self.time_sec.get(),
+                                   figsize=figsize)
 
             else:
                 # Plot instanteous discharge rate
-                openhdemg.plot_idr(emgfile=self.resdict, munumber=int(mu_idr))
-
-        except AttributeError:
-            tk.messagebox.showerror("Information", "Load file prior to computation.")
+                openhdemg.plot_idr(emgfile=self.resdict,
+                                   munumber=int(mu_idr),
+                                   addrefsig=eval(self.ref_but.get()),
+                                   timeinseconds=self.time_sec.get(),
+                                   figsize=figsize)
 
         except ValueError:
             tk.messagebox.showerror("Information", "Enter valid motor unit number.")
@@ -1854,10 +1894,67 @@ class GUI():
             tk.messagebox.showerror("Information", "Enter valid motor unit number.")
 
     def plot_derivation(self):
-        pass
+        """
+        Plot the differential derivation of the RAW_SIGNAL by matrix column.
 
-    def plot_muap(self):
-        pass
+        Both the single and the double differencials can be plotted.
+        This function is used to plot also the sorted RAW_SIGNAL.
+        """
+        # Sort emg file
+        sorted_file = openhdemg.sort_rawemg(emgfile=self.resdict, code=self.mat_code.get(),
+                                            orientation=int(self.mat_orientation.get()))
+
+        # calcualte derivation
+        if self.deriv_config.get() == "Single differential":
+            diff_file = openhdemg.diff(sorted_rawemg=sorted_file)
+
+        elif self.deriv_config.get() == "Double differential":
+            diff_file = openhdemg.double_diff(sorted_rawemg=sorted_file)
+
+        # Create list of figsize
+        figsize = [int(i) for i in self.size_fig.get().split(",")]
+
+        # Plot deviation
+        openhdemg.plot_differentials(emgfile=self.resdict,
+                                     differential=diff_file,
+                                     column=self.deriv_matrix.get(),
+                                     addrefsig=eval(self.ref_but.get()),
+                                     timeinseconds=self.time_sec.get(),
+                                     figsize=figsize
+                                     )
+
+    def plot_muaps(self):
+        """
+        """
+        
+        # Sort emg file
+        sorted_file = openhdemg.sort_rawemg(emgfile=self.resdict, code=self.mat_code.get(),
+                                            orientation=int(self.mat_orientation.get()))
+        # calcualte derivation
+        if self.muap_config.get() == "Single differential":
+            diff_file = openhdemg.diff(sorted_rawemg=sorted_file)
+
+        elif self.muap_config.get() == "Double differential":
+            diff_file = openhdemg.double_diff(sorted_rawemg=sorted_file)
+
+        elif self.muap_config.get() == "Monopolar":
+            diff_file = sorted_file
+
+        # Calculate STA dictionary
+        # Plot deviation
+        sta_dict = openhdemg.sta(emgfile=self.resdict,
+                                 sorted_rawemg=diff_file,
+                                 firings="all",
+                                 timewindow=int(self.muap_time.get())
+                                 )
+
+        # Create list of figsize
+        figsize = [int(i) for i in self.size_fig.get().split(",")]
+
+        # Plot MUAPS
+        openhdemg.plot_muaps(sta_dict[int(self.muap_munum.get())],
+                                     figsize=figsize
+                                     )
 
     def open_pdf(self):
         """
@@ -1870,10 +1967,15 @@ class GUI():
         """
         # Get file path
         path = Path("./gui_files/test.pdf").resolve()
-        # Windows option
-        webbrowser.open_new(str(path))
-        # Mac option
-        os.system(f"{str(path)}")
+        
+        # Check user OS for pdf opening
+        if platform in ("win32", "linux"):
+            # Windows/linux option
+            webbrowser.open_new(str(path))
+        
+        elif platform == "darwin":
+            # Mac option
+            os.system(f"open {str(path)}")
 
 
         
