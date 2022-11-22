@@ -867,7 +867,7 @@ def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediate
     
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
-    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
+    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
     >>> sta = emg.sta(emgfile=emgfile, sorted_rawemg=sorted_rawemg, firings="all", timewindow=50)
     >>> emg.plot_muaps(sta_dict=sta[1])
 
@@ -877,7 +877,7 @@ def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediate
     
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
-    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
+    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
     >>> sorted_rawemg = emg.diff(sorted_rawemg=sorted_rawemg)
     >>> sta = emg.sta(emgfile=emgfile, sorted_rawemg=sorted_rawemg, firings="all", timewindow=50)
     >>> emg.plot_muaps(sta_dict=sta[1])
@@ -888,7 +888,7 @@ def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediate
     
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
-    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
+    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
     >>> sorted_rawemg = emg.diff(sorted_rawemg=sorted_rawemg)
     >>> sta = emg.sta(emgfile=emgfile, sorted_rawemg=sorted_rawemg, firings="all", timewindow=50)
     >>> emg.plot_muaps(sta_dict=[sta[1], sta[2]])
@@ -969,9 +969,9 @@ def plot_muap(
         dict containing a dict of ST MUAPs (pd.DataFrame) for every MUs.
     munumber : int
         The number of MU to plot.
-    column : str {"col0", col1", "col2", "col3", "col4"}
+    column : str
         The matrix columns.
-        Options are usyally "col0", "col1", "col2", "col3", "col4".
+        Options are usyally "col0", "col1", "col2", ..., last column.
     channel : int
         The channel of the matrix to plot.
         This can be the real channel number if channelprog=False (default),
@@ -1012,7 +1012,7 @@ def plot_muap(
     
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
-    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
+    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
     >>> stmuap = emg.st_muap(emgfile=emgfile, sorted_rawemg=sorted_rawemg, timewindow=50)
     >>> emg.plot_muap(
     ...     emgfile=emgfile,
@@ -1035,7 +1035,7 @@ def plot_muap(
     
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
-    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
+    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
     >>> stmuap = emg.st_muap(emgfile=emgfile, sorted_rawemg=sorted_rawemg, timewindow=50)
     >>> emg.plot_muap(
     ...     emgfile=emgfile,
@@ -1058,7 +1058,7 @@ def plot_muap(
     
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
-    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
+    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
     >>> sorted_rawemg = emg.diff(sorted_rawemg=sorted_rawemg)
     >>> stmuap = emg.st_muap(emgfile=emgfile, sorted_rawemg=sorted_rawemg, timewindow=50)
     >>> emg.plot_muap(

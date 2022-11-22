@@ -78,12 +78,13 @@ def diff(sorted_rawemg):
     """
 
     # Create a dict of pd.DataFrames for the single differential
-    sd = {"col0": {}, "col1": {}, "col2": {}, "col3": {}, "col4": {}}
+    sd = {col:{} for col in sorted_rawemg.keys()}
+    #{"col0": {}, "col1": {}, "col2": {}, "col3": {}, "col4": {}}
+    #{'col0': {}, 'col1': {}, 'col2': {}, 'col3': {}, 'col4': {}, 'col5': {}, 'col6': {}, 'col7': {}}
 
     # Loop matrix columns
     for col in sorted_rawemg.keys():
         # Loop matrix rows
-        # TODO check this part for compatibility with different sorting orders
         for pos, row in enumerate(sorted_rawemg[col].columns):
             if pos > 0:
                 res = (
@@ -158,12 +159,11 @@ def double_diff(sorted_rawemg):
     """
 
     # Create a dict of pd.DataFrames for the double differential
-    dd = {"col0": {}, "col1": {}, "col2": {}, "col3": {}, "col4": {}}
+    dd = {col:{} for col in sorted_rawemg.keys()}
 
     # Loop matrix columns
     for col in sorted_rawemg.keys():
         # Loop matrix rows
-        # TODO check this part for compatibility with different sorting orders
         for pos, row in enumerate(sorted_rawemg[col].columns):
             if pos > 1:
                 res = (

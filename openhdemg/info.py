@@ -1,4 +1,4 @@
-#TODO complete with Paul bio and check when building the documentation, space after docum in GUI
+#TODO space after docum in GUI
 """
 This module contains all the informations regarding:
     - Data
@@ -113,6 +113,7 @@ class info:
         abbr = {
             "COV": "Coefficient of variation",
             "DERT": "DERecruitment threshold",
+            "DD": "Double differential",
             "DR": "Discharge rate",
             "FSAMP": "Sampling frequency",
             "IDR": "Instantaneous discharge rate",
@@ -122,6 +123,7 @@ class info:
             "MUAP": "MUs action potential",
             "PNR": "Pulse to noise ratio",
             "RT": "Recruitment threshold",
+            "SD": "Single differential",
             "SIL": "Silouette threshold",
             "STA": "Spike-triggered average",
             "XCC": "Cross-correlation coefficient",
@@ -181,7 +183,7 @@ class info:
         People that contributed to the development of this project are:
         
         Mr. Giacomo Valli:
-            the creator of the project and the developer of the library.
+            The creator of the project and the developer of the library.
             \x1B[3m
             Mr. Giacomo Valli obtained a master degree in Sports Science and a research 
             fellowship in molecular biology of exercise at the University of Urbino (IT).
@@ -190,7 +192,13 @@ class info:
             disease and aging and linking this information to the molecular alterations of the muscle.
             \x1B[0m
         Mr. Paul Ritsche:
-            the developer of the GUI.
+            The developer of the GUI.
+            \x1B[3m
+            Mr. Paul Ritsche obtained a master degree in Sports Science at the University of Basel (CH).
+            He is currently a research associate at the University of Basel (CH) focussing on muscle
+            ultrasonography. He is investigating automatic ultrasonography image analysis methods 
+            to evaluate muscle morphological as well architectural parameters. 
+            \x1B[0m
         """
 
         # Make Text Bold and Italic with Escape Sequence
