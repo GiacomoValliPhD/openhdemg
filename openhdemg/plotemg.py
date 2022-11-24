@@ -99,7 +99,10 @@ def plot_emgsig(
     .. plot::
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
     >>> emg.plot_emgsig(
     ...     emgfile=emgfile,
     ...     channels=[*range(0,13)],
@@ -234,7 +237,10 @@ def plot_differentials(
     .. plot::
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
     >>> sorted_rawemg = emg.sort_rawemg(emgfile=emgfile, code="GR08MM1305", orientation=180)
     >>> sd=emg.diff(sorted_rawemg=sorted_rawemg)
     >>> emg.plot_differentials(
@@ -344,7 +350,10 @@ def plot_refsig(
     .. plot::
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
     >>> emg.plot_refsig(emgfile=emgfile)
 
     Change Y axis label and show time in samples.
@@ -352,7 +361,10 @@ def plot_refsig(
     .. plot::
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
     >>> emg.plot_refsig(emgfile=emgfile, ylabel="Custom unit e.g., N or kg", timeinseconds=False)
     """
 
@@ -437,7 +449,10 @@ def plot_mupulses(
     .. plot::
     
     >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
     >>> emg.plot_mupulses(
     ...     emgfile=emgfile,
     ...     linewidths=0.5,
@@ -572,7 +587,10 @@ def plot_ipts(
     .. plot::
     
     >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
     >>> emg.plot_ipts(
     ...     emgfile=emgfile,
     ...     munumber="all",
@@ -587,7 +605,10 @@ def plot_ipts(
     .. plot::
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
     >>> emg.plot_ipts(
     ...     emgfile=emgfile,
     ...     munumber=[1, 3],
@@ -724,7 +745,10 @@ def plot_idr(
     .. plot::
     
     >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
     >>> emg.plot_idr(
     ...     emgfile=emgfile,
     ...     munumber="all",
@@ -739,7 +763,10 @@ def plot_idr(
     .. plot::
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
     >>> emg.plot_idr(
     ...     emgfile=emgfile,
     ...     munumber=[1, 3],
@@ -866,7 +893,10 @@ def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediate
     .. plot::
     
     >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
     >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
     >>> sta = emg.sta(emgfile=emgfile, sorted_rawemg=sorted_rawemg, firings="all", timewindow=50)
     >>> emg.plot_muaps(sta_dict=sta[1])
@@ -876,7 +906,10 @@ def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediate
     .. plot::
     
     >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
     >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
     >>> sorted_rawemg = emg.diff(sorted_rawemg=sorted_rawemg)
     >>> sta = emg.sta(emgfile=emgfile, sorted_rawemg=sorted_rawemg, firings="all", timewindow=50)
@@ -887,7 +920,10 @@ def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediate
     .. plot::
     
     >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
     >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
     >>> sorted_rawemg = emg.diff(sorted_rawemg=sorted_rawemg)
     >>> sta = emg.sta(emgfile=emgfile, sorted_rawemg=sorted_rawemg, firings="all", timewindow=50)
@@ -1011,7 +1047,10 @@ def plot_muap(
     .. plot::
     
     >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
     >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
     >>> stmuap = emg.st_muap(emgfile=emgfile, sorted_rawemg=sorted_rawemg, timewindow=50)
     >>> emg.plot_muap(
@@ -1034,7 +1073,10 @@ def plot_muap(
     .. plot::
     
     >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
     >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
     >>> stmuap = emg.st_muap(emgfile=emgfile, sorted_rawemg=sorted_rawemg, timewindow=50)
     >>> emg.plot_muap(
@@ -1057,7 +1099,10 @@ def plot_muap(
     .. plot::
     
     >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat")
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
     >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
     >>> sorted_rawemg = emg.diff(sorted_rawemg=sorted_rawemg)
     >>> stmuap = emg.st_muap(emgfile=emgfile, sorted_rawemg=sorted_rawemg, timewindow=50)

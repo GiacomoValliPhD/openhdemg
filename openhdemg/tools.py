@@ -200,7 +200,7 @@ def compute_idr(emgfile):
     Load the EMG file, compute IDR and access the results for the first MU.
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> idr = emg.compute_idr(emgfile=emgfile)
     >>> munumber = 0
     >>> idr[munumber]
@@ -463,7 +463,7 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
     Load the EMG file, compute covsteady and access the result from GUI.
     
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> covsteady = emg.compute_covsteady(emgfile=emgfile)
     >>> covsteady
     0    1.452806
@@ -473,7 +473,7 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
     The process can be automated by bypassing the GUI.
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> covsteady = emg.compute_covsteady(emgfile=emgfile, start_steady=3580, end_steady=15820)
     >>> covsteady
     0    35.611263

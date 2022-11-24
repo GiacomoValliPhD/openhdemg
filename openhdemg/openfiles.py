@@ -57,7 +57,6 @@ from tkinter import *
 from tkinter import filedialog
 import json, gzip
 
-#TODO performance of JSON, in open otb add possibility to load requested path in future releases
 
 # ---------------------------------------------------------------------
 # Define functions used in the DEMUSE openfile function.
@@ -348,7 +347,7 @@ def emg_from_demuse(filepath):
     ) 
     """
 
-    # Second: collect the necessary variables in pandas dataframe (df) or list (for matlab cell arrays)   -variable_name must be a string (i.e., "name")
+    # Second: collect the necessary variables in pandas dataframe (df) or list (for matlab cell arrays)
     REF_SIGNAL = oned_mat_to_pd(
         variable_name="ref_signal", mat_file=mat_file, transpose_=False
     )
@@ -357,6 +356,10 @@ def emg_from_demuse(filepath):
     MUPULSES = threed_mat_to_list(
         variable_name="MUPulses", mat_file=mat_file, transpose_=False
     )
+    for pos, pulses in enumerate(MUPULSES):
+        MUPULSES[pos] = pulses - 1
+    # Subtract 1 to MUPULSES because these are values in base 1 (MATLAB)
+
 
     # Third: collect the necessary values in variables
     FSAMP = int(mat_file["fsamp"])  # Sampling frequency
@@ -481,7 +484,7 @@ def get_otb_refsignal(df, refsig):
         return np.nan
 
 
-def get_otb_decomposition(df): #TODO verify that we don't extract everything base 1 here and in DEMUSE
+def get_otb_decomposition(df):
     """
     Extract the IPTS and BINARY_MUS_FIRING from the OTB .mat file.
 
@@ -615,11 +618,13 @@ def get_otb_rawsignal(df):
 # Main function to open decomposed files coming from OTBiolab+.
 # This function calls the functions defined above
 
-def emg_from_otb(filepath, refsig=[True, "fullsampled"], version="1.5.7.3"): #TODO test the latest release and change
+def emg_from_otb(
+    filepath, ext_factor=8, refsig=[True, "fullsampled"], version="1.5.8.0"
+):
     """
     Import the .mat file exportable by OTBiolab+.   
     
-    This function is used to import the .mat file exportable by the OTBiolab+ software 
+    This function is used to import the .mat file exportable by the OTBiolab+ software
     as a dictionary of Python objects (mainly pandas dataframes).
 
     Parameters
@@ -627,16 +632,18 @@ def emg_from_otb(filepath, refsig=[True, "fullsampled"], version="1.5.7.3"): #TO
     filepath : str or Path
         The directory and the name of the file to load (including file extension .mat).
         This can be a simple string, the use of Path is not necessary.
+    ext_factor : int, default 8
+        The extension factor used for the decomposition in the OTbiolab+ software.
     refsig : list, default [True, "fullsampled"]
         Whether to seacrh also for the REF_SIGNAL and whether to load the full or sub-sampled one.
         The list is composed as [bool, str]. str can be "fullsampled" or "subsampled".
         Please read notes section.
-    version : str {"1.5.7.3"}, default "1.5.7.3"
-        Version of the OTBiolab+ software used.
+    version : str {"1.5.8.0"}, default "1.5.8.0"
+        Version of the OTBiolab+ software used (4 points).
         If your specific version is not available, try with the closer one.
 
-        ``1.5.7.3``
-            Works for this and earlier versions.
+        ``1.5.8.0``
+            Tested for versions from 1.5.7.3 to 1.5.8.0.
     
     Returns
     -------
@@ -647,6 +654,11 @@ def emg_from_otb(filepath, refsig=[True, "fullsampled"], version="1.5.7.3"): #TO
     --------
     refsig_from_otb : import REF_SIGNAL in the .mat file exportable by OTBiolab+.
     emg_from_demuse : import the .mat file used in DEMUSE.
+    
+    Raises
+    ------
+    ValueError
+        When a wrong value is passed to version=.
     
     Notes
     ---------
@@ -686,21 +698,28 @@ def emg_from_otb(filepath, refsig=[True, "fullsampled"], version="1.5.7.3"): #TO
     mat_file = loadmat(filepath, simplify_cells=True)
 
     # Parse .mat obtained from DEMUSE to see the available variables
-    """ 
-    print(
+    """ print(
         "\n--------------------------------\nAvailable dict keys are:\n\n{}\n".format(
             mat_file.keys()
         )
-    ) 
-    """
+    ) """
 
-    if version in ["1.5.7.3"]:
+    # Check if a valid version has been specified
+    valid_versions = ["1.5.8.0"]
+    if not version in valid_versions:
+        raise ValueError(f"Specified version is not valid. Use one of:\n{valid_versions}")
+    
+    if version in ["1.5.8.0"]:
         # Simplify (rename) columns description and extract all the parameters in a pandas dataframe
         df = pd.DataFrame(mat_file["Data"], columns=mat_file["Description"])
 
         REF_SIGNAL = get_otb_refsignal(df=df, refsig=refsig)
         SIL = pd.DataFrame({0: np.nan}, index=[0])
         IPTS, BINARY_MUS_FIRING = get_otb_decomposition(df=df)
+        # Align BINARY_MUS_FIRING to IPTS
+        BINARY_MUS_FIRING = BINARY_MUS_FIRING.shift(- int(ext_factor))
+        BINARY_MUS_FIRING.fillna(value=0, inplace=True)
+
         EMG_LENGTH, NUMBER_OF_MUS = IPTS.shape
         MUPULSES = get_otb_mupulses(binarymusfiring=BINARY_MUS_FIRING)
         FSAMP = int(mat_file["SamplingFrequency"])
@@ -727,7 +746,7 @@ def emg_from_otb(filepath, refsig=[True, "fullsampled"], version="1.5.7.3"): #TO
         return resdict
 
 
-def refsig_from_otb(filepath, refsig="fullsampled"):
+def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
     """
     Import REF_SIGNAL in the .mat file exportable by OTBiolab+.   
     
@@ -745,6 +764,12 @@ def refsig_from_otb(filepath, refsig="fullsampled"):
     refsig : str {"fullsampled", "subsampled"}, default "fullsampled"
         Whether to load the full or sub-sampled one.
         Please read notes section.
+    version : str {"1.5.8.0"}, default "1.5.8.0"
+        Version of the OTBiolab+ software used (4 points).
+        If your specific version is not available, try with the closer one.
+
+        ``1.5.8.0``
+            Tested for versions from 1.5.7.3 to 1.5.8.0. 
     
     Returns
     -------
@@ -781,30 +806,36 @@ def refsig_from_otb(filepath, refsig="fullsampled"):
     mat_file = loadmat(filepath, simplify_cells=True)
 
     # Parse .mat obtained from DEMUSE to see the available variables
-    print(
+    """ print(
         "\n--------------------------------\nAvailable dict keys are:\n\n{}\n".format(
             mat_file.keys()
         )
-    )
+    ) """
 
-    # Simplify (rename) columns description and extract all the parameters in a pandas dataframe
-    df = pd.DataFrame(mat_file["Data"], columns=mat_file["Description"])
+    # Check if a valid version has been specified
+    valid_versions = ["1.5.8.0"]
+    if not version in valid_versions:
+        raise ValueError(f"Specified version is not valid. Use one of:\n{valid_versions}")
 
-    # Convert the input passed to refsig in a list compatible with the function get_otb_refsignal
-    refsig_ = [True, refsig]
-    REF_SIGNAL = get_otb_refsignal(df=df, refsig=refsig_)
+    if version in ["1.5.8.0"]:
+        # Simplify (rename) columns description and extract all the parameters in a pandas dataframe
+        df = pd.DataFrame(mat_file["Data"], columns=mat_file["Description"])
 
-    # Use this to know what data you have or don't have
-    SOURCE = "OTB_refsig"
-    FSAMP = int(mat_file["SamplingFrequency"])
+        # Convert the input passed to refsig in a list compatible with the function get_otb_refsignal
+        refsig_ = [True, refsig]
+        REF_SIGNAL = get_otb_refsignal(df=df, refsig=refsig_)
 
-    resdict = {
-        "SOURCE": SOURCE,
-        "FSAMP": FSAMP,
-        "REF_SIGNAL": REF_SIGNAL,
-    }
+        # Use this to know what data you have or don't have
+        SOURCE = "OTB_refsig"
+        FSAMP = int(mat_file["SamplingFrequency"])
 
-    return resdict
+        resdict = {
+            "SOURCE": SOURCE,
+            "FSAMP": FSAMP,
+            "REF_SIGNAL": REF_SIGNAL,
+        }
+
+        return resdict
 
 
 # ---------------------------------------------------------------------
@@ -822,7 +853,7 @@ def save_json_emgfile(emgfile, filepath):
         The directory and the name of the file to save (including file extension .json).
         This can be a simple string; The use of Path is not necessary.
     """
-
+    
     if emgfile["SOURCE"] in ["DEMUSE", "OTB"]:
         """
         We need to convert all the components of emgfile to a dictionary and then to json object.
@@ -915,7 +946,7 @@ def save_json_emgfile(emgfile, filepath):
             # Encode json
             json_bytes = json_to_save.encode("utf-8")
             # Write to a file
-            f.write(json_bytes)
+            f.write(json_bytes) #TODO_NEXT_ try to improve writing time. f.write is the bottleneck but it is hard to improve.
 
     elif emgfile["SOURCE"] == "OTB_refsig":
         """
@@ -955,7 +986,7 @@ def emg_from_json(filepath):
     ----------
     filepath : str or Path
         The directory and the name of the file to load (including file extension .json).
-        This can be a simple string, the use of Path is not necessary. 
+        This can be a simple string, the use of Path is not necessary.
     
     Returns
     -------
@@ -1089,7 +1120,11 @@ def emg_from_json(filepath):
 # Function to open files from a GUI in a single line of code.
 
 def askopenfile(
-    initialdir="/", filesource="DEMUSE", otb_refsig_type=[True, "fullsampled"]
+    initialdir="/",
+    filesource="DEMUSE",
+    otb_ext_factor=8,
+    otb_refsig_type=[True, "fullsampled"],
+    otb_version="1.5.8.0",
 ):
     """
     Select and open files with a GUI.
@@ -1110,9 +1145,20 @@ def askopenfile(
             File exported from OTB with only the reference signal (.mat).
         ``Open_HD-EMG``
             File saved from openhdemg (.json).
+    otb_ext_factor : int, default 8
+        The extension factor used for the decomposition in the OTbiolab+ software.
+        Ignore if loading a DEMUSE file.
     otb_refsig_type : list, default [True, "fullsampled"]
         Whether to seacrh also for the REF_SIGNAL and whether to load the full or sub-sampled one.
         The list is composed as [bool, str]. str can be "fullsampled" or "subsampled".
+        Ignore if loading a DEMUSE file.
+    otb_version : str {"1.5.8.0"}, default "1.5.8.0"
+        Version of the OTBiolab+ software used (4 points).
+        If your specific version is not available, try with the closer one.
+        Ignore if loading a DEMUSE file.
+
+        ``1.5.8.0``
+            Tested for versions from 1.5.7.3 to 1.5.8.0.
 
     Returns
     -------
@@ -1191,9 +1237,16 @@ def askopenfile(
     if filesource == "DEMUSE":
         emgfile = emg_from_demuse(filepath=file_toOpen)
     elif filesource == "OTB":
-        emgfile = emg_from_otb(filepath=file_toOpen, refsig=otb_refsig_type)
+        emgfile = emg_from_otb(
+            filepath=file_toOpen,
+            ext_factor=otb_ext_factor,
+            refsig=otb_refsig_type,
+            version=otb_version
+        )
     elif filesource == "OTB_refsig":
-        emgfile = refsig_from_otb(filepath=file_toOpen, refsig=otb_refsig_type[1])
+        emgfile = refsig_from_otb(
+            filepath=file_toOpen, refsig=otb_refsig_type[1], version=otb_version
+        )
     elif filesource == "Open_HD-EMG":
         emgfile = emg_from_json(filepath=file_toOpen)
 

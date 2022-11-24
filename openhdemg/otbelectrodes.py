@@ -111,7 +111,7 @@ def sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True
     Sort emgfile RAW_SIGNAL and divide it by columns.
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
     >>> sorted_rawemg["col0"]
             0          1          2          3  ...         9          10         11         12
@@ -129,7 +129,7 @@ def sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True
 
     Sort emgfile RAW_SIGNAL without dividing it by columns.
 
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=False)
     >>> sorted_rawemg
            0          1          2          3  ...         61         62         63         64

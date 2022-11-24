@@ -104,7 +104,7 @@ def norm_twod_xcorr(df1, df2, mode="full"):
     5 Compute 2dxcorr to identify a common lag/delay
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emgfile = emg.filter_rawemg(emgfile, order=2, lowcut=20, highcut=500)
     >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
     >>> sta = emg.sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100)

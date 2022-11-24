@@ -72,7 +72,7 @@ def diff(sorted_rawemg):
     matrix code and orientation should be also specified.
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
     >>> sd = emg.diff(sorted_rawemg)
     """
@@ -153,7 +153,7 @@ def double_diff(sorted_rawemg):
     matrix code and orientation should be also specified.
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.double_diff(emgfile, code="GR08MM1305", orientation=180)
     >>> dd = emg.diff(sorted_rawemg)
     """
@@ -225,7 +225,7 @@ def sta(
     Access the STA of the column 0 of the first MU (number 0).
     
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
     >>> sta = emg.sta(emgfile=emgfile, sorted_rawemg=sorted_rawemg, firings=[0,25], timewindow=50)
     >>> sta[0]["col0"]
@@ -245,7 +245,7 @@ def sta(
     Calculate STA of the differential signal on all the firings.
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
     >>> sd = emg.diff(sorted_rawemg=sorted_rawemg)
     >>> sta = emg.sta(emgfile=emgfile, sorted_rawemg=sd, firings="all", timewindow=50)
@@ -431,7 +431,7 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
     the second matrix column ("col1").
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
     >>> sd = emg.diff(sorted_rawemg=sorted_rawemg)
     >>> stmuap = emg.st_muap(emgfile=emgfile, sorted_rawemg=sd, timewindow=50)
@@ -543,7 +543,7 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     Align two MUs with a final duration of 50% the original one.
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
     >>> sta = emg.sta(emgfile=emgfile, sorted_rawemg=sorted_rawemg, timewindow=100)
     >>> aligned_sta1, aligned_sta2 = emg.align_by_xcorr(
@@ -690,8 +690,8 @@ def tracking(
     If loading a DEMUSE file, matrixcode and orientation can be ignored.
      
     >>> import openhdemg as emg
-    >>> emgfile1 = emg.askopenfile(filesource="OTB")
-    >>> emgfile2 = emg.askopenfile(filesource="OTB")
+    >>> emgfile1 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile2 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> tracking_res = emg.tracking(
     ...     emgfile1=emgfile1,
     ...     emgfile2=emgfile2,

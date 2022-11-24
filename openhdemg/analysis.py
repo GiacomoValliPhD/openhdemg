@@ -58,7 +58,7 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
     Load the EMG file and compute the thresholds.
     
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> mus_thresholds = emg.compute_thresholds(emgfile=emgfile, event_="rt_dert")
     >>> mus_thresholds    
            abs_RT    abs_DERT     rel_RT   rel_DERT
@@ -70,7 +70,7 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
     Type of output can be adjusted, e.g., to have only absolute values at recruitment.
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> mus_thresholds = emg.compute_thresholds(emgfile=emgfile, event_="rt", type_="abs")
     >>> mus_thresholds 
            abs_RT
@@ -222,7 +222,7 @@ def compute_dr(
     Load the EMG file and compute the DR.
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> mus_dr = emg.compute_dr(emgfile=emgfile)
     >>> mus_dr
          DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady     DR_all
@@ -234,7 +234,7 @@ def compute_dr(
     Type of output can be adjusted, e.g., to have only the DR at recruitment.
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> mus_dr = emg.compute_dr(emgfile=emgfile, event_="rec")
     >>> mus_dr
          DR_rec     DR_all
@@ -247,7 +247,7 @@ def compute_dr(
     if previously calculated with an automated method.
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> mus_dr = emg.compute_dr(emgfile=emgfile, start_steady=20000, end_steady=50000, event_="steady")
     >>> mus_dr
        DR_start_steady  DR_end_steady  DR_all_steady     DR_all
@@ -436,7 +436,7 @@ def basic_mus_properties(
     Get full summary of all the MUs properties.
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> df = emg.basic_mus_properties(emgfile=emgfile)
     >>> df
         MViF  MU_number      abs_RT    abs_DERT     rel_RT   rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady     DR_all  COVisi_steady  COVisi_all  COV_steady
@@ -450,7 +450,7 @@ def basic_mus_properties(
     calculated with an automated method.
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> df = emg.basic_mus_properties(emgfile=emgfile, start_steady=20000, end_steady=50000, mvif=786)
     >>> df
     MViF  MU_number      abs_RT    abs_DERT     rel_RT   rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady     DR_all  COVisi_steady  COVisi_all  COV_steady
@@ -600,7 +600,7 @@ def compute_covisi(
     Compute covisi during the various parts of the trapezoidal contraction.
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> df = emg.compute_covisi(emgfile=emgfile)
     >>> df
        COVisi_rec  COVisi_derec  COVisi_steady  COVisi_all
@@ -613,7 +613,7 @@ def compute_covisi(
     of the area can be bypassed.
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> df = emg.compute_covisi(emgfile=emgfile, event_="rec_derec", start_steady=20000, end_steady=50000)
     >>> df
        COVisi_rec  COVisi_derec  COVisi_all
@@ -625,7 +625,7 @@ def compute_covisi(
     To access the covisi of the entire contraction of a single MU.
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> df = emg.compute_covisi(emgfile=emgfile, single_mu_number=2)
     >>> df
        COVisi_all
@@ -789,7 +789,7 @@ def compute_drvariability(
     Compute covisi during the various parts of the trapezoidal contraction.
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> df = emg.compute_covisi(emgfile=emgfile)
     >>> df
        DRvar_rec  DRvar_derec  DRvar_steady  DRvar_all
@@ -802,7 +802,7 @@ def compute_drvariability(
     of the area can be bypassed.
 
     >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB")
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> df = emg.compute_covisi(emgfile=emgfile, event_="rec_derec", start_steady=20000, end_steady=50000)
     >>> df
        DRvar_rec  DRvar_derec  DRvar_all
