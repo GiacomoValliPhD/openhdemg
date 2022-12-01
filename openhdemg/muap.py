@@ -1,5 +1,6 @@
-""" 
-This module contains functions to produce and analyse MUs anction potentials (MUAPs).
+"""
+This module contains functions to produce and analyse MUs anction potentials
+(MUAPs).
 """
 
 import pandas as pd
@@ -24,18 +25,19 @@ def diff(sorted_rawemg):
     ----------
     sorted_rawemg : dict
         A dict containing the sorted electrodes.
-        Every key of the dictionary represents a different column of the matrix.
-        Rows are stored in the dict as a pd.DataFrame.
+        Every key of the dictionary represents a different column of the
+        matrix. Rows are stored in the dict as a pd.DataFrame.
         Electrodes can be sorted with the function emg.sort_rawemg.
         DEMUSE files should be also passed to emg.sort_rawemg since
-        this function, altough not sorting DEMUSE files, will still divide the 
-        channels by matrix row.
+        this function, altough not sorting DEMUSE files, will still divide
+        the channels by matrix row.
 
     Returns
     -------
     sd : dict
         A dict containing the double differential signal.
-        Every key of the dictionary represents a different column of the matrix.
+        Every key of the dictionary represents a different column of the
+        matrix.
         Rows are stored in the dict as a pd.DataFrame.
 
     See also
@@ -78,9 +80,10 @@ def diff(sorted_rawemg):
     """
 
     # Create a dict of pd.DataFrames for the single differential
-    sd = {col:{} for col in sorted_rawemg.keys()}
-    #{"col0": {}, "col1": {}, "col2": {}, "col3": {}, "col4": {}}
-    #{'col0': {}, 'col1': {}, 'col2': {}, 'col3': {}, 'col4': {}, 'col5': {}, 'col6': {}, 'col7': {}}
+    sd = {col: {} for col in sorted_rawemg.keys()}
+    # {"col0": {}, "col1": {}, "col2": {}, "col3": {}, "col4": {}}
+    # {'col0': {}, 'col1': {}, 'col2': {}, 'col3': {}, 'col4': {}, 'col5': {},
+    #   'col6': {}, 'col7': {}}
 
     # Loop matrix columns
     for col in sorted_rawemg.keys():
@@ -105,19 +108,19 @@ def double_diff(sorted_rawemg):
     ----------
     sorted_rawemg : dict
         A dict containing the sorted electrodes.
-        Every key of the dictionary represents a different column of the matrix.
-        Rows are stored in the dict as a pd.DataFrame.
+        Every key of the dictionary represents a different column of the
+        matrix. Rows are stored in the dict as a pd.DataFrame.
         Electrodes can be sorted with the function emg.sort_rawemg.
         DEMUSE files should be also passed to emg.sort_rawemg since
-        this function, altough not sorting DEMUSE files, will still divide the 
+        this function, altough not sorting DEMUSE files, will still divide the
         channels by matrix row.
 
     Returns
     -------
     dd : dict
         A dict containing the double differential signal.
-        Every key of the dictionary represents a different column of the matrix.
-        Rows are stored in the dict as a pd.DataFrame.
+        Every key of the dictionary represents a different column of the
+        matrix. Rows are stored in the dict as a pd.DataFrame.
 
     See also
     --------
@@ -126,7 +129,7 @@ def double_diff(sorted_rawemg):
     Notes
     -----
     The returned dd will contain two less matrix rows.
-    
+
     Examples
     --------
     Calculate double differential.
@@ -159,7 +162,7 @@ def double_diff(sorted_rawemg):
     """
 
     # Create a dict of pd.DataFrames for the double differential
-    dd = {col:{} for col in sorted_rawemg.keys()}
+    dd = {col: {} for col in sorted_rawemg.keys()}
 
     # Loop matrix columns
     for col in sorted_rawemg.keys():
@@ -190,8 +193,8 @@ def sta(
         The dictionary containing the emgfile.
     sorted_rawemg : dict
         A dict containing the sorted electrodes.
-        Every key of the dictionary represents a different column of the matrix.
-        Rows are stored in the dict as a pd.DataFrame.
+        Every key of the dictionary represents a different column of the
+        matrix. Rows are stored in the dict as a pd.DataFrame.
     firings : list or str {"all"}, default [0, 50]
         The range of firnings to be used for the STA.
         If a MU has less firings than the range, the upper limit
@@ -332,7 +335,8 @@ def unpack_sta(sta_mu1):
     Returns
     -------
     df1 : pd.DataFrame
-        A pd.DataFrame containing the STA of the MU (including the empty channel).
+        A pd.DataFrame containing the STA of the MU
+        (including the empty channel).
 
     See also
     --------
@@ -361,14 +365,15 @@ def pack_sta(df_sta1):
 
     Parameters
     ----------
-    df_sta1 : A pd.DataFrame containing the STA of the MU (including the empty channel).
+    df_sta1 : A pd.DataFrame containing the STA of the MU
+    (including the empty channel).
 
     Returns
     -------
     packed_sta : dict
         dict containing STA of the input pd.DataFrame divided by matrix column.
         Dict columns are "col0", col1", "col2", "col3", "col4".
-    
+
     See also
     --------
     sta : computes the STA of every MUs.
@@ -388,22 +393,24 @@ def pack_sta(df_sta1):
 
     return packed_sta
 
-#TODO incredibly slow and must be documented well to understand how to access elements inside (this and other datasets as well)
+
+# TODO incredibly slow and must be documented well to understand how to access
+# elements inside (this and other datasets as well).
 def st_muap(emgfile, sorted_rawemg, timewindow=50):
     """
     Generate spike triggered MUAPs of every MUs.
 
     Generate single spike triggered (ST) MUs action potentials (MUAPs)
     over the entire spike train of every MUs.
-    
+
     Parameters
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
     sorted_rawemg : dict
         A dict containing the sorted electrodes.
-        Every key of the dictionary represents a different column of the matrix.
-        Rows are stored in the dict as a pd.DataFrame.
+        Every key of the dictionary represents a different column of the
+        matrix. Rows are stored in the dict as a pd.DataFrame.
     timewindow : int, default 50
         Timewindow to compute ST MUAPs in milliseconds.
 
@@ -413,7 +420,7 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
         dict containing a dict of ST MUAPs (pd.DataFrame) for every MUs.
         pd.DataFrames containing the ST MUAPs are organised based on matrix
         rows (dict) and matrix channel.
-        For example, the ST MUAPs of the first MU (0), in the second electrode 
+        For example, the ST MUAPs of the first MU (0), in the second electrode
         of the matrix can be accessed as stmuap[0]["col0"][1].
 
     See also
@@ -427,8 +434,8 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
     Examples
     --------
     Calculate the MUAPs of the differential signal.
-    Access the MUAPs of the first MU (number 0), channel 15 that is contained in
-    the second matrix column ("col1").
+    Access the MUAPs of the first MU (number 0), channel 15 that is contained
+    in the second matrix column ("col1").
 
     >>> import openhdemg as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
@@ -463,8 +470,8 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
         {0: {}, 1: {}, 2: {}, 3: {}}
         """
 
-    # Calculate ST MUAPs on sorted_rawemg for every mu and put it into sta_dict[mu]
-    # Loop all the MUs to fill sta_dict
+    # Calculate ST MUAPs on sorted_rawemg for every mu and put it into
+    # sta_dict[mu]. Loop all the MUs to fill sta_dict.
     for mu in stmuap.keys():
         # Loop the matrix columns
         sorted_rawemg_st = {}
@@ -523,15 +530,18 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     -------
     aligned_sta1 : dict
         A dictionary containing the aligned and STA of the first MU
-        with the final expected timewindow (duration of sta_mu1 * finalduration).
+        with the final expected timewindow
+        (duration of sta_mu1 * finalduration).
     aligned_sta2 : dict
         A dictionary containing the aligned and STA of the second MU
-        with the final expected timewindow (duration of sta_mu1 * finalduration).
+        with the final expected timewindow
+        (duration of sta_mu1 * finalduration).
 
     See also
     --------
     sta : computes the STA of every MUs.
-    norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of two MUS.
+    norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
+        two MUS.
 
     Notes
     -----
@@ -565,7 +575,8 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     """
 
     # Obtain a pd.DataFrame for the 2d xcorr without empty column
-    # but mantain the original pd.DataFrame with empty column to return the aligned STAs
+    # but mantain the original pd.DataFrame with empty column to return the
+    # aligned STAs.
     df1 = unpack_sta(sta_mu1)
     no_nan_sta1 = df1.dropna(axis=1, inplace=False)
     df2 = unpack_sta(sta_mu2)
@@ -581,7 +592,8 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     normxcorr_df.set_index(corr_lags, inplace=True)
     lag = normxcorr_df.idxmax().median()  # First signal compared to second
 
-    # Be sure that the lag/delay does not exceed values suitable for the final expected duration.
+    # Be sure that the lag/delay does not exceed values suitable for the final
+    # expected duration.
     finalduration_samples = round(len(df1.index) * finalduration)
     if lag > (finalduration_samples / 2):
         lag = finalduration_samples / 2
@@ -616,7 +628,8 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
 
     return aligned_sta1, aligned_sta2
 
-#TODO_NEXT_ update matrixcode and orientation here and in otbelectrodes
+
+# TODO_NEXT_ update matrixcode and orientation here and in otbelectrodes
 def tracking(
     emgfile1,
     emgfile2,
@@ -688,7 +701,7 @@ def tracking(
     --------
     Track MUs between two OTB files and show the filtered results.
     If loading a DEMUSE file, matrixcode and orientation can be ignored.
-     
+
     >>> import openhdemg as emg
     >>> emgfile1 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emgfile2 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
@@ -751,7 +764,7 @@ def tracking(
             normxcorr_df, normxcorr_max = norm_twod_xcorr(df1, df2, mode="full")
 
             # Third, fill the tracking_res
-            if exclude_belowthreshold == False:
+            if exclude_belowthreshold is False:
                 res["MU_file1"].append(mu_file1)
                 res["MU_file2"].append(mu_file2)
                 res["XCC"].append(normxcorr_max)
@@ -896,22 +909,23 @@ def remove_duplicates_between(
     show : bool, default False
         Whether to plot ste STA of pairs of MUs with XCC above threshold.
     which : str {"munumber", "PNR"}
-        How to remove the duplicated MUs. 
-        
+        How to remove the duplicated MUs.
+
         ``munumber``
             Duplicated MUs are removed from the file with more MUs.
         ``PNR``
             The MU with the lowest PNR is removed (valid only for DEMUSE files).
-    
+
     Returns
     -------
     emgfile1, emgfile2 : dict
         The original emgfiles without the duplicated MUs.
-    
+
     See also
     --------
     sta : computes the STA of every MUs.
-    norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of two MUS.
+    norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
+        two MUS.
     tracking : track MUs across two different files.
     """
 
@@ -956,7 +970,8 @@ def remove_duplicates_between(
 
     elif which == "PNR":
         if emgfile1["SOURCE"] == "DEMUSE" and emgfile2["SOURCE"] == "DEMUSE":
-            # Create a list containing which MU to remove in which file based on PNR
+            # Create a list containing which MU to remove in which file based
+            # on PNR value.
             to_remove1 = []
             to_remove2 = []
             for i, row in tracking_res.iterrows():

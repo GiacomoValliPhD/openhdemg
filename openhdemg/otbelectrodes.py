@@ -1,7 +1,9 @@
-""" 
-This module contains informations about the electrodes sold by OTB and commonly used for HD-EMG recordings.
-Functions to sort the electrode position are also included. These functions are used only for the OTBiolab+
-software since DEMUSE already provides sorted channels.
+"""
+This module contains informations about the electrodes sold by OTB and
+commonly used for HD-EMG recordings.
+Functions to sort the electrode position are also included. These functions
+are used only for the OTBiolab+ software since DEMUSE already provides sorted
+channels.
 """
 
 import numpy as np
@@ -70,7 +72,12 @@ Number of electrodes for each matrix.
 # - GR10MM0808(0, 180)
 
 
-def sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True):
+def sort_rawemg(
+    emgfile,
+    code="GR08MM1305",
+    orientation=180,
+    dividebycolumn=True
+):
     """
     Sort RAW_SIGNAL based on matrix type and orientation.
 
@@ -93,10 +100,10 @@ def sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True
     -------
     sorted_rawemg : dict or pd.DataFrame
         If dividebycolumn == True a dict containing the sorted electrodes.
-        Every key of the dictionary represents a different column of the matrix.
-        Rows are stored in the dict as a pd.DataFrame.
-        If dividebycolumn == False a pd.DataFrame containing the sorted electrodes.
-        The matrix channels are stored in the pd.DataFrame columns.
+        Every key of the dictionary represents a different column of the
+        matrix. Rows are stored in the dict as a pd.DataFrame.
+        If dividebycolumn == False a pd.DataFrame containing the sorted
+        electrodes. The matrix channels are stored in the pd.DataFrame columns.
 
     Notes
     -----
@@ -114,54 +121,56 @@ def sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
     >>> sorted_rawemg["col0"]
-            0          1          2          3  ...         9          10         11         12
-    0     NaN -11.189778   3.560384 -13.224284  ...  -7.629395  -2.034505  -3.051758  -0.508626
-    1     NaN -12.715657   4.577637 -13.224284  ...  -4.577637   2.034505  -7.120768  -0.508626
-    2     NaN   0.508626  21.870932   1.017253  ...   8.138021  17.801920   8.646647  16.276041
-    3     NaN   6.103516  26.957193   8.646647  ...  16.276041  26.448568  19.327799  19.836426
-    4     NaN  -5.594889  13.224284  -9.155273  ...  -2.543132  10.681152   2.034505   3.560384
-    ...    ..        ...        ...        ...  ...        ...        ...        ...        ...
-    63483 NaN -15.767415 -22.379557 -15.258789  ... -14.750163 -12.207031 -12.207031 -15.767415
-    63484 NaN  -9.155273 -19.327799 -10.681152  ... -11.698405  -7.629395  -8.138021  -8.138021
-    63485 NaN  -6.103516 -12.207031  -5.594889  ...  -7.629395  -6.103516  -5.086263  -3.051758
-    63486 NaN  -6.103516 -15.767415  -6.103516  ...  -5.594889  -3.560384  -0.508626   2.543132
-    63487 NaN  -8.138021 -18.819174  -8.646647  ...  -5.594889  -2.034505  -1.525879   3.560384
+            0          1          2 ...        10         11         12
+    0     NaN -11.189778   3.560384 ... -2.034505  -3.051758  -0.508626
+    1     NaN -12.715657   4.577637 ...  2.034505  -7.120768  -0.508626
+    2     NaN   0.508626  21.870932 ... 17.801920   8.646647  16.276041
+    3     NaN   6.103516  26.957193 ... 26.448568  19.327799  19.836426
+    4     NaN  -5.594889  13.224284 ... 10.681152   2.034505   3.560384
+    ...    ..        ...        ... ...       ...        ...        ...
+    63483 NaN -15.767415 -22.379557 ...-12.207031 -12.207031 -15.767415
+    63484 NaN  -9.155273 -19.327799 ... -7.629395  -8.138021  -8.138021
+    63485 NaN  -6.103516 -12.207031 ... -6.103516  -5.086263  -3.051758
+    63486 NaN  -6.103516 -15.767415 ... -3.560384  -0.508626   2.543132
+    63487 NaN  -8.138021 -18.819174 ... -2.034505  -1.525879   3.560384
 
     Sort emgfile RAW_SIGNAL without dividing it by columns.
 
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=False)
     >>> sorted_rawemg
-           0          1          2          3  ...         61         62         63         64
-    0     NaN -11.189778   3.560384 -13.224284 ... -13.732910  -5.086263  -9.663899   2.034505
-    1     NaN -12.715657   4.577637 -13.224284 ... -13.732910  -3.560384  -8.646647   1.017253
-    2     NaN   0.508626  21.870932   1.017253 ...   2.034505  11.189778   6.612142  17.293295
-    3     NaN   6.103516  26.957193   8.646647 ...   9.155273  22.888184  14.750163  21.362305
-    4     NaN  -5.594889  13.224284  -9.155273 ...  -2.543132   9.663899   1.525879   6.612142
-    ...    ..        ...        ...        ... ...        ...        ...        ...        ...
-    63483 NaN -15.767415 -22.379557 -15.258789 ... -17.293295  -8.646647 -20.345053 -15.258789
-    63484 NaN  -9.155273 -19.327799 -10.681152 ... -14.241536  -7.120768 -19.327799 -13.732910
-    63485 NaN  -6.103516 -12.207031  -5.594889 ... -11.698405  -3.051758 -10.681152  -6.103516
-    63486 NaN  -6.103516 -15.767415  -6.103516 ...  -8.646647   2.543132  -7.120768  -4.069010
-    63487 NaN  -8.138021 -18.819174  -8.646647 ...  -7.120768   2.034505  -3.051758  -0.508626
+           0          1          2  ...        62         63         64
+    0     NaN -11.189778   3.560384 ... -5.086263  -9.663899   2.034505
+    1     NaN -12.715657   4.577637 ... -3.560384  -8.646647   1.017253
+    2     NaN   0.508626  21.870932 ... 11.189778   6.612142  17.293295
+    3     NaN   6.103516  26.957193 ... 22.888184  14.750163  21.362305
+    4     NaN  -5.594889  13.224284 ...  9.663899   1.525879   6.612142
+    ...    ..        ...        ... ...       ...        ...        ...
+    63483 NaN -15.767415 -22.379557 ... -8.646647 -20.345053 -15.258789
+    63484 NaN  -9.155273 -19.327799 ... -7.120768 -19.327799 -13.732910
+    63485 NaN  -6.103516 -12.207031 ... -3.051758 -10.681152  -6.103516
+    63486 NaN  -6.103516 -15.767415 ...  2.543132  -7.120768  -4.069010
+    63487 NaN  -8.138021 -18.819174 ...  2.034505  -3.051758  -0.508626
     """
 
     # DEMUSE files are supposed to be already sorted
     if emgfile["SOURCE"] == "OTB":
         # Work on a copy of the RAW_SIGNAL
         rawemg = copy.deepcopy(emgfile["RAW_SIGNAL"])
-        
+
         # Get sorting order by matrix
         if code in ["GR08MM1305", "GR04MM1305"]:
             # Get sorting order by matrix orientation
             if orientation == 0:
                 """
-                MUST REMEMBER: python loops from 0 and the emg channels start from 0
-                but the channel order reflects the real channels and starts from 1!
-                This order is for the user, while the script uses the base0_sorting_order.
+                MUST REMEMBER: python loops from 0 and the emg channels start
+                from 0 but the channel order reflects the real channels and
+                starts from 1! This order is for the user, while the script
+                uses the base0_sorting_order.
 
                 base0_sorting_order provides the sorting order while
-                base0_nanpos indicates the position of the empty (np.nan) channel.
+                base0_nanpos indicates the position of the empty (np.nan)
+                channel.
 
                 Channel Order GR08MM1305
                        0   1   2   3   4
@@ -261,9 +270,9 @@ def sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True
                     55, 54, 53, 52, 51, 50, 49, 48,
                     63, 62, 61, 60, 59, 58, 57, 56,
                 ]
-        
+
         else:
-            pass #TODO_NEXT_ add other electrodes, and orientations?
+            pass # TODO_NEXT_ add other electrodes, and orientations?
 
         # Once the order to sort channels has been retrieved,
         # Sort the channels based on pre-specified order and reset columns
@@ -274,7 +283,7 @@ def sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True
         # For DEMUSE files (supposed to be already sorted)
         # Work on a copy of the RAW_SIGNAL
         sorted_rawemg = copy.deepcopy(emgfile["RAW_SIGNAL"])
-    
+
     # Check if we need the sorted RAW_SIGNAL divided by column
     if dividebycolumn:
         if code in ["GR08MM1305", "GR04MM1305"]:
@@ -286,7 +295,7 @@ def sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True
                             "col3":sorted_rawemg.loc[:,39:51],
                             "col4":sorted_rawemg.loc[:,52:64]
                         }
-        
+
         elif code == "GR10MM0808":
             if orientation in [0, 180]:
                 sorted_rawemg = {
@@ -301,6 +310,6 @@ def sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True
                         }
 
         return sorted_rawemg
-    
+
     else:
         return sorted_rawemg
