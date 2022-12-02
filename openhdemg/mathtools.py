@@ -1,5 +1,6 @@
 """
-This module contains all the mathematical functions that are necessary for the library.
+This module contains all the mathematical functions that are necessary for the
+library.
 """
 
 import copy
@@ -15,14 +16,16 @@ def min_max_scaling(series_or_df):
     Min-max feature scaling is often simply referred to as normalization,
     which rescales the dataset feature to a range of 0 - 1.
     It's calculated by subtracting the feature's minimum value from the value
-    and then dividing it by the difference between the maximum and minimum value.
+    and then dividing it by the difference between the maximum and minimum 
+    value.
 
     The formula looks like this: xnorm = x - xmin / xmax - xmin.
 
     Parameters
     ----------
     series_or_df : pd.Series or pd.DataFrame
-        The min-max scaling is performed on the entire series, or to single columns in a pd.DataFrame.
+        The min-max scaling is performed for the entire series,
+        or for single columns in a pd.DataFrame.
 
     Returns
     -------
@@ -46,7 +49,7 @@ def min_max_scaling(series_or_df):
         return object
 
     else:
-        raise Exception(
+        raise TypeError(
             f"series_or_df must a pandas series or a dataframe. {type(series_or_df)} was passed instead."
         )
 
@@ -55,16 +58,18 @@ def norm_twod_xcorr(df1, df2, mode="full"):
     """
     Normalised 2-dimensional cross-correlation of STAs of two MUS.
 
-    Any pre-processing of the RAW_SIGNAL (i.e., normal, differential or double differential)
-    can be passed as long as the two inputs have same shape.
+    Any pre-processing of the RAW_SIGNAL (i.e., normal, differential or double
+    differential) can be passed as long as the two inputs have same shape.
 
     Parameters
     ----------
     df1 : pd.DataFrame
-        A pd.DataFrame containing the STA of the first MU without np.nan column. 
+        A pd.DataFrame containing the STA of the first MU without np.nan 
+        column.
     df2 : pd.DataFrame
-        A pd.DataFrame containing the STA of the second MU without np.nan column.
-    mode : str {"full", "valid", "same"}, default "full" #TODO docs like this
+        A pd.DataFrame containing the STA of the second MU without np.nan
+        column.
+    mode : str {"full", "valid", "same"}, default "full"
         A string indicating the size of the output:
 
         ``full``
@@ -72,8 +77,8 @@ def norm_twod_xcorr(df1, df2, mode="full"):
            of the inputs. (Default)
         ``valid``
            The output consists only of those elements that do not
-           rely on the zero-padding. In 'valid' mode, either `sta_mu1` or `sta_mu2`
-           must be at least as large as the other in every dimension.
+           rely on the zero-padding. In 'valid' mode, either `sta_mu1` or
+           `sta_mu2` must be at least as large as the other in every dimension.
         ``same``
            The output is the same size as `in1`, centered
            with respect to the 'full' output.
@@ -84,7 +89,7 @@ def norm_twod_xcorr(df1, df2, mode="full"):
         The results of the normalised 2d cross-correlation.
     normxcorr_max : float
         The maximum value of the 2d cross-correlation.
-    
+
     See also
     --------
     align_by_xcorr : to align the two STAs before calling norm_twod_xcorr.
@@ -92,6 +97,47 @@ def norm_twod_xcorr(df1, df2, mode="full"):
         before passing it to norm_twod_xcorr.
     pack_sta : for packing the sta pd.DataFrame in a dict where
         each matrix column corresponds to a dict key.
+
+    Examples
+    --------
+    Full steps to pass two dataframes to norm_twod_xcorr from the same EMG
+    file.
+    1 Load the EMG file and band-pass filter the raw EMG signal
+    2 Sort the matrix channels and compute the spike-triggered average
+    3 Extract the STA of the MUs of interest from all the STAs
+    4 Unpack the STAs of single MUs and remove np.nan to pas them to
+        norm_twod_xcorr
+    5 Compute 2dxcorr to identify a common lag/delay
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.filter_rawemg(emgfile, order=2, lowcut=20, highcut=500)
+    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
+    >>> sta = emg.sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100)
+    >>> mu0 = 0
+    >>> mu1 = 1
+    >>> sta_mu1 = sta[mu0]
+    >>> sta_mu2 = sta[mu1]
+    >>> df1 = emg.unpack_sta(sta_mu1)
+    >>> no_nan_sta1 = df1.dropna(axis=1, inplace=False)
+    >>> df2 = emg.unpack_sta(sta_mu2)
+    >>> no_nan_sta2 = df2.dropna(axis=1, inplace=False)
+    >>> normxcorr_df, normxcorr_max = emg.norm_twod_xcorr(no_nan_sta1, no_nan_sta2)
+    >>> normxcorr_max
+    0.7241553627564273
+    >>> normxcorr_df
+                0             1             2               125       126
+    0   -0.000002 -1.467778e-05 -3.013564e-05 ... -1.052780e-06  0.000001
+    1   -0.000004 -2.818055e-05 -6.024427e-05 ... -4.452469e-06  0.000001
+    2   -0.000007 -4.192479e-05 -9.223725e-05 ... -1.549197e-05 -0.000002
+    3   -0.000009 -5.071660e-05 -1.174545e-04 ... -3.078518e-05 -0.000007
+    4   -0.000007 -4.841255e-05 -1.239106e-04 ... -4.232094e-05 -0.000012
+    ..        ...           ...           ... ...           ...       ...
+    402  0.000005  1.641773e-05  3.994943e-05 ...  8.170792e-07 -0.000006
+    403 -0.000001  4.535878e-06  1.858700e-05 ...  2.087135e-06 -0.000003
+    404 -0.000004 -1.241530e-06  5.704194e-06 ...  1.027966e-05  0.000002
+    405 -0.000004 -1.693078e-06  1.054646e-06 ...  1.811828e-05  0.000007
+    406 -0.000002 -2.473282e-07  6.006046e-07 ...  1.605406e-05  0.000007
     """
     
     # Perform 2d xcorr
