@@ -1,5 +1,7 @@
-# Title
-## Smaller title
+# openhdemg
+A powerful toolbox for the analysis of HD-EMG recordings.
+
+## What and why?
 
 The openhdemg project was born in 2022 with the aim to provide a free 
 and open-source framework to analyse HIGH-DENSITY EMG recordings.
