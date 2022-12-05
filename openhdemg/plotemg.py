@@ -725,7 +725,7 @@ def plot_idr(
     tight_layout=True,
 ):
     """
-    This function plots the IDR.
+    Plot the IDR. Single or multiple MUs.
 
     Parameters
     ----------

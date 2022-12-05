@@ -1,4 +1,4 @@
-#TODO space after docum in GUI
+# TODO space after docum in GUI
 """
 This module contains all the informations regarding:
     - Data
@@ -145,7 +145,7 @@ class info:
             -----
 
             The openhdemg project was born in 2022 with the aim to provide a free 
-            And open-source framework to analyse HIGH-DENSITY EMG recordings.
+            and open-source framework to analyse HIGH-DENSITY EMG recordings.
 
             The field of EMG analysis in humans has always be characterised by little
             or no software available for signal post-processing an analysis and this 
@@ -260,3 +260,4 @@ class info:
         print(json.dumps(cite, indent=4))
 
         return cite
+# TODO complete infos

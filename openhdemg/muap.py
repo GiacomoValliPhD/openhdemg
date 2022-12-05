@@ -15,6 +15,8 @@ import numpy as np
 import time
 from joblib import Parallel, delayed
 import copy
+import os
+import warnings
 
 
 def diff(sorted_rawemg):
@@ -181,9 +183,10 @@ def double_diff(sorted_rawemg):
     return dd
 
 
+# This function exploits parallel processing to compute the STA
 def sta(
     emgfile, sorted_rawemg, firings=[0, 50], timewindow=100
-):  # TODO performance improvements, parallel proc?
+):
     """
     Computes the spike-triggered average (STA) of every MUs.
 
@@ -273,7 +276,7 @@ def sta(
 
     # Container of the STA for every MUs
     sta_dict = {}
-    for mu in [*range(emgfile["NUMBER_OF_MUS"])]:
+    for mu in range(emgfile["NUMBER_OF_MUS"]):
         sta_dict[mu] = {}
         """
         sta_dict
@@ -283,6 +286,10 @@ def sta(
     # Calculate STA on sorted_rawemg for every mu and put it into sta_dict[mu]
     # Loop all the MUs to fill sta_dict
     for mu in sta_dict.keys():
+        pass
+
+    # STA function to run in parallel
+    def parallel(mu):
         # Set firings if firings="all"
         if firings == "all":
             firings_ = [0, len(emgfile["MUPULSES"][mu])]
@@ -318,14 +325,33 @@ def sta(
 
             sorted_rawemg_sta[col] = pd.DataFrame(row_dict)
 
-        sta_dict[mu] = sorted_rawemg_sta
+        # Add a reference to the MU number to sort the values returned by
+        # parallel processing
+        sorted_rawemg_sta["munumber"] = mu
+
+        return sorted_rawemg_sta
+
+    # Start parallel execution
+    # Meausere running time
+    t0 = time.time()
+
+    res = Parallel(n_jobs=-1)(delayed(parallel)(mu) for mu in sta_dict.keys())
+
+    t1 = time.time()
+    print(f"\nTime of sta parallel processing: {round(t1-t0, 2)} Sec\n")
+
+    # Sort output of the parallel processing according to MU number
+    for i in res:
+        mu = i["munumber"]
+        del i["munumber"]
+        sta_dict[mu] = i
 
     return sta_dict
 
 
 def unpack_sta(sta_mu1):
     """
-    Build a common pd.DataFrame from the sta dict containing all the channels.
+    Build a common pd.DataFrame from the sta_dict containing all the channels.
 
     Parameters
     ----------
@@ -394,8 +420,7 @@ def pack_sta(df_sta1):
     return packed_sta
 
 
-# TODO incredibly slow and must be documented well to understand how to access
-# elements inside (this and other datasets as well).
+# This function exploits parallel processing to compute the MUAPs
 def st_muap(emgfile, sorted_rawemg, timewindow=50):
     """
     Generate spike triggered MUAPs of every MUs.
@@ -409,8 +434,8 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
         The dictionary containing the emgfile.
     sorted_rawemg : dict
         A dict containing the sorted electrodes.
-        Every key of the dictionary represents a different column of the
-        matrix. Rows are stored in the dict as a pd.DataFrame.
+        Every key of the dictionary represents a different column of the matrix.
+        Rows are stored in the dict as a pd.DataFrame.
     timewindow : int, default 50
         Timewindow to compute ST MUAPs in milliseconds.
 
@@ -420,7 +445,7 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
         dict containing a dict of ST MUAPs (pd.DataFrame) for every MUs.
         pd.DataFrames containing the ST MUAPs are organised based on matrix
         rows (dict) and matrix channel.
-        For example, the ST MUAPs of the first MU (0), in the second electrode
+        For example, the ST MUAPs of the first MU (0), in the second electrode 
         of the matrix can be accessed as stmuap[0]["col0"][1].
 
     See also
@@ -434,8 +459,8 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
     Examples
     --------
     Calculate the MUAPs of the differential signal.
-    Access the MUAPs of the first MU (number 0), channel 15 that is contained
-    in the second matrix column ("col1").
+    Access the MUAPs of the first MU (number 0), channel 15 that is contained in
+    the second matrix column ("col1").
 
     >>> import openhdemg as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
@@ -463,7 +488,7 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
 
     # Container of the STA for every MUs
     stmuap = {}
-    for mu in [*range(emgfile["NUMBER_OF_MUS"])]:
+    for mu in range(emgfile["NUMBER_OF_MUS"]):
         stmuap[mu] = {}
         """
         sta_dict
@@ -472,7 +497,8 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
 
     # Calculate ST MUAPs on sorted_rawemg for every mu and put it into
     # sta_dict[mu]. Loop all the MUs to fill sta_dict.
-    for mu in stmuap.keys():
+    # ST MUAPS function to run in parallel
+    def parallel(mu):
         # Loop the matrix columns
         sorted_rawemg_st = {}
         for col in sorted_rawemg.keys():
@@ -501,7 +527,26 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
 
             sorted_rawemg_st[col] = row_dict
 
-        stmuap[mu] = sorted_rawemg_st
+        # Add a reference to the MU number to sort the values returned by
+        # parallel processing
+        sorted_rawemg_st["munumber"] = mu
+
+        return sorted_rawemg_st
+
+    # Start parallel execution
+    # Meausere running time
+    t0 = time.time()
+
+    res = Parallel(n_jobs=1)(delayed(parallel)(mu) for mu in stmuap.keys())
+
+    t1 = time.time()
+    print(f"\nTime of st muaps parallel processing: {round(t1-t0, 2)} Sec\n")
+
+    # Sort output of the parallel processing according to MU number
+    for i in res:
+        mu = i["munumber"]
+        del i["munumber"]
+        stmuap[mu] = i
 
     return stmuap
 
@@ -583,7 +628,9 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     no_nan_sta2 = df2.dropna(axis=1, inplace=False)
 
     # Compute 2dxcorr to identify a common lag/delay
-    normxcorr_df, normxcorr_max = norm_twod_xcorr(no_nan_sta1, no_nan_sta2, mode="same")
+    normxcorr_df, normxcorr_max = norm_twod_xcorr(
+        no_nan_sta1, no_nan_sta2, mode="same"
+    )
 
     # Detect the time leads or lags from 2dxcorr
     corr_lags = signal.correlation_lags(
@@ -630,6 +677,11 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
 
 
 # TODO_NEXT_ update matrixcode and orientation here and in otbelectrodes
+
+# This function exploits parallel processing:
+#   - sta: calls the emg.sta function which is executed in parallel
+#   - align and xcorr are processed in parallel
+#   - plotting is processed in parallel
 def tracking(
     emgfile1,
     emgfile2,
@@ -641,7 +693,7 @@ def tracking(
     exclude_belowthreshold=True,
     filter=True,
     show=False,
-):  # TODO check tracking function implementation and performance overall
+):
     """
     Track MUs across two different files.
 
@@ -664,7 +716,7 @@ def tracking(
     threshold : float, default 0.8
         The 2-dimensional cross-correlation minimum value
         to consider two MUs to be the same. Ranges 0-1.
-    matrixcode : str {"GR08MM1305", "GR04MM1305"}, default "GR08MM1305"
+    matrixcode : str {"GR08MM1305", "GR04MM1305", "GR10MM0808"}, default "GR08MM1305"
         The code of the matrix used.
     orientation : int {0, 180}, default 180
         Orientation in degree of the matrix (same as in OTBiolab).
@@ -683,19 +735,27 @@ def tracking(
         The results of the tracking including the MU from file 1,
         MU from file 2 and the normalised cross-correlation value (XCC).
 
+    Warns
+    -----
+    UserWarning
+        If the number of plots to show exceeds that of available cores.
+    
     See also
     --------
     sta : computes the STA of every MUs.
-    norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of two MUS.
-    remove_duplicates_between : remove duplicated MUs across two different files based on STA.
+    norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
+        two MUS.
+    remove_duplicates_between : remove duplicated MUs across two different
+        files based on STA.
 
     Notes
     -----
-    Parallel processing can improve performances by 5-10 times compared to serial
-    processing. In this function, parallel processing has been implemented for the tasks
-    involving 2-dimensional cross-correlation but not yet for sta and plotting that still
-    constitute a bottlneck. Parallel processing of these features will be implemented
-    in the next releases.
+    Parallel processing can improve performances by 5-10 times compared to
+    serial processing. In this function, parallel processing has been
+    implemented for the tasks involving 2-dimensional cross-correlation but
+    not yet for sta and plotting that still constitute a bottlneck.
+    Parallel processing of these features will be implemented in the next
+    releases.
 
     Examples
     --------
@@ -732,14 +792,15 @@ def tracking(
     """
 
     # Get the STAs
-    emgfile1_sorted = sort_rawemg(emgfile1, code=matrixcode, orientation=orientation)
-    t0 = time.time()
+    emgfile1_sorted = sort_rawemg(
+        emgfile1, code=matrixcode, orientation=orientation
+    )
     sta_emgfile1 = sta(
         emgfile1, emgfile1_sorted, firings=firings, timewindow=timewindow * 2
     )
-    t1 = time.time()
-    print(f"sta time: {t1-t0}")  # TODO remove this after improving performance
-    emgfile2_sorted = sort_rawemg(emgfile2, code=matrixcode, orientation=orientation)
+    emgfile2_sorted = sort_rawemg(
+        emgfile2, code=matrixcode, orientation=orientation
+    )
     sta_emgfile2 = sta(
         emgfile2, emgfile2_sorted, firings=firings, timewindow=timewindow * 2
     )
@@ -753,7 +814,9 @@ def tracking(
         for mu_file2 in range(emgfile2["NUMBER_OF_MUS"]):
             # Firs, align the STAs
             aligned_sta1, aligned_sta2 = align_by_xcorr(
-                sta_emgfile1[mu_file1], sta_emgfile2[mu_file2], finalduration=0.5
+                sta_emgfile1[mu_file1],
+                sta_emgfile2[mu_file2],
+                finalduration=0.5
             )
 
             # Second, compute 2d cross-correlation
@@ -761,7 +824,9 @@ def tracking(
             df1.dropna(axis=1, inplace=True)
             df2 = unpack_sta(aligned_sta2)
             df2.dropna(axis=1, inplace=True)
-            normxcorr_df, normxcorr_max = norm_twod_xcorr(df1, df2, mode="full")
+            normxcorr_df, normxcorr_max = norm_twod_xcorr(
+                df1, df2, mode="full"
+            )
 
             # Third, fill the tracking_res
             if exclude_belowthreshold is False:
@@ -799,7 +864,9 @@ def tracking(
     # Filter the results
     if filter:
         # Sort file by MUs in file 1 and XCC to have first the highest XCC
-        sorted_res = tracking_res.sort_values(by=["MU_file1", "XCC"], ascending=False)
+        sorted_res = tracking_res.sort_values(
+            by=["MU_file1", "XCC"], ascending=False
+        )
         # Get unique MUs from file 1
         unique = sorted_res["MU_file1"].unique()
 
@@ -812,7 +879,9 @@ def tracking(
             res_unique.loc[pos, :] = this_res.iloc[0, :]
 
         # Now repeat the task with MUs from file 2
-        sorted_res = res_unique.sort_values(by=["MU_file2", "XCC"], ascending=False)
+        sorted_res = res_unique.sort_values(
+            by=["MU_file2", "XCC"], ascending=False
+        )
         unique = sorted_res["MU_file2"].unique()
         res_unique = pd.DataFrame(columns=sorted_res.columns)
         for pos, mu2 in enumerate(unique):
@@ -831,9 +900,8 @@ def tracking(
     pd.reset_option("display.max_rows")
 
     # Plot the MUs pairs
-    if show:  # TODO improve performance
-        t0 = time.time()
-        for ind in tracking_res.index:
+    if show:
+        def parallel(ind): # Function for the parallel execution of plotting
             if tracking_res["XCC"].loc[ind] >= threshold:
                 # Align STA
                 aligned_sta1, aligned_sta2 = align_by_xcorr(
@@ -841,22 +909,27 @@ def tracking(
                     sta_emgfile2[tracking_res["MU_file2"].loc[ind]],
                     finalduration=0.5,
                 )
-
                 title = "MUAPs from MU '{}' in file 1 and MU '{}' in file 2, XCC = {}".format(
                     tracking_res["MU_file1"].loc[ind],
                     tracking_res["MU_file2"].loc[ind],
                     round(tracking_res["XCC"].loc[ind], 2),
                 )
                 plot_muaps(
-                    [aligned_sta1, aligned_sta2], title=title, showimmediately=False
+                    sta_dict=[aligned_sta1, aligned_sta2],
+                    title=title,
+                    showimmediately=False
                 )
 
-        t1 = time.time()
-        print(
-            f"\nTime of plotting: {round(t1-t0, 2)} Sec. Will be improved in the next releases\n"
-        )
+            plt.show()
 
-        plt.show()
+        # Check that the number of plots does not exceed the number of cores
+        num_cores = os.cpu_count()
+        if len(tracking_res.index) > num_cores:
+            # If yes, raise a warning
+            warnings.warn("\n\nThere are more plots to show than available cores\n")
+
+        # Parallel execution of plotting
+        Parallel(n_jobs=-1)(delayed(parallel)(ind) for ind in tracking_res.index)
 
     return tracking_res
 
@@ -896,7 +969,7 @@ def remove_duplicates_between(
     threshold : float, default 0.9
         The 2-dimensional cross-correlation minimum value
         to consider two MUs to be the same. Ranges 0-1.
-    matrixcode : str {"GR08MM1305", "GR04MM1305"}, default "GR08MM1305"
+    matrixcode : str {"GR08MM1305", "GR04MM1305", "GR10MM0808"}, default "GR08MM1305"
         The code of the matrix used.
     orientation : int {0, 180}, default 180
         Orientation in degree of the matrix (same as in OTBiolab).
@@ -1002,3 +1075,5 @@ def remove_duplicates_between(
 
     else:
         pass  # TODO_NEXT_ implement with SIL as with PNR
+
+# TODO_NEXT_ try if replacing at/iat with loc/iloc can improve performance.
