@@ -1042,7 +1042,7 @@ def plot_muap(
     stmuap : dict
         dict containing a dict of ST MUAPs (pd.DataFrame) for every MUs.
     munumber : int
-        The number of MU to plot.
+        The number of the MU to plot.
     column : str
         The matrix columns.
         Options are usyally "col0", "col1", "col2", ..., last column.

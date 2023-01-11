@@ -14,7 +14,9 @@ Description
     should not be exposed to the final user.
 
     Functions should be exposed in the __init__ file as:
-        from openhdemg.openfiles import emg_from_otb, emg_from_demuse, refsig_from_otb, save_json_emgfile, emg_from_json, askopenfile, asksavefile.
+        from openhdemg.openfiles import emg_from_otb, emg_from_demuse,
+        refsig_from_otb, emg_from_customcsv, save_json_emgfile,
+        emg_from_json, askopenfile, asksavefile.
 
 Function's scope
 ----------------
@@ -67,6 +69,8 @@ from tkinter import *
 from tkinter import filedialog
 import json
 import gzip
+import warnings
+import math
 
 
 # ---------------------------------------------------------------------
@@ -114,7 +118,7 @@ def oned_mat_to_pd(variable_name, mat_file, transpose_=False):
         return mat
 
     else:
-        print(
+        warnings.warn(
             "\nVariable {} was not found in the mat file, check the spelling against the dict_keys\n".format(
                 variable_name
             )
@@ -158,7 +162,7 @@ def twod_mat_to_pd(variable_name, mat_file, transpose_=True):
         return mat
 
     else:
-        print(
+        warnings.warn(
             "\nVariable {} was not found in the mat file, check the spelling against the dict_keys\n".format(
                 variable_name
             )
@@ -200,7 +204,7 @@ def threed_mat_to_list(variable_name, mat_file, transpose_=False):
         return mat
 
     else:
-        print(
+        warnings.warn(
             "\nVariable {} was not found in the mat file, check the spelling against the dict_keys\n".format(
                 variable_name
             )
@@ -292,7 +296,7 @@ def raw_sig_from_demuse(variable_name, mat_file, transpose_=False):
         return mat
 
     else:
-        print(
+        warnings.warn(
             "\nVariable {} was not found in the mat file, check the spelling against the dict_keys\n".format(
                 variable_name
             )
@@ -466,14 +470,14 @@ def get_otb_refsignal(df, refsig):
                 # Verify that there is no value above 100% since the
                 # REF_SIGNAL is expected to be expressed as % of the MViF
                 if max(REF_SIGNAL_SUBSAMPLED[0]) > 100:
-                    print(
+                    warnings.warn(
                         "\nALERT! Ref signal grater than 100, did you use values normalised to the MViF?\n"
                     )
 
                 return REF_SIGNAL_SUBSAMPLED
 
             else:
-                print(
+                warnings.warn(
                     "\nReference signal not found, it might be necessary for some analysis\n"
                 )
 
@@ -489,21 +493,21 @@ def get_otb_refsignal(df, refsig):
                 # Verify that there is no value above 100% since the
                 # REF_SIGNAL is expected to be expressed as % of the MViF
                 if max(REF_SIGNAL_FULLSAMPLED[0]) > 100:
-                    print(
+                    warnings.warn(
                         "\nALERT! Ref signal grater than 100, did you use values normalised to the MViF?\n"
                     )
 
                 return REF_SIGNAL_FULLSAMPLED
 
             else:
-                print(
+                warnings.warn(
                     "\nReference signal not found, it might be necessary for some analysis\n"
                 )
 
                 return np.nan
 
     else:
-        print("\nNot searched for reference signal, it might be necessary for some analysis\n")
+        warnings.warn("\nNot searched for reference signal, it might be necessary for some analysis\n")
 
         return np.nan
 
@@ -866,6 +870,106 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
         }
 
         return resdict
+
+
+# ---------------------------------------------------------------------
+# Functions to open custom CSV documents.
+def emg_from_customcsv(
+    filepath,
+    ref_signal="REF_SIGNAL",
+    raw_signal="RAW_SIGNAL",
+    ipts="IPTS",
+    mupulses="MUPULSES",
+    binary_mus_firing="BINARY_MUS_FIRING",
+    fsamp=2048,
+    ied=8,
+):# TODO check SOURCE in other functions execution, problem with SIL/PNR and electrodes sorting => add "custom" source to the checks
+    # TODO check variables not found, assign nan or df of nan?
+    # TODO we should calculate SIL and PNR here for compatibility
+    
+    # Load the csv
+    csv = pd.read_csv(filepath)
+
+    # Get REF_SIGNAL
+    REF_SIGNAL = csv.filter(regex = ref_signal, axis=1)
+    if not REF_SIGNAL.empty:
+        REF_SIGNAL.columns = [i for i in range(len(REF_SIGNAL.columns))]
+    else:
+        warnings.warn(
+            "\nref_signal not found, it might be necessary for some analysis\n"
+        )
+        REF_SIGNAL = np.nan
+
+    # Get RAW_SIGNAL
+    RAW_SIGNAL = csv.filter(regex = raw_signal, axis=1)
+    if not RAW_SIGNAL.empty:
+        RAW_SIGNAL.columns = [i for i in range(len(RAW_SIGNAL.columns))]
+    else:
+        warnings.warn(
+            "\nraw_signal not found, it might be necessary for some analysis\n"
+        )
+        RAW_SIGNAL = np.nan
+    
+    # Get IPTS
+    IPTS = csv.filter(regex = ipts, axis=1)
+    if not IPTS.empty:
+        IPTS.columns = [i for i in range(len(IPTS.columns))]
+    else:
+        warnings.warn(
+            "\nipts not found, it might be necessary for some analysis\n"
+        )
+        IPTS = np.nan
+    
+    # Get MUPULSES
+    df = csv.filter(regex = mupulses, axis=1)
+    if not df.empty:
+        MUPULSES = []
+        for col in df.columns:
+            toappend = df[col].dropna().to_numpy(dtype=int)
+            MUPULSES.append(toappend)
+    else:
+        MUPULSES = np.nan
+    
+    # Get BINARY_MUS_FIRING
+    BINARY_MUS_FIRING = csv.filter(regex = binary_mus_firing, axis=1)
+    if not BINARY_MUS_FIRING.empty:
+        BINARY_MUS_FIRING.columns = [i for i in range(len(BINARY_MUS_FIRING.columns))]
+    else:
+        BINARY_MUS_FIRING = np.nan
+    
+    # Get EMG_LENGTH and NUMBER_OF_MUS
+    EMG_LENGTH, NUMBER_OF_MUS = IPTS.shape
+    
+    # Use this to know how to sort the matrix
+    SOURCE = "custom" # TODO
+
+    # If one of BINARY_MUS_FIRING or MUPULSES is not present,
+    # calculate them from each other
+    # TODO
+    if math.isnan(BINARY_MUS_FIRING) and not math.isnan(MUPULSES):
+        pass
+    elif math.isnan(MUPULSES) and not math.isnan(BINARY_MUS_FIRING):
+        pass
+    else:
+        warnings.warn(
+            "\nIt was not possible to calculate binary_mus_firing and mupulses since both are absent\n"
+        )
+
+    resdict = {
+            "SOURCE": SOURCE,
+            "RAW_SIGNAL": RAW_SIGNAL,
+            "REF_SIGNAL": REF_SIGNAL,
+            "SIL": 4,# TODO
+            "IPTS": IPTS,
+            "MUPULSES": MUPULSES,
+            "FSAMP": fsamp,
+            "IED": ied,
+            "EMG_LENGTH": EMG_LENGTH,
+            "NUMBER_OF_MUS": NUMBER_OF_MUS,
+            "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
+        }
+
+    return resdict
 
 
 # ---------------------------------------------------------------------

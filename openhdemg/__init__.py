@@ -13,6 +13,7 @@ from openhdemg.openfiles import (
     emg_from_otb,
     emg_from_demuse,
     refsig_from_otb,
+    emg_from_customcsv,
     save_json_emgfile,
     emg_from_json,
     askopenfile,

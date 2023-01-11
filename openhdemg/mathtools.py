@@ -7,6 +7,7 @@ import copy
 import pandas as pd
 from scipy import signal
 import numpy as np
+from scipy.spatial.distance import cdist
 
 
 def min_max_scaling(series_or_df):
@@ -157,3 +158,62 @@ def norm_twod_xcorr(df1, df2, mode="full"):
     normxcorr_max = normxcorr_df.max().max()
 
     return normxcorr_df, normxcorr_max
+
+
+def sil(emgfile, munumber): # TODO add refs for each function if necessary
+    """
+    Calculate the Silhouette score for a single MU.
+
+    The SIL is defined as the difference between the within-cluster sums of point-to-centroid distances and the
+    same measure calculated between clusters. The measure was normalized dividing by the maximum of the two values.
+    
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+    munumber : int
+        The number of the MU to plot.
+    
+    Returns
+    -------
+    sil : float
+        The SIL score.
+    
+    See also
+    --------
+    pnr : to calculate the Pulse to Noise ratio of a single MU.
+    """
+
+    # Extract source and peaks
+    source = emgfile["IPTS"][munumber].to_numpy()
+    peaks_idxs = emgfile["MUPULSES"][munumber]
+
+    # Create clusters
+    peak_cluster = source[peaks_idxs]
+    noise_cluster = np.delete(source, peaks_idxs)
+
+    # Create centroids for each cluster
+    peak_centroid = peak_cluster.mean()
+    noise_centroid = noise_cluster.mean()
+
+    # Calculate within-cluster sums of point-to-centroid distances using the
+    # squared Euclidean distance metric. It is defined as the sum of the
+    # squares of the differences between the corresponding elements of the two
+    # vectors.
+    intra_sums = cdist(
+        peak_cluster.reshape(-1, 1),
+        peak_centroid.reshape(-1, 1),
+        metric="sqeuclidean",
+    ).sum()
+
+    # Calculate between-cluster sums of point-to-centroid distances
+    inter_sums = cdist(
+        peak_cluster.reshape(-1, 1),
+        noise_centroid.reshape(-1, 1),
+        metric="sqeuclidean",
+    ).sum()
+
+    # Calculate silhouette coefficient
+    sil = (inter_sums - intra_sums) / max(intra_sums, inter_sums)
+
+    return sil
