@@ -19,15 +19,18 @@ def showgoodlayout(tight_layout=True, despined=False):
     ----------
     tight_layout : bool, default True
         If true (default), plt.tight_layout() is applied to the figure.
-    despined : bool or str, default False
-        False: left and bottom is not despined (standard plotting)
-        True: all the sides are despined
-        "2yaxes": only the top is despined. This is used for y axes both on the right and left side at the same time
+    despined : bool or str {"2yaxes"}, default False
+        False: left and bottom is not despined (standard plotting).
+        True: all the sides are despined.
+        ``2yaxes``
+            Only the top is despined. 
+            This is used for y axes both on the right and left side at the
+            same time.
     """
 
     # Check the input
     if not isinstance(despined, (bool, str)):
-        raise Exception(
+        raise TypeError(
             f"despined can be True, False of 2yaxes. {despined} was passed instead"
         )
 
@@ -38,7 +41,7 @@ def showgoodlayout(tight_layout=True, despined=False):
     elif despined == "2yaxes":
         sns.despine(top=True, bottom=False, left=False, right=False)
     else:
-        raise Exception(
+        raise ValueError(
             f"despined can be True, False or 2yaxes. {despined} was passed instead"
         )
 
@@ -58,7 +61,7 @@ def plot_emgsig(
     """
     Pot the RAW_SIGNAL. Single or multiple channels.
 
-    Up to 12 channels can be easily observed togheter (but more can be plotted of course).
+    Up to 12 channels can be easily observed togheter (but more can be plotted).
 
     Parameters
     ----------
@@ -66,21 +69,55 @@ def plot_emgsig(
         The dictionary containing the emgfile.
     channels : int or list
         The channel (int) or channels (list of int) to plot.
-        The list can be passed as a manually-written list or with: channels=[*range(0, 12)],
-        We need the "*" operator to unpack the results of range and build a list.
-        channels is expected to be with base 0 (i.e., the first channel in the file is the number 0).
+        The list can be passed as a manually-written list or with:
+        channels=[*range(0, 12)].
+        We need the "*" operator to unpack the results of range into a list.
+        channels is expected to be with base 0 (i.e., the first channel
+        in the file is the number 0).
     addrefsig : bool, default True
-        If True, the REF_SIGNAL is plotted in front of the signal with a separated y-axes.
+        If True, the REF_SIGNAL is plotted in front of the signal with a
+        separated y-axes.
     timeinseconds : bool, default True
-        Whether to show the time on the x-axes in seconds (True) or in samples (False).
+        Whether to show the time on the x-axes in seconds (True)
+        or in samples (False).
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the user.
+        If True (default), plt.show() is called and the figure showed to the
+        user.
         It is useful to set it to False when calling the function from the GUI.
     tight_layout : bool, default True
-        If True (default), the plt.tight_layout() is called and the figure's layout is improved.
+        If True (default), the plt.tight_layout() is called and the figure's
+        layout is improved.
         It is useful to set it to False when calling the function from the GUI.
+
+    Returns
+    -------
+    fig : pyplot `~.figure.Figure`
+
+    See also
+    --------
+    plot_differentials : plot the differential derivation of the RAW_SIGNAL by
+        matrix column.
+
+    Examples
+    --------
+    Plot channels 0 to 12 and overlay the reference signal.
+
+    .. plot::
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
+    >>> emg.plot_emgsig(
+    ...     emgfile=emgfile,
+    ...     channels=[*range(0,13)],
+    ...     addrefsig=True,
+    ...     timeinseconds=True,
+    ...     figsize=[20, 15],
+    ... )
     """
 
     # Check to have the RAW_SIGNAL in a pandas dataframe
@@ -124,7 +161,7 @@ def plot_emgsig(
             ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
         else:
-            raise Exception(
+            raise TypeError(
                 "While calling the plot_emgsig function, you should pass an integer, a list or 'all' to channels"
             )
 
@@ -143,8 +180,10 @@ def plot_emgsig(
         if showimmediately:
             plt.show()
 
+        return fig
+
     else:
-        raise Exception(
+        raise TypeError(
             "RAW_SIGNAL is probably absent or it is not contained in a dataframe"
         )
 
@@ -170,22 +209,61 @@ def plot_differentials(
     emgfile : dict
         The dictionary containing the original emgfile.
     differential : dict
-        The dictionary containing the differential derivation of the RAW_SIGNAL.
-    column : str, default "col0"
+        The dictionary containing the differential derivation of the
+        RAW_SIGNAL.
+    column : str {"col0", "col1", "col2", "col3", "col4"}, default "col0"
         The matrix column to plot.
         Options are usyally "col0", "col1", "col2", "col3", "col4".
+        but might change based on the matrix used.
     addrefsig : bool, default True
-        If True, the REF_SIGNAL is plotted in front of the signal with a separated y-axes.
+        If True, the REF_SIGNAL is plotted in front of the signal with a
+        separated y-axes.
     timeinseconds : bool, default True
-        Whether to show the time on the x-axes in seconds (True) or in samples (False).
+        Whether to show the time on the x-axes in seconds (True)
+        or in samples (False).
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the user.
+        If True (default), plt.show() is called and the figure showed to the
+        user.
         It is useful to set it to False when calling the function from the GUI.
     tight_layout : bool, default True
-        If True (default), the plt.tight_layout() is called and the figure's layout is improved.
+        If True (default), the plt.tight_layout() is called and the figure's
+        layout is improved.
         It is useful to set it to False when calling the function from the GUI.
+
+    Returns
+    -------
+    fig : pyplot `~.figure.Figure`
+
+    See also
+    --------
+    diff : calculate single differential of RAW_SIGNAL on matrix rows.
+    double_diff : calculate double differential of RAW_SIGNAL on matrix rows.
+    plot_emgsig : pot the RAW_SIGNAL. Single or multiple channels.
+
+    Examples
+    --------
+    Plot plot the differential derivation of the first matrix column (col0).
+
+    .. plot::
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
+    >>> sorted_rawemg = emg.sort_rawemg(emgfile=emgfile, code="GR08MM1305", orientation=180)
+    >>> sd=emg.diff(sorted_rawemg=sorted_rawemg)
+    >>> emg.plot_differentials(
+    ...     emgfile=emgfile,
+    ...     differential=sd,
+    ...     column="col0",
+    ...     addrefsig=False,
+    ...     timeinseconds=True,
+    ...     figsize=[20, 15],
+    ...     showimmediately=True,
+    ... )
     """
 
     # Check to have the RAW_SIGNAL in a pandas dataframe
@@ -233,15 +311,18 @@ def plot_differentials(
         showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
         if showimmediately:
             plt.show()
+        
+        return fig
 
     else:
-        raise Exception(
+        raise TypeError(
             "RAW_SIGNAL is probably absent or it is not contained in a dataframe"
         )
 
 
 def plot_refsig(
     emgfile,
+    ylabel="% MViF",
     timeinseconds=True,
     figsize=[20, 15],
     showimmediately=True,
@@ -257,16 +338,49 @@ def plot_refsig(
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
+    ylabel : str, default "% MViF"
+        The unit of measure to show on the Y axis.
     timeinseconds : bool, default True
-        Whether to show the time on the x-axes in seconds (True) or in samples (False).
+        Whether to show the time on the x-axes in seconds (True)
+        or in samples (False).
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the user.
+        If True (default), plt.show() is called and the figure showed to the
+        user.
         It is useful to set it to False when calling the function from the GUI.
     tight_layout : bool, default True
-        If True (default), the plt.tight_layout() is called and the figure's layout is improved.
+        If True (default), the plt.tight_layout() is called and the figure's
+        layout is improved.
         It is useful to set it to False when calling the function from the GUI.
+
+    Returns
+    -------
+    fig : pyplot `~.figure.Figure`
+
+    Examples
+    --------
+    Plot the reference signal.
+
+    .. plot::
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
+    >>> emg.plot_refsig(emgfile=emgfile)
+
+    Change Y axis label and show time in samples.
+
+    .. plot::
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
+    >>> emg.plot_refsig(emgfile=emgfile, ylabel="Custom unit e.g., N or kg", timeinseconds=False)
     """
 
     # Check to have the REF_SIGNAL in a pandas dataframe
@@ -283,18 +397,17 @@ def plot_refsig(
             "Reference signal", figsize=(figsize[0] / 2.54, figsize[1] / 2.54)
         )
         ax = sns.lineplot(x=x_axis, y=refsig[0])
-        ax.set_ylabel("% MViF")
+        ax.set_ylabel(ylabel)
         ax.set_xlabel("Time (s)" if timeinseconds else "Samples")
 
         showgoodlayout(tight_layout)
         if showimmediately:
             plt.show()
 
-        # TODO Needed for the GUI? To check the other plot functions and add to the returned
         return fig
 
     else:
-        raise Exception(
+        raise TypeError(
             "REF_SIGNAL is probably absent or it is not contained in a dataframe"
         )
 
@@ -323,17 +436,51 @@ def plot_mupulses(
     order : bool, default False
         If True, MUs are sorted and plotted based on the order of recruitment.
     addrefsig : bool, default True
-        If True, the REF_SIGNAL is plotted in front of the MUs pulses with a separated y-axes.
+        If True, the REF_SIGNAL is plotted in front of the MUs pulses with a
+        separated y-axes.
     timeinseconds : bool, default True
-        Whether to show the time on the x-axes in seconds (True) or in samples (False).
+        Whether to show the time on the x-axes in seconds (True)
+        or in samples (False).
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the user.
+        If True (default), plt.show() is called and the figure showed to the
+        user.
         It is useful to set it to False when calling the function from the GUI.
     tight_layout : bool, default True
-        If True (default), the plt.tight_layout() is called and the figure's layout is improved.
+        If True (default), the plt.tight_layout() is called and the figure's
+        layout is improved.
         It is useful to set it to False when calling the function from the GUI.
+
+    Returns
+    -------
+    fig : pyplot `~.figure.Figure`
+
+    See also
+    --------
+    plot_ipts : plot the impulse train per second (IPTS). Single or multiple MUs.
+    plot_idr : plot the instantaneous discharge rate.
+
+    Examples
+    --------
+    Plot MUs pulses based on recruitment order and overlay the reference signal.
+
+    .. plot::
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
+    >>> emg.plot_mupulses(
+    ...     emgfile=emgfile,
+    ...     linewidths=0.5,
+    ...     order=True,
+    ...     addrefsig=True,
+    ...     timeinseconds=True,
+    ...     figsize=[20, 15],
+    ...     showimmediately=True,
+    ... )
     """
 
     # Check to have the correct input
@@ -341,13 +488,13 @@ def plot_mupulses(
         # Create a deepcopy to modify mupulses without affecting the original file
         mupulses = copy.deepcopy(emgfile["MUPULSES"])
     else:
-        raise Exception(
+        raise TypeError(
             "MUPULSES is probably absent or it is not contained in a np.array"
         )
 
     if addrefsig:
         if not isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
-            raise Exception(
+            raise TypeError(
                 "REF_SIGNAL is probably absent or it is not contained in a dataframe"
             )
 
@@ -401,6 +548,8 @@ def plot_mupulses(
     showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
     if showimmediately:
         plt.show()
+    
+    return fig
 
 
 def plot_ipts(
@@ -419,26 +568,81 @@ def plot_ipts(
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    munumber : str, int or list, default "all"
-        By default, IPTS of all the MUs is plotted.
-        Otherwise, a single MU (int) or multiple MUs (list of int) can be specified.
-        The list can be passed as a manually-written list or with: munumber=[*range(0, 12)],
-        We need the "*" operator to unpack the results of range and build a list.
-        munumber is expected to be with base 0 (i.e., the first MU in the file is the number 0).
+    munumber : str {"all"}, int or list, default "all"
+        ``all``
+            IPTS of all the MUs is plotted.
+        Otherwise, a single MU (int) or multiple MUs (list of int) can be
+        specified.
+        The list can be passed as a manually-written list or with:
+        munumber=[*range(0, 12)].
+        We need the "*" operator to unpack the results of range into a list.
+        munumber is expected to be with base 0 (i.e., the first MU in the file
+        is the number 0).
     timeinseconds : bool, default True
-        Whether to show the time on the x-axes in seconds (True) or in samples (False).
+        Whether to show the time on the x-axes in seconds (True)
+        or in samples (False).
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the user.
+        If True (default), plt.show() is called and the figure showed to the
+        user.
         It is useful to set it to False when calling the function from the GUI.
     tight_layout : bool, default True
-        If True (default), the plt.tight_layout() is called and the figure's layout is improved.
+        If True (default), the plt.tight_layout() is called and the figure's
+        layout is improved.
         It is useful to set it to False when calling the function from the GUI.
+
+    Returns
+    -------
+    fig : pyplot `~.figure.Figure`
+
+    See also
+    --------
+    plot_mupulses : plot the binary representation of the firings.
+    plot_idr : plot the instantaneous discharge rate.
 
     Notes
     -----
-    munumber = "all" corresponds to munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
+    munumber = "all" corresponds to
+    munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
+
+    Examples
+    --------
+    Plot IPTS of all the MUs and overlay the reference signal.
+
+    .. plot::
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
+    >>> emg.plot_ipts(
+    ...     emgfile=emgfile,
+    ...     munumber="all",
+    ...     addrefsig=True,
+    ...     timeinseconds=True,
+    ...     figsize=[20, 15],
+    ...     showimmediately=True,
+    ... )
+
+    Plot IPTS of two MUs.
+
+    .. plot::
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
+    >>> emg.plot_ipts(
+    ...     emgfile=emgfile,
+    ...     munumber=[1, 3],
+    ...     addrefsig=False,
+    ...     timeinseconds=True,
+    ...     figsize=[20, 15],
+    ...     showimmediately=True,
+    ... )
     """
 
     # Check if all the MUs have to be plotted
@@ -470,12 +674,12 @@ def plot_ipts(
             ax1.set_ylabel(
                 "MU {}".format(munumber)
             )  # Useful because if the MU is empty it won't show the channel number
-            ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
         elif isinstance(munumber, list):
             # Plot all the MUs.
             for count, thisMU in enumerate(munumber):
-                y_axis = ipts[thisMU] + count
+                norm_ipts = min_max_scaling(ipts[thisMU])
+                y_axis = norm_ipts + count
                 sns.lineplot(x=x_axis, y=y_axis, ax=ax1)
 
                 # Ensure correct and complete ticks on the left y axis
@@ -484,9 +688,11 @@ def plot_ipts(
                 ax1.set_ylabel("Motor units")
 
         else:
-            raise Exception(
+            raise TypeError(
                 "While calling the plot_ipts function, you should pass an integer, a list or 'all' to munumber"
             )
+
+        ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
         if addrefsig:
             ax2 = ax1.twinx()
@@ -502,9 +708,11 @@ def plot_ipts(
         showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
         if showimmediately:
             plt.show()
+        
+        return fig
 
     else:
-        raise Exception("IPTS is probably absent or it is not contained in a dataframe")
+        raise TypeError("IPTS is probably absent or it is not contained in a dataframe")
 
 
 def plot_idr(
@@ -517,34 +725,90 @@ def plot_idr(
     tight_layout=True,
 ):
     """
-    This function plots the IDR.
+    Plot the IDR. Single or multiple MUs.
 
     Parameters
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
     munumber : str, int or list, default "all"
-        By default, IDR of all the MUs is plotted.
-        Otherwise, a single MU (int) or multiple MUs (list of int) can be specified.
-        The list can be passed as a manually-written list or with: munumber=[*range(0, 12)],
-        We need the "*" operator to unpack the results of range and build a list.
-        munumber is expected to be with base 0 (i.e., the first MU in the file is the number 0).
+        ``all"
+            IDR of all the MUs is plotted.
+        Otherwise, a single MU (int) or multiple MUs (list of int) can be
+        specified.
+        The list can be passed as a manually-written list or with:
+        munumber=[*range(0, 12)].
+        We need the "*" operator to unpack the results of range into a list.
+        munumber is expected to be with base 0 (i.e., the first MU in the file
+        is the number 0).
     addrefsig : bool, default True
-        If True, the REF_SIGNAL is plotted in front of the MUs IDR with a separated y-axes.
+        If True, the REF_SIGNAL is plotted in front of the MUs IDR with a
+        separated y-axes.
     timeinseconds : bool, default True
-        Whether to show the time on the x-axes in seconds (True) or in samples (False).
+        Whether to show the time on the x-axes in seconds (True)
+        or in samples (False).
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the user.
+        If True (default), plt.show() is called and the figure showed to the
+        user.
         It is useful to set it to False when calling the function from the GUI.
     tight_layout : bool, default True
-        If True (default), the plt.tight_layout() is called and the figure's layout is improved.
+        If True (default), the plt.tight_layout() is called and the figure's
+        layout is improved.
         It is useful to set it to False when calling the function from the GUI.
+
+    Returns
+    -------
+    fig : pyplot `~.figure.Figure`
+
+    See also
+    --------
+    plot_mupulses : plot the binary representation of the firings.
+    plot_ipts : plot the impulse train per second (IPTS).
 
     Notes
     -----
-    munumber = "all" corresponds to munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
+    munumber = "all" corresponds to
+    munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
+
+    Examples
+    --------
+    Plot IDR of all the MUs and overlay the reference signal.
+
+    .. plot::
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
+    >>> emg.plot_idr(
+    ...     emgfile=emgfile,
+    ...     munumber="all",
+    ...     addrefsig=True,
+    ...     timeinseconds=True,
+    ...     figsize=[20, 15],
+    ...     showimmediately=True,
+    ... )
+
+    Plot IDR of two MUs.
+
+    .. plot::
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
+    >>> emg.plot_idr(
+    ...     emgfile=emgfile,
+    ...     munumber=[1, 3],
+    ...     addrefsig=False,
+    ...     timeinseconds=True,
+    ...     figsize=[20, 15],
+    ...     showimmediately=True,
+    ... )
     """
 
     # Compute the instantaneous discharge rate (IDR) from the MUPULSES and check the input
@@ -552,7 +816,7 @@ def plot_idr(
 
     if addrefsig:
         if not isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
-            raise Exception(
+            raise TypeError(
                 "REF_SIGNAL is probably absent or it is not contained in a dataframe"
             )
 
@@ -599,7 +863,7 @@ def plot_idr(
         ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
     else:
-        raise Exception(
+        raise TypeError(
             "While calling the plot_idr function, you should pass an integer, a list or 'all' to munumber"
         )
 
@@ -621,6 +885,7 @@ def plot_idr(
     return fig
 
 
+# TODO_NEXT_kwargs for flexible plotting design (all the plots)
 def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediately=True):
     """
     Plot MUAPs obtained from STA from one or multiple MUs.
@@ -628,8 +893,8 @@ def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediate
     Parameters
     ----------
     sta_dict : dict or list
-        dict containing STA of the specified MU or a list of dicts containing STA
-        of specified MUs.
+        dict containing STA of the specified MU or a list of dicts containing
+        STA of specified MUs.
         If a list is passed, different MUs are overlayed. This is useful for
         visualisation of MUAPs during tracking or duplicates removal.
     tile : str, default "MUAPs from STA"
@@ -637,19 +902,70 @@ def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediate
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the user.
+        If True (default), plt.show() is called and the figure showed to the
+        user.
         It is useful to set it to False when calling the function from the GUI.
 
-    Notes
-    -----
-    There is no limit to the number of MUs and STA files that can be overplotted.
-    ``Remember: the different STAs should be matched`` with same number of electrode,
-        processing (i.e., differential) and computed on the same timewindow.
+    Returns
+    -------
+    fig : pyplot `~.figure.Figure`
 
     See also
     --------
-    plot_muap : for overplotting all the STAs and the average STA of a single MU.
-    align_by_xcorr : for alignin the STAs of two different MUs before plotting them.
+    sta : computes the spike-triggered average (STA) of every MUs.
+    plot_muap : for overplotting all the STAs and the average STA of a MU.
+    align_by_xcorr : for alignin the STAs of two different MUs.
+
+    Notes
+    -----
+    There is no limit to the number of MUs and STA files that can be
+    overplotted.
+    ``Remember: the different STAs should be matched`` with same number of
+        electrode, processing (i.e., differential) and computed on the same
+        timewindow.
+
+    Examples
+    --------
+    Plot MUAPs of a single MU.
+
+    .. plot::
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
+    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
+    >>> sta = emg.sta(emgfile=emgfile, sorted_rawemg=sorted_rawemg, firings="all", timewindow=50)
+    >>> emg.plot_muaps(sta_dict=sta[1])
+
+    Plot single differential derivation MUAPs of a single MU.
+
+    .. plot::
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
+    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
+    >>> sorted_rawemg = emg.diff(sorted_rawemg=sorted_rawemg)
+    >>> sta = emg.sta(emgfile=emgfile, sorted_rawemg=sorted_rawemg, firings="all", timewindow=50)
+    >>> emg.plot_muaps(sta_dict=sta[1])
+
+    Plot single differential derivation MUAPs of two MUs from the same file.
+
+    .. plot::
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
+    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
+    >>> sorted_rawemg = emg.diff(sorted_rawemg=sorted_rawemg)
+    >>> sta = emg.sta(emgfile=emgfile, sorted_rawemg=sorted_rawemg, firings="all", timewindow=50)
+    >>> emg.plot_muaps(sta_dict=[sta[1], sta[2]])
     """
 
     if isinstance(sta_dict, dict):
@@ -694,9 +1010,11 @@ def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediate
         showgoodlayout(tight_layout=False, despined=True)
         if showimmediately:
             plt.show()
+        
+        return fig
 
     else:
-        raise Exception("sta_dict must be dict or list")
+        raise TypeError("sta_dict must be dict or list")
 
 
 def plot_muap(
@@ -724,9 +1042,10 @@ def plot_muap(
     stmuap : dict
         dict containing a dict of ST MUAPs (pd.DataFrame) for every MUs.
     munumber : int
-        The number of MU to plot.
-    column : str {"col0", col1", "col2", "col3", "col4"}
+        The number of the MU to plot.
+    column : str
         The matrix columns.
+        Options are usyally "col0", "col1", "col2", ..., last column.
     channel : int
         The channel of the matrix to plot.
         This can be the real channel number if channelprog=False (default),
@@ -736,42 +1055,132 @@ def plot_muap(
         Whether to use the real channel number or a progressive number
         (see channel).
     average : bool, default True 
-        Whether to plot also the MUAPs average obtained by spyke triggered average.
+        Whether to plot also the MUAPs average obtained by spike triggered
+        average.
     timeinseconds : bool, default True
-        Whether to show the time on the x-axes in seconds (True) or in samples (False).
+        Whether to show the time on the x-axes in seconds (True)
+        or in samples (False).
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the user.
+        If True (default), plt.show() is called and the figure showed to the
+        user.
         It is useful to set it to False when calling the function from the GUI.
     tight_layout : bool, default True
-        If True (default), the plt.tight_layout() is called and the figure's layout is improved.
+        If True (default), the plt.tight_layout() is called and the figure's
+        layout is improved.
         It is useful to set it to False when calling the function from the GUI.
-    
+
+    Returns
+    -------
+    fig : pyplot `~.figure.Figure`
+
     See also
     --------
     plot_muaps : Plot MUAPs obtained from STA from one or multiple MUs.
-    st_muap : Generate spike triggered MUAPs of every MUs (as input to this function).
+    st_muap : Generate spike triggered MUAPs of every MUs
+        (as input to this function).
+
+    Examples
+    --------
+    Plot all the consecutive MUAPs of a single MU.
+    In this case we are plotting the matrix channel 45 which is placed in
+    column 4 ("col3") as Python numbering is base 0.
+
+    .. plot::
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
+    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
+    >>> stmuap = emg.st_muap(emgfile=emgfile, sorted_rawemg=sorted_rawemg, timewindow=50)
+    >>> emg.plot_muap(
+    ...     emgfile=emgfile,
+    ...     stmuap=stmuap,
+    ...     munumber=1,
+    ...     column="col3",
+    ...     channel=45,
+    ...     channelprog=False,
+    ...     average=False,
+    ...     timeinseconds=True,
+    ...     figsize=[20, 15],
+    ...     showimmediately=True,
+    ... )
+
+    To avoid the problem of remebering which channel number is present in
+    which matrix column, we can set channelprog=True and locate the channel
+    with a value ranging from 0 to the length of each column.
+
+    .. plot::
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
+    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
+    >>> stmuap = emg.st_muap(emgfile=emgfile, sorted_rawemg=sorted_rawemg, timewindow=50)
+    >>> emg.plot_muap(
+    ...     emgfile=emgfile,
+    ...     stmuap=stmuap,
+    ...     munumber=1,
+    ...     column="col3",
+    ...     channel=5,
+    ...     channelprog=True,
+    ...     average=False,
+    ...     timeinseconds=True,
+    ...     figsize=[20, 15],
+    ...     showimmediately=True,
+    ... )
+
+    It is also possible to visualise the spike triggered average
+    of the MU with average=True.
+    In this example the single differential derivation is used.
+
+    .. plot::
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.emg_from_otb(
+    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
+    ...     ext_factor=8
+    ... )
+    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
+    >>> sorted_rawemg = emg.diff(sorted_rawemg=sorted_rawemg)
+    >>> stmuap = emg.st_muap(emgfile=emgfile, sorted_rawemg=sorted_rawemg, timewindow=50)
+    >>> emg.plot_muap(
+    ...     emgfile=emgfile,
+    ...     stmuap=stmuap,
+    ...     munumber=1,
+    ...     column="col2",
+    ...     channel=6,
+    ...     channelprog=True,
+    ...     average=True,
+    ...     timeinseconds=True,
+    ...     figsize=[20, 15],
+    ...     showimmediately=True,
+    ... )
     """
 
     # Check if munumber is within the number of MUs
     if munumber >= emgfile["NUMBER_OF_MUS"]:
-        raise Exception(
+        raise ValueError(
             "munumber exceeds the the number of MUs in the emgfile ({})".format(
                 emgfile["NUMBER_OF_MUS"]
             )
-        )#TODO Check if these exceptions are necessary also in other STA functions/plot
-    
+        )
+
     # Get the MUAPs to plot
     if channelprog:
         keys = list(stmuap[munumber][column].keys())
 
         # Check that the specified channel is within the matrix column range
-        if channel > len(keys):
-            raise Exception(
+        if channel >= len(keys):
+            raise ValueError(
                 "Channel exceeds the the length of the matrix column, verify the use of channelprog"
             )
-        
+
         my_muap = stmuap[munumber][column][keys[channel]]
         channelnumb = keys[channel]
 
@@ -780,9 +1189,9 @@ def plot_muap(
 
         # Check that the specified channel is within the matrix channels
         if not channel in keys:
-            raise Exception(
+            raise ValueError(
                 "Channel is not included in this matrix column, please check"
-            )#TODO Check if these exceptions are necessary also in other STA functions/plot
+            )
 
         my_muap = stmuap[munumber][column][channel]
         channelnumb = channel
@@ -816,3 +1225,5 @@ def plot_muap(
     showgoodlayout(tight_layout)
     if showimmediately:
         plt.show()
+
+    return fig

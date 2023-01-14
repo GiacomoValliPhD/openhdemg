@@ -1,7 +1,8 @@
 """
-This module contains all the functions that don't properly apply to the plot or analysis (of the MUs properties) category.
-However, these functions are necessary for the usability of the library and can be considered as "tools" necessary to
-operate with the HD-EMG recordings.
+This module contains all the functions that don't properly apply to the plot
+or analysis (of the MUs properties) category.
+However, these functions are necessary for the usability of the library and
+can be considered as "tools" necessary to operate with the HD-EMG recordings.
 """
 
 import copy
@@ -9,37 +10,50 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
+import warnings
 
 
 def showselect(emgfile, title="", nclic=2):
     """
     Select a part of the recording.
-    
-    The area can be selected (based on the REF_SIGNAL) with any letter or number in the keyboard, wrong
-    points can be removed by pressing the right mouse button. Once finished, press enter to continue.
+
+    The area can be selected (based on the REF_SIGNAL) with any letter or
+    number in the keyboard, wrong points can be removed by pressing the
+    right mouse button. Once finished, press enter to continue.
 
     Parameters
     ----------
     emgfile : dict
-        The dictionary containing the emgfile and in particular the REF_SIGNAL (which is used for the selection).
+        The dictionary containing the emgfile and in particular the REF_SIGNAL
+        (which is used for the selection).
     title : str
-        The title of the plot. It is optional but strongly recommended. It should describe the task to do.
+        The title of the plot. It is optional but strongly recommended.
+        It should describe the task to do.
     nclic: int, default 2
-        The number of clics to be collected. 1 and 4 clics can also be specified with nclic.
-    
+        The number of clics to be collected. 1 and 4 clics can also be
+        specified with nclic.
+
     Returns
     -------
     points : int
-        The selected points (sorted in ascending order).
+        The selected points (sorted in ascending order) based on nclic.
+
+    Raises
+    ------
+    ValueError
+        When the user clicked a wrong number of inputs in the GUI.
 
     Examples
     --------
-    Calling the function and collecting the results.
+    Load the EMG file and select the points.
 
-    start_point, end_point = showselect(emgfile, title="Select 2 points", nclic=2)
-    
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB_refsig")
+    >>> start_point, end_point = emg.showselect(emgfile, title="Select 2 points", nclic=2)
+    >>> start_point, end_point
+    16115 40473
     """
-  
+
     # Show the signal for the selection
     plt.figure(num="Fig_ginput")
     plt.plot(emgfile["REF_SIGNAL"][0])
@@ -50,11 +64,12 @@ def showselect(emgfile, title="", nclic=2):
 
     # Check if the user entered the correct number of clics
     if nclic != len(ginput_res):
-        raise Exception("Wrong number of inputs, read the title")
+        raise ValueError("Wrong number of inputs, read the title")
 
     # Act according to the number of clics
     if nclic == 2:
-        # Sort the input range. Used to resize the signal, select the steady-state, calculate MViF
+        # Sort the input range. Used to resize the signal,
+        # select the steady-state, calculate MViF
         if ginput_res[0][0] < ginput_res[1][0]:
             start_point = round(ginput_res[0][0])
             end_point = round(ginput_res[1][0])
@@ -93,15 +108,17 @@ def showselect(emgfile, title="", nclic=2):
 def resize_emgfile(emgfile, area=None):
     """
     Resize all the emgfile.
-    
-    This function can be useful to compute the various parameters only in the area of interest.
-    
+
+    This function can be useful to compute the various parameters only in the
+    area of interest.
+
     Parameters
     ----------
     emgfile : dict
         The dictionary containing the emgfile to resize.
     area : None or list, default None
-        The resizing area. If already known, it can be passed in samples, as a list (e.g., [120,2560]).
+        The resizing area. If already known, it can be passed in samples, as a
+        list (e.g., [120,2560]).
         If None, the user can select the area of interest manually.
 
     Returns
@@ -110,7 +127,7 @@ def resize_emgfile(emgfile, area=None):
         the new (resized) emgfile.
     start_, end_ : int
         the start and end of the selection (can be used for code automation).
-    
+
     Notes
     -----
     Suggested names for the returned objects: rs_emgfile, start_, end_
@@ -136,7 +153,7 @@ def resize_emgfile(emgfile, area=None):
                 "SOURCE" : SOURCE,
                 ==> "RAW_SIGNAL" : RAW_SIGNAL, 
                 ==> "REF_SIGNAL" : REF_SIGNAL, 
-                "PNR" : PNR, 
+                "PNR" : PNR or "SIL" : SIL
                 ==> "IPTS" : IPTS, 
                 ==> "MUPULSES" : MUPULSES, 
                 "FSAMP" : FSAMP, 
@@ -164,9 +181,10 @@ def compute_idr(emgfile):
     """
     Compute the IDR.
 
-    This function computes the instantaneous discharge rate (IDR) from the MUPULSES.
+    This function computes the instantaneous discharge rate (IDR) from the
+    MUPULSES.
     The IDR is very useful for plotting and visualisation of the MUs behaviour.
-    
+
     Parameters
     ----------
     emgfile : dict
@@ -177,10 +195,37 @@ def compute_idr(emgfile):
     idr : dict
         A dict containing a pd.DataFrame for each MU (keys are integers).
         Accessing the key, we have a pd.DataFrame containing:
-            mupulses: firing sample
-            diff_mupulses: delta between consecutive firing samples
-            timesec: delta between consecutive firing samples in seconds
-            idr: instantaneous discharge rate
+            mupulses: firing sample.
+            diff_mupulses: delta between consecutive firing samples.
+            timesec: delta between consecutive firing samples in seconds.
+            idr: instantaneous discharge rate.
+
+    See also
+    --------
+    compute_covsteady : compute the coefficient of variation of the
+    steady-state phase.
+
+    Examples
+    --------
+    Load the EMG file, compute IDR and access the results for the first MU.
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> idr = emg.compute_idr(emgfile=emgfile)
+    >>> munumber = 0
+    >>> idr[munumber]
+        mupulses  diff_mupulses    timesec       idr
+    0        9221            NaN   4.502441       NaN
+    1        9580          359.0   4.677734  5.704735
+    2        9973          393.0   4.869629  5.211196
+    3       10304          331.0   5.031250  6.187311
+    4       10617          313.0   5.184082  6.543131
+    ..        ...            ...        ...       ...
+    149     54521          395.0  26.621582  5.184810
+    150     54838          317.0  26.776367  6.460568
+    151     55417          579.0  27.059082  3.537133
+    152     55830          413.0  27.260742  4.958838
+    153     56203          373.0  27.442871  5.490617
     """
 
     # Compute the instantaneous discharge rate (IDR) from the MUPULSES
@@ -208,25 +253,9 @@ def compute_idr(emgfile):
                 columns={0: "mupulses", 1: "diff_mupulses", 2: "timesec", 3: "idr"},
                 inplace=True,
             )
-            #TODO check idr, maybe low??
+
             # Add the idr to the idr dict
             idr[mu] = df
-            """ 
-            idr is a dict with a key for every MU
-            idr[mu] is a DataFrame
-                 mupulses  diff_mupulses    timesec       idr
-            0        2719            NaN   1.327637       NaN
-            1        3046          327.0   1.487305  6.262997
-            2        3370          324.0   1.645508  6.320988
-            3        3721          351.0   1.816895  5.834758
-            4        3952          231.0   1.929688  8.865801
-            ..        ...            ...        ...       ...
-            193     57862          385.0  28.252930  5.319481
-            194     58247          385.0  28.440918  5.319481
-            195     58585          338.0  28.605957  6.059172
-            196     58993          408.0  28.805176  5.019608
-            197     59638          645.0  29.120117  3.175194
-            """
 
         return idr
 
@@ -234,22 +263,30 @@ def compute_idr(emgfile):
         raise Exception("MUPULSES is probably absent or it is not contained in a list")
 
 
-def delete_mus(emgfile, munumber):
+def delete_mus(emgfile, munumber, if_single_mu="ignore"):
     """
     Delete unwanted MUs.
 
-    The function will not work if the emgfile only contains 1 motor unit,
-    since the entire file should be deleted instead. In this case, None will be returned.
-    
     Parameters
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
     munumber : int, list
-        The MUs to remove. If a single MU has to be removed, this should be an int (number of the MU). 
+        The MUs to remove. If a single MU has to be removed, this should be an
+        int (number of the MU).
         If multiple MUs have to be removed, a list of int should be passed.
         An unpacked (*) range can also be passed as munumber=[*range(0, 5)].
-        munumber is expected to be with base 0 (i.e., the first MU in the file is the number 0).
+        munumber is expected to be with base 0 (i.e., the first MU in the file
+        is the number 0).
+    if_single_mu : str {"ignore", "remove"}, default "ignore"
+        A string indicating how to behave in case of a file with a single MU.
+
+            ``ignore``
+            Ignore the process and return the original emgfile. (Default)
+            ``remove``
+            Remove the MU and return the emgfile without the MU. (Default)
+            This should allow full compatibility with the use of this file
+            in following processing (i.e., save/load and analyse).
 
     Returns
     -------
@@ -257,9 +294,25 @@ def delete_mus(emgfile, munumber):
         The dictionary containing the emgfile without the unwanted MUs.
     """
 
-    # Check how many MUs we have, if we only have 1 MU, the entire file should be deleted instead.
-    if emgfile["NUMBER_OF_MUS"] <= 1:
-        return
+    # Check how to behave in case of a single MU
+    if if_single_mu == "ignore":
+        # Check how many MUs we have, if we only have 1 MU, the entire file should be deleted instead.
+        if emgfile["NUMBER_OF_MUS"] <= 1:
+            warnings.warn(
+                "There is only 1 MU in the file, and it has not been removed. You can change this behaviour with if_single_mu='remove' in the function delete_mus"
+            )
+
+            return emgfile
+
+    elif if_single_mu == "remove":
+        pass
+
+    else:
+        raise ValueError(
+            "if_single_mu must be one of 'ignore' or 'remove', {} was passed instead".format(
+                if_single_mu
+            )
+        )
 
     # Create the object to store the new emgfile without the specified MUs.
     # Create a deepcopy to avoid changing the original emgfile
@@ -268,31 +321,31 @@ def delete_mus(emgfile, munumber):
     Need to be changed: ==>
     emgfile =   {
                 "SOURCE" : SOURCE,
-                "RAW_SIGNAL" : RAW_SIGNAL, 
-                "REF_SIGNAL" : REF_SIGNAL, 
-                ==> "PNR" : PNR, 
-                ==> "IPTS" : IPTS, 
-                ==> "MUPULSES" : MUPULSES, 
-                "FSAMP" : FSAMP, 
-                "IED" : IED, 
-                "EMG_LENGTH" : EMG_LENGTH, 
-                ==> "NUMBER_OF_MUS" : NUMBER_OF_MUS, 
+                "RAW_SIGNAL" : RAW_SIGNAL,
+                "REF_SIGNAL" : REF_SIGNAL,
+                ==> "PNR" : PNR, or "SIL" : SIL
+                ==> "IPTS" : IPTS,
+                ==> "MUPULSES" : MUPULSES,
+                "FSAMP" : FSAMP,
+                "IED" : IED,
+                "EMG_LENGTH" : EMG_LENGTH,
+                ==> "NUMBER_OF_MUS" : NUMBER_OF_MUS,
                 ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
                 }
     """
 
     # Common part working for all the possible inputs to munumber
     # Drop PNR values and rename the index
-    if (emgfile["SOURCE"] == "DEMUSE"):  # Modify once PNR calculation is implemented also for OTB files
+    if (emgfile["SOURCE"] == "DEMUSE"):  # TODO_NEXT_ use SIL for OTB
         del_emgfile["PNR"] = del_emgfile["PNR"].drop(munumber)  # Works with lists and integers
         del_emgfile["PNR"].reset_index(inplace=True, drop=True)  # Drop the old index
 
     # Drop IPTS by columns and rename the columns
-    del_emgfile["IPTS"] = del_emgfile["IPTS"].drop(munumber, axis=1)  # Works with lists and integers
+    del_emgfile["IPTS"] = del_emgfile["IPTS"].drop(munumber, axis=1)
     del_emgfile["IPTS"].columns = range(del_emgfile["IPTS"].shape[1])
 
     # Drop BINARY_MUS_FIRING by columns and rename the columns
-    del_emgfile["BINARY_MUS_FIRING"] = del_emgfile["BINARY_MUS_FIRING"].drop(munumber, axis=1)  # Works with lists and integers
+    del_emgfile["BINARY_MUS_FIRING"] = del_emgfile["BINARY_MUS_FIRING"].drop(munumber, axis=1)
     del_emgfile["BINARY_MUS_FIRING"].columns = range(del_emgfile["BINARY_MUS_FIRING"].shape[1])
 
     if isinstance(munumber, int):
@@ -303,8 +356,9 @@ def delete_mus(emgfile, munumber):
         del_emgfile["NUMBER_OF_MUS"] = del_emgfile["NUMBER_OF_MUS"] - 1
 
     elif isinstance(munumber, list):
-        # Delete all the content in the del_emgfile["MUPULSES"] and append only the MUs that we want to retain (exclude deleted MUs)
-        # This is a workaround to directly deleting elements
+        # Delete all the content in the del_emgfile["MUPULSES"] and append
+        # only the MUs that we want to retain (exclude deleted MUs)
+        # This is a workaround to directly deleting, for safer implementation
         del_emgfile["MUPULSES"] = []
         for mu in range(emgfile["NUMBER_OF_MUS"]):
             if mu not in munumber:
@@ -396,9 +450,9 @@ def sort_mus(emgfile):
 def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
     """
     Calculates the covsteady.
-    
-    This function calculates the coefficient of variation of the steady-state phase
-    (covsteady of the REF_SIGNAL).
+
+    This function calculates the coefficient of variation of the steady-state
+    phase (covsteady of the REF_SIGNAL).
 
     Parameters
     ----------
@@ -406,12 +460,40 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
         The dictionary containing the emgfile.
     start_steady, end_steady : int, default -1
         The start and end point (in samples) of the steady-state phase.
-        If < 0 (default), the user will need to manually select the start and end of the steady-state phase.
-    
+        If < 0 (default), the user will need to manually select the start and
+        end of the steady-state phase.
+
     Returns
     -------
     covsteady : pd.Series
-        The coefficient of variation of the steady-state phase in % (accessible as covsteady[0])
+        The coefficient of variation of the steady-state phase in %
+        (accessible as covsteady[0]).
+
+    See also
+    --------
+    compute_idr : computes the instantaneous discharge rate.
+
+    Examples
+    --------
+    Load the EMG file, compute covsteady and access the result from GUI.
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> covsteady = emg.compute_covsteady(emgfile=emgfile)
+    >>> covsteady
+    0    1.452806
+    >>> covsteady[0]
+    1.452806
+
+    The process can be automated by bypassing the GUI.
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> covsteady = emg.compute_covsteady(emgfile=emgfile, start_steady=3580, end_steady=15820)
+    >>> covsteady
+    0    35.611263
+    >>> covsteady[0]
+    35.611263
     """
 
     if start_steady < 0 and end_steady < 0:
@@ -437,13 +519,15 @@ def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
         The dictionary containing the emgfile.
     order : int, default 2
         The filter order.
-    cutoff : int, default 20
-        The cut-off frequency in Hz.
+    lowcut : int, default 20
+        The lower cut-off frequency in Hz.
+    highcut : int, default 500
+        The higher cut-off frequency in Hz.
 
     Returns
     -------
-    filteredrefsig : dict
-        The dictionary containing the emgfile with a filtered REF_SIGNAL.
+    filteredrawsig : dict
+        The dictionary containing the emgfile with a filtered RAW_SIGNAL.
     """
 
     filteredrawsig = copy.deepcopy(emgfile)
@@ -477,6 +561,10 @@ def filter_refsig(emgfile, order=4, cutoff=15):
     -------
     filteredrefsig : dict
         The dictionary containing the emgfile with a filtered REF_SIGNAL.
+    
+    See also
+    --------
+    remove_offset : remove the offset from the REF_SIGNAL.
     """
 
     filteredrefsig = copy.deepcopy(emgfile)
@@ -498,25 +586,32 @@ def remove_offset(emgfile, offsetval=0, auto=0):
     emgfile : dict
         The dictionary containing the emgfile.
     offsetval : float, default 0
-        Value of the offset. If offsetval is 0 (default), the user will be asked to manually 
-        select an aerea to compute the offset value.
-        Otherwise, the value passed to offsetval will be used. Negative offsetval can be passed.
+        Value of the offset. If offsetval is 0 (default), the user will be
+        asked to manually select an aerea to compute the offset value.
+        Otherwise, the value passed to offsetval will be used.
+        Negative offsetval can be passed.
     auto : int, default 0
-        If auto > 0, the script automatically removes the offset based on the number of samples passed in input.
+        If auto > 0, the script automatically removes the offset based on the
+        number of samples passed in input.
 
     Returns
     -------
     offs_emgfile : dict
-        The dictionary containing the emgfile with a corrected offset of the REF_SIGNAL.
+        The dictionary containing the emgfile with a corrected offset of the
+        REF_SIGNAL.
+
+    See also
+    --------
+    filter_refsig : low-pass filter REF_SIGNAL.
     """
 
     # Check that all the inputs are correct
     if not isinstance(offsetval, (float, int)):
-        raise Exception(
+        raise TypeError(
             f"offsetval must be one of the following types: float, int. {type(offsetval)} was passed instead."
         )
     if not isinstance(auto, (float, int)):
-        raise Exception(
+        raise TypeError(
             f"auto must be one of the following types: float, int. {type(auto)} was passed instead."
         )
 
@@ -549,52 +644,136 @@ def remove_offset(emgfile, offsetval=0, auto=0):
     return offs_emgfile
 
 
-def get_mvif(emgfile):
+def get_mvif(emgfile, how="showselect"):
     """
     Measure the MViF.
 
     Parameters
     ----------
     emgfile : dict
-        The dictionary containing the emgfile.
-    
+        The dictionary containing the emgfile with the reference signal.
+    how : str {"showselect", "all"}, default "showselect"
+
+        ``showselect``
+            Ask the user to select the area where to calculate the MViF
+            with a GUI.
+        ``all``
+            Calculate the MViF on the entire file.
+
     Returns
     -------
     mvif : float
         The MViF value in the original unit of measurement.
+
+    See also
+    --------
+    compute_rfd : calculate the RFD.
+    remove_offset : remove the offset from the REF_SIGNAL.
+    filter_refsig : low-pass filter REF_SIGNAL.
+
+    Examples
+    --------
+    Load the EMG file, remove reference signal offset and get MViF value.
+
+    >>> import openhdemg as emg
+    >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
+    >>> offs_refsig = emg.remove_offset(emgfile=emg_refsig)
+    >>> mvif = emg.get_mvif(emgfile=offs_refsig )
+    >>> mvif
+    50.72
+
+    The process can be automated by bypassing the GUI and
+    calculating the MViF of the entire file.
+
+    >>> import openhdemg as emg
+    >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
+    >>> mvif = emg.get_mvif(emgfile=emg_refsig, how="all")
+    >>> print(mvif)
+    50.86
     """
 
-    # Select the area to measure the MViF (maximum value)
-    start_, end_ = showselect(
-        emgfile, title="Select the start/end area to measure the MViF, then press enter"
-    )
-    mvif = emgfile["REF_SIGNAL"].iloc[start_:end_].max()
-    # We need to convert the series mvif into float
+    if how == "all":
+        mvif = emgfile["REF_SIGNAL"].max()
+
+    elif how == "showselect":
+        # Select the area to measure the MViF (maximum value)
+        start_, end_ = showselect(
+            emgfile, title="Select the start/end area to measure the MViF, then press enter"
+        )
+        mvif = emgfile["REF_SIGNAL"].iloc[start_:end_].max()
+        # We need to convert the series mvif into float
+
+    else:
+        raise ValueError(f"how must be one of 'showselect' or 'all', {how} was passed instead")
+
+
     mvif = round(float(mvif), 2)
 
     return mvif
 
 
-def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None):
+def compute_rfd(
+    emgfile,
+    ms=[50, 100, 150, 200],
+    startpoint=None,
+    conversion_val=0
+):
     """
     Calculate the RFD.
-    
-    Rate of force development (RFD) is reported as N/Sec.
+
+    Rate of force development (RFD) is reported as X/Sec
+    where "X" is the unit of measurement based on conversion_val.
 
     Parameters
     ----------
     emgfile : dict
-        The dictionary containing the emgfile.
+        The dictionary containing the emgfile with the reference signal.
     ms : list, default [50, 100, 150, 200]
-        Milliseconds (ms). A list containing the ranges in ms to calculate the RFD.
+        Milliseconds (ms). A list containing the ranges in ms to calculate the
+        RFD.
     startpoint : None or int, default None
         The starting point to calculate the RFD in samples,
-        If None, the user will be requested to manually select the starting point.
-    
+        If None, the user will be requested to manually select the starting
+        point.
+    conversion_val : float or int, default 0
+        The conversion value to multiply the original reference signal.
+        I.e., if the original reference signal is in kilogram (kg) and
+        conversion_val=9.81, the output will be in Newton/Sec (N/Sec).
+        If conversion_val=0 (default), the results will simply be Original
+        measure unit/Sec. conversion_val can be any custom int or float.
+
     Returns
     -------
     rfd : pd.DataFrame
         A pd.DataFrame containing the RFD at the different times.
+
+    See also
+    --------
+    get_mvif : measure the MViF.
+    remove_offset : remove the offset from the REF_SIGNAL.
+    filter_refsig : low-pass filter REF_SIGNAL.
+
+    Examples
+    --------
+    Load the EMG file, low-pass filter the reference signal and compute RFD.
+
+    >>> import openhdemg as emg
+    >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
+    >>> filteredrefsig  = emg.filter_refsig(emgfile=emg_refsig, order=4, cutoff=15)
+    >>> rfd = emg.compute_rfd(emgfile=filteredrefsig, ms=[50, 100, 200], conversion_val=9.81)
+    >>> rfd
+            50         100        200
+    0  68.34342  79.296188  41.308215
+
+    The process can be automated by bypassing the GUI.
+
+    >>> import openhdemg as emg
+    >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
+    >>> filteredrefsig  = emg.filter_refsig(emgfile=emg_refsig, order=4, cutoff=15)
+    >>> rfd = emg.compute_rfd(emgfile=filteredrefsig, ms=[50, 100, 200], startpoint=3568)
+    >>> rfd
+            50         100        200
+    0  68.34342  79.296188  41.308215
     """
 
     # Check if the startpoint was passed
@@ -623,23 +802,7 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None):
 
     rfd = pd.DataFrame(rfd_dict)
 
+    if conversion_val != 0:
+        rfd = rfd * conversion_val
+
     return rfd
-
-#TODO remove duplicates
-""" #TODO input by= to remove duplicates by correlation between firings
-def remove_duplicated_mus(files, **kwargs):
-
-    
-    # Need to compare all the MUs in the two emgfiles
-    # To do this we need: RAW_SIGNAL and MUPULSES
-    # Check with isinstance
-    # Then we need to loop all the MUs of emgfile 1 and compute their STA
-    # Then we need to loop all the MUs of emgfile 2 and compute their STA
-    # Then compute norm_twod_xcorr and evaluate if >= threshold
-    # build a df of normxcorr_max and retain only highest?
-    # remove duplicated mus to which file? pass a list to delete_mus
-    
-    
-    
-    if by=="MUAP":
-        normxcorr_df, normxcorr_max = norm_twod_xcorr() """
