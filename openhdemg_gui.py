@@ -421,9 +421,16 @@ class GUI():
         reset.grid(column=1, row=18, sticky=(W,E))
 
         # Advanced tools
-        advanced = tk.Button(self.left, command=self.open_advanced_tools,
-                             text="Advanced Tools",
-                             fg="white", bg="black")
+        # Create seperate style for this button
+        advanced_button_style = ttk.Style()
+        advanced_button_style.theme_use('clam')
+        advanced_button_style.configure('B.TButton',
+                                        foreground = 'white',
+                                        background = "black",
+                                        font = ('Lucida Sans', 11))
+
+        advanced = ttk.Button(self.left, command=self.open_advanced_tools,
+                             text="Advanced Tools", style='B.TButton')
         advanced.grid(row=20, column=0, columnspan=2, sticky=(W,E))
 
         # Create right side framing for functionalities
