@@ -804,9 +804,9 @@ class GUI():
                 self.fig = openhdemg.plot_refsig(emgfile=self.resdict, showimmediately=False, tight_layout=True)
 
             self.canvas = FigureCanvasTkAgg(self.fig, master=self.right)
-            self.canvas.get_tk_widget().grid(row=0, column=0)
+            self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=5)
             toolbar = NavigationToolbar2Tk(self.canvas, self.right, pack_toolbar=False)
-            toolbar.grid(row=1, column=0)
+            toolbar.grid(row=5, column=0)
             plt.close()
 
         except AttributeError:
@@ -1682,7 +1682,8 @@ class GUI():
             orientation.grid(row=1, column=4, sticky=(W,E))
 
             # Instruction
-            ttk.Label(self.head, text="*Ignored for DEMUSE files", font=("Arial", 8)).grid(row=2, column=3, sticky=W)
+            ttk.Label(self.head, text="*Ignored for DEMUSE files, insert random values",
+                font=("Arial", 8)).grid(row=2, column=3, sticky=W)
 
             # Plot derivation
             # Button
@@ -1744,7 +1745,7 @@ class GUI():
             timewindow = ttk.Combobox(self.head,
                                          width=15,
                                          textvariable=self.muap_time)
-            timewindow["values"] = ("10", "50", "100", "200", "500")
+            timewindow["values"] = ("25", "50", "100", "200")
             timewindow.grid(row=4, column=6, sticky=(W,E))
             self.muap_time.set("Timewindow (ms)")
 
@@ -1755,7 +1756,7 @@ class GUI():
             matrix_canvas.create_image(0, 0, anchor="nw", image=self.matrix)
 
             # Information Button 
-            self.info = tk.PhotoImage(file="./gui_files/Info_B.png")
+            self.info = tk.PhotoImage(file="./gui_files/Info.png")
             info_button = customtkinter.CTkButton(self.head, image=self.info,
                                                   text="", width=30, height=30,
                                                   bg_color="LightBlue4", fg_color="LightBlue4",
@@ -1806,12 +1807,16 @@ class GUI():
                 openhdemg.plot_emgsig(emgfile=self.resdict,
                                       channels=chan_list,
                                       addrefsig=eval(self.ref_but.get()),
-                                      timeinseconds=self.time_sec.get(),
+                                      timeinseconds=eval(self.time_sec.get()),
                                       figsize=figsize)
 
             else:
                 # Plot raw emg signal
-                openhdemg.plot_emgsig(emgfile=self.resdict, channels=int(channels))
+                openhdemg.plot_emgsig(emgfile=self.resdict,
+                                      channels=int(channels),
+                                      addrefsig=eval(self.ref_but.get()),
+                                      timeinseconds=eval(self.time_sec.get()),
+                                      figsize=figsize)
 
         except ValueError:
             tk.messagebox.showerror("Information", "Enter valid channel number.")
@@ -1870,7 +1875,7 @@ class GUI():
             openhdemg.plot_mupulses(emgfile=self.resdict,
                                     linewidths=float(self.linewidth.get()),
                                     addrefsig=eval(self.ref_but.get()),
-                                    timeinseconds=self.time_sec.get(),
+                                    timeinseconds=eval(self.time_sec.get()),
                                     figsize=figsize)
 
         except ValueError:
@@ -1908,7 +1913,7 @@ class GUI():
                 # Plot motor unit puls train in default
                 openhdemg.plot_ipts(emgfile=self.resdict,
                                     addrefsig=eval(self.ref_but.get()),
-                                    timeinseconds=self.time_sec.get(),
+                                    timeinseconds=eval(self.time_sec.get()),
                                     figsize=figsize)
 
             elif len(mu_numb) > 2:
@@ -1920,7 +1925,7 @@ class GUI():
                 openhdemg.plot_ipts(emgfile=self.resdict,
                                     munumber=mu_list,
                                     addrefsig=eval(self.ref_but.get()),
-                                    timeinseconds=self.time_sec.get(),
+                                    timeinseconds=eval(self.time_sec.get()),
                                     figsize=figsize)
 
             else:
@@ -1928,7 +1933,7 @@ class GUI():
                 openhdemg.plot_ipts(emgfile=self.resdict,
                                     munumber=int(mu_numb),
                                     addrefsig=eval(self.ref_but.get()),
-                                    timeinseconds=self.time_sec.get(),
+                                    timeinseconds=eval(self.time_sec.get()),
                                     figsize=figsize)
 
         except ValueError:
@@ -1968,7 +1973,7 @@ class GUI():
                 # Plot instanteous discharge rate
                 openhdemg.plot_idr(emgfile=self.resdict,
                                    addrefsig=eval(self.ref_but.get()),
-                                   timeinseconds=self.time_sec.get(),
+                                   timeinseconds=eval(self.time_sec.get()),
                                    figsize=figsize)
 
             elif len(mu_idr) > 2:
@@ -1978,7 +1983,7 @@ class GUI():
                 openhdemg.plot_idr(emgfile=self.resdict,
                                    munumber=mu_list_idr,
                                    addrefsig=eval(self.ref_but.get()),
-                                   timeinseconds=self.time_sec.get(),
+                                   timeinseconds=eval(self.time_sec.get()),
                                    figsize=figsize)
 
             else:
@@ -1986,7 +1991,7 @@ class GUI():
                 openhdemg.plot_idr(emgfile=self.resdict,
                                    munumber=int(mu_idr),
                                    addrefsig=eval(self.ref_but.get()),
-                                   timeinseconds=self.time_sec.get(),
+                                   timeinseconds=eval(self.time_sec.get()),
                                    figsize=figsize)
 
         except ValueError:
@@ -2022,7 +2027,7 @@ class GUI():
                                          differential=diff_file,
                                          column=self.deriv_matrix.get(),
                                          addrefsig=eval(self.ref_but.get()),
-                                         timeinseconds=self.time_sec.get(),
+                                         timeinseconds=eval(self.time_sec.get()),
                                          figsize=figsize
                                          )
         except ValueError:
