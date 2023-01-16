@@ -942,11 +942,10 @@ def remove_duplicates_between(
     threshold=0.9,
     matrixcode="GR08MM1305",
     orientation=180,
-    exclude_belowthreshold=True,
     filter=True,
     show=False,
     which="munumber",
-):
+):# TODO write examples
     """
     Remove duplicated MUs across two different files based on STA.
 
@@ -974,8 +973,6 @@ def remove_duplicates_between(
     orientation : int {0, 180}, default 180
         Orientation in degree of the matrix (same as in OTBiolab).
         E.g. 180 corresponds to the matrix connection toward the user.
-    exclude_belowthreshold : bool, default True
-        Whether to exclude results with XCC below threshold.
     filter : bool, default True
         If true, when the same MU has a match of XCC > threshold with
         multiple MUs, only the match with the highest XCC is returned.
@@ -1000,6 +997,29 @@ def remove_duplicates_between(
     norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
         two MUS.
     tracking : track MUs across two different files.
+
+    Examples
+    --------
+    Remove duplicated MUs between two OTB files and save the emgfiles
+    without duplicates.
+    If loading a DEMUSE file, matrixcode and orientation can be ignored.
+
+    >>> emgfile1 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile2 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile1, emgfile2 = emg.remove_duplicates_between(
+    ...     emgfile1,
+    ...     emgfile2,
+    ...     firings="all",
+    ...     timewindow=25,
+    ...     threshold=0.9,
+    ...     matrixcode="GR08MM1305",
+    ...     orientation=180,
+    ...     filter=True,
+    ...     show=False,
+    ...     which="munumber",
+    ... )
+    >>> emg.asksavefile(emgfile1)
+    >>> emg.asksavefile(emgfile2)
     """
 
     # Work on deepcopies to prevent changing the original file
@@ -1008,16 +1028,16 @@ def remove_duplicates_between(
 
     # Get tracking results to identify duplicated MUs
     tracking_res = tracking(
-        emgfile1,
-        emgfile2,
-        firings,
-        timewindow,
-        threshold,
-        matrixcode,
-        orientation,
-        exclude_belowthreshold,
-        filter,
-        show,
+        emgfile1=emgfile1,
+        emgfile2=emgfile2,
+        firings=firings,
+        timewindow=timewindow,
+        threshold=threshold,
+        matrixcode=matrixcode,
+        orientation=orientation,
+        exclude_belowthreshold=True,
+        filter=filter,
+        show=show,
     )
 
     # Identify how to remove MUs
@@ -1074,6 +1094,6 @@ def remove_duplicates_between(
             )
 
     else:
-        pass  # TODO_NEXT_ implement with SIL as with PNR
+        pass  # TODO implement with SIL as with PNR
 
 # TODO_NEXT_ try if replacing at/iat with loc/iloc can improve performance.

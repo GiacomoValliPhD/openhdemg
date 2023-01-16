@@ -284,6 +284,9 @@ def sort_rawemg(
         # Work on a copy of the RAW_SIGNAL
         sorted_rawemg = copy.deepcopy(emgfile["RAW_SIGNAL"])
 
+    elif emgfile["SOURCE"] == "custom":
+        pass # TODO what do we do with a custom file?
+
     # Check if we need the sorted RAW_SIGNAL divided by column
     if dividebycolumn:
         if code in ["GR08MM1305", "GR04MM1305"]:
