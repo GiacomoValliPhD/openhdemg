@@ -16,7 +16,6 @@ import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
-from PIL import Image, ImageTk
 import pandas as pd
 
 matplotlib.use("TkAgg")
@@ -200,8 +199,8 @@ class GUI:
     self.exclude_thres : tk.Boolenvar()
         Boolean determining whether values below treshold should be excluded
         during MU tracking.
-
-
+    self.which_adv : tk.Stringvar()
+        Stringvariable determining how MU duplicates are removed.
 
     Methods
     -------
@@ -687,6 +686,8 @@ class GUI:
         When the filetype is set to "OTB" it will create a second combobox on the grid at column 0 and row 2,
         and when the filetype is set to something else it will remove the second combobox from the grid.
         """
+        # Add a combobox containing the OTB extension factors
+        # in case an OTB file is loaded
         if self.filetype.get() == "OTB":
             self.extension_factor = StringVar()
             self.otb_combobox = ttk.Combobox(
@@ -698,6 +699,8 @@ class GUI:
             )
             self.otb_combobox.grid(column=0, row=2, sticky=(W, E))
             self.otb_combobox.set("8")
+
+        # Forget widget when filetype is changes
         else:
             if hasattr(self, "otb_combobox"):
                 self.otb_combobox.grid_forget()
@@ -896,10 +899,10 @@ class GUI:
 
         # Add Selection Combobox
         self.advanced_method = StringVar()
-        adv_box = ttk.Combobox(self.head, width=50, textvariable=self.advanced_method)
+        adv_box = ttk.Combobox(self.head, width=30, textvariable=self.advanced_method)
         adv_box["values"] = (
             "MUs tracking",
-            "Duplicate Removal - Differnt contractions",
+            "Duplicate Removal",
         )
         adv_box["state"] = "readonly"
         adv_box.grid(row=2, column=0, padx=20, pady=5)
@@ -908,7 +911,7 @@ class GUI:
         adv_button = ttk.Button(
             self.head, text="Advanced Analysis", command=self.advanced_analysis
         )
-        adv_button.grid(column=0, row=3)
+        adv_button.grid(column=0, row=3, padx=5, pady=5)
 
     def open_pdf(self):
         """
@@ -1325,7 +1328,7 @@ class GUI:
                 emgfile=self.resdict,
                 title="Select the start/end area to consider then press enter",
             )
-            self.resdict, start_, end_ = openhdemg.resize_emgfile(
+            self.resdict, _, _ = openhdemg.resize_emgfile(
                 emgfile=self.resdict, area=[start, end]
             )
             # Update Plot
@@ -2311,127 +2314,135 @@ class GUI:
         """
         Open top-level windows based on the selected advanced method.
         """
-        if self.advanced_method.get() == "MUs tracking":
+        self.head = tk.Toplevel(bg="LightBlue4")
+        self.head.title("MUs tracking window")
+        self.head.iconbitmap("./gui_files/logo.ico")
+        self.head.grab_set()
 
-            self.head = tk.Toplevel(bg="LightBlue4")
-            self.head.title("MUs tracking window")
-            self.head.iconbitmap("./gui_files/logo.ico")
-            self.head.grab_set()
+        # Specify Signal
+        self.filetype_adv = StringVar()
+        signal_value = ("OTB", "DEMUSE", "Open_HD-EMG")
+        signal_entry = ttk.Combobox(
+            self.head, text="Signal", width=8, textvariable=self.filetype_adv
+        )
+        signal_entry["values"] = signal_value
+        signal_entry["state"] = "readonly"
+        signal_entry.grid(column=0, row=1, sticky=(W, E))
+        self.filetype_adv.set("Type of file")
+        self.filetype_adv.trace("w", self.on_filetype_change_adv)
 
-            # Specify Signal
-            self.filetype_adv = StringVar()
-            signal_value = ("OTB", "DEMUSE", "Open_HD-EMG")
-            signal_entry = ttk.Combobox(
-                self.head, text="Signal", width=8, textvariable=self.filetype_adv
-            )
-            signal_entry["values"] = signal_value
-            signal_entry["state"] = "readonly"
-            signal_entry.grid(column=0, row=1, sticky=(W, E))
-            self.filetype_adv.set("Type of file")
-            self.filetype_adv.trace("w", self.on_filetype_change_adv)
+        # Load file
+        load1 = ttk.Button(self.head, text="Load File 1", command=self.open_emgfile1)
+        load1.grid(column=0, row=2, sticky=(W, E))
 
-            # Load file
-            load1 = ttk.Button(
-                self.head, text="Load File 1", command=self.open_emgfile1
-            )
-            load1.grid(column=0, row=2, sticky=(W, E))
+        # Load file
+        load2 = ttk.Button(self.head, text="Load File 2", command=self.open_emgfile2)
+        load2.grid(column=0, row=4, sticky=(W, E))
 
-            # Load file
-            load2 = ttk.Button(
-                self.head, text="Load File 2", command=self.open_emgfile2
-            )
-            load2.grid(column=0, row=4, sticky=(W, E))
+        # Matrix code
+        ttk.Label(self.head, text="Matrix Code*").grid(row=6, column=0, sticky=(W))
+        self.mat_code_adv = StringVar()
+        matrix_code = ttk.Combobox(self.head, width=8, textvariable=self.mat_code_adv)
+        matrix_code["values"] = ("GR08MM1305", "GR04MM1305")
+        matrix_code["state"] = "readonly"
+        matrix_code.grid(row=6, column=1, sticky=(W, E))
 
-            # Matrix code
-            ttk.Label(self.head, text="Matrix Code*").grid(row=6, column=0, sticky=(W))
-            self.mat_code_adv = StringVar()
-            matrix_code = ttk.Combobox(
-                self.head, width=8, textvariable=self.mat_code_adv
-            )
-            matrix_code["values"] = ("GR08MM1305", "GR04MM1305")
-            matrix_code["state"] = "readonly"
-            matrix_code.grid(row=6, column=1, sticky=(W, E))
+        # Matrix Orientation
+        ttk.Label(self.head, text="Orientation*").grid(row=7, column=0, sticky=(W))
+        self.mat_orientation_adv = StringVar()
+        orientation = ttk.Combobox(
+            self.head, width=8, textvariable=self.mat_orientation_adv
+        )
+        orientation["values"] = ("0", "180")
+        orientation["state"] = "readonly"
+        orientation.grid(row=7, column=1, sticky=(W, E))
 
-            # Matrix Orientation
-            ttk.Label(self.head, text="Orientation*").grid(row=7, column=0, sticky=(W))
-            self.mat_orientation_adv = StringVar()
-            orientation = ttk.Combobox(
-                self.head, width=8, textvariable=self.mat_orientation_adv
-            )
-            orientation["values"] = ("0", "180")
-            orientation["state"] = "readonly"
-            orientation.grid(row=7, column=1, sticky=(W, E))
+        # Instruction
+        ttk.Label(
+            self.head,
+            text="*Ignored for DEMUSE files, \ninsert random values",
+            font=("Arial", 8),
+        ).grid(row=8, column=0, sticky=W)
 
-            # Instruction
-            ttk.Label(
+        # Threshold label
+        threshold_label = ttk.Label(self.head, text="Threshold:")
+        threshold_label.grid(column=0, row=9)
+
+        # Combobox for threshold
+        self.threshold_adv = StringVar()
+        threshold_combobox = ttk.Combobox(
+            self.head,
+            values=[0.6, 0.7, 0.8, 0.9],
+            textvariable=self.threshold_adv,
+            state="readonly",
+            width=8,
+        )
+        threshold_combobox.grid(column=1, row=9)
+        self.threshold_adv.set(0.8)
+
+        # Exclude below threshold
+        exclude_label = ttk.Label(self.head, text="Exclude below threshold")
+        exclude_label.grid(column=0, row=10)
+
+        # Add exclude checkbox
+        self.exclude_thres = tk.BooleanVar()
+        exclude_checkbox = tk.Checkbutton(
+            self.head, variable=self.exclude_thres, bg="LightBlue4"
+        )
+        exclude_checkbox.grid(column=1, row=10)
+
+        # Filter
+        filter_label = ttk.Label(self.head, text="Filter")
+        filter_label.grid(column=0, row=11)
+
+        # Add filter checkbox
+        self.filter_adv = tk.BooleanVar()
+        filter_checkbox = tk.Checkbutton(
+            self.head, variable=self.filter_adv, bg="LightBlue4"
+        )
+        filter_checkbox.grid(column=1, row=11)
+
+        # Exclude below threshold
+        show_label = ttk.Label(self.head, text="Show")
+        show_label.grid(column=0, row=12)
+
+        # Add exclude checkbox
+        self.show_adv = tk.BooleanVar()
+        show_checkbox = tk.Checkbutton(
+            self.head, variable=self.show_adv, bg="LightBlue4"
+        )
+        show_checkbox.grid(column=1, row=12)
+
+        # Add button to execute MU tracking
+        track_button = ttk.Button(self.head, text="Track", command=self.track_mus)
+        track_button.grid(column=0, row=14, columnspan=2, sticky=(W, E))
+
+        # Add padding
+        for child in self.head.winfo_children():
+            child.grid_configure(padx=5, pady=5)
+
+        # Add Which widget and update the track button
+        # to match functionalities required for duplicate removal
+        if self.advanced_method.get() == "Duplicate Removal":
+
+            # Add Which label
+            ttk.Label(self.head, text="Which").grid(column=0, row=13)
+            # Combobox for Which option
+            self.which_adv = StringVar()
+            which_combobox = ttk.Combobox(
                 self.head,
-                text="*Ignored for DEMUSE files, \ninsert random values",
-                font=("Arial", 8),
-            ).grid(row=8, column=0, sticky=W)
-
-            # Threshold label
-            threshold_label = ttk.Label(self.head, text="Threshold:")
-            threshold_label.grid(column=0, row=9)
-
-            # Combobox for threshold
-            self.threshold_adv = StringVar()
-            threshold_combobox = ttk.Combobox(
-                self.head,
-                values=[0.6, 0.7, 0.8, 0.9],
-                textvariable=self.threshold_adv,
+                values=["munumber", "SIL", "PNR"],
+                textvariable=self.which_adv,
                 state="readonly",
                 width=8,
             )
-            threshold_combobox.grid(column=1, row=9)
-            self.threshold_adv.set(0.8)
-
-            # Exclude below threshold
-            exclude_label = ttk.Label(self.head, text="Exclude below threshold")
-            exclude_label.grid(column=0, row=10)
-
-            # Add exclude checkbox
-            self.exclude_thres = tk.BooleanVar()
-            exclude_checkbox = tk.Checkbutton(
-                self.head, variable=self.exclude_thres, bg="LightBlue4"
-            )
-            exclude_checkbox.grid(column=1, row=10)
-
-            # Filter
-            filter_label = ttk.Label(self.head, text="Filter")
-            filter_label.grid(column=0, row=11)
-
-            # Add filter checkbox
-            self.filter_adv = tk.BooleanVar()
-            filter_checkbox = tk.Checkbutton(
-                self.head, variable=self.filter_adv, bg="LightBlue4"
-            )
-            filter_checkbox.grid(column=1, row=11)
-
-            # Exclude below threshold
-            show_label = ttk.Label(self.head, text="Show")
-            show_label.grid(column=0, row=12)
-
-            # Add exclude checkbox
-            self.show_adv = tk.BooleanVar()
-            show_checkbox = tk.Checkbutton(
-                self.head, variable=self.show_adv, bg="LightBlue4"
-            )
-            show_checkbox.grid(column=1, row=12)
+            which_combobox.grid(row=13, column=1, padx=5, pady=5)
+            self.which_adv.set("munumber")
 
             # Add button to execute MU tracking
-            track_button = ttk.Button(self.head, text="Track", command=self.track_mus)
-            track_button.grid(column=0, row=13, columnspan=2, sticky=(W, E))
-
-            # Add padding
-            for child in self.head.winfo_children():
-                child.grid_configure(padx=5, pady=5)
-
-        elif self.advanced_method.get() == "Duplicate removal":
-
-            self.head = tk.Toplevel(bg="LightBlue4")
-            self.head.title("Duplicate removal window")
-            self.head.iconbitmap("./gui_files/logo.ico")
-            self.head.grab_set()
+            track_button.config(
+                text="Remove Duplicates", command=self.remove_duplicates_between
+            )
 
     ### Define function for advanced analysis tools
 
@@ -2447,18 +2458,20 @@ class GUI:
         --------
         open_emgfile1(), openhdemg.askopenfile()
         """
+        # Open OTB file
         if self.filetype_adv.get() == "OTB":
 
             self.emgfile1 = openhdemg.askopenfile(
                 filesource=self.filetype_adv.get(),
                 otb_ext_factor=int(self.extension_factor_adv.get()),
             )
-
+        # Open all other filetypes
         else:
             self.emgfile1 = openhdemg.askopenfile(
                 filesource=self.filetype_adv.get(),
             )
 
+        # Add filename to GUI
         ttk.Label(self.head, text="Blabla").grid(column=0, row=3)
 
     def open_emgfile2(self):
@@ -2473,18 +2486,20 @@ class GUI:
         --------
         open_emgfile1(), openhdemg.askopenfile()
         """
+        # Open OTB file
         if self.filetype_adv.get() == "OTB":
 
             self.emgfile2 = openhdemg.askopenfile(
                 filesource=self.filetype_adv.get(),
                 otb_ext_factor=int(self.extension_factor_adv.get()),
             )
-
+        # Open all other filetypes
         else:
             self.emgfile2 = openhdemg.askopenfile(
                 filesource=self.filetype_adv.get(),
             )
 
+        # Add filename to GUI
         ttk.Label(self.head, text="Blabla").grid(column=0, row=5)
 
     def on_filetype_change_adv(self, *args):
@@ -2493,6 +2508,8 @@ class GUI:
         When the filetype is set to "OTB" it will create a second combobox on the grid at column 0 and row 2,
         and when the filetype is set to something else it will remove the second combobox from the grid.
         """
+        # Add a combobox containing the OTB extension factors
+        # in case an OTB file is loaded
         if self.filetype_adv.get() == "OTB":
             self.extension_factor_adv = StringVar()
             self.otb_combobox = ttk.Combobox(
@@ -2504,6 +2521,8 @@ class GUI:
             )
             self.otb_combobox.grid(column=1, row=1, sticky=(W, E))
             self.otb_combobox.set("8")
+
+        # Forget the widget in case the filetype is changed
         else:
             if hasattr(self, "otb_combobox"):
                 self.otb_combobox.grid_forget()
@@ -2529,6 +2548,7 @@ class GUI:
         openhdemg.tracking()
         """
         try:
+            # Track motor units
             tracking_res = openhdemg.tracking(
                 emgfile1=self.emgfile1,
                 emgfile2=self.emgfile2,
@@ -2553,6 +2573,8 @@ class GUI:
                 padx=10,
                 sticky=(N, S, W, E),
             )
+
+            # Add table containing results to the label frame
             track_table = Table(track_terminal, dataframe=tracking_res)
             track_table.show()
 
@@ -2571,6 +2593,62 @@ class GUI:
                 + "\n - Matrix Code"
                 + "\n - Matrix Orientation"
                 + "\n - Threshold",
+            )
+
+    def remove_duplicates_between(self):
+        """
+        Perform duplicate removal between two EMG files.
+
+        Notes
+        -----
+        The function uses the openhdemg.remove_duplicates_between function to remove duplicates between two EMG files.
+        If the required parameters are not provided, the function will raise an AttributeError or ValueError.
+
+        Raises
+        ------
+        AttributeError
+            If the required EMG files have not been loaded.
+        ValueError
+            If the input parameters are not valid.
+
+        See Also
+        --------
+        openhdemg.remove_duplicates_between(), openhdemg.asksavefile()
+        """
+        try:
+            # Remove motor unit duplicates
+            emg_file1, emg_file2 = openhdemg.remove_duplicates_between(
+                emgfile1=self.emgfile1,
+                emgfile2=self.emgfile2,
+                threshold=float(self.threshold_adv.get()),
+                matrixcode=self.mat_code_adv.get(),
+                orientation=int(self.mat_orientation_adv.get()),
+                exclude_belowthreshold=self.exclude_thres.get(),
+                filter=self.filter_adv.get(),
+                show=self.show_adv.get(),
+                which=self.which_adv.get(),
+            )
+
+            # Save files
+            openhdemg.asksavefile(emg_file1)
+            openhdemg.asksavefile(emg_file2)
+
+        except AttributeError:
+            tk.messagebox.showerror(
+                "Information",
+                "Make sure to load all required EMG files prior to tracking.",
+            )
+
+        except ValueError:
+            tk.messagebox.showerror(
+                "Information",
+                "Enter valid input parameters."
+                + "\nPotenital error sources:"
+                + "\n - Extension Factor (in case of OTB file)"
+                + "\n - Matrix Code"
+                + "\n - Matrix Orientation"
+                + "\n - Threshold"
+                + "\n - Which",
             )
 
     # -----------------------------------------------------------------------------------------------
