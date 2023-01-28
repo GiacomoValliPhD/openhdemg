@@ -692,13 +692,23 @@ class GUI:
             self.extension_factor = StringVar()
             self.otb_combobox = ttk.Combobox(
                 self.left,
-                values=["5", "6", "7", "8", "9"],
+                values=[
+                    "8",
+                    "9",
+                    "10",
+                    "11",
+                    "12",
+                    "13",
+                    "14",
+                    "15",
+                    "16",
+                ],
                 width=8,
-                text="Extension Factor",
                 textvariable=self.extension_factor,
+                state="readonly",
             )
-            self.otb_combobox.grid(column=0, row=2, sticky=(W, E))
-            self.otb_combobox.set("8")
+            self.otb_combobox.grid(column=0, row=2, sticky=(W, E), padx=5)
+            self.otb_combobox.set("Extension Factor")
 
         # Forget widget when filetype is changes
         else:
@@ -900,10 +910,7 @@ class GUI:
         # Add Selection Combobox
         self.advanced_method = StringVar()
         adv_box = ttk.Combobox(self.head, width=30, textvariable=self.advanced_method)
-        adv_box["values"] = (
-            "MUs tracking",
-            "Duplicate Removal",
-        )
+        adv_box["values"] = ("MUs tracking", "Duplicate Removal", "Conduction Velocity")
         adv_box["state"] = "readonly"
         adv_box.grid(row=2, column=0, padx=20, pady=5)
         adv_box.set("MUs tracking")
@@ -1842,6 +1849,7 @@ class GUI:
             matrix_code["values"] = ("GR08MM1305", "GR04MM1305")
             matrix_code["state"] = "readonly"
             matrix_code.grid(row=0, column=4, sticky=(W, E))
+            self.mat_code.set("GR08MM1305")
 
             # Matrix Orientation
             ttk.Label(self.head, text="Orientation*").grid(row=1, column=3, sticky=(W))
@@ -1852,6 +1860,7 @@ class GUI:
             orientation["values"] = ("0", "180")
             orientation["state"] = "readonly"
             orientation.grid(row=1, column=4, sticky=(W, E))
+            self.mat_orientation.set("180")
 
             # Instruction
             ttk.Label(
@@ -2337,15 +2346,16 @@ class GUI:
 
         # Load file
         load2 = ttk.Button(self.head, text="Load File 2", command=self.open_emgfile2)
-        load2.grid(column=0, row=4, sticky=(W, E))
+        load2.grid(column=0, row=3, sticky=(W, E))
 
         # Matrix code
         ttk.Label(self.head, text="Matrix Code*").grid(row=6, column=0, sticky=(W))
         self.mat_code_adv = StringVar()
-        matrix_code = ttk.Combobox(self.head, width=8, textvariable=self.mat_code_adv)
+        matrix_code = ttk.Combobox(self.head, width=10, textvariable=self.mat_code_adv)
         matrix_code["values"] = ("GR08MM1305", "GR04MM1305")
         matrix_code["state"] = "readonly"
         matrix_code.grid(row=6, column=1, sticky=(W, E))
+        self.mat_code_adv.set("GR08MM1305")
 
         # Matrix Orientation
         ttk.Label(self.head, text="Orientation*").grid(row=7, column=0, sticky=(W))
@@ -2356,6 +2366,7 @@ class GUI:
         orientation["values"] = ("0", "180")
         orientation["state"] = "readonly"
         orientation.grid(row=7, column=1, sticky=(W, E))
+        self.mat_orientation_adv.set("180")
 
         # Instruction
         ttk.Label(
@@ -2390,6 +2401,7 @@ class GUI:
             self.head, variable=self.exclude_thres, bg="LightBlue4"
         )
         exclude_checkbox.grid(column=1, row=10)
+        self.exclude_thres.set(True)
 
         # Filter
         filter_label = ttk.Label(self.head, text="Filter")
@@ -2401,6 +2413,7 @@ class GUI:
             self.head, variable=self.filter_adv, bg="LightBlue4"
         )
         filter_checkbox.grid(column=1, row=11)
+        self.filter_adv.set(True)
 
         # Exclude below threshold
         show_label = ttk.Label(self.head, text="Show")
@@ -2444,6 +2457,32 @@ class GUI:
                 text="Remove Duplicates", command=self.remove_duplicates_between
             )
 
+        if self.advanced_method.get() == "Conduction Velocity":
+
+            # Forget load two button
+            load2.grid_forget()
+
+            # Forget threshold
+            threshold_label.grid_forget()
+            threshold_combobox.grid_forget()
+
+            # Forget exclude below threshold
+            exclude_checkbox.grid_forget()
+            exclude_label.grid_forget()
+
+            # Forget filter
+            filter_label.grid_forget()
+            filter_checkbox.grid_forget()
+
+            # Forget show
+            show_label.grid_forget()
+            show_checkbox.grid_forget()
+
+            # Configute button to calculate conduction velocity
+            track_button.config(
+                text="Caclculate CV and RMS", command=self.calculate_conduct_vel
+            )
+
     ### Define function for advanced analysis tools
 
     def open_emgfile1(self):
@@ -2472,7 +2511,7 @@ class GUI:
             )
 
         # Add filename to GUI
-        ttk.Label(self.head, text="Blabla").grid(column=0, row=3)
+        ttk.Label(self.head, text="File 1 loaded").grid(column=1, row=2)
 
     def open_emgfile2(self):
         """
@@ -2500,7 +2539,7 @@ class GUI:
             )
 
         # Add filename to GUI
-        ttk.Label(self.head, text="Blabla").grid(column=0, row=5)
+        ttk.Label(self.head, text="File 2 loaded").grid(column=1, row=3)
 
     def on_filetype_change_adv(self, *args):
         """
@@ -2514,13 +2553,13 @@ class GUI:
             self.extension_factor_adv = StringVar()
             self.otb_combobox = ttk.Combobox(
                 self.head,
-                values=["5", "6", "7", "8", "9"],
+                values=["8", "9", "10", "11", "12", "13", "14", "15", "16"],
                 width=8,
-                text="Extension Factor",
                 textvariable=self.extension_factor_adv,
+                state="readonly",
             )
-            self.otb_combobox.grid(column=1, row=1, sticky=(W, E))
-            self.otb_combobox.set("8")
+            self.otb_combobox.grid(column=1, row=1, sticky=(W, E), padx=5)
+            self.otb_combobox.set("Extension Factor")
 
         # Forget the widget in case the filetype is changed
         else:
@@ -2650,6 +2689,22 @@ class GUI:
                 + "\n - Threshold"
                 + "\n - Which",
             )
+
+    def calculate_conduct_vel(self):
+
+        # Add result terminal
+        track_terminal = ttk.LabelFrame(
+            self.head, text="Conduction Velocity", height=100, relief="ridge"
+        )
+        track_terminal.grid(
+            column=2,
+            row=0,
+            columnspan=2,
+            rowspan=12,
+            pady=8,
+            padx=10,
+            sticky=(N, S, W, E),
+        )
 
     # -----------------------------------------------------------------------------------------------
     # Analysis results display
