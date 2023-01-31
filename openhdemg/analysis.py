@@ -5,6 +5,7 @@ This module contains all the functions used to analyse the MUs properties.
 import pandas as pd
 import numpy as np
 from openhdemg.tools import showselect, compute_idr, compute_covsteady
+from openhdemg.mathtools import compute_pnr, compute_sil
 import warnings
 import math
 
@@ -503,22 +504,35 @@ def basic_mus_properties(
     toappend = pd.DataFrame(toappend)
     exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
-    # Only for DEMUSE files at this point # TODO use SIL for OTB
-    if emgfile["SOURCE"] == "DEMUSE":
-        # Repeat the task for every new column to fill and concatenate
-        toappend = []
-        for i in range(emgfile["NUMBER_OF_MUS"]):
-            toappend.append({"PNR": emgfile["PNR"][0][i]})
-        toappend = pd.DataFrame(toappend)
-        exportable_df = pd.concat([exportable_df, toappend], axis=1)
+    # Calculate PNR
+    # Repeat the task for every new column to fill and concatenate
+    toappend = []
+    for mu in range(emgfile["NUMBER_OF_MUS"]):
+        pnr = compute_pnr(ipts=emgfile["IPTS"][mu], mupulses=emgfile["MUPULSES"][mu])
+        toappend.append({"PNR": pnr})
+    toappend = pd.DataFrame(toappend)
+    exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
-        # Repeat again...
-        toappend = []
-        toappend.append({"avg_PNR": np.average(emgfile["PNR"])})
-        toappend = pd.DataFrame(toappend)
-        exportable_df = pd.concat([exportable_df, toappend], axis=1)
-    else:
-        pass
+    # Calculate avrage PNR
+    toappend = []
+    toappend.append({"avg_PNR": np.average(exportable_df["PNR"])})
+    toappend = pd.DataFrame(toappend)
+    exportable_df = pd.concat([exportable_df, toappend], axis=1)
+
+    # Calculate SIL
+    # Repeat the task for every new column to fill and concatenate
+    toappend = []
+    for mu in range(emgfile["NUMBER_OF_MUS"]):
+        sil = compute_sil(ipts=emgfile["IPTS"][mu], mupulses=emgfile["MUPULSES"][mu])
+        toappend.append({"SIL": sil})
+    toappend = pd.DataFrame(toappend)
+    exportable_df = pd.concat([exportable_df, toappend], axis=1)
+
+    # Calculate avrage SIL
+    toappend = []
+    toappend.append({"avg_SIL": np.average(exportable_df["SIL"])})
+    toappend = pd.DataFrame(toappend)
+    exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
     # Calculate RT and DERT
     mus_thresholds = compute_thresholds(emgfile=emgfile, mvif=mvif)

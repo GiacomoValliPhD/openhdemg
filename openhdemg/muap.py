@@ -978,7 +978,7 @@ def remove_duplicates_between(
         multiple MUs, only the match with the highest XCC is returned.
     show : bool, default False
         Whether to plot ste STA of pairs of MUs with XCC above threshold.
-    which : str {"munumber", "PNR"}
+    which : str {"munumber", "PNR", "SIL"}
         How to remove the duplicated MUs.
 
         ``munumber``
@@ -986,7 +986,7 @@ def remove_duplicates_between(
         ``PNR``
             The MU with the lowest PNR is removed.
         ``SIL``
-            The MU with the lowest SIL is removed. # TODO implement this
+            The MU with the lowest SIL is removed.
 
     Returns
     -------
@@ -1065,38 +1065,58 @@ def remove_duplicates_between(
             return emgfile1, emgfile2
 
     elif which == "PNR":
-        if emgfile1["SOURCE"] == "DEMUSE" and emgfile2["SOURCE"] == "DEMUSE":
-            # Create a list containing which MU to remove in which file based
-            # on PNR value.
-            to_remove1 = []
-            to_remove2 = []
-            for i, row in tracking_res.iterrows():
-                pnr1 = emgfile1["PNR"].loc[int(row["MU_file1"])]
-                pnr2 = emgfile2["PNR"].loc[int(row["MU_file2"])]
+        # Create a list containing which MU to remove in which file based
+        # on PNR value.
+        to_remove1 = []
+        to_remove2 = []
+        for i, row in tracking_res.iterrows():
+            pnr1 = emgfile1["PNR"].loc[int(row["MU_file1"])]
+            pnr2 = emgfile2["PNR"].loc[int(row["MU_file2"])]
 
-                if pnr1[0] <= pnr2[0]:
-                    # This MU should be removed from emgfile1
-                    to_remove1.append(int(row["MU_file1"]))
-                else:
-                    # This MU should be removed from emgfile2
-                    to_remove2.append(int(row["MU_file2"]))
+            if pnr1[0] <= pnr2[0]:
+                # This MU should be removed from emgfile1
+                to_remove1.append(int(row["MU_file1"]))
+            else:
+                # This MU should be removed from emgfile2
+                to_remove2.append(int(row["MU_file2"]))
 
-            # Delete the MUs
-            emgfile1 = delete_mus(
-                emgfile=emgfile1, munumber=to_remove1, if_single_mu="remove"
-            )
-            emgfile2 = delete_mus(
-                emgfile=emgfile2, munumber=to_remove2, if_single_mu="remove"
-            )
+        # Delete the MUs
+        emgfile1 = delete_mus(
+            emgfile=emgfile1, munumber=to_remove1, if_single_mu="remove"
+        )
+        emgfile2 = delete_mus(
+            emgfile=emgfile2, munumber=to_remove2, if_single_mu="remove"
+        )
 
-            return emgfile1, emgfile2
+        return emgfile1, emgfile2
 
-        else:
-            raise Exception(
-                "To remove duplicated MUs by PNR, you should load files from DEMUSE"
-            )
+    elif which == "SIL":
+        # Create a list containing which MU to remove in which file based
+        # on SIL score.
+        to_remove1 = []
+        to_remove2 = []
+        for i, row in tracking_res.iterrows():
+            sil1 = emgfile1["SIL"].loc[int(row["MU_file1"])]
+            sil2 = emgfile2["SIL"].loc[int(row["MU_file2"])]
+
+            if sil1[0] <= sil2[0]:
+                # This MU should be removed from emgfile1
+                to_remove1.append(int(row["MU_file1"]))
+            else:
+                # This MU should be removed from emgfile2
+                to_remove2.append(int(row["MU_file2"]))
+
+        # Delete the MUs
+        emgfile1 = delete_mus(
+            emgfile=emgfile1, munumber=to_remove1, if_single_mu="remove"
+        )
+        emgfile2 = delete_mus(
+            emgfile=emgfile2, munumber=to_remove2, if_single_mu="remove"
+        )
+
+        return emgfile1, emgfile2
 
     else:
-        pass  # TODO implement with SIL as with PNR
+        raise ValueError(f"which can be one of 'munumber', 'PNR', 'SIL'. {which} was passed instead")
 
 # TODO_NEXT_ try if replacing at/iat with loc/iloc can improve performance.
