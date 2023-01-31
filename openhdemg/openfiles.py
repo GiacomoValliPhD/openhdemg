@@ -68,7 +68,7 @@ The only exception when OTB files are loaded with just the reference signal:
 Additional informations can be found in the info module (emg.info()) and in
 the function's description.
 """
-# TODO consider avoiding functions in emg_from_demuse especially now that we are calculating the PNR
+
 
 from scipy.io import loadmat
 import pandas as pd
@@ -183,7 +183,8 @@ def emg_from_demuse(filepath):
     For an extended explanation of the imported emgfile:
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_demuse(filepath="path/filename.mat")
-    >>> emg.info().data(emgfile)
+    >>> info = emg.info()
+    >>> info.data(emgfile)
     """
 
     mat_file = loadmat(filepath, simplify_cells=True)
@@ -278,7 +279,7 @@ def emg_from_demuse(filepath):
 
     # Use this to know the data source and name of the file
     SOURCE = "DEMUSE"
-    FILENAME = os.path.basename(filepath) # TODO add in open and save for all the files (and in infos)
+    FILENAME = os.path.basename(filepath)
 
     # Calculate the PNR
     to_append = []
@@ -545,7 +546,7 @@ def get_otb_rawsignal(df):
 
 def emg_from_otb(
     filepath, ext_factor=8, refsig=[True, "fullsampled"], version="1.5.8.0"
-):
+): # TODO test with a single MU
     """
     Import the .mat file exportable by OTBiolab+.   
     
@@ -624,9 +625,10 @@ def emg_from_otb(
         }
     
     For an extended explanation of the imported emgfile use:
-        import openhdemg as emg
-        emgfile = emg.emg_from_otb(filepath="path/filename.mat")
-        emg.info().data(emgfile)
+    >>> import openhdemg as emg
+    >>> emgfile = emg.emg_from_otb(filepath="path/filename.mat")
+    >>> info = emg.info()
+    >>> info.data(emgfile)
     """
 
     mat_file = loadmat(filepath, simplify_cells=True)
@@ -741,7 +743,7 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
     
     Returns
     -------
-    emgfile : dict
+    emg_refsig : dict
         A dictionary containing all the useful variables.
     
     See also
@@ -762,14 +764,16 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
     Structure of the returned emg_refsig:
         emg_refsig = {
             "SOURCE": SOURCE,
+            "FILENAME": FILENAME,
             "FSAMP": FSAMP,
             "REF_SIGNAL": REF_SIGNAL,
         }
     
     For an extended explanation of the imported emgfile use:
-        import openhdemg as emg
-        emgfile = emg.refsig_from_otb(filepath="path/filename.mat")
-        emg.info().data(emgfile)
+    >>> import openhdemg as emg
+    >>> emgfile = emg.refsig_from_otb(filepath="path/filename.mat")
+    >>> info = emg.info()
+    >>> info.data(emgfile)
     """
 
     mat_file = loadmat(filepath, simplify_cells=True)
@@ -807,14 +811,14 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
         FILENAME = os.path.basename(filepath)
         FSAMP = int(mat_file["SamplingFrequency"])
 
-        resdict = {
+        emg_refsig = {
             "SOURCE": SOURCE,
             "FILENAME": FILENAME,
             "FSAMP": FSAMP,
             "REF_SIGNAL": REF_SIGNAL,
         }
 
-        return resdict
+        return emg_refsig
 
 
 # ---------------------------------------------------------------------
@@ -899,7 +903,13 @@ def emg_from_customcsv(
             "NUMBER_OF_MUS": NUMBER_OF_MUS,
             "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
         }
-    
+
+    For an extended explanation of the imported emgfile use:
+    >>> import openhdemg as emg
+    >>> emgfile = emg_from_customcsv(filepath = "mypath/file.csv")
+    >>> info = emg.info()
+    >>> info.data(emgfile)
+
     An example of the .csv file to load:
         REF_SIGNAL  RAW_SIGNAL (1)  RAW_SIGNAL (2)  RAW_SIGNAL (3) ...  IPTS (1)  IPTS (2)  MUPULSES (1)  MUPULSES (2)  BINARY_MUS_FIRING (1)  BINARY_MUS_FIRING (2)
     0            1        0.100000        0.100000        0.100000 ...  0.010000  0.010000           2.0           1.0                      0                      0
@@ -1005,7 +1015,7 @@ def emg_from_customcsv(
 # ---------------------------------------------------------------------
 # Functions to convert and save the emgfile to JSON.
 
-def save_json_emgfile(emgfile, filepath): # TODO change everything here for the new common emgfile format and add customfile, check also descriptions for load/save emgfile
+def save_json_emgfile(emgfile, filepath):
     """
     Save the emgfile or emg_refsig as a JSON file.
 
@@ -1026,28 +1036,32 @@ def save_json_emgfile(emgfile, filepath): # TODO change everything here for the 
         pd.DataFrame cannot be converted with json.dumps.
         Once all the elements are converted to json objects, we create a list
         of json objects and dump/save it into a single json file.
-        emgfile =   {
-                    "SOURCE" : SOURCE,
-                    "RAW_SIGNAL" : RAW_SIGNAL,
-                    "REF_SIGNAL" : REF_SIGNAL,
-                    ==> "PNR" : PNR OR "SIL" : SIL
-                    ==> "IPTS" : IPTS,
-                    ==> "MUPULSES" : MUPULSES,
-                    "FSAMP" : FSAMP,
-                    "IED" : IED,
-                    "EMG_LENGTH" : EMG_LENGTH,
-                    "NUMBER_OF_MUS" : NUMBER_OF_MUS,
-                    ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
-                    }
+        emgfile = {
+            "SOURCE": SOURCE,
+            "FILENAME": FILENAME,
+            "RAW_SIGNAL": RAW_SIGNAL,
+            "REF_SIGNAL": REF_SIGNAL,
+            "PNR": PNR,
+            "SIL": SIL
+            "IPTS": IPTS,
+            "MUPULSES": MUPULSES,
+            "FSAMP": FSAMP,
+            "IED": IED,
+            "EMG_LENGTH": EMG_LENGTH,
+            "NUMBER_OF_MUS": NUMBER_OF_MUS,
+            "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
+        }
         """
         # str or int
         # Directly convert the ditionary to a json format
         source = {"SOURCE": emgfile["SOURCE"]}
+        filename = {"FILENAME": emgfile["FILENAME"]}
         fsamp = {"FSAMP": emgfile["FSAMP"]}
         ied = {"IED": emgfile["IED"]}
         emg_length = {"EMG_LENGTH": emgfile["EMG_LENGTH"]}
         number_of_mus = {"NUMBER_OF_MUS": emgfile["NUMBER_OF_MUS"]}
         source = json.dumps(source)
+        filename = json.dumps(filename)
         fsamp = json.dumps(fsamp)
         ied = json.dumps(ied)
         emg_length = json.dumps(emg_length)
@@ -1059,28 +1073,29 @@ def save_json_emgfile(emgfile, filepath): # TODO change everything here for the 
         # re-importing them in python.
         raw_signal = emgfile["RAW_SIGNAL"]
         ref_signal = emgfile["REF_SIGNAL"]
-        if emgfile["SOURCE"] == "DEMUSE":
-            pnr = emgfile["PNR"]
-        else:
-            pnr = emgfile["SIL"]
+        pnr = emgfile["PNR"]
+        sil = emgfile["SIL"]
         ipts = emgfile["IPTS"]
         binary_mus_firing = emgfile["BINARY_MUS_FIRING"]
+
         raw_signal = raw_signal.to_json()
         ref_signal = ref_signal.to_json()
         pnr = pnr.to_json()
+        sil = sil.to_json()
         ipts = ipts.to_json()
         binary_mus_firing = binary_mus_firing.to_json()
+
         raw_signal = {"RAW_SIGNAL": raw_signal}
         ref_signal = {"REF_SIGNAL": ref_signal}
-        if emgfile["SOURCE"] == "DEMUSE":
-            pnr = {"PNR": pnr}
-        else:
-            pnr = {"SIL": pnr}
+        pnr = {"PNR": pnr}
+        sil = {"SIL": sil}
         ipts = {"IPTS": ipts}
         binary_mus_firing = {"BINARY_MUS_FIRING": binary_mus_firing}
+
         raw_signal = json.dumps(raw_signal)
         ref_signal = json.dumps(ref_signal)
         pnr = json.dumps(pnr)
+        sil = json.dumps(sil)
         ipts = json.dumps(ipts)
         binary_mus_firing = json.dumps(binary_mus_firing)
 
@@ -1098,9 +1113,11 @@ def save_json_emgfile(emgfile, filepath): # TODO change everything here for the 
         # function.
         list_to_save = [
             source,
+            filename,
             raw_signal,
             ref_signal,
             pnr,
+            sil,
             ipts,
             mupulses,
             fsamp,
@@ -1125,14 +1142,17 @@ def save_json_emgfile(emgfile, filepath): # TODO change everything here for the 
         """
         refsig =   {
                 "SOURCE" : SOURCE,
+                "FILENAME": FILENAME,
                 "FSAMP" : FSAMP,
                 "REF_SIGNAL" : REF_SIGNAL,
                 }
         """
         # str or int
         source = {"SOURCE": emgfile["SOURCE"]}
+        filename = {"FILENAME": emgfile["FILENAME"]}
         fsamp = {"FSAMP": emgfile["FSAMP"]}
         source = json.dumps(source)
+        filename = json.dumps(filename)
         fsamp = json.dumps(fsamp)
         # df
         ref_signal = emgfile["REF_SIGNAL"]
@@ -1140,7 +1160,7 @@ def save_json_emgfile(emgfile, filepath): # TODO change everything here for the 
         ref_signal = {"REF_SIGNAL": ref_signal}
         ref_signal = json.dumps(ref_signal)
         # Merge all the objects in one
-        list_to_save = [source, fsamp, ref_signal]
+        list_to_save = [source, filename, fsamp, ref_signal]
         json_to_save = json.dumps(list_to_save)
         # Compress and save
         with gzip.open(filepath, "w") as f:
@@ -1151,7 +1171,7 @@ def save_json_emgfile(emgfile, filepath): # TODO change everything here for the 
         raise Exception("File source not recognised")
 
 
-def emg_from_json(filepath): # TODO change everything here for the new common emgfile format and add customfile
+def emg_from_json(filepath):
     """
     Load the emgfile or emg_refsig stored in json format.
 
@@ -1171,12 +1191,17 @@ def emg_from_json(filepath): # TODO change everything here for the new common em
     -----
     The returned file is called ``emgfile`` for convention (or ``emg_refsig`` if SOURCE = "OTB_refsig").
 
-    For an extended explanation of the imported emgfile refer to the function:
-        info
-    Or to:
+    For an extended explanation of the imported emgfile use:
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile()
+    >>> info = emg.info()
+    >>> info.data(emgfile)
+    
+    Or refer to the documentation of the following functions:
         emg_from_otb
         emg_from_demuse
         refsig_from_otb
+        emg_from_customcsv
     """
 
     # Read and decompress json file
@@ -1196,71 +1221,81 @@ def emg_from_json(filepath): # TODO change everything here for the new common em
     # jsonemgfile[0] contains the SOURCE in a dictionary
     source_dict = json.loads(jsonemgfile[0])
     source = source_dict["SOURCE"]
-    if source in ["DEMUSE", "OTB"]:
-        # jsonemgfile[1] contains the RAW_SIGNAL in a dictionary, i can
-        # extract the RAW_SIGNAL in a new dictionary and convert it to a df.
+    # jsonemgfile[1] contains the FILENAME in all the sources
+    filename_dict = json.loads(jsonemgfile[1])
+    filename = filename_dict["FILENAME"]
+
+    if source in ["DEMUSE", "OTB", "custom"]:
+        # jsonemgfile[2] contains the RAW_SIGNAL in a dictionary, it can be
+        # extracted in a new dictionary and converted into a pd.DataFrame.
         # index and columns are imported as str, we need to convert it to int.
-        raw_signal_dict = json.loads(jsonemgfile[1])
+        raw_signal_dict = json.loads(jsonemgfile[2])
         raw_signal_dict = json.loads(raw_signal_dict["RAW_SIGNAL"])
         raw_signal = pd.DataFrame(raw_signal_dict)
         raw_signal.columns = raw_signal.columns.astype(int)
         raw_signal.index = raw_signal.index.astype(int)
         raw_signal.sort_index(inplace=True)
-        # jsonemgfile[2] contains the REF_SIGNAL to be treated as jsonemgfile[1]
-        ref_signal_dict = json.loads(jsonemgfile[2])
+        # jsonemgfile[3] contains the REF_SIGNAL to be treated as jsonemgfile[2]
+        ref_signal_dict = json.loads(jsonemgfile[3])
         ref_signal_dict = json.loads(ref_signal_dict["REF_SIGNAL"])
         ref_signal = pd.DataFrame(ref_signal_dict)
         ref_signal.columns = ref_signal.columns.astype(int)
         ref_signal.index = ref_signal.index.astype(int)
         ref_signal.sort_index(inplace=True)
-        # jsonemgfile[3] contains the pnr to be treated as jsonemgfile[1]
-        pnr_dict = json.loads(jsonemgfile[3])
-        if source == "DEMUSE":
-            pnr_dict = json.loads(pnr_dict["PNR"])
-        else:
-            pnr_dict = json.loads(pnr_dict["SIL"])
+        # jsonemgfile[4] contains the PNR to be treated as jsonemgfile[2]
+        pnr_dict = json.loads(jsonemgfile[4])
+        pnr_dict = json.loads(pnr_dict["PNR"])
         pnr = pd.DataFrame(pnr_dict)
         pnr.columns = pnr.columns.astype(int)
         pnr.index = pnr.index.astype(int)
         pnr.sort_index(inplace=True)
-        # jsonemgfile[4] contains the IPTS to be treated as jsonemgfile[1]
-        ipts_dict = json.loads(jsonemgfile[4])
+        # jsonemgfile[5] contains the SIL to be treated as jsonemgfile[2]
+        sil_dict = json.loads(jsonemgfile[5])
+        sil_dict = json.loads(sil_dict["SIL"])
+        sil = pd.DataFrame(sil_dict)
+        sil.columns = sil.columns.astype(int)
+        sil.index = sil.index.astype(int)
+        sil.sort_index(inplace=True)
+        # jsonemgfile[6] contains the IPTS to be treated as jsonemgfile[2]
+        ipts_dict = json.loads(jsonemgfile[6])
         ipts_dict = json.loads(ipts_dict["IPTS"])
         ipts = pd.DataFrame(ipts_dict)
         ipts.columns = ipts.columns.astype(int)
         ipts.index = ipts.index.astype(int)
         ipts.sort_index(inplace=True)
-        # jsonemgfile[5] contains the MUPULSES which is a list of lists but
+        # jsonemgfile[7] contains the MUPULSES which is a list of lists but
         # has to be converted in a list of ndarrays.
-        mupulses = json.loads(jsonemgfile[5])
+        mupulses = json.loads(jsonemgfile[7])
         for num, element in enumerate(mupulses):
             mupulses[num] = np.array(element)
-        # jsonemgfile[6] contains the fsamp to be treated as jsonemgfile[0]
-        fsamp_dict = json.loads(jsonemgfile[6])
+        # jsonemgfile[8] contains the FSAMP to be treated as jsonemgfile[0]
+        fsamp_dict = json.loads(jsonemgfile[8])
         fsamp = int(fsamp_dict["FSAMP"])
-        # jsonemgfile[7] contains the IED to be treated as jsonemgfile[0]
-        ied_dict = json.loads(jsonemgfile[7])
+        # jsonemgfile[9] contains the IED to be treated as jsonemgfile[0]
+        ied_dict = json.loads(jsonemgfile[9])
         ied = int(ied_dict["IED"])
-        # jsonemgfile[8] contains the EMG_LENGTH to be treated as jsonemgfile[0]
-        emg_length_dict = json.loads(jsonemgfile[8])
+        # jsonemgfile[10] contains the EMG_LENGTH to be treated as jsonemgfile[0]
+        emg_length_dict = json.loads(jsonemgfile[10])
         emg_length = int(emg_length_dict["EMG_LENGTH"])
-        # jsonemgfile[9] contains the NUMBER_OF_MUS to be treated as
+        # jsonemgfile[11] contains the NUMBER_OF_MUS to be treated as
         # jsonemgfile[0]
-        number_of_mus_dict = json.loads(jsonemgfile[9])
+        number_of_mus_dict = json.loads(jsonemgfile[11])
         number_of_mus = int(number_of_mus_dict["NUMBER_OF_MUS"])
-        # jsonemgfile[10] contains the binary_mus_firing to be treated as
-        # jsonemgfile[1]
-        binary_mus_firing_dict = json.loads(jsonemgfile[10])
+        # jsonemgfile[12] contains the BINARY_MUS_FIRING to be treated as
+        # jsonemgfile[2]
+        binary_mus_firing_dict = json.loads(jsonemgfile[12])
         binary_mus_firing_dict = json.loads(binary_mus_firing_dict["BINARY_MUS_FIRING"])
         binary_mus_firing = pd.DataFrame(binary_mus_firing_dict)
         binary_mus_firing.columns = binary_mus_firing.columns.astype(int)
         binary_mus_firing.index = binary_mus_firing.index.astype(int)
 
-        resdict = {
+        emgfile = {
             "SOURCE": source,
+            "FILENAME": filename,
             "RAW_SIGNAL": raw_signal,
             "REF_SIGNAL": ref_signal,
-            "PNR" if source == "DEMUSE" else "SIL" : pnr,
+            "PNR" : pnr,
+            "SIL": sil,
             "IPTS": ipts,
             "MUPULSES": mupulses,
             "FSAMP": fsamp,
@@ -1271,19 +1306,20 @@ def emg_from_json(filepath): # TODO change everything here for the new common em
         }
 
     elif source == "OTB_refsig":
-        # jsonemgfile[1] contains the fsamp
-        fsamp_dict = json.loads(jsonemgfile[1])
+        # jsonemgfile[2] contains the fsamp
+        fsamp_dict = json.loads(jsonemgfile[2])
         fsamp = int(fsamp_dict["FSAMP"])
-        # jsonemgfile[2] contains the REF_SIGNAL to be treated as jsonemgfile[1]
-        ref_signal_dict = json.loads(jsonemgfile[2])
+        # jsonemgfile[3] contains the REF_SIGNAL
+        ref_signal_dict = json.loads(jsonemgfile[3])
         ref_signal_dict = json.loads(ref_signal_dict["REF_SIGNAL"])
         ref_signal = pd.DataFrame(ref_signal_dict)
         ref_signal.columns = ref_signal.columns.astype(int)
         ref_signal.index = ref_signal.index.astype(int)
         ref_signal.sort_index(inplace=True)
 
-        resdict = {
+        emgfile = {
             "SOURCE": source,
+            "FILENAME": filename,
             "FSAMP": fsamp,
             "REF_SIGNAL": ref_signal,
         }
@@ -1291,19 +1327,13 @@ def emg_from_json(filepath): # TODO change everything here for the new common em
     else:
         raise Exception("File source not recognised")
 
-    return resdict
+    return emgfile
 
 
 # ---------------------------------------------------------------------
 # Function to open files from a GUI in a single line of code.
 
-def askopenfile(
-    initialdir="/",
-    filesource="DEMUSE",
-    otb_ext_factor=8,
-    otb_refsig_type=[True, "fullsampled"],
-    otb_version="1.5.8.0",
-): # TODO add also custom and check descriptions # TODO return name of opened file for GUI eg. emgfile, name = emg.askopenfile(var=True)
+def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):   
     """
     Select and open files with a GUI.
 
@@ -1312,7 +1342,7 @@ def askopenfile(
     initialdir : str or Path, default "/"
         The directory of the file to load (excluding file name).
         This can be a simple string, the use of Path is not necessary.
-    filesource : str {"DEMUSE", "OTB", "OTB_refsig", "Open_HD-EMG"}, default "DEMUSE"
+    filesource : str {"DEMUSE", "OTB", "OTB_refsig", "custom", "Open_HD-EMG"}, default "DEMUSE"
         See notes for how files should be exported from OTB.
 
         ``DEMUSE``
@@ -1321,24 +1351,55 @@ def askopenfile(
             File exported from OTB with decomposition and reference signal (.mat).
         ``OTB_refsig``
             File exported from OTB with only the reference signal (.mat).
+        ``custom``
+            Custom file format (.csv).
         ``Open_HD-EMG``
             File saved from openhdemg (.json).
     otb_ext_factor : int, default 8
         The extension factor used for the decomposition in the OTbiolab+
         software.
-        Ignore if loading a DEMUSE file.
+        Ignore if loading other files.
     otb_refsig_type : list, default [True, "fullsampled"]
         Whether to seacrh also for the REF_SIGNAL and whether to load the full
         or sub-sampled one. The list is composed as [bool, str]. str can be 
         "fullsampled" or "subsampled".
-        Ignore if loading a DEMUSE file.
-    otb_version : str {"1.5.8.0"}, default "1.5.8.0"
+        Ignore if loading other files.
+    otb_version : str, default "1.5.8.0"
         Version of the OTBiolab+ software used (4 points).
-        If your specific version is not available, try with the closer one.
-        Ignore if loading a DEMUSE file.
-
-        ``1.5.8.0``
-            Tested for versions from 1.5.7.3 to 1.5.8.0.
+        Tested versions are:
+            "1.5.3.0",
+            "1.5.4.0",
+            "1.5.5.0",
+            "1.5.6.0",
+            "1.5.7.2",
+            "1.5.7.3",
+            "1.5.8.0",
+        If your specific version is not available in the tested versions,
+        trying with the closer one usually works, but please double check the results.
+        Ignore if loading other files.
+    custom_ref_signal : str, default 'REF_SIGNAL'
+        Label of the column(s) containing the reference signal of the custom file.
+        This and the following arguments are needed only for custom files.
+        Ignore if loading other files.
+    custom_raw_signal : str, default 'RAW_SIGNAL'
+        Label of the column(s) containing the raw emg signal of the custom file.
+        Ignore if loading other files.
+    custom_ipts : str, default 'IPTS'
+        Label of the column(s) containing the pulse train of the custom file.
+        Ignore if loading other files.
+    custom_mupulses : str, default 'MUPULSES'
+        Label of the column(s) containing the times of firing of the custom file.
+        Ignore if loading other files.
+    custom_binary_mus_firing : str, default 'BINARY_MUS_FIRING'
+        Label of the column(s) containing the binary representation
+        of the MUs firings of the custom file.
+        Ignore if loading other files.
+    custom_fsamp : int, default 2048
+        Tha sampling frequency of the custom file.
+        Ignore if loading other files.
+    custom_ied : int, default 8
+        The inter-electrode distance in mm of the custom file.
+        Ignore if loading other files.
 
     Returns
     -------
@@ -1369,9 +1430,25 @@ def askopenfile(
         before exporting the .mat file.
     - NO OTHER ELEMENTS SHOULD BE PRESENT!
 
+    For custom .csv files:
+    The variables of interest should be contained in columns. The name of the
+    columns containing each variable can be specified by the user if different
+    from the default values.
+    This function detects the content of the .csv by parsing the .csv columns.
+    For parsing, column labels should be provided. A label is a term common
+    to all the columns containing the same information.
+    For example, if the raw signal is contained in the columns 'RAW_SIGNAL_1',
+    'RAW_SIGNAL_2', ... , 'RAW_SIGNAL_n', the label of the columns should be
+    'RAW_SIGNAL'.
+    If the parameters in input are not present in the .csv file, the user
+    can simply leave the original inputs.
+    Please see the documentation of the function emg_from_customcsv for additional
+    informations.
+
     Structure of the returned emgfile:
         emgfile = {
             "SOURCE": SOURCE,
+            "FILENAME": FILENAME,
             "RAW_SIGNAL": RAW_SIGNAL,
             "REF_SIGNAL": REF_SIGNAL,
             "PNR": PNR,
@@ -1385,10 +1462,19 @@ def askopenfile(
             "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
         }
 
+    Structure of the returned emg_refsig:
+        emg_refsig = {
+            "SOURCE": SOURCE,
+            "FILENAME": FILENAME,
+            "FSAMP": FSAMP,
+            "REF_SIGNAL": REF_SIGNAL,
+        }
+
     For an extended explanation of the imported emgfile use:
-        import openhdemg as emg
-        emgfile = emg.askopenfile()
-        emg.info().data(emgfile)
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile()
+    >>> info = emg.info()
+    >>> info.data(emgfile)
     """
 
     # Set initialdir (actually not working on Windows)
@@ -1410,8 +1496,14 @@ def askopenfile(
     elif filesource == "Open_HD-EMG":
         file_toOpen = filedialog.askopenfilename(
             initialdir=initialdir,
-            title="Select a Open_HD-EMG file to load",
+            title="Select an Open_HD-EMG file to load",
             filetypes=[("JSON files", ".json")],
+        )
+    elif filesource == "custom":
+        file_toOpen = filedialog.askopenfilename(
+            initialdir=initialdir,
+            title="Select a custom file to load",
+            filetypes=[("CSV files", ".csv")],
         )
     else:
         raise Exception(
@@ -1427,16 +1519,28 @@ def askopenfile(
     elif filesource == "OTB":
         emgfile = emg_from_otb(
             filepath=file_toOpen,
-            ext_factor=otb_ext_factor,
-            refsig=otb_refsig_type,
-            version=otb_version
+            ext_factor=kwargs.get("otb_ext_factor", 8),
+            refsig=kwargs.get("otb_refsig_type", [True, "fullsampled"]),
+            version=kwargs.get("otb_version", "1.5.8.0")
         )
     elif filesource == "OTB_refsig":
+        ref = kwargs.get("otb_refsig_type", [True, "fullsampled"])
         emgfile = refsig_from_otb(
-            filepath=file_toOpen, refsig=otb_refsig_type[1], version=otb_version
+            filepath=file_toOpen, refsig=ref[1], version=kwargs.get("otb_version", "1.5.8.0")
         )
     elif filesource == "Open_HD-EMG":
         emgfile = emg_from_json(filepath=file_toOpen)
+    else: # custom
+        emgfile = emg_from_customcsv(
+            filepath = file_toOpen,
+            ref_signal=kwargs.get("custom_ref_signal", "REF_SIGNAL"),
+            raw_signal=kwargs.get("custom_raw_signal", "RAW_SIGNAL"),
+            ipts=kwargs.get("custom_ipts", "IPTS"),
+            mupulses=kwargs.get("custom_mupulses", "MUPULSES"),
+            binary_mus_firing=kwargs.get("custom_binary_mus_firing", "BINARY_MUS_FIRING"),
+            fsamp=kwargs.get("custom_fsamp", 2048),
+            ied=kwargs.get("custom_ied", 8),
+        )
 
     print("\n-----------\nFile loaded\n-----------\n")
 

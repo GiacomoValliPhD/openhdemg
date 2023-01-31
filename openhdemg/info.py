@@ -49,39 +49,19 @@ class info:
             The dictionary containing the emgfile.
         """
 
-        if emgfile["SOURCE"]=="OTB": # TODO same for DEMUSE/OTB/custom
+        if emgfile["SOURCE"] in ["DEMUSE", "OTB", "custom"]:
             print("\nData structure of the emgfile loaded with the function emg_from_otb.")
             print("--------------------------------------------------------------------\n")
             print(f"emgfile type is:\n{type(emgfile)}\n")
             print(f"emgfile keys are:\n{emgfile.keys()}\n")
             print("Any key can be acced as emgfile[key].\n")
             print(f"emgfile['SOURCE'] is a {type(emgfile['SOURCE'])} of value:\n{emgfile['SOURCE']}\n")
-            print("MUST NOTE: megfile from OTB has 64 channels, from DEMUSE 65 (includes empty channel).")
-            print(f"emgfile['RAW_SIGNAL'] is a {type(emgfile['RAW_SIGNAL'])} of value:\n{emgfile['RAW_SIGNAL']}\n")
-            print(f"emgfile['REF_SIGNAL'] is a {type(emgfile['REF_SIGNAL'])} of value:\n{emgfile['REF_SIGNAL']}\n")
-            print("SIL estimation to be implemented in future releases.")
-            print(f"emgfile['SIL'] is a {type(emgfile['SIL'])} of value:\n{emgfile['SIL']}\n")
-            print(f"emgfile['IPTS'] is a {type(emgfile['IPTS'])} of value:\n{emgfile['IPTS']}\n")
-            print(f"emgfile['MUPULSES'] is a {type(emgfile['MUPULSES'])} of length depending on total MUs number.")
-            print(f"MUPULSES for each MU can be accessed as emgfile['MUPULSES'][MUnumber].\n")
-            print(f"emgfile['MUPULSES'][0] is a {type(emgfile['MUPULSES'][0])} of value:\n{emgfile['MUPULSES'][0]}\n")
-            print(f"emgfile['FSAMP'] is a {type(emgfile['FSAMP'])} of value:\n{emgfile['FSAMP']}\n")
-            print(f"emgfile['IED'] is a {type(emgfile['IED'])} of value:\n{emgfile['IED']}\n")
-            print(f"emgfile['EMG_LENGTH'] is a {type(emgfile['EMG_LENGTH'])} of value:\n{emgfile['EMG_LENGTH']}\n")
-            print(f"emgfile['NUMBER_OF_MUS'] is a {type(emgfile['NUMBER_OF_MUS'])} of value:\n{emgfile['NUMBER_OF_MUS']}\n")
-            print(f"emgfile['BINARY_MUS_FIRING'] is a {type(emgfile['BINARY_MUS_FIRING'])} of value:\n{emgfile['BINARY_MUS_FIRING']}\n")
-        
-        elif emgfile["SOURCE"]=="DEMUSE":
-            print("\nData structure of the emgfile loaded with the function emg_from_demuse.")
-            print("-----------------------------------------------------------------------\n")
-            print(f"emgfile type is:\n{type(emgfile)}\n")
-            print(f"emgfile keys are:\n{emgfile.keys()}\n")
-            print("Any key can be acced as emgfile[key].\n")
-            print(f"emgfile['SOURCE'] is a {type(emgfile['SOURCE'])} of value:\n{emgfile['SOURCE']}\n")
+            print(f"emgfile['FILENAME'] is a {type(emgfile['FILENAME'])} of value:\n{emgfile['FILENAME']}\n")
             print("MUST NOTE: megfile from OTB has 64 channels, from DEMUSE 65 (includes empty channel).")
             print(f"emgfile['RAW_SIGNAL'] is a {type(emgfile['RAW_SIGNAL'])} of value:\n{emgfile['RAW_SIGNAL']}\n")
             print(f"emgfile['REF_SIGNAL'] is a {type(emgfile['REF_SIGNAL'])} of value:\n{emgfile['REF_SIGNAL']}\n")
             print(f"emgfile['PNR'] is a {type(emgfile['PNR'])} of value:\n{emgfile['PNR']}\n")
+            print(f"emgfile['SIL'] is a {type(emgfile['SIL'])} of value:\n{emgfile['SIL']}\n")
             print(f"emgfile['IPTS'] is a {type(emgfile['IPTS'])} of value:\n{emgfile['IPTS']}\n")
             print(f"emgfile['MUPULSES'] is a {type(emgfile['MUPULSES'])} of length depending on total MUs number.")
             print(f"MUPULSES for each MU can be accessed as emgfile['MUPULSES'][MUnumber].\n")
@@ -99,11 +79,12 @@ class info:
             print(f"emgfile keys are:\n{emgfile.keys()}\n")
             print("Any key can be acced as emgfile[key].\n")
             print(f"emgfile['SOURCE'] is a {type(emgfile['SOURCE'])} of value:\n{emgfile['SOURCE']}\n")
+            print(f"emgfile['FILENAME'] is a {type(emgfile['FILENAME'])} of value:\n{emgfile['FILENAME']}\n")
             print(f"emgfile['FSAMP'] is a {type(emgfile['FSAMP'])} of value:\n{emgfile['FSAMP']}\n")
             print(f"emgfile['REF_SIGNAL'] is a {type(emgfile['REF_SIGNAL'])} of value:\n{emgfile['REF_SIGNAL']}\n")
         
         else:
-            raise ValueError("emgfile['SOURCE'] not recognised")
+            raise ValueError(f"Source '{emgfile['SOURCE']}' not recognised")
 
     def abbreviations(self):
         """
