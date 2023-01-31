@@ -160,7 +160,7 @@ def norm_twod_xcorr(df1, df2, mode="full"):
     return normxcorr_df, normxcorr_max
 
 
-def sil(emgfile, munumber): # TODO add refs for each function if necessary
+def compute_sil(ipts, mupulses): # TODO _NEXT_ add refs in docs when necessary
     """
     Calculate the Silhouette score for a single MU.
 
@@ -169,10 +169,10 @@ def sil(emgfile, munumber): # TODO add refs for each function if necessary
     
     Parameters
     ----------
-    emgfile : dict
-        The dictionary containing the emgfile.
-    munumber : int
-        The number of the MU to plot.
+    ipts : pd.Series
+        The source of decomposition (or pulse train, IPTS[mu]) of the MU of interest.
+    mupulses : ndarray
+        The time of firing (MUPULSES[mu]) of the MU of interest.
     
     Returns
     -------
@@ -181,12 +181,12 @@ def sil(emgfile, munumber): # TODO add refs for each function if necessary
     
     See also
     --------
-    pnr : to calculate the Pulse to Noise ratio of a single MU.
+    compute_pnr : to calculate the Pulse to Noise ratio of a single MU.
     """
 
     # Extract source and peaks
-    source = emgfile["IPTS"][munumber].to_numpy()
-    peaks_idxs = emgfile["MUPULSES"][munumber]
+    source = ipts.to_numpy()
+    peaks_idxs = mupulses
 
     # Create clusters
     peak_cluster = source[peaks_idxs]
@@ -217,3 +217,38 @@ def sil(emgfile, munumber): # TODO add refs for each function if necessary
     sil = (inter_sums - intra_sums) / max(intra_sums, inter_sums)
 
     return sil
+
+
+def compute_pnr(ipts, mupulses): # TODO correct the function
+    """
+    Calculate the pulse to noise ratio for a single MU.
+    
+    Parameters
+    ----------
+    ipts : pd.Series
+        The source of decomposition (or pulse train, IPTS[mu]) of the MU of interest.
+    mupulses : ndarray
+        The time of firing (MUPULSES[mu]) of the MU of interest.
+    
+    Returns
+    -------
+    pnr : float
+        The PNR in decibels.
+    
+    See also
+    --------
+    compute_sil : to calculate the Silhouette score for a single MU.
+    """
+
+    # Extract source and peaks
+    source = ipts.to_numpy()
+    peaks_idxs = mupulses
+
+    # Create clusters
+    peak_cluster = source[peaks_idxs]
+    noise_cluster = np.delete(source, peaks_idxs)
+
+    # Calculate silhouette coefficient
+    pnr = 10*np.log((peak_cluster.mean() / noise_cluster.std()))
+
+    return pnr

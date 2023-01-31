@@ -49,7 +49,7 @@ class info:
             The dictionary containing the emgfile.
         """
 
-        if emgfile["SOURCE"]=="OTB":
+        if emgfile["SOURCE"]=="OTB": # TODO same for DEMUSE/OTB/custom
             print("\nData structure of the emgfile loaded with the function emg_from_otb.")
             print("--------------------------------------------------------------------\n")
             print(f"emgfile type is:\n{type(emgfile)}\n")
@@ -124,7 +124,7 @@ class info:
             "PNR": "Pulse to noise ratio",
             "RT": "Recruitment threshold",
             "SD": "Single differential",
-            "SIL": "Silouette threshold",
+            "SIL": "Silhouette score",
             "STA": "Spike-triggered average",
             "XCC": "Cross-correlation coefficient",
         }

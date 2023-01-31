@@ -495,14 +495,15 @@ def basic_mus_properties(
     exportable_df.append({"MViF": mvif})
     exportable_df = pd.DataFrame(exportable_df)
 
-    # Basically, we create an empty list, append values, convert the list in df and then concatenate to the exportable_df
+    # Basically, we create an empty list, append values, convert the
+    # list in a pd.DataFrame and then concatenate to the exportable_df
     toappend = []
     for i in range(emgfile["NUMBER_OF_MUS"]):
-        toappend.append({"MU_number": i + 1})
+        toappend.append({"MU_number": i})
     toappend = pd.DataFrame(toappend)
     exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
-    # Only for DEMUSE files at this point #TODO_NEXT_ use SIL for OTB
+    # Only for DEMUSE files at this point # TODO use SIL for OTB
     if emgfile["SOURCE"] == "DEMUSE":
         # Repeat the task for every new column to fill and concatenate
         toappend = []

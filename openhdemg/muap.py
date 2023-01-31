@@ -945,7 +945,7 @@ def remove_duplicates_between(
     filter=True,
     show=False,
     which="munumber",
-):# TODO write examples
+):
     """
     Remove duplicated MUs across two different files based on STA.
 
@@ -984,7 +984,9 @@ def remove_duplicates_between(
         ``munumber``
             Duplicated MUs are removed from the file with more MUs.
         ``PNR``
-            The MU with the lowest PNR is removed (valid only for DEMUSE files).
+            The MU with the lowest PNR is removed.
+        ``SIL``
+            The MU with the lowest SIL is removed. # TODO implement this
 
     Returns
     -------
@@ -1001,7 +1003,8 @@ def remove_duplicates_between(
     Examples
     --------
     Remove duplicated MUs between two OTB files and save the emgfiles
-    without duplicates.
+    without duplicates. The duplicates are removed from the file with
+    more MUs.
     If loading a DEMUSE file, matrixcode and orientation can be ignored.
 
     >>> emgfile1 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
