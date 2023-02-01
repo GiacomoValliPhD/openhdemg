@@ -140,12 +140,13 @@ def norm_twod_xcorr(df1, df2, mode="full"):
     405 -0.000004 -1.693078e-06  1.054646e-06 ...  1.811828e-05  0.000007
     406 -0.000002 -2.473282e-07  6.006046e-07 ...  1.605406e-05  0.000007
     """
-    
+
     # Perform 2d xcorr
     correlate2d = signal.correlate2d(in1=df1, in2=df2, mode=mode)
 
     # Normalise the result of 2d xcorr for the different energy levels
-    # MATLAB equivalent: acor_norm = xcorr(x,y)/sqrt(sum(abs(x).^2)*sum(abs(y).^2))
+    # MATLAB equivalent:
+    # acor_norm = xcorr(x,y)/sqrt(sum(abs(x).^2)*sum(abs(y).^2))
     absx = df1.abs()
     absy = df2.abs()
     expx = absx**2
@@ -160,25 +161,27 @@ def norm_twod_xcorr(df1, df2, mode="full"):
     return normxcorr_df, normxcorr_max
 
 
-def compute_sil(ipts, mupulses): # TODO _NEXT_ add refs in docs when necessary
+def compute_sil(ipts, mupulses):  # TODO _NEXT_ add refs in docs when necessary
     """
     Calculate the Silhouette score for a single MU.
 
-    The SIL is defined as the difference between the within-cluster sums of point-to-centroid distances and the
-    same measure calculated between clusters. The measure was normalized dividing by the maximum of the two values.
-    
+    The SIL is defined as the difference between the within-cluster sums of
+    point-to-centroid distances and the same measure calculated between clusters.
+    The measure was normalized dividing by the maximum of the two values.
+
     Parameters
     ----------
     ipts : pd.Series
-        The source of decomposition (or pulse train, IPTS[mu]) of the MU of interest.
+        The source of decomposition (or pulse train, IPTS[mu]) of the MU of
+        interest.
     mupulses : ndarray
         The time of firing (MUPULSES[mu]) of the MU of interest.
-    
+
     Returns
     -------
     sil : float
         The SIL score.
-    
+
     See also
     --------
     compute_pnr : to calculate the Pulse to Noise ratio of a single MU.
@@ -219,22 +222,23 @@ def compute_sil(ipts, mupulses): # TODO _NEXT_ add refs in docs when necessary
     return sil
 
 
-def compute_pnr(ipts, mupulses): # TODO correct the function
+def compute_pnr(ipts, mupulses):  # TODO correct the function
     """
     Calculate the pulse to noise ratio for a single MU.
-    
+
     Parameters
     ----------
     ipts : pd.Series
-        The source of decomposition (or pulse train, IPTS[mu]) of the MU of interest.
+        The source of decomposition (or pulse train, IPTS[mu]) of the MU of
+        interest.
     mupulses : ndarray
         The time of firing (MUPULSES[mu]) of the MU of interest.
-    
+
     Returns
     -------
     pnr : float
         The PNR in decibels.
-    
+
     See also
     --------
     compute_sil : to calculate the Silhouette score for a single MU.

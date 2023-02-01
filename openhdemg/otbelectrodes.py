@@ -1,9 +1,8 @@
 """
-This module contains informations about the electrodes sold by OTB and
-commonly used for HD-EMG recordings.
-Functions to sort the electrode position are also included. These functions
-are used only for the OTBiolab+ software since DEMUSE already provides sorted
-channels. # TODO custom? to sort like OTB
+This module contains informations about the electrodes commonly used for
+HD-EMG recordings.
+Functions to sort the electrode position are also included.
+The files saved from the DEMUSE software are supposed to be already sorted.
 """
 
 import numpy as np
@@ -77,7 +76,8 @@ def sort_rawemg(
     """
     Sort RAW_SIGNAL based on matrix type and orientation.
 
-    Built-in sorting functions have been implemented for code(orientation):
+    Built-in sorting functions have been implemented for the matrices:
+        Code       (Orientation)
         GR08MM1305(0, 180),
         GR04MM1305(0, 180),
         GR10MM0808(0, 180).
@@ -150,7 +150,7 @@ def sort_rawemg(
     """
 
     # DEMUSE files are supposed to be already sorted
-    if emgfile["SOURCE"] == "OTB":
+    if emgfile["SOURCE"] in ["OTB", "custom"]:
         # Work on a copy of the RAW_SIGNAL
         rawemg = copy.deepcopy(emgfile["RAW_SIGNAL"])
 
@@ -280,8 +280,8 @@ def sort_rawemg(
         # Work on a copy of the RAW_SIGNAL
         sorted_rawemg = copy.deepcopy(emgfile["RAW_SIGNAL"])
 
-    elif emgfile["SOURCE"] == "custom":
-        pass # TODO what do we do with a custom file?
+    else:
+        raise ValueError(f"Source {emgfile['SOURCE']} not valid")
 
     # Check if we need the sorted RAW_SIGNAL divided by column
     if dividebycolumn:

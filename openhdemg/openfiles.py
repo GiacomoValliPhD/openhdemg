@@ -76,58 +76,13 @@ import numpy as np
 from openhdemg.otbelectrodes import *
 from openhdemg.mathtools import compute_sil
 from openhdemg.mathtools import compute_pnr
+from openhdemg.tools import create_binary_firings
 from tkinter import *
 from tkinter import filedialog
 import json
 import gzip
 import warnings
-import math
 import os
-
-
-def create_binary_firings(EMG_LENGTH, NUMBER_OF_MUS, MUPULSES): # TODO move to tools? and expose to users
-    """
-    Create a binary representation of the MU firing.
-
-    Create a binary representation of the MU firing over time
-    based on the times of firing of each MU.
-
-    Parameters
-    ----------
-    EMG_LENGTH : int
-        Number of samples (length) in the emg file.
-    NUMBER_OF_MUS : int
-        Number of MUs in the emg file.
-    MUPULSES : list of ndarrays
-        The times of firing of all the MUs.
-
-    Returns
-    -------
-    mat : pd.DataFrame
-        A pd.DataFrame containing the requested variable
-        or np.nan if the variable was not found.
-    """
-
-    if isinstance(MUPULSES, list):  # skip the step if I don't have the MUPULSES (is nan)
-        # create an empty pd.DataFrame containing zeros
-        binary_MUs_firing = pd.DataFrame(np.zeros((EMG_LENGTH, NUMBER_OF_MUS)))
-        # Loop through the columns (MUs) and isolate the data of interest
-        for i in range(NUMBER_OF_MUS):
-            this_mu_binary_firing = binary_MUs_firing[i]
-            this_mu_pulses = pd.DataFrame(MUPULSES[i])
-            
-            # Loop through the rows (time) and assign 1 if the MU is firing
-            for position in range(len(this_mu_pulses)):
-                firing_point = int(this_mu_pulses.iloc[position])
-                this_mu_binary_firing.iloc[firing_point] = 1
-
-            # Merge the work done with the original pd.DataFrame of zeros
-            binary_MUs_firing[i] = this_mu_binary_firing
-
-        return binary_MUs_firing
-
-    else:
-        return np.nan
 
 
 # ---------------------------------------------------------------------
@@ -243,8 +198,8 @@ def emg_from_demuse(filepath):
     IED = int(mat_file["IED"])
     EMG_LENGTH, NUMBER_OF_MUS = IPTS.shape
 
-    # Collect the MUPULSES, subtract 1 to MUPULSES because these are values in base 1
-    # (MATLAB) and manage exception of single MU.
+    # Collect the MUPULSES, subtract 1 to MUPULSES because these are values in
+    # base 1 (MATLAB) and manage exception of single MU.
     if "MUPulses" in mat_file.keys():
         MUPULSES = list(mat_file["MUPulses"])
 
@@ -546,24 +501,25 @@ def get_otb_rawsignal(df):
 
 def emg_from_otb(
     filepath, ext_factor=8, refsig=[True, "fullsampled"], version="1.5.8.0"
-): # TODO test with a single MU
+):  # TODO test with a single MU
     """
     Import the .mat file exportable by OTBiolab+.   
-    
-    This function is used to import the .mat file exportable by the OTBiolab+ software
-    as a dictionary of Python objects (mainly pandas dataframes).
+
+    This function is used to import the .mat file exportable by the OTBiolab+
+    software as a dictionary of Python objects (mainly pandas dataframes).
 
     Parameters
     ----------
     filepath : str or Path
-        The directory and the name of the file to load (including file extension .mat).
+        The directory and the name of the file to load
+        (including file extension .mat).
         This can be a simple string, the use of Path is not necessary.
     ext_factor : int, default 8
-        The extension factor used for the decomposition in the OTbiolab+ software.
+        The extension factor used for the decomposition in OTbiolab+.
     refsig : list, default [True, "fullsampled"]
-        Whether to seacrh also for the REF_SIGNAL and whether to load the full or sub-sampled one.
-        The list is composed as [bool, str]. str can be "fullsampled" or "subsampled".
-        Please read notes section.
+        Whether to seacrh also for the REF_SIGNAL and whether to load the full
+        or sub-sampled one. The list is composed as [bool, str]. str can be
+        "fullsampled" or "subsampled". Please read notes section.
     version : str, default "1.5.8.0"
         Version of the OTBiolab+ software used (4 points).
         Tested versions are:
@@ -575,8 +531,9 @@ def emg_from_otb(
             "1.5.7.3",
             "1.5.8.0",
         If your specific version is not available in the tested versions,
-        trying with the closer one usually works, but please double check the results.
-    
+        trying with the closer one usually works, but please double check the
+        results.
+
     Returns
     -------
     emgfile : dict
@@ -584,7 +541,8 @@ def emg_from_otb(
 
     See also
     --------
-    refsig_from_otb : import REF_SIGNAL in the .mat file exportable by OTBiolab+.
+    refsig_from_otb : import REF_SIGNAL in the .mat file exportable from
+        OTBiolab+.
     emg_from_demuse : import the .mat file used in DEMUSE.
     emg_from_customcsv : Import custom data from a .csv file.
 
@@ -592,19 +550,24 @@ def emg_from_otb(
     ------
     ValueError
         When a wrong value is passed to version=.
-    
+
     Notes
     ---------
     The returned file is called ``emgfile`` for convention.
 
-    The input .mat file exported from the OTBiolab+ software should have a specific content:
-    - refsig signal is optional but, if present, there should be both the fullsampled and the subsampled version
-        (in OTBioLab+ the "performed path" refers to the subsampled signal, the "acquired data" to the fullsampled signal),
-        REF_SIGNAL is expected to be expressed as % of the MViF (but not compulsory).
-    - Both the IPTS ('Source for decomposition...' in OTBioLab+) and the BINARY_MUS_FIRING
-        ('Decomposition of...' in OTBioLab+) should be present.
-    - The raw EMG signal should be present (it has no specific name in OTBioLab+) with all the channels.
-        Don't exclude unwanted channels before exporting the .mat file.
+    The input .mat file exported from the OTBiolab+ software should have a
+    specific content:
+    - refsig signal is optional but, if present, there should be both the
+        fullsampled and the subsampled version (in OTBioLab+ the "performed
+        path" refers to the subsampled signal, the "acquired data" to the
+        fullsampled signal), REF_SIGNAL is expected to be expressed as % of
+        the MViF (but not compulsory).
+    - Both the IPTS ('Source for decomposition...' in OTBioLab+) and the
+        BINARY_MUS_FIRING ('Decomposition of...' in OTBioLab+) should be
+        present.
+    - The raw EMG signal should be present (it has no specific name in
+        OTBioLab+) with all the channels. Don't exclude unwanted channels
+        before exporting the .mat file.
     - NO OTHER ELEMENTS SHOULD BE PRESENT!
 
     Structure of the returned emgfile:
@@ -623,7 +586,7 @@ def emg_from_otb(
             "NUMBER_OF_MUS": NUMBER_OF_MUS,
             "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
         }
-    
+
     For an extended explanation of the imported emgfile use:
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(filepath="path/filename.mat")
@@ -650,11 +613,12 @@ def emg_from_otb(
         "1.5.7.3",
         "1.5.8.0",
     ]
-    if not version in valid_versions:
+    if version not in valid_versions:
         raise ValueError(f"Specified version is not valid. Use one of:\n{valid_versions}")
-    
+
     if version in ["1.5.3.0", "1.5.4.0", "1.5.5.0", "1.5.6.0", "1.5.7.2", "1.5.7.3", "1.5.8.0"]:
-        # Simplify (rename) columns description and extract all the parameters in a pandas dataframe
+        # Simplify (rename) columns description and extract all the parameters
+        # in a pd.DataFrame
         df = pd.DataFrame(mat_file["Data"], columns=mat_file["Description"])
 
         # Collect the REF_SIGNAL
@@ -712,19 +676,21 @@ def emg_from_otb(
 
 def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
     """
-    Import REF_SIGNAL in the .mat file exportable by OTBiolab+.   
-    
-    This function is used to import the .mat file exportable by the OTBiolab+ software 
-    as a dictionary of Python objects (mainly pandas dataframes).
-    Compared to the function emg_from_otb, this function only imports the REF_SIGNAL 
-    and, therefore, it can be used for special cases where only the REF_SIGNAL is necessary.
-    This will allow a faster execution of the script and to avoid exceptions for missing data.
+    Import REF_SIGNAL in the .mat file exportable by OTBiolab+.
+
+    This function is used to import the .mat file exportable by the OTBiolab+
+    software as a dictionary of Python objects (mainly pandas dataframes).
+    Compared to the function emg_from_otb, this function only imports the
+    REF_SIGNAL and, therefore, it can be used for special cases where only the
+    REF_SIGNAL is necessary. This will allow a faster execution of the script
+    and to avoid exceptions for missing data.
 
     Parameters
     ----------
     filepath : str or Path
-        The directory and the name of the file to load (including file extension .mat).
-        This can be a simple string, the use of Path is not necessary.
+        The directory and the name of the file to load (including file
+        extension .mat). This can be a simple string, the use of Path is not
+        necessary.
     refsig : str {"fullsampled", "subsampled"}, default "fullsampled"
         Whether to load the full or sub-sampled one.
         Please read notes section.
@@ -739,13 +705,14 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
             "1.5.7.3",
             "1.5.8.0",
         If your specific version is not available in the tested versions,
-        trying with the closer one usually works, but please double check the results. 
-    
+        trying with the closer one usually works, but please double check the
+        results.
+
     Returns
     -------
     emg_refsig : dict
         A dictionary containing all the useful variables.
-    
+
     See also
     --------
     emg_from_otb : import the .mat file exportable by OTBiolab+.
@@ -757,9 +724,10 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
     The returned file is called ``emg_refsig`` for convention.
 
     The input .mat file exported from the OTBiolab+ software should contain:
-    - refsig signal: there should be both the fullsampled and the subsampled version
-        (in OTBioLab+ the "performed path" refers to the subsampled signal, the "acquired data" to the fullsampled signal),
-        REF_SIGNAL is expected to be expressed as % of the MViF (but not compulsory).
+    - refsig signal: there should be both the fullsampled and the subsampled
+        version (in OTBioLab+ the "performed path" refers to the subsampled
+        signal, the "acquired data" to the fullsampled signal), REF_SIGNAL is
+        expected to be expressed as % of the MViF (but not compulsory).
 
     Structure of the returned emg_refsig:
         emg_refsig = {
@@ -768,7 +736,7 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
             "FSAMP": FSAMP,
             "REF_SIGNAL": REF_SIGNAL,
         }
-    
+
     For an extended explanation of the imported emgfile use:
     >>> import openhdemg as emg
     >>> emgfile = emg.refsig_from_otb(filepath="path/filename.mat")
@@ -795,14 +763,16 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
         "1.5.7.3",
         "1.5.8.0",
     ]
-    if not version in valid_versions:
+    if version not in valid_versions:
         raise ValueError(f"Specified version is not valid. Use one of:\n{valid_versions}")
 
     if version in ["1.5.3.0", "1.5.4.0", "1.5.5.0", "1.5.6.0", "1.5.7.2", "1.5.7.3", "1.5.8.0"]:
-        # Simplify (rename) columns description and extract all the parameters in a pandas dataframe
+        # Simplify (rename) columns description and extract all the parameters
+        # in a pd.DataFrame
         df = pd.DataFrame(mat_file["Data"], columns=mat_file["Description"])
 
-        # Convert the input passed to refsig in a list compatible with the function get_otb_refsignal
+        # Convert the input passed to refsig in a list compatible with the
+        # function get_otb_refsignal
         refsig_ = [True, refsig]
         REF_SIGNAL = get_otb_refsignal(df=df, refsig=refsig_)
 
@@ -833,7 +803,7 @@ def emg_from_customcsv(
     fsamp=2048,
     ied=8,
 ):
-    """ # TODO control impagination in this file and in the mathtools
+    """
     Import custom data from a .csv file.
 
     The variables of interest should be contained in columns. The name of the
@@ -919,14 +889,12 @@ def emg_from_customcsv(
     4            5        0.350000        0.350000        0.350000 ... -0.100000 -0.100000          15.0          18.0                      1                      1
     5            6        0.215000        0.215000        0.215000 ...  0.200000  0.200000          16.0           NaN                      1                      0
     """
-    # TODO check SOURCE in other functions execution, problem with electrodes sorting => add "custom" source to the checks
-    # TODO check variables not found, assign nan or df of nan?
 
     # Load the csv
     csv = pd.read_csv(filepath)
 
     # Get REF_SIGNAL
-    REF_SIGNAL = csv.filter(regex = ref_signal, axis=1)
+    REF_SIGNAL = csv.filter(regex=ref_signal, axis=1)
     if not REF_SIGNAL.empty:
         REF_SIGNAL.columns = [i for i in range(len(REF_SIGNAL.columns))]
     else:
@@ -936,7 +904,7 @@ def emg_from_customcsv(
         REF_SIGNAL = np.nan
 
     # Get RAW_SIGNAL
-    RAW_SIGNAL = csv.filter(regex = raw_signal, axis=1)
+    RAW_SIGNAL = csv.filter(regex=raw_signal, axis=1)
     if not RAW_SIGNAL.empty:
         RAW_SIGNAL.columns = [i for i in range(len(RAW_SIGNAL.columns))]
     else:
@@ -946,7 +914,7 @@ def emg_from_customcsv(
         RAW_SIGNAL = np.nan
 
     # Get IPTS
-    IPTS = csv.filter(regex = ipts, axis=1)
+    IPTS = csv.filter(regex=ipts, axis=1)
     if not IPTS.empty:
         IPTS.columns = [i for i in range(len(IPTS.columns))]
     else:
@@ -956,7 +924,7 @@ def emg_from_customcsv(
         IPTS = np.nan
 
     # Get MUPULSES
-    df = csv.filter(regex = mupulses, axis=1)
+    df = csv.filter(regex=mupulses, axis=1)
     if not df.empty:
         MUPULSES = []
         for col in df.columns:
@@ -966,7 +934,7 @@ def emg_from_customcsv(
         MUPULSES = np.nan
 
     # Get BINARY_MUS_FIRING
-    BINARY_MUS_FIRING = csv.filter(regex = binary_mus_firing, axis=1)
+    BINARY_MUS_FIRING = csv.filter(regex=binary_mus_firing, axis=1)
     if not BINARY_MUS_FIRING.empty:
         BINARY_MUS_FIRING.columns = [i for i in range(len(BINARY_MUS_FIRING.columns))]
     else:
@@ -1196,7 +1164,7 @@ def emg_from_json(filepath):
     >>> emgfile = emg.askopenfile()
     >>> info = emg.info()
     >>> info.data(emgfile)
-    
+
     Or refer to the documentation of the following functions:
         emg_from_otb
         emg_from_demuse
@@ -1294,7 +1262,7 @@ def emg_from_json(filepath):
             "FILENAME": filename,
             "RAW_SIGNAL": raw_signal,
             "REF_SIGNAL": ref_signal,
-            "PNR" : pnr,
+            "PNR": pnr,
             "SIL": sil,
             "IPTS": ipts,
             "MUPULSES": mupulses,
@@ -1442,8 +1410,8 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
     'RAW_SIGNAL'.
     If the parameters in input are not present in the .csv file, the user
     can simply leave the original inputs.
-    Please see the documentation of the function emg_from_customcsv for additional
-    informations.
+    Please see the documentation of the function emg_from_customcsv for
+    additional informations.
 
     Structure of the returned emgfile:
         emgfile = {
@@ -1530,7 +1498,7 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
         )
     elif filesource == "Open_HD-EMG":
         emgfile = emg_from_json(filepath=file_toOpen)
-    else: # custom
+    else:  # custom
         emgfile = emg_from_customcsv(
             filepath = file_toOpen,
             ref_signal=kwargs.get("custom_ref_signal", "REF_SIGNAL"),
@@ -1561,7 +1529,8 @@ def asksavefile(emgfile):
     askopenfile : select and open files with a GUI.
     """
 
-    # Create and hide the tkinter root window necessary for the GUI based open-file function
+    # Create and hide the tkinter root window necessary for the GUI based
+    # open-file function
     root = Tk()
     root.withdraw()
 

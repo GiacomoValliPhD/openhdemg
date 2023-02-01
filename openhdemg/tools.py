@@ -107,6 +107,52 @@ def showselect(emgfile, title="", nclic=2):
         raise ValueError(f"nclic can be only one of 1, 2, 4. {nclic} was passed instead")
 
 
+def create_binary_firings(EMG_LENGTH, NUMBER_OF_MUS, MUPULSES):
+    """
+    Create a binary representation of the MU firing.
+
+    Create a binary representation of the MU firing over time
+    based on the times of firing of each MU.
+
+    Parameters
+    ----------
+    EMG_LENGTH : int
+        Number of samples (length) in the emg file.
+    NUMBER_OF_MUS : int
+        Number of MUs in the emg file.
+    MUPULSES : list of ndarrays
+        Each ndarray should contain the times of firing of each MU.
+
+    Returns
+    -------
+    mat : pd.DataFrame
+        A pd.DataFrame containing the requested variable
+        or np.nan if the variable was not found.
+    """
+
+    if isinstance(MUPULSES, list):
+        # skip the step if I don't have the MUPULSES (is nan)
+        # create an empty pd.DataFrame containing zeros
+        binary_MUs_firing = pd.DataFrame(np.zeros((EMG_LENGTH, NUMBER_OF_MUS)))
+        # Loop through the columns (MUs) and isolate the data of interest
+        for i in range(NUMBER_OF_MUS):
+            this_mu_binary_firing = binary_MUs_firing[i]
+            this_mu_pulses = pd.DataFrame(MUPULSES[i])
+
+            # Loop through the rows (time) and assign 1 if the MU is firing
+            for position in range(len(this_mu_pulses)):
+                firing_point = int(this_mu_pulses.iloc[position])
+                this_mu_binary_firing.iloc[firing_point] = 1
+
+            # Merge the work done with the original pd.DataFrame of zeros
+            binary_MUs_firing[i] = this_mu_binary_firing
+
+        return binary_MUs_firing
+
+    else:
+        return np.nan
+
+
 def resize_emgfile(emgfile, area=None):
     """
     Resize all the emgfile.
