@@ -64,8 +64,9 @@ class info:
             print(f"emgfile['SIL'] is a {type(emgfile['SIL'])} of value:\n{emgfile['SIL']}\n")
             print(f"emgfile['IPTS'] is a {type(emgfile['IPTS'])} of value:\n{emgfile['IPTS']}\n")
             print(f"emgfile['MUPULSES'] is a {type(emgfile['MUPULSES'])} of length depending on total MUs number.")
-            print(f"MUPULSES for each MU can be accessed as emgfile['MUPULSES'][MUnumber].\n")
-            print(f"emgfile['MUPULSES'][0] is a {type(emgfile['MUPULSES'][0])} of value:\n{emgfile['MUPULSES'][0]}\n")
+            if emgfile['NUMBER_OF_MUS'] > 0: # Manage exceptions
+                print(f"MUPULSES for each MU can be accessed as emgfile['MUPULSES'][MUnumber].\n")
+                print(f"emgfile['MUPULSES'][0] is a {type(emgfile['MUPULSES'][0])} of value:\n{emgfile['MUPULSES'][0]}\n")
             print(f"emgfile['FSAMP'] is a {type(emgfile['FSAMP'])} of value:\n{emgfile['FSAMP']}\n")
             print(f"emgfile['IED'] is a {type(emgfile['IED'])} of value:\n{emgfile['IED']}\n")
             print(f"emgfile['EMG_LENGTH'] is a {type(emgfile['EMG_LENGTH'])} of value:\n{emgfile['EMG_LENGTH']}\n")

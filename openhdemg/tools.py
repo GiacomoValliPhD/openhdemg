@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 import warnings
+from openhdemg.mathtools import compute_pnr, compute_sil
 
 
 def showselect(emgfile, title="", nclic=2):
@@ -178,7 +179,9 @@ def resize_emgfile(emgfile, area=None):
 
     Notes
     -----
-    Suggested names for the returned objects: rs_emgfile, start_, end_
+    Suggested names for the returned objects: rs_emgfile, start_, end_.
+    
+    PNR and SIL are computed again in the new resized area.
     """
 
     # Identify the area of interest
@@ -196,20 +199,21 @@ def resize_emgfile(emgfile, area=None):
     # Create a deepcopy to avoid changes in the original emgfile
     rs_emgfile = copy.deepcopy(emgfile)
     """
-    PNR and SIL should be re-computed on the new portion of the file.
+    PNR and SIL should be re-computed on the new portion of the file ==>.
     Need to be resized: ==>
     emgfile =   {
-                "SOURCE" : SOURCE,
-                ==> "RAW_SIGNAL" : RAW_SIGNAL,
-                ==> "REF_SIGNAL" : REF_SIGNAL,
-                "PNR" : PNR or "SIL" : SIL # TODO need to be recomputed on the new area
-                ==> "IPTS" : IPTS,
-                ==> "MUPULSES" : MUPULSES,
-                "FSAMP" : FSAMP,
-                "IED" : IED,
-                ==> "EMG_LENGTH" : EMG_LENGTH,
-                "NUMBER_OF_MUS" : NUMBER_OF_MUS,
-                ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
+                "SOURCE": SOURCE,
+                ==> "RAW_SIGNAL": RAW_SIGNAL,
+                ==> "REF_SIGNAL": REF_SIGNAL,
+                ==> "PNR": PNR,
+                ==> "SIL": SIL,
+                ==> "IPTS": IPTS,
+                ==> "MUPULSES": MUPULSES,
+                "FSAMP": FSAMP,
+                "IED": IED,
+                ==> "EMG_LENGTH": EMG_LENGTH,
+                "NUMBER_OF_MUS": NUMBER_OF_MUS,
+                ==> "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
                 }
     """
     rs_emgfile["RAW_SIGNAL"] = rs_emgfile["RAW_SIGNAL"].iloc[start_:end_]
@@ -222,6 +226,32 @@ def resize_emgfile(emgfile, area=None):
         rs_emgfile["MUPULSES"][i] = rs_emgfile["MUPULSES"][i][
             (rs_emgfile["MUPULSES"][i] >= start_) & (rs_emgfile["MUPULSES"][i] < end_)
         ]
+
+    # Compute PNR and SIL
+    if rs_emgfile["NUMBER_OF_MUS"] > 0:
+        # Calculate the PNR
+        to_append = []
+        for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
+            res = compute_pnr(
+                ipts=rs_emgfile["IPTS"][mu],
+                mupulses=rs_emgfile["MUPULSES"][mu],
+            )
+            to_append.append(res)
+        rs_emgfile["PNR"] = pd.DataFrame(to_append)
+
+        # Calculate the SIL
+        to_append = []
+        for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
+            res = compute_sil(
+                ipts=rs_emgfile["IPTS"][mu],
+                mupulses=rs_emgfile["MUPULSES"][mu],
+            )
+            to_append.append(res)
+        rs_emgfile["SIL"] = pd.DataFrame(to_append)
+
+    else:
+        rs_emgfile["PNR"] = np.nan
+        rs_emgfile["SIL"] = np.nan
 
     return rs_emgfile, start_, end_
 
@@ -367,7 +397,8 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
                 "SOURCE" : SOURCE,
                 "RAW_SIGNAL" : RAW_SIGNAL,
                 "REF_SIGNAL" : REF_SIGNAL,
-                ==> "PNR" : PNR, or "SIL" : SIL # TODO
+                ==> "PNR" : PNR,
+                ==> "SIL" : SIL
                 ==> "IPTS" : IPTS,
                 ==> "MUPULSES" : MUPULSES,
                 "FSAMP" : FSAMP,
@@ -380,9 +411,12 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
 
     # Common part working for all the possible inputs to munumber
     # Drop PNR values and rename the index
-    if (emgfile["SOURCE"] == "DEMUSE"):  # TODO
-        del_emgfile["PNR"] = del_emgfile["PNR"].drop(munumber)  # Works with lists and integers
-        del_emgfile["PNR"].reset_index(inplace=True, drop=True)  # Drop the old index
+    del_emgfile["PNR"] = del_emgfile["PNR"].drop(munumber)  # Works with lists and integers
+    del_emgfile["PNR"].reset_index(inplace=True, drop=True)  # Drop the old index
+
+    # Drop SIL values and rename the index
+    del_emgfile["SIL"] = del_emgfile["SIL"].drop(munumber)
+    del_emgfile["SIL"].reset_index(inplace=True, drop=True)
 
     # Drop IPTS by columns and rename the columns
     del_emgfile["IPTS"] = del_emgfile["IPTS"].drop(munumber, axis=1)
@@ -447,7 +481,8 @@ def sort_mus(emgfile):
                 "SOURCE" : SOURCE,
                 "RAW_SIGNAL" : RAW_SIGNAL, 
                 "REF_SIGNAL" : REF_SIGNAL, 
-                ==> "PNR" : PNR, # TODO
+                ==> "PNR" : PNR,
+                ==> "SIL": SIL,
                 ==> "IPTS" : IPTS, 
                 ==> "MUPULSES" : MUPULSES, 
                 "FSAMP" : FSAMP, 
@@ -466,12 +501,13 @@ def sort_mus(emgfile):
     df.sort_values(by="firstpulses", inplace=True)
     sorting_order = list(df.index)
 
-    # Sort PNR (single column) # TODO
-    if emgfile["SOURCE"] == "DEMUSE":
-        for origpos, newpos in enumerate(sorting_order):
-            sorted_emgfile["PNR"].loc[origpos] = emgfile["PNR"].loc[newpos]
-    else:
-        pass
+    # Sort PNR (single column)
+    for origpos, newpos in enumerate(sorting_order):
+        sorted_emgfile["PNR"].loc[origpos] = emgfile["PNR"].loc[newpos]
+    
+    # Sort SIL (single column)
+    for origpos, newpos in enumerate(sorting_order):
+        sorted_emgfile["SIL"].loc[origpos] = emgfile["SIL"].loc[newpos]
 
     # Sort IPTS (multiple columns, sort by columns, then reset columns' name)
     sorted_emgfile["IPTS"] = sorted_emgfile["IPTS"].reindex(columns=sorting_order)
@@ -507,11 +543,10 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
         If < 0 (default), the user will need to manually select the start and
         end of the steady-state phase.
 
-    Returns # TODO return float??
+    Returns
     -------
-    covsteady : pd.Series
-        The coefficient of variation of the steady-state phase in %
-        (accessible as covsteady[0]).
+    covsteady : float
+        The coefficient of variation of the steady-state phase in %.
 
     See also
     --------
@@ -525,8 +560,6 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> covsteady = emg.compute_covsteady(emgfile=emgfile)
     >>> covsteady
-    0    1.452806
-    >>> covsteady[0]
     1.452806
 
     The process can be automated by bypassing the GUI.
@@ -535,8 +568,6 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> covsteady = emg.compute_covsteady(emgfile=emgfile, start_steady=3580, end_steady=15820)
     >>> covsteady
-    0    35.611263
-    >>> covsteady[0]
     35.611263
     """
 
@@ -548,7 +579,7 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
     ref = emgfile["REF_SIGNAL"].loc[start_steady:end_steady]
     covsteady = (ref.std() / ref.mean()) * 100
 
-    return covsteady
+    return covsteady[0]
 
 
 def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
@@ -850,4 +881,3 @@ def compute_rfd(
         rfd = rfd * conversion_val
 
     return rfd
-# TODO function to calculate the amplification factor and convert the ref signal

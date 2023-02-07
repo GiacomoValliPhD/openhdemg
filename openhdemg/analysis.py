@@ -514,9 +514,7 @@ def basic_mus_properties(
     exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
     # Calculate avrage PNR
-    toappend = []
-    toappend.append({"avg_PNR": np.average(exportable_df["PNR"])})
-    toappend = pd.DataFrame(toappend)
+    toappend = pd.DataFrame([{"avg_PNR": np.average(exportable_df["PNR"])}])
     exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
     # Calculate SIL
@@ -529,9 +527,7 @@ def basic_mus_properties(
     exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
     # Calculate avrage SIL
-    toappend = []
-    toappend.append({"avg_SIL": np.average(exportable_df["SIL"])})
-    toappend = pd.DataFrame(toappend)
+    toappend = pd.DataFrame([{"avg_SIL": np.average(exportable_df["SIL"])}])
     exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
     # Calculate RT and DERT
@@ -562,7 +558,7 @@ def basic_mus_properties(
     covsteady = compute_covsteady(
         emgfile, start_steady=start_steady, end_steady=end_steady
     )
-    covsteady = pd.DataFrame(covsteady, columns=["COV_steady"])
+    covsteady = pd.DataFrame([{"COV_steady": covsteady}])
     exportable_df = pd.concat([exportable_df, covsteady], axis=1)
 
     return exportable_df

@@ -187,9 +187,10 @@ def compute_sil(ipts, mupulses):  # TODO _NEXT_ add refs in docs when necessary
     compute_pnr : to calculate the Pulse to Noise ratio of a single MU.
     """
 
-    # Extract source and peaks
+    # Extract source and peaks and align source and peaks based on IPTS
+    # index to avoid errors in the resized files.
     source = ipts.to_numpy()
-    peaks_idxs = mupulses
+    peaks_idxs = mupulses - ipts.index[0]
 
     # Create clusters
     peak_cluster = source[peaks_idxs]
@@ -244,9 +245,10 @@ def compute_pnr(ipts, mupulses):  # TODO correct the function
     compute_sil : to calculate the Silhouette score for a single MU.
     """
 
-    # Extract source and peaks
+    # Extract source and peaks and align source and peaks based on IPTS
+    # index to avoid errors in the resized files.
     source = ipts.to_numpy()
-    peaks_idxs = mupulses
+    peaks_idxs = mupulses - ipts.index[0]
 
     # Create clusters
     peak_cluster = source[peaks_idxs]

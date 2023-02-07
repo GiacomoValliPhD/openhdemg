@@ -159,8 +159,8 @@ def double_diff(sorted_rawemg):
 
     >>> import openhdemg as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> sorted_rawemg = emg.double_diff(emgfile, code="GR08MM1305", orientation=180)
-    >>> dd = emg.diff(sorted_rawemg)
+    >>> sorted_rawemg = emg.sort_rawemg(emgfile=emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
+    >>> dd = emg.double_diff(sorted_rawemg)
     """
 
     # Create a dict of pd.DataFrames for the double differential

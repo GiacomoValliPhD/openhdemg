@@ -236,19 +236,24 @@ def emg_from_demuse(filepath):
     SOURCE = "DEMUSE"
     FILENAME = os.path.basename(filepath)
 
-    # Calculate the PNR
-    to_append = []
-    for mu in range(NUMBER_OF_MUS):
-        res = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu])
-        to_append.append(res)
-    PNR = pd.DataFrame(to_append)
+    if NUMBER_OF_MUS > 0:
+        # Calculate the PNR
+        to_append = []
+        for mu in range(NUMBER_OF_MUS):
+            res = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu])
+            to_append.append(res)
+        PNR = pd.DataFrame(to_append)
 
-    # Calculate the SIL
-    to_append = []
-    for mu in range(NUMBER_OF_MUS):
-        res = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
-        to_append.append(res)
-    SIL = pd.DataFrame(to_append)
+        # Calculate the SIL
+        to_append = []
+        for mu in range(NUMBER_OF_MUS):
+            res = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
+            to_append.append(res)
+        SIL = pd.DataFrame(to_append)
+    
+    else:
+        PNR = np.nan
+        SIL = np.nan
 
     emgfile = {
         "SOURCE": SOURCE,
@@ -272,7 +277,6 @@ def emg_from_demuse(filepath):
 # ---------------------------------------------------------------------
 # Define functions used in the OTB openfile function.
 # These functions are not exposed to the final user.
-# TODO _NEXT_ should we consider a different structure for emg_from_otb? Maybe a class?
 
 def get_otb_refsignal(df, refsig):
     """
@@ -641,19 +645,24 @@ def emg_from_otb(
         SOURCE = "OTB"
         FILENAME = os.path.basename(filepath)
 
-        # Calculate the PNR
-        to_append = []
-        for mu in range(NUMBER_OF_MUS):
-            res = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu])
-            to_append.append(res)
-        PNR = pd.DataFrame(to_append)
+        if NUMBER_OF_MUS > 0:
+            # Calculate the PNR
+            to_append = []
+            for mu in range(NUMBER_OF_MUS):
+                res = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu])
+                to_append.append(res)
+            PNR = pd.DataFrame(to_append)
 
-        # Calculate the SIL
-        to_append = []
-        for mu in range(NUMBER_OF_MUS):
-            res = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
-            to_append.append(res)
-        SIL = pd.DataFrame(to_append)
+            # Calculate the SIL
+            to_append = []
+            for mu in range(NUMBER_OF_MUS):
+                res = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
+                to_append.append(res)
+            SIL = pd.DataFrame(to_append)
+        
+        else:
+            PNR = np.nan
+            SIL = np.nan
 
         emgfile = {
             "SOURCE": SOURCE,
@@ -947,19 +956,24 @@ def emg_from_customcsv(
     SOURCE = "custom"
     FILENAME = os.path.basename(filepath)
 
-    # Calculate the PNR
-    to_append = []
-    for mu in range(NUMBER_OF_MUS):
-        res = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu])
-        to_append.append(res)
-    PNR = pd.DataFrame(to_append)
+    if NUMBER_OF_MUS > 0:
+        # Calculate the PNR
+        to_append = []
+        for mu in range(NUMBER_OF_MUS):
+            res = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu])
+            to_append.append(res)
+        PNR = pd.DataFrame(to_append)
 
-    # Calculate the SIL
-    to_append = []
-    for mu in range(NUMBER_OF_MUS):
-        res = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
-        to_append.append(res)
-    SIL = pd.DataFrame(to_append)
+        # Calculate the SIL
+        to_append = []
+        for mu in range(NUMBER_OF_MUS):
+            res = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
+            to_append.append(res)
+        SIL = pd.DataFrame(to_append)
+
+    else:
+        PNR = np.nan
+        SIL = np.nan
 
     emgfile = {
         "SOURCE": SOURCE,
