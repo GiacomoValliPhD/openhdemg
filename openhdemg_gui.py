@@ -318,7 +318,9 @@ class GUI:
         # Set up GUI
         self.master = master
         self.master.title("Open_HD-EMG")
-        self.master.iconbitmap("./gui_files/logo.ico")
+        master_path = os.path.dirname(os.path.abspath(__file__))
+        iconpath = master_path + "/gui_files/logo.ico"
+        self.master.iconbitmap(iconpath)
 
         # Create left side framing for functionalities
         self.left = ttk.Frame(self.master, padding="10 10 12 12")
@@ -478,13 +480,17 @@ class GUI:
         # Create logo figure
         self.logo_canvas = Canvas(self.right, height=590, width=800, bg="white")
         self.logo_canvas.grid(row=0, column=0, rowspan=5)
-        self.logo = tk.PhotoImage(file="./gui_files/logo.png")
+
+        logo_path = master_path + "/gui_files/logo.png"  # Get logo path
+        self.logo = tk.PhotoImage(file=logo_path)
+
         # self.matrix = tk.PhotoImage(file="Matrix_illustration.png")
         self.logo_canvas.create_image(400, 300, anchor="center", image=self.logo)
 
         # Create info button
         # Information Button
-        self.info = tk.PhotoImage(file="./gui_files/Info.png")
+        info_path = master_path + "/gui_files/Info.png"  # Get infor button path
+        self.info = tk.PhotoImage(file=info_path)
         info_button = customtkinter.CTkButton(
             self.right,
             image=self.info,
@@ -498,7 +504,8 @@ class GUI:
         info_button.grid(row=0, column=1, sticky=E)
 
         # Button for online tutorials
-        self.online = tk.PhotoImage(file="./gui_files/Online.png")
+        online_path = master_path + "/gui_files/Online.png"
+        self.online = tk.PhotoImage(file=online_path)
         online_button = customtkinter.CTkButton(
             self.right,
             image=self.online,
@@ -511,7 +518,8 @@ class GUI:
         online_button.grid(row=1, column=1, sticky=E)
 
         # Button for dev information
-        self.redirect = tk.PhotoImage(file="./gui_files/Redirect.png")
+        redirect_path = master_path + "/gui_files/Redirect.png"
+        self.redirect = tk.PhotoImage(file=redirect_path)
         redirect_button = customtkinter.CTkButton(
             self.right,
             image=self.redirect,
@@ -524,7 +532,8 @@ class GUI:
         redirect_button.grid(row=2, column=1, sticky=E)
 
         # Button for contact information
-        self.contact = tk.PhotoImage(file="./gui_files/Contact.png")
+        contact_path = master_path + "/gui_files/Contact.png"
+        self.contact = tk.PhotoImage(file=contact_path)
         contact_button = customtkinter.CTkButton(
             self.right,
             image=self.contact,
@@ -536,7 +545,9 @@ class GUI:
         )
         contact_button.grid(row=3, column=1, sticky=E)
 
-        self.cite = tk.PhotoImage(file="./gui_files/Cite.png")
+        # Button for citatoin information
+        cite_path = master_path + "/gui_files/Cite.png"
+        self.cite = tk.PhotoImage(file=cite_path)
         cite_button = customtkinter.CTkButton(
             self.right,
             image=self.cite,
@@ -899,7 +910,9 @@ class GUI:
         # Open window
         self.head = tk.Toplevel(bg="LightBlue4", height=200)
         self.head.title("Advanced Tools Window")
-        self.head.iconbitmap("./gui_files/logo.ico")
+        self.head.iconbitmap(
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+        )
         self.head.grab_set()
 
         # Add Label
@@ -1033,11 +1046,13 @@ class GUI:
         AttributeError
             When no file is loaded prior to analysis.
         """
-        try:
+        if hasattr(self, "resdict"):
             # Create new window
             self.head = tk.Toplevel(bg="LightBlue4")
             self.head.title("Motor Unit Removal Window")
-            self.head.iconbitmap("./gui_files/logo.ico")
+            self.head.iconbitmap(
+                os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+            )
             self.head.grab_set()
 
             # Select Motor Unit
@@ -1058,7 +1073,7 @@ class GUI:
             remove = ttk.Button(self.head, text="Remove MU", command=self.remove)
             remove.grid(column=1, row=1, sticky=(W, E), padx=5, pady=5)
 
-        except AttributeError:
+        else:
             tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
     def remove(self):
@@ -1072,26 +1087,32 @@ class GUI:
         --------
         delete_mus in library.
         """
-        # Get resdict with MU removed
-        self.resdict = openhdemg.delete_mus(
-            emgfile=self.resdict, munumber=int(self.mu_to_remove.get())
-        )
-        # Upate MU number
-        ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
-            column=2, row=3, sticky=(W, E)
-        )
+        try:
+            # Get resdict with MU removed
+            self.resdict = openhdemg.delete_mus(
+                emgfile=self.resdict, munumber=int(self.mu_to_remove.get())
+            )
+            # Upate MU number
+            ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
+                column=2, row=3, sticky=(W, E)
+            )
 
-        # Update selection field
-        self.mu_to_remove = StringVar()
-        removed_mu_value = [*range(0, self.resdict["NUMBER_OF_MUS"])]
-        removed_mu = ttk.Combobox(self.head, width=10, textvariable=self.mu_to_remove)
-        removed_mu["values"] = removed_mu_value
-        removed_mu["state"] = "readonly"
-        removed_mu.grid(column=1, row=0, sticky=(W, E), padx=5, pady=5)
+            # Update selection field
+            self.mu_to_remove = StringVar()
+            removed_mu_value = [*range(0, self.resdict["NUMBER_OF_MUS"])]
+            removed_mu = ttk.Combobox(
+                self.head, width=10, textvariable=self.mu_to_remove
+            )
+            removed_mu["values"] = removed_mu_value
+            removed_mu["state"] = "readonly"
+            removed_mu.grid(column=1, row=0, sticky=(W, E), padx=5, pady=5)
 
-        # Update plot
-        if hasattr(self, "fig"):
-            self.in_gui_plotting()
+            # Update plot
+            if hasattr(self, "fig"):
+                self.in_gui_plotting()
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
     # -----------------------------------------------------------------------------------------------
     # Editing of single motor Units
@@ -1158,7 +1179,9 @@ class GUI:
         # Create new window
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("Reference Signal Eiditing Window")
-        self.head.iconbitmap("./gui_files/logo.ico")
+        self.head.iconbitmap(
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+        )
         self.head.grab_set()
 
         # Filter Refsig
@@ -1278,7 +1301,9 @@ class GUI:
         # Create new window
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("Resize EMG File Window")
-        self.head.iconbitmap("./gui_files/logo.ico")
+        self.head.iconbitmap(
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+        )
         self.head.grab_set()
 
         # Enter start point of resizing area
@@ -1402,7 +1427,9 @@ class GUI:
         # Create new window
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("Force Analysis Window")
-        self.head.iconbitmap("./gui_files/logo.ico")
+        self.head.iconbitmap(
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+        )
         self.head.grab_set()
 
         # Get MVIF
@@ -1500,7 +1527,9 @@ class GUI:
         # Create new window
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("Motor Unit Properties Window")
-        self.head.iconbitmap("./gui_files/logo.ico")
+        self.head.iconbitmap(
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+        )
         self.head.grab_set()
 
         # MVIF Entry
@@ -1741,7 +1770,9 @@ class GUI:
             # Create new window
             self.head = tk.Toplevel(bg="LightBlue4")
             self.head.title("Plot Window")
-            self.head.iconbitmap("./gui_files/logo.ico")
+            self.head.iconbitmap(
+                os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+            )
             self.head.grab_set()
 
             # Reference signal
@@ -1936,11 +1967,16 @@ class GUI:
             # Matrix Illustration Graphic
             matrix_canvas = Canvas(self.head, height=150, width=600, bg="white")
             matrix_canvas.grid(row=5, column=3, rowspan=5, columnspan=5)
-            self.matrix = tk.PhotoImage(file="./gui_files/Matrix.png")
+            self.matrix = tk.PhotoImage(
+                file=os.path.dirname(os.path.abspath(__file__))
+                + "/gui_files/Matrix.png"
+            )
             matrix_canvas.create_image(0, 0, anchor="nw", image=self.matrix)
 
             # Information Button
-            self.info = tk.PhotoImage(file="./gui_files/Info.png")
+            self.info = tk.PhotoImage(
+                file=os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Info.png"
+            )
             info_button = customtkinter.CTkButton(
                 self.head,
                 image=self.info,
@@ -2325,7 +2361,9 @@ class GUI:
         """
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("MUs tracking window")
-        self.head.iconbitmap("./gui_files/logo.ico")
+        self.head.iconbitmap(
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+        )
         self.head.grab_set()
 
         # Specify Signal
