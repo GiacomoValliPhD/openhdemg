@@ -240,7 +240,7 @@ def emg_from_demuse(filepath):
         # Calculate the PNR
         to_append = []
         for mu in range(NUMBER_OF_MUS):
-            res = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu])
+            res = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu], fsamp=FSAMP)
             to_append.append(res)
         PNR = pd.DataFrame(to_append)
 
@@ -649,7 +649,7 @@ def emg_from_otb(
             # Calculate the PNR
             to_append = []
             for mu in range(NUMBER_OF_MUS):
-                res = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu])
+                res = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu], fsamp=FSAMP)
                 to_append.append(res)
             PNR = pd.DataFrame(to_append)
 
@@ -960,7 +960,7 @@ def emg_from_customcsv(
         # Calculate the PNR
         to_append = []
         for mu in range(NUMBER_OF_MUS):
-            res = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu])
+            res = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu], fsamp=fsamp)
             to_append.append(res)
         PNR = pd.DataFrame(to_append)
 

@@ -57,7 +57,7 @@ class info:
             print("Any key can be acced as emgfile[key].\n")
             print(f"emgfile['SOURCE'] is a {type(emgfile['SOURCE'])} of value:\n{emgfile['SOURCE']}\n")
             print(f"emgfile['FILENAME'] is a {type(emgfile['FILENAME'])} of value:\n{emgfile['FILENAME']}\n")
-            print("MUST NOTE: megfile from OTB has 64 channels, from DEMUSE 65 (includes empty channel).")
+            print("MUST NOTE: emgfile from OTB has 64 channels, from DEMUSE 65 (includes empty channel).")
             print(f"emgfile['RAW_SIGNAL'] is a {type(emgfile['RAW_SIGNAL'])} of value:\n{emgfile['RAW_SIGNAL']}\n")
             print(f"emgfile['REF_SIGNAL'] is a {type(emgfile['REF_SIGNAL'])} of value:\n{emgfile['REF_SIGNAL']}\n")
             print(f"emgfile['PNR'] is a {type(emgfile['PNR'])} of value:\n{emgfile['PNR']}\n")

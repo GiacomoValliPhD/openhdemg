@@ -8,6 +8,7 @@ import pandas as pd
 from scipy import signal
 import numpy as np
 from scipy.spatial.distance import cdist
+import math
 
 
 def min_max_scaling(series_or_df):
@@ -223,7 +224,7 @@ def compute_sil(ipts, mupulses):  # TODO _NEXT_ add refs in docs when necessary
     return sil
 
 
-def compute_pnr(ipts, mupulses):  # TODO correct the function
+def compute_pnr(ipts, mupulses, fsamp):
     """
     Calculate the pulse to noise ratio for a single MU.
 
@@ -245,16 +246,66 @@ def compute_pnr(ipts, mupulses):  # TODO correct the function
     compute_sil : to calculate the Silhouette score for a single MU.
     """
 
-    # Extract source and peaks and align source and peaks based on IPTS
-    # index to avoid errors in the resized files.
+    # According to Holobar 2014, the PNR is calculated as:
+    # 10 * log10((mean of firings) / (mean of noise))
+    # Where instants in the source of decomposition are classified as firings
+    # or noise based on a threshold value named "Pi" or "r".
+    #
+    # Pi is calculated via a heuristic penalty funtion described in Holobar
+    # 2012 as:
+    # Pi = D · χ[3,50](D) + CoVIDI + CoVpIDI
+    # Where:
+    # D is the median of the low-pass filtered instantaneous motor unit
+    # discharge rate (first-order Butterworth filter, cut-off frequency 3 Hz)
+    # χ[3,50](D) stands for an indicator function that penalizes motor units
+    # with filtered discharge rate D below 3 pulses per second (pps) or above
+    # 50 pps:
+    # χ[3,50](D) = 0 if D is between 3 and 50 or 1 if D is not between 3 and 50
+    # Two separate coefficients of variation for inter-discharge interval (IDI)
+    # calculated as standard deviation (SD) of IDI divided by the mean IDI,
+    # are used. CoVIDI is the coefficient of variation for IDI of non-paired
+    # MUs discharges only, whereas CoVpIDI is the coefficient of variation for
+    # IDI of paired MUs discharges.
+    # Holobar 2012 considered MUs discharges paired whenever the second
+    # discharge was within 50 ms of the first.
+    # Paired discharges are typical in pathological tremor and the use of both
+    # CoVIDI and CoVpIDI accounts for this condition.
+    #
+    # However, this heuristic penalty function does not work in particular
+    # types of contractions like explosive contractions (MUs discharge up to
+    # 200 pps). Therefore, in this implementation of the PNR estimation we did
+    # not use a penality based on MUs discharge rate and we estimate
+    # Pi = CoVIDI + CoVpIDI
+    # which remains valid also in tremor.
+
+    # Calculate IDI and divide the paired and non-paired IDIs
+    idi = np.diff(mupulses)
+
+    idinonp = idi[idi >= (fsamp * 0.05)]
+    idip = idi[idi < (fsamp * 0.05)]
+
+    CoVIDI = np.std(idinonp) / np.average(idinonp)
+    if math.isnan(CoVIDI):
+        CoVIDI = 0
+
+    CoVpIDI = np.std(idip) / np.average(idip)
+    if math.isnan(CoVpIDI):
+        CoVpIDI = 0
+
+    # Calculate Pi
+    Pi = CoVIDI + CoVpIDI
+
+    # Extract the source
     source = ipts.to_numpy()
-    peaks_idxs = mupulses - ipts.index[0]
 
     # Create clusters
-    peak_cluster = source[peaks_idxs]
-    noise_cluster = np.delete(source, peaks_idxs)
+    peak_cluster = source[source >= Pi]
+    noise_cluster = source[source < Pi]
 
-    # Calculate silhouette coefficient
-    pnr = 10*np.log((peak_cluster.mean() / noise_cluster.std()))
+    peak_cluster = np.square(peak_cluster)
+    noise_cluster = np.square(noise_cluster)
+
+    # Calculate PNR
+    pnr = 10 * np.log10((peak_cluster.mean() / noise_cluster.mean()))
 
     return pnr

@@ -235,6 +235,7 @@ def resize_emgfile(emgfile, area=None):
             res = compute_pnr(
                 ipts=rs_emgfile["IPTS"][mu],
                 mupulses=rs_emgfile["MUPULSES"][mu],
+                fsamp=emgfile["FSAMP"],
             )
             to_append.append(res)
         rs_emgfile["PNR"] = pd.DataFrame(to_append)
@@ -881,3 +882,10 @@ def compute_rfd(
         rfd = rfd * conversion_val
 
     return rfd
+
+# TODO function to calculate the amplification factor and convert the ref signal
+# TODO in the article discuss also the correlation between PNR and SIL since we calculate both
+# Quante MUs sono sopra o sotto una specificas soglia, distribuzioni ecc...
+# TODO in the GUI, allow to convert the force for a conversion factor
+# TODO write extended documentation of how emgfile should be structured and why and how it
+# can be expanded to fit possible new necessities

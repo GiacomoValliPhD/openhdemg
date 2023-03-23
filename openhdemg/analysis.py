@@ -508,7 +508,11 @@ def basic_mus_properties(
     # Repeat the task for every new column to fill and concatenate
     toappend = []
     for mu in range(emgfile["NUMBER_OF_MUS"]):
-        pnr = compute_pnr(ipts=emgfile["IPTS"][mu], mupulses=emgfile["MUPULSES"][mu])
+        pnr = compute_pnr(
+            ipts=emgfile["IPTS"][mu],
+            mupulses=emgfile["MUPULSES"][mu],
+            fsamp=emgfile["FSAMP"],
+        )
         toappend.append({"PNR": pnr})
     toappend = pd.DataFrame(toappend)
     exportable_df = pd.concat([exportable_df, toappend], axis=1)

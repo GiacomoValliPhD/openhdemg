@@ -886,6 +886,7 @@ def plot_idr(
 
 
 # TODO_NEXT_kwargs for flexible plotting design (all the plots)
+# TODO add align option
 def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediately=True):
     """
     Plot MUAPs obtained from STA from one or multiple MUs.
