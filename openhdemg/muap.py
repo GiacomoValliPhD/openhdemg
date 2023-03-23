@@ -159,8 +159,8 @@ def double_diff(sorted_rawemg):
 
     >>> import openhdemg as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> sorted_rawemg = emg.double_diff(emgfile, code="GR08MM1305", orientation=180)
-    >>> dd = emg.diff(sorted_rawemg)
+    >>> sorted_rawemg = emg.sort_rawemg(emgfile=emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
+    >>> dd = emg.double_diff(sorted_rawemg)
     """
 
     # Create a dict of pd.DataFrames for the double differential
@@ -942,7 +942,6 @@ def remove_duplicates_between(
     threshold=0.9,
     matrixcode="GR08MM1305",
     orientation=180,
-    exclude_belowthreshold=True,
     filter=True,
     show=False,
     which="munumber",
@@ -974,20 +973,20 @@ def remove_duplicates_between(
     orientation : int {0, 180}, default 180
         Orientation in degree of the matrix (same as in OTBiolab).
         E.g. 180 corresponds to the matrix connection toward the user.
-    exclude_belowthreshold : bool, default True
-        Whether to exclude results with XCC below threshold.
     filter : bool, default True
         If true, when the same MU has a match of XCC > threshold with
         multiple MUs, only the match with the highest XCC is returned.
     show : bool, default False
         Whether to plot ste STA of pairs of MUs with XCC above threshold.
-    which : str {"munumber", "PNR"}
+    which : str {"munumber", "PNR", "SIL"}
         How to remove the duplicated MUs.
 
         ``munumber``
             Duplicated MUs are removed from the file with more MUs.
         ``PNR``
-            The MU with the lowest PNR is removed (valid only for DEMUSE files).
+            The MU with the lowest PNR is removed.
+        ``SIL``
+            The MU with the lowest SIL is removed.
 
     Returns
     -------
@@ -1000,6 +999,30 @@ def remove_duplicates_between(
     norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
         two MUS.
     tracking : track MUs across two different files.
+
+    Examples
+    --------
+    Remove duplicated MUs between two OTB files and save the emgfiles
+    without duplicates. The duplicates are removed from the file with
+    more MUs.
+    If loading a DEMUSE file, matrixcode and orientation can be ignored.
+
+    >>> emgfile1 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile2 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile1, emgfile2 = emg.remove_duplicates_between(
+    ...     emgfile1,
+    ...     emgfile2,
+    ...     firings="all",
+    ...     timewindow=25,
+    ...     threshold=0.9,
+    ...     matrixcode="GR08MM1305",
+    ...     orientation=180,
+    ...     filter=True,
+    ...     show=False,
+    ...     which="munumber",
+    ... )
+    >>> emg.asksavefile(emgfile1)
+    >>> emg.asksavefile(emgfile2)
     """
 
     # Work on deepcopies to prevent changing the original file
@@ -1008,16 +1031,16 @@ def remove_duplicates_between(
 
     # Get tracking results to identify duplicated MUs
     tracking_res = tracking(
-        emgfile1,
-        emgfile2,
-        firings,
-        timewindow,
-        threshold,
-        matrixcode,
-        orientation,
-        exclude_belowthreshold,
-        filter,
-        show,
+        emgfile1=emgfile1,
+        emgfile2=emgfile2,
+        firings=firings,
+        timewindow=timewindow,
+        threshold=threshold,
+        matrixcode=matrixcode,
+        orientation=orientation,
+        exclude_belowthreshold=True,
+        filter=filter,
+        show=show,
     )
 
     # Identify how to remove MUs
@@ -1042,38 +1065,58 @@ def remove_duplicates_between(
             return emgfile1, emgfile2
 
     elif which == "PNR":
-        if emgfile1["SOURCE"] == "DEMUSE" and emgfile2["SOURCE"] == "DEMUSE":
-            # Create a list containing which MU to remove in which file based
-            # on PNR value.
-            to_remove1 = []
-            to_remove2 = []
-            for i, row in tracking_res.iterrows():
-                pnr1 = emgfile1["PNR"].loc[int(row["MU_file1"])]
-                pnr2 = emgfile2["PNR"].loc[int(row["MU_file2"])]
+        # Create a list containing which MU to remove in which file based
+        # on PNR value.
+        to_remove1 = []
+        to_remove2 = []
+        for i, row in tracking_res.iterrows():
+            pnr1 = emgfile1["PNR"].loc[int(row["MU_file1"])]
+            pnr2 = emgfile2["PNR"].loc[int(row["MU_file2"])]
 
-                if pnr1[0] <= pnr2[0]:
-                    # This MU should be removed from emgfile1
-                    to_remove1.append(int(row["MU_file1"]))
-                else:
-                    # This MU should be removed from emgfile2
-                    to_remove2.append(int(row["MU_file2"]))
+            if pnr1[0] <= pnr2[0]:
+                # This MU should be removed from emgfile1
+                to_remove1.append(int(row["MU_file1"]))
+            else:
+                # This MU should be removed from emgfile2
+                to_remove2.append(int(row["MU_file2"]))
 
-            # Delete the MUs
-            emgfile1 = delete_mus(
-                emgfile=emgfile1, munumber=to_remove1, if_single_mu="remove"
-            )
-            emgfile2 = delete_mus(
-                emgfile=emgfile2, munumber=to_remove2, if_single_mu="remove"
-            )
+        # Delete the MUs
+        emgfile1 = delete_mus(
+            emgfile=emgfile1, munumber=to_remove1, if_single_mu="remove"
+        )
+        emgfile2 = delete_mus(
+            emgfile=emgfile2, munumber=to_remove2, if_single_mu="remove"
+        )
 
-            return emgfile1, emgfile2
+        return emgfile1, emgfile2
 
-        else:
-            raise Exception(
-                "To remove duplicated MUs by PNR, you should load files from DEMUSE"
-            )
+    elif which == "SIL":
+        # Create a list containing which MU to remove in which file based
+        # on SIL score.
+        to_remove1 = []
+        to_remove2 = []
+        for i, row in tracking_res.iterrows():
+            sil1 = emgfile1["SIL"].loc[int(row["MU_file1"])]
+            sil2 = emgfile2["SIL"].loc[int(row["MU_file2"])]
+
+            if sil1[0] <= sil2[0]:
+                # This MU should be removed from emgfile1
+                to_remove1.append(int(row["MU_file1"]))
+            else:
+                # This MU should be removed from emgfile2
+                to_remove2.append(int(row["MU_file2"]))
+
+        # Delete the MUs
+        emgfile1 = delete_mus(
+            emgfile=emgfile1, munumber=to_remove1, if_single_mu="remove"
+        )
+        emgfile2 = delete_mus(
+            emgfile=emgfile2, munumber=to_remove2, if_single_mu="remove"
+        )
+
+        return emgfile1, emgfile2
 
     else:
-        pass  # TODO_NEXT_ implement with SIL as with PNR
+        raise ValueError(f"which can be one of 'munumber', 'PNR', 'SIL'. {which} was passed instead")
 
 # TODO_NEXT_ try if replacing at/iat with loc/iloc can improve performance.

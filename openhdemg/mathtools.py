@@ -8,6 +8,7 @@ import pandas as pd
 from scipy import signal
 import numpy as np
 from scipy.spatial.distance import cdist
+import math
 
 
 def min_max_scaling(series_or_df):
@@ -140,12 +141,13 @@ def norm_twod_xcorr(df1, df2, mode="full"):
     405 -0.000004 -1.693078e-06  1.054646e-06 ...  1.811828e-05  0.000007
     406 -0.000002 -2.473282e-07  6.006046e-07 ...  1.605406e-05  0.000007
     """
-    
+
     # Perform 2d xcorr
     correlate2d = signal.correlate2d(in1=df1, in2=df2, mode=mode)
 
     # Normalise the result of 2d xcorr for the different energy levels
-    # MATLAB equivalent: acor_norm = xcorr(x,y)/sqrt(sum(abs(x).^2)*sum(abs(y).^2))
+    # MATLAB equivalent:
+    # acor_norm = xcorr(x,y)/sqrt(sum(abs(x).^2)*sum(abs(y).^2))
     absx = df1.abs()
     absy = df2.abs()
     expx = absx**2
@@ -160,33 +162,36 @@ def norm_twod_xcorr(df1, df2, mode="full"):
     return normxcorr_df, normxcorr_max
 
 
-def sil(emgfile, munumber): # TODO add refs for each function if necessary
+def compute_sil(ipts, mupulses):  # TODO _NEXT_ add refs in docs when necessary
     """
     Calculate the Silhouette score for a single MU.
 
-    The SIL is defined as the difference between the within-cluster sums of point-to-centroid distances and the
-    same measure calculated between clusters. The measure was normalized dividing by the maximum of the two values.
-    
+    The SIL is defined as the difference between the within-cluster sums of
+    point-to-centroid distances and the same measure calculated between clusters.
+    The measure was normalized dividing by the maximum of the two values.
+
     Parameters
     ----------
-    emgfile : dict
-        The dictionary containing the emgfile.
-    munumber : int
-        The number of the MU to plot.
-    
+    ipts : pd.Series
+        The source of decomposition (or pulse train, IPTS[mu]) of the MU of
+        interest.
+    mupulses : ndarray
+        The time of firing (MUPULSES[mu]) of the MU of interest.
+
     Returns
     -------
     sil : float
         The SIL score.
-    
+
     See also
     --------
-    pnr : to calculate the Pulse to Noise ratio of a single MU.
+    compute_pnr : to calculate the Pulse to Noise ratio of a single MU.
     """
 
-    # Extract source and peaks
-    source = emgfile["IPTS"][munumber].to_numpy()
-    peaks_idxs = emgfile["MUPULSES"][munumber]
+    # Extract source and peaks and align source and peaks based on IPTS
+    # index to avoid errors in the resized files.
+    source = ipts.to_numpy()
+    peaks_idxs = mupulses - ipts.index[0]
 
     # Create clusters
     peak_cluster = source[peaks_idxs]
@@ -217,3 +222,90 @@ def sil(emgfile, munumber): # TODO add refs for each function if necessary
     sil = (inter_sums - intra_sums) / max(intra_sums, inter_sums)
 
     return sil
+
+
+def compute_pnr(ipts, mupulses, fsamp):
+    """
+    Calculate the pulse to noise ratio for a single MU.
+
+    Parameters
+    ----------
+    ipts : pd.Series
+        The source of decomposition (or pulse train, IPTS[mu]) of the MU of
+        interest.
+    mupulses : ndarray
+        The time of firing (MUPULSES[mu]) of the MU of interest.
+
+    Returns
+    -------
+    pnr : float
+        The PNR in decibels.
+
+    See also
+    --------
+    compute_sil : to calculate the Silhouette score for a single MU.
+    """
+
+    # According to Holobar 2014, the PNR is calculated as:
+    # 10 * log10((mean of firings) / (mean of noise))
+    # Where instants in the source of decomposition are classified as firings
+    # or noise based on a threshold value named "Pi" or "r".
+    #
+    # Pi is calculated via a heuristic penalty funtion described in Holobar
+    # 2012 as:
+    # Pi = D · χ[3,50](D) + CoVIDI + CoVpIDI
+    # Where:
+    # D is the median of the low-pass filtered instantaneous motor unit
+    # discharge rate (first-order Butterworth filter, cut-off frequency 3 Hz)
+    # χ[3,50](D) stands for an indicator function that penalizes motor units
+    # with filtered discharge rate D below 3 pulses per second (pps) or above
+    # 50 pps:
+    # χ[3,50](D) = 0 if D is between 3 and 50 or 1 if D is not between 3 and 50
+    # Two separate coefficients of variation for inter-discharge interval (IDI)
+    # calculated as standard deviation (SD) of IDI divided by the mean IDI,
+    # are used. CoVIDI is the coefficient of variation for IDI of non-paired
+    # MUs discharges only, whereas CoVpIDI is the coefficient of variation for
+    # IDI of paired MUs discharges.
+    # Holobar 2012 considered MUs discharges paired whenever the second
+    # discharge was within 50 ms of the first.
+    # Paired discharges are typical in pathological tremor and the use of both
+    # CoVIDI and CoVpIDI accounts for this condition.
+    #
+    # However, this heuristic penalty function does not work in particular
+    # types of contractions like explosive contractions (MUs discharge up to
+    # 200 pps). Therefore, in this implementation of the PNR estimation we did
+    # not use a penality based on MUs discharge rate and we estimate
+    # Pi = CoVIDI + CoVpIDI
+    # which remains valid also in tremor.
+
+    # Calculate IDI and divide the paired and non-paired IDIs
+    idi = np.diff(mupulses)
+
+    idinonp = idi[idi >= (fsamp * 0.05)]
+    idip = idi[idi < (fsamp * 0.05)]
+
+    CoVIDI = np.std(idinonp) / np.average(idinonp)
+    if math.isnan(CoVIDI):
+        CoVIDI = 0
+
+    CoVpIDI = np.std(idip) / np.average(idip)
+    if math.isnan(CoVpIDI):
+        CoVpIDI = 0
+
+    # Calculate Pi
+    Pi = CoVIDI + CoVpIDI
+
+    # Extract the source
+    source = ipts.to_numpy()
+
+    # Create clusters
+    peak_cluster = source[source >= Pi]
+    noise_cluster = source[source < Pi]
+
+    peak_cluster = np.square(peak_cluster)
+    noise_cluster = np.square(noise_cluster)
+
+    # Calculate PNR
+    pnr = 10 * np.log10((peak_cluster.mean() / noise_cluster.mean()))
+
+    return pnr

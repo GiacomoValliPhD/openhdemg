@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 import warnings
+from openhdemg.mathtools import compute_pnr, compute_sil
 
 
 def showselect(emgfile, title="", nclic=2):
@@ -29,9 +30,8 @@ def showselect(emgfile, title="", nclic=2):
     title : str
         The title of the plot. It is optional but strongly recommended.
         It should describe the task to do.
-    nclic: int, default 2
-        The number of clics to be collected. 1 and 4 clics can also be
-        specified with nclic.
+    nclic: int {1, 2, 4}, default 2
+        The number of clics to be collected.
 
     Returns
     -------
@@ -67,7 +67,13 @@ def showselect(emgfile, title="", nclic=2):
         raise ValueError("Wrong number of inputs, read the title")
 
     # Act according to the number of clics
-    if nclic == 2:
+    if nclic == 1:
+        start_point = round(ginput_res[0][0])
+
+        plt.close()
+        return start_point
+    
+    elif nclic == 2:
         # Sort the input range. Used to resize the signal,
         # select the steady-state, calculate MViF
         if ginput_res[0][0] < ginput_res[1][0]:
@@ -79,12 +85,6 @@ def showselect(emgfile, title="", nclic=2):
 
         plt.close()
         return start_point, end_point
-
-    elif nclic == 1:
-        start_point = round(ginput_res[0][0])
-
-        plt.close()
-        return start_point
 
     elif nclic == 4:  # Used for activation capacity
         points = [
@@ -103,6 +103,55 @@ def showselect(emgfile, title="", nclic=2):
 
         plt.close()
         return start_point_tw, end_point_tw, start_point_rest, end_point_rest
+    
+    else:
+        raise ValueError(f"nclic can be only one of 1, 2, 4. {nclic} was passed instead")
+
+
+def create_binary_firings(EMG_LENGTH, NUMBER_OF_MUS, MUPULSES):
+    """
+    Create a binary representation of the MU firing.
+
+    Create a binary representation of the MU firing over time
+    based on the times of firing of each MU.
+
+    Parameters
+    ----------
+    EMG_LENGTH : int
+        Number of samples (length) in the emg file.
+    NUMBER_OF_MUS : int
+        Number of MUs in the emg file.
+    MUPULSES : list of ndarrays
+        Each ndarray should contain the times of firing of each MU.
+
+    Returns
+    -------
+    mat : pd.DataFrame
+        A pd.DataFrame containing the requested variable
+        or np.nan if the variable was not found.
+    """
+
+    if isinstance(MUPULSES, list):
+        # skip the step if I don't have the MUPULSES (is nan)
+        # create an empty pd.DataFrame containing zeros
+        binary_MUs_firing = pd.DataFrame(np.zeros((EMG_LENGTH, NUMBER_OF_MUS)))
+        # Loop through the columns (MUs) and isolate the data of interest
+        for i in range(NUMBER_OF_MUS):
+            this_mu_binary_firing = binary_MUs_firing[i]
+            this_mu_pulses = pd.DataFrame(MUPULSES[i])
+
+            # Loop through the rows (time) and assign 1 if the MU is firing
+            for position in range(len(this_mu_pulses)):
+                firing_point = int(this_mu_pulses.iloc[position])
+                this_mu_binary_firing.iloc[firing_point] = 1
+
+            # Merge the work done with the original pd.DataFrame of zeros
+            binary_MUs_firing[i] = this_mu_binary_firing
+
+        return binary_MUs_firing
+
+    else:
+        return np.nan
 
 
 def resize_emgfile(emgfile, area=None):
@@ -130,7 +179,9 @@ def resize_emgfile(emgfile, area=None):
 
     Notes
     -----
-    Suggested names for the returned objects: rs_emgfile, start_, end_
+    Suggested names for the returned objects: rs_emgfile, start_, end_.
+    
+    PNR and SIL are computed again in the new resized area.
     """
 
     # Identify the area of interest
@@ -139,28 +190,30 @@ def resize_emgfile(emgfile, area=None):
         end_ = area[1]
 
     else:
-        # Visualise and select the steady-state
+        # Visualise and select the area to resize
         start_, end_ = showselect(
-            emgfile, title="Select the start/end area to consider then press enter"
+            emgfile, title="Select the start/end area to resize then press enter"
         )
 
     # Create the object to store the resized emgfile.
-    # Create a deepcopy to avoid changing the original emgfile
+    # Create a deepcopy to avoid changes in the original emgfile
     rs_emgfile = copy.deepcopy(emgfile)
     """
+    PNR and SIL should be re-computed on the new portion of the file ==>.
     Need to be resized: ==>
     emgfile =   {
-                "SOURCE" : SOURCE,
-                ==> "RAW_SIGNAL" : RAW_SIGNAL, 
-                ==> "REF_SIGNAL" : REF_SIGNAL, 
-                "PNR" : PNR or "SIL" : SIL
-                ==> "IPTS" : IPTS, 
-                ==> "MUPULSES" : MUPULSES, 
-                "FSAMP" : FSAMP, 
-                "IED" : IED, 
-                ==> "EMG_LENGTH" : EMG_LENGTH, 
-                "NUMBER_OF_MUS" : NUMBER_OF_MUS, 
-                ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
+                "SOURCE": SOURCE,
+                ==> "RAW_SIGNAL": RAW_SIGNAL,
+                ==> "REF_SIGNAL": REF_SIGNAL,
+                ==> "PNR": PNR,
+                ==> "SIL": SIL,
+                ==> "IPTS": IPTS,
+                ==> "MUPULSES": MUPULSES,
+                "FSAMP": FSAMP,
+                "IED": IED,
+                ==> "EMG_LENGTH": EMG_LENGTH,
+                "NUMBER_OF_MUS": NUMBER_OF_MUS,
+                ==> "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
                 }
     """
     rs_emgfile["RAW_SIGNAL"] = rs_emgfile["RAW_SIGNAL"].iloc[start_:end_]
@@ -174,12 +227,39 @@ def resize_emgfile(emgfile, area=None):
             (rs_emgfile["MUPULSES"][i] >= start_) & (rs_emgfile["MUPULSES"][i] < end_)
         ]
 
+    # Compute PNR and SIL
+    if rs_emgfile["NUMBER_OF_MUS"] > 0:
+        # Calculate the PNR
+        to_append = []
+        for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
+            res = compute_pnr(
+                ipts=rs_emgfile["IPTS"][mu],
+                mupulses=rs_emgfile["MUPULSES"][mu],
+                fsamp=emgfile["FSAMP"],
+            )
+            to_append.append(res)
+        rs_emgfile["PNR"] = pd.DataFrame(to_append)
+
+        # Calculate the SIL
+        to_append = []
+        for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
+            res = compute_sil(
+                ipts=rs_emgfile["IPTS"][mu],
+                mupulses=rs_emgfile["MUPULSES"][mu],
+            )
+            to_append.append(res)
+        rs_emgfile["SIL"] = pd.DataFrame(to_append)
+
+    else:
+        rs_emgfile["PNR"] = np.nan
+        rs_emgfile["SIL"] = np.nan
+
     return rs_emgfile, start_, end_
 
 
 def compute_idr(emgfile):
     """
-    Compute the IDR.
+    Compute the IDR. # TODO maybe it is not IDR
 
     This function computes the instantaneous discharge rate (IDR) from the
     MUPULSES.
@@ -199,11 +279,6 @@ def compute_idr(emgfile):
             diff_mupulses: delta between consecutive firing samples.
             timesec: delta between consecutive firing samples in seconds.
             idr: instantaneous discharge rate.
-
-    See also
-    --------
-    compute_covsteady : compute the coefficient of variation of the
-    steady-state phase.
 
     Examples
     --------
@@ -271,7 +346,7 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    munumber : int, list
+    munumber : int, list of int
         The MUs to remove. If a single MU has to be removed, this should be an
         int (number of the MU).
         If multiple MUs have to be removed, a list of int should be passed.
@@ -315,7 +390,7 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
         )
 
     # Create the object to store the new emgfile without the specified MUs.
-    # Create a deepcopy to avoid changing the original emgfile
+    # Create a deepcopy to avoid changes in the original emgfile
     del_emgfile = copy.deepcopy(emgfile)
     """
     Need to be changed: ==>
@@ -323,7 +398,8 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
                 "SOURCE" : SOURCE,
                 "RAW_SIGNAL" : RAW_SIGNAL,
                 "REF_SIGNAL" : REF_SIGNAL,
-                ==> "PNR" : PNR, or "SIL" : SIL
+                ==> "PNR" : PNR,
+                ==> "SIL" : SIL
                 ==> "IPTS" : IPTS,
                 ==> "MUPULSES" : MUPULSES,
                 "FSAMP" : FSAMP,
@@ -336,9 +412,12 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
 
     # Common part working for all the possible inputs to munumber
     # Drop PNR values and rename the index
-    if (emgfile["SOURCE"] == "DEMUSE"):  # TODO_NEXT_ use SIL for OTB
-        del_emgfile["PNR"] = del_emgfile["PNR"].drop(munumber)  # Works with lists and integers
-        del_emgfile["PNR"].reset_index(inplace=True, drop=True)  # Drop the old index
+    del_emgfile["PNR"] = del_emgfile["PNR"].drop(munumber)  # Works with lists and integers
+    del_emgfile["PNR"].reset_index(inplace=True, drop=True)  # Drop the old index
+
+    # Drop SIL values and rename the index
+    del_emgfile["SIL"] = del_emgfile["SIL"].drop(munumber)
+    del_emgfile["SIL"].reset_index(inplace=True, drop=True)
 
     # Drop IPTS by columns and rename the columns
     del_emgfile["IPTS"] = del_emgfile["IPTS"].drop(munumber, axis=1)
@@ -403,7 +482,8 @@ def sort_mus(emgfile):
                 "SOURCE" : SOURCE,
                 "RAW_SIGNAL" : RAW_SIGNAL, 
                 "REF_SIGNAL" : REF_SIGNAL, 
-                ==> "PNR" : PNR, 
+                ==> "PNR" : PNR,
+                ==> "SIL": SIL,
                 ==> "IPTS" : IPTS, 
                 ==> "MUPULSES" : MUPULSES, 
                 "FSAMP" : FSAMP, 
@@ -423,11 +503,12 @@ def sort_mus(emgfile):
     sorting_order = list(df.index)
 
     # Sort PNR (single column)
-    if emgfile["SOURCE"] == "DEMUSE":
-        for origpos, newpos in enumerate(sorting_order):
-            sorted_emgfile["PNR"].loc[origpos] = emgfile["PNR"].loc[newpos]
-    else:
-        pass
+    for origpos, newpos in enumerate(sorting_order):
+        sorted_emgfile["PNR"].loc[origpos] = emgfile["PNR"].loc[newpos]
+    
+    # Sort SIL (single column)
+    for origpos, newpos in enumerate(sorting_order):
+        sorted_emgfile["SIL"].loc[origpos] = emgfile["SIL"].loc[newpos]
 
     # Sort IPTS (multiple columns, sort by columns, then reset columns' name)
     sorted_emgfile["IPTS"] = sorted_emgfile["IPTS"].reindex(columns=sorting_order)
@@ -465,9 +546,8 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
 
     Returns
     -------
-    covsteady : pd.Series
-        The coefficient of variation of the steady-state phase in %
-        (accessible as covsteady[0]).
+    covsteady : float
+        The coefficient of variation of the steady-state phase in %.
 
     See also
     --------
@@ -481,8 +561,6 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> covsteady = emg.compute_covsteady(emgfile=emgfile)
     >>> covsteady
-    0    1.452806
-    >>> covsteady[0]
     1.452806
 
     The process can be automated by bypassing the GUI.
@@ -491,20 +569,18 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> covsteady = emg.compute_covsteady(emgfile=emgfile, start_steady=3580, end_steady=15820)
     >>> covsteady
-    0    35.611263
-    >>> covsteady[0]
     35.611263
     """
 
-    if start_steady < 0 and end_steady < 0:
+    if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
         start_steady, end_steady = showselect(
-            emgfile, title="Select the start/end area to consider then press enter"
+            emgfile, title="Select the start/end of the steady-state then press enter"
         )
 
     ref = emgfile["REF_SIGNAL"].loc[start_steady:end_steady]
     covsteady = (ref.std() / ref.mean()) * 100
 
-    return covsteady
+    return covsteady[0]
 
 
 def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
@@ -806,3 +882,10 @@ def compute_rfd(
         rfd = rfd * conversion_val
 
     return rfd
+
+# TODO function to calculate the amplification factor and convert the ref signal
+# TODO in the article discuss also the correlation between PNR and SIL since we calculate both
+# Quante MUs sono sopra o sotto una specificas soglia, distribuzioni ecc...
+# TODO in the GUI, allow to convert the force for a conversion factor
+# TODO write extended documentation of how emgfile should be structured and why and how it
+# can be expanded to fit possible new necessities
