@@ -278,9 +278,21 @@ def compute_pnr(ipts, mupulses, fsamp):
     # Pi = CoVIDI + CoVpIDI
     # which remains valid also in tremor.
 
-    # Calculate IDI and divide the paired and non-paired IDIs
+    # Calculate IDI
+    # Compute differences between consecutive elements
     idi = np.diff(mupulses)
 
+    # In order to increase robustness to outlier values, remove values greater
+    # than mean + 3* STD in the idi array. Do not remove the values below
+    # mean - 3* STD that could be common in tremor.
+    # Compute upper bound for accepted range of values
+    mean, std = np.mean(idi), np.std(idi)
+    upper_bound = mean + 3*std
+
+    # Remove values above upper bound
+    idi = idi[idi <= upper_bound]
+
+    # Divide the paired and non-paired IDIs before calculating specific CoV
     idinonp = idi[idi >= (fsamp * 0.05)]
     idip = idi[idi < (fsamp * 0.05)]
 
