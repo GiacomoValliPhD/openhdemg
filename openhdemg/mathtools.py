@@ -5,10 +5,11 @@ library.
 
 import copy
 import pandas as pd
-from scipy import signal
 import numpy as np
-from scipy.spatial.distance import cdist
 import math
+from scipy import signal
+from scipy.spatial.distance import cdist
+from scipy.fftpack import fft
 
 
 def min_max_scaling(series_or_df):
@@ -321,3 +322,153 @@ def compute_pnr(ipts, mupulses, fsamp):
     pnr = 10 * np.log10((peak_cluster.mean() / noise_cluster.mean()))
 
     return pnr
+
+
+def derivatives_beamforming(sig, row, teta):
+    """
+    Calculate devivatives for the beamforming technique.
+    
+    
+    Calculate the first and second devivative of the mean square error for the beamforming technique with the first signal as reference.
+
+    Parameters
+    ----------
+    sig : pd.Dataframe
+        The source signal to be used for the calculation.
+        Different channels should be organised in different columns.
+    row : int
+        The actual row in the iterative procedure.
+    teta : float
+        The value of teta. # TODO
+
+    Returns
+    -------
+    de1, de2 : float
+        The value of the first and second derivative.
+
+    See also
+    --------
+    # TODO
+
+    Examples
+    --------
+    # TODO
+    """
+    
+    # TODO Use nympy arrays for performance instead of pd.Series
+
+    # Define some necessary variables
+    total_rows = len(sig)
+    m = total_rows - 1
+    total_columns =len(sig.columns)
+    half_of_the_columns = pd.Series(np.arange((round(total_columns/2)))) + 1 # To overcome base 0
+    
+    # Create a custom position index with negative and mirrored values for index < row
+    position = np.zeros(len(sig.index))
+    position[0] = row + 1 # + 1 used to overcome base 0 here and following
+    
+    for i in range(1, row+1):
+        position[i] = i-(row+1)
+    
+    for i in range(m-row):
+        position[i+row+1] = i + 1
+    
+    position = np.delete(position, 0)
+
+    # Shift sig and move row to sig[0]
+    this_row = pd.DataFrame(sig.iloc[row]).transpose()
+    sig = sig.drop(row).reset_index(drop=True)
+    sig = pd.concat([this_row, sig], ignore_index=True)
+    
+    # Calculate fft row-wise
+    sigfft = pd.DataFrame(0, index=np.arange(total_rows), columns=sig.columns)
+    for i in range(total_rows):
+        sigfft.iloc[i] = fft(sig.iloc[i].to_numpy())
+
+    # Create the series used to store the terms of the derivatives
+    term_de1 = pd.Series(0, np.arange(len(half_of_the_columns)))
+    term_de2 = pd.Series(0, np.arange(len(half_of_the_columns)))
+    term_de12 = pd.Series(0, np.arange(len(half_of_the_columns)))
+    term_de22 = pd.Series(0, np.arange(len(half_of_the_columns)))
+
+    # Calculate the first term of the first derivative
+    for i in range(m):
+        for u in range(i+1, m):
+            
+            s_fft = sigfft.iloc[i+1, list(half_of_the_columns)]
+            s_conj = np.conj(sigfft.iloc[u+1, list(half_of_the_columns)])
+            s_exp = np.exp(1j * 2 * np.pi * half_of_the_columns * (position[i]-position[u]) * teta / total_columns)
+            s_last = 2 * np.pi * half_of_the_columns * (position[i]-position[u]) / total_columns
+
+            s_fft  = s_fft.reset_index(drop=True)
+            s_conj = s_conj.reset_index(drop=True)
+            s_exp  = s_exp.reset_index(drop=True)
+            s_last = s_last.reset_index(drop=True)
+
+            image = np.imag(s_fft * s_conj * s_exp * s_last)
+            
+            term_de1 = term_de1-image
+
+    term_de1= (term_de1*2) / (m**2)
+    
+    # Calculate the second term of the first derivative
+    for i in range(m):
+        
+        s_fft = sigfft.iloc[i+1, list(half_of_the_columns)]
+        s_exp = np.exp(1j * 2 * np.pi * half_of_the_columns * position[i] * teta / total_columns)
+        s_last = 2 * np.pi * half_of_the_columns * position[i] / total_columns
+
+        s_fft  = s_fft.reset_index(drop=True)
+        s_exp  = s_exp.reset_index(drop=True)
+        s_last = s_last.reset_index(drop=True)
+
+        term_de2 = term_de2 + (s_fft * s_exp * s_last)
+    
+    s_conj = np.conj(sigfft.iloc[0, list(half_of_the_columns)])
+    s_conj = s_conj.reset_index(drop=True)
+
+    term_de2 = 2 * np.imag(s_conj * term_de2) / m
+    
+    # Calculate the first derivative
+    de1 = 2 / total_columns * np.sum(term_de1 + term_de2)
+
+    # Calculate the first term of the second derivative
+    for i in range(m):
+        for u in range(i+1, m):
+            
+            s_fft = sigfft.iloc[i+1, list(half_of_the_columns)]
+            s_conj = np.conj(sigfft.iloc[u+1, list(half_of_the_columns)])
+            s_exp = np.exp(1j * 2 * np.pi * half_of_the_columns * (position[i]-position[u]) * teta / total_columns)
+            s_last = 2 * np.pi * half_of_the_columns * (position[i]-position[u]) / total_columns
+
+            s_fft  = s_fft.reset_index(drop=True)
+            s_conj = s_conj.reset_index(drop=True)
+            s_exp  = s_exp.reset_index(drop=True)
+            s_last = s_last.reset_index(drop=True)
+            
+            term_de12 = term_de12 - np.real(s_fft * s_conj * s_exp * (s_last**2))
+            
+    term_de12= (term_de12*2) / (m**2)
+
+    # Calculate the second term of the second derivative
+    for i in range(m):
+        
+        s_fft = sigfft.iloc[i+1, list(half_of_the_columns)]
+        s_exp = np.exp(1j * 2 * np.pi * half_of_the_columns * position[i] * teta / total_columns)
+        s_last = 2 * np.pi * half_of_the_columns * position[i] / total_columns
+
+        s_fft  = s_fft.reset_index(drop=True)
+        s_exp  = s_exp.reset_index(drop=True)
+        s_last = s_last.reset_index(drop=True)
+
+        term_de22 = term_de22 + (s_fft * s_exp * (s_last**2))
+    
+    s_conj = np.conj(sigfft.iloc[0, list(half_of_the_columns)])
+    s_conj = s_conj.reset_index(drop=True)
+
+    term_de22 = 2 * np.real(s_conj * term_de22) / m
+    
+    # Calculate the second derivative
+    de2 = 2 / total_columns * np.sum(term_de12 + term_de22)
+    
+    return de1, de2
