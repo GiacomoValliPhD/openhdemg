@@ -6,10 +6,12 @@ library.
 import copy
 import pandas as pd
 import numpy as np
+import numpy.polynomial.polynomial as poly
 import math
 from scipy import signal
 from scipy.spatial.distance import cdist
 from scipy.fftpack import fft
+import sys
 
 
 def min_max_scaling(series_or_df):
@@ -324,7 +326,7 @@ def compute_pnr(ipts, mupulses, fsamp):
     return pnr
 
 
-def derivatives_beamforming(sig, row, teta):
+def derivatives_beamforming(sig, row, teta): # TODO
     """
     Calculate devivatives for the beamforming technique.
     
@@ -335,7 +337,7 @@ def derivatives_beamforming(sig, row, teta):
     ----------
     sig : pd.Dataframe
         The source signal to be used for the calculation.
-        Different channels should be organised in different columns.
+        Different channels should be organised in different rows.
     row : int
         The actual row in the iterative procedure.
     teta : float
@@ -472,3 +474,154 @@ def derivatives_beamforming(sig, row, teta):
     de2 = 2 / total_columns * np.sum(term_de12 + term_de22)
     
     return de1, de2
+
+
+def mle_cv_est(sig, initial_teta, ied, fsamp):
+    """
+    Estimate CV via MLE.
+
+    Estimate conduction velocity (CV) via maximum likelihood estimation.
+    
+    Parameters
+    ----------
+    sig : pd.Dataframe
+        The source signal to be used for the calculation.
+        Different channels should be organised in different columns,
+        for coherence with the structure of emgfile["RAW_SIGNAL"].
+    initial_teta : int
+        The starting value teta.
+    ied : int
+        Interelectrode distance (mm).
+    fsamp : int
+        Sampling frequency (Hz).
+
+    Returns
+    -------
+    cv : float
+        Conduction velocity (M/s).
+    teta : float
+        The final value of teta.
+
+    See also
+    --------
+    # TODO
+
+    Examples
+    --------
+    # TODO
+    """
+    
+    # Transpose the signal to represent each channel in a different row
+    sig = sig.transpose()
+    # Calculate ied in meters
+    ied = ied / 1000
+
+    # Assign the initial value of teta to t
+    t = initial_teta
+    # Set teta to 10 just to start the while loop
+    teta = 10
+    trial = 0
+    eps = sys.float_info.epsilon
+
+    while abs(teta - t) >= 5e-5 and trial < 30:
+        trial = trial+1
+        teta = t
+        # Initialize the first and second derivatives
+        de1 = 0
+        de2 = 0
+
+        # Calculate the first and second derivatives
+        for row in range(len(sig)):
+            de1t, de2t = derivatives_beamforming(sig=sig, row=row, teta=teta)
+            de1 = de1 + de1t + eps
+            de2 = de2 + de2t + eps
+
+        # Newton's criteria
+        if de2 > 0:
+            # calculate step size using Newton's method
+            u = -de1 / de2
+            # if the step size is too large, limit it to 0.5
+            if abs(u) > 0.5:
+                u = -0.5 * abs(de1) / de1
+            
+        else:
+            u = -0.5 * abs(de1) / de1
+        
+        # Update t using step size and teta
+        t = teta + u
+
+    cv = ied / (teta / fsamp)
+    
+    return cv, teta
+
+
+def find_teta(sig1, sig2, ied, fsamp): # TODO
+    """
+    Find the starting value for teta.
+
+    It is important to don't fix teta and use a non-fixed starting point for the CV algorithm.
+
+    Parameters
+    ----------
+    sig1, sig2 : pd.Series
+        The two signals based on which to calculate teta.
+        These must be pd.Series, i.e., 1-dimensional data structures.
+    ied : int
+        Interelectrode distance (mm).
+    fsamp : int
+        Sampling frequency (Hz).
+    
+    Returns
+    -------
+    teta : int
+        The starting value teta.
+
+    See also
+    --------
+    # TODO
+
+    Examples
+    --------
+    # TODO
+    """
+
+    # Define an arbitrary range for possible CV values (slightly larger than the physiological range) based on which to calculate teta.
+    min_cv = 1
+    max_cv = 10
+    teta_min = math.floor(ied / max_cv * fsamp)
+    teta_max = math.ceil(ied / min_cv * fsamp)
+
+    # Work with numpy arrays for better performance
+    sig1 = sig1.to_numpy()
+    sig2 = sig2.to_numpy()
+
+    # Verify that the input is a 1D array. If not, it will affect the calculation of corrloc.
+    if sig1.ndim != 1:
+        raise ValueError("sig1 is not 1 dimensional")
+    if sig2.ndim != 1:
+        raise ValueError("sig2 is not 1 dimesional")
+
+    delay = np.arange(teta_min, teta_max+1)
+    corrloc = np.zeros(len(delay))
+    for idx, i in enumerate(delay):
+        sig1_tosum = sig1[:len(sig1)-i]
+        sig2_tosum = sig2[i:]
+        
+        corrloc[idx-teta_min+1] = np.sum(sig1_tosum * sig2_tosum) 
+        
+    pos = corrloc.argmax() + 1 # To overcome base 0 and prevent beta from beeing 0
+
+    if pos > 1 and pos < len(delay):
+        x = delay[pos-2 : pos+1]
+        y = corrloc[pos-2 : pos+1]
+
+        coefs = poly.polyfit(x=x, y=y, deg=2)
+        # The polyfit function originally returns flipped coefficients
+        coefs = np.flip(coefs)
+
+        teta = -coefs[1] / (2 * coefs[0])
+
+    else:
+        teta = pos
+
+    return teta
