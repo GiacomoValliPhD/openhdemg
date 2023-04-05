@@ -17,6 +17,8 @@ from joblib import Parallel, delayed
 import copy
 import os
 import warnings
+import tkinter as tk
+from tkinter import ttk
 
 
 def diff(sorted_rawemg):
@@ -1117,6 +1119,61 @@ def remove_duplicates_between(
         return emgfile1, emgfile2
 
     else:
-        raise ValueError(f"which can be one of 'munumber', 'PNR', 'SIL'. {which} was passed instead")
+        raise ValueError(
+            f"which can be one of 'munumber', 'PNR', 'SIL'. {which} was passed instead"
+        )
 
-# TODO_NEXT_ try if replacing at/iat with loc/iloc can improve performance.
+# TODO_NEXT_ try if replacing at/iat with loc/iloc can improve performance or use np arrays.
+
+
+def xcc_sta(sta):
+    """
+    Cross-correlation between the STA of adjacent channels.
+
+    Calculate the normalised cross-correlation coefficient (XCC) between the
+    MUs action potential shapes on adjacent channels.
+    The XCC will be calculated for all the MUs and all the pairs of electrodes.
+
+    Parameters
+    ----------
+    sta : dict
+        The dict containing the spike-triggered average (STA) of all the MUs
+        computed with the function sta().
+
+    Returns
+    -------
+    xcc_sta : dict
+        A dict containing the XCC for all the pairs of channels and all the
+        MUs. This dict is organised as the sta dict.
+
+    See also
+    -------- # TODO
+    """
+
+    from mathtools import norm_xcorr  # TODO should we call all the functions within openhdemg inside the functions?
+
+    # Obtain the structure of the sta_xcc dict
+    xcc_sta = copy.deepcopy(sta)
+
+    # Access all the MUs and matrix columns
+    for mu_number in sta:
+        for matrix_col in sta[mu_number].keys():
+            df = sta[mu_number][matrix_col]
+
+            # Reverse matrix columns to start pairs comparison from the last
+            reversed_col = list(df.columns)
+            reversed_col.reverse()
+
+            for pos, col in enumerate(reversed_col):
+                if pos != len(reversed_col)-1:
+                    this_c = df.loc[: , reversed_col[pos]].to_numpy()  # For performance
+                    next_c = df.loc[: , reversed_col[pos+1]].to_numpy()
+                    xcc = norm_xcorr(sig1=this_c, sig2=next_c)
+                else:
+                    xcc = np.nan
+
+                xcc_sta[mu_number][matrix_col][col] = xcc
+
+            xcc_sta[mu_number][matrix_col] = xcc_sta[mu_number][matrix_col].drop_duplicates()
+
+    return xcc_sta
