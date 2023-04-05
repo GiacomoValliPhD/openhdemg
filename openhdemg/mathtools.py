@@ -59,7 +59,41 @@ def min_max_scaling(series_or_df):
         )
 
 
-def norm_twod_xcorr(df1, df2, mode="full"):
+def norm_xcorr(sig1, sig2):
+    """
+    Normalized cross-correlation of 2 signals.
+
+    Parameters
+    ----------
+    sig1, sig2 : pd.Series or np.ndarray
+        The two signals to correlate.
+        These signals must be 1-dimensional and of same length.
+
+    Returns
+    -------
+    xcc : float
+        The maximum cross-correlation value.
+
+    See also
+    --------
+    norm_twod_xcorr : Normalised 2-dimensional cross-correlation of STAs of
+        two MUS.
+    """
+    
+    # Implementation corresponding to:
+    # MATLAB => xcorr(a, b, 'normalized')
+    # From:
+    # https://stackoverflow.com/questions/53436231/normalized-cross-correlation-in-python
+    norm_a = np.linalg.norm(sig1)
+    a = sig1 / norm_a
+    norm_b = np.linalg.norm(sig2)
+    b = sig2 / norm_b
+    c = np.correlate(a, b, mode = 'full')
+    
+    return max(c)
+
+
+def norm_twod_xcorr(df1, df2, mode="full"): # TODO Consider changing names df1, df2, input and np arrays
     """
     Normalised 2-dimensional cross-correlation of STAs of two MUS.
 
