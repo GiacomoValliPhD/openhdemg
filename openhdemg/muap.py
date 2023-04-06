@@ -5,9 +5,9 @@ This module contains functions to produce and analyse MUs anction potentials
 
 import pandas as pd
 from openhdemg.tools import delete_mus
-from openhdemg.mathtools import norm_twod_xcorr
+from openhdemg.mathtools import norm_twod_xcorr, find_teta, mle_cv_est
 from openhdemg.otbelectrodes import sort_rawemg
-from openhdemg.plotemg import plot_muaps
+from openhdemg.plotemg import plot_muaps, plot_muaps_for_cv
 from scipy import signal
 import matplotlib.pyplot as plt
 from functools import reduce
@@ -19,6 +19,7 @@ import os
 import warnings
 import tkinter as tk
 from tkinter import ttk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
 def diff(sorted_rawemg):
@@ -1150,7 +1151,7 @@ def xcc_sta(sta):
     -------- # TODO
     """
 
-    from mathtools import norm_xcorr  # TODO should we call all the functions within openhdemg inside the functions?
+    from openhdemg.mathtools import norm_xcorr  # TODO should we call all the functions within openhdemg inside the functions?
 
     # Obtain the structure of the sta_xcc dict
     xcc_sta = copy.deepcopy(sta)
@@ -1177,3 +1178,184 @@ def xcc_sta(sta):
             xcc_sta[mu_number][matrix_col] = xcc_sta[mu_number][matrix_col].drop_duplicates()
 
     return xcc_sta
+
+
+
+class MUcv_gui:
+    """
+    Add
+    """ # TODO all the docstrings
+    
+    def __init__(self, emgfile, sorted_rawemg, n_firings=[0,50], muaps_timewindow=50):
+        """
+        Initialization of master GUI window upon calling.
+
+        Parameters
+        ----------
+        master: tk
+            tk class object
+        """
+
+        # On start, compute the necessary information
+        self.dd = double_diff(sorted_rawemg)
+        self.st = sta(
+            emgfile=emgfile,
+            sorted_rawemg=self.dd,
+            firings=n_firings,
+            timewindow=muaps_timewindow,
+        )
+        self.sta_xcc = xcc_sta(self.st)
+
+        
+        # After that, set up the GUI
+        self.root = tk.Tk()
+        self.root.title('MUs cv estimation')
+        self.root.geometry('900x700')
+        
+        # Assign structure and minimum spacing
+        self.frm = ttk.Frame(self.root, padding=15)
+        # Assign grid structure
+        self.frm.grid()
+    
+        # Label MU number combobox
+        self.munumber_label = ttk.Label(self.frm, text="MU number", width=15)
+        self.munumber_label.grid(row=0, column=0, columnspan=1, sticky=tk.W)
+        
+        # Create a combobox and a button to select a MU
+        self.all_mus = list(range(emgfile["NUMBER_OF_MUS"]))
+
+        self.selectmu_cb = ttk.Combobox(
+            self.frm,
+            textvariable=tk.StringVar(),
+            values=self.all_mus,
+            state='readonly',
+            width= 15,
+        )
+        self.selectmu_cb.grid(row=1, column=0, columnspan=1, sticky=tk.W)
+        self.selectmu_cb.current(0)
+        
+        self.button_view = ttk.Button(
+            self.frm,
+            text="View",
+            command=lambda: self.gui_plot(), # TODO Lambda not needed
+            width= 15,
+        )
+        self.button_view.grid(row=1, column=1, columnspan=1, sticky=tk.W)
+
+        # Empty column
+        self.emp = ttk.Label(self.frm, text= "", width=15)
+        self.emp.grid(row=0, column=2, columnspan=1, sticky=tk.W)
+
+        # Create the widgets to calculate CV
+        # Label and combobox to select the matrix column
+        self.col_label = ttk.Label(self.frm, text= "Column", width=15)
+        self.col_label.grid(row=0, column=3, columnspan=1, sticky=tk.W)
+
+        self.columns = list(self.st[0].keys())
+
+        self.col_cb = ttk.Combobox(
+            self.frm,
+            textvariable=tk.StringVar(),
+            values=self.columns,
+            state='readonly',
+            width= 15,
+        )
+        self.col_cb.grid(row=1, column=3, columnspan=1, sticky=tk.W)
+        self.col_cb.current(0)
+        
+        # Label and combobox to select the matrix channels
+        self.rows = list(range(len(list(self.st[0][self.columns[0]].columns))))
+        
+        self.start_label = ttk.Label(self.frm, text= "From row", width=15)
+        self.start_label.grid(row=0, column=4, columnspan=1, sticky=tk.W)
+
+        self.start_cb = ttk.Combobox(
+            self.frm,
+            textvariable=tk.StringVar(),
+            values=self.rows,
+            state='readonly',
+            width= 15,
+        )
+        self.start_cb.grid(row=1, column=4, columnspan=1, sticky=tk.W)
+        self.start_cb.current(0)
+
+        self.stop_label = ttk.Label(self.frm, text= "To row", width=15)
+        self.stop_label.grid(row=0, column=5, columnspan=1, sticky=tk.W)
+
+        self.stop_cb = ttk.Combobox(
+            self.frm,
+            textvariable=tk.StringVar(),
+            values=self.rows,
+            state='readonly',
+            width= 15,
+        )
+        self.stop_cb.grid(row=1, column=5, columnspan=1, sticky=tk.W)
+        self.stop_cb.current(max(self.rows))
+
+        # Button to start CV estimation
+        self.ied = emgfile["IED"]
+        self.fsamp = emgfile["FSAMP"]
+        self.button_est = ttk.Button(
+            self.frm,
+            text="Estimate",
+            command=lambda: self.compute_cv(), # TODO compute_cv self? lambda not needed
+            width= 15,
+        )
+        self.button_est.grid(row=1, column=6, columnspan=1, sticky=tk.W)
+
+        # Empty column
+        #self.emp1 = ttk.Label(self.frm, text= "", width=15)
+        #self.emp1.grid(row=0, column=7, columnspan=1, sticky=tk.W)
+        
+        self.root.mainloop()
+    
+
+    # Define functions necessary for the GUI
+    def gui_plot(self): # TODO check when self is needed
+        """
+        Add
+        """
+        mu = int(self.selectmu_cb.get())
+        
+        fig = plot_muaps_for_cv(
+            sta_dict=self.st[mu],
+            xcc_sta=self.sta_xcc[mu],
+            showimmediately=False,
+        )
+
+        canvas = FigureCanvasTkAgg(fig, master=self.root)
+        canvas.draw()
+        canvas.get_tk_widget().grid(row=2, column=0, columnspan=6, sticky=tk.W)
+        plt.close()
+
+    
+    # Define functions for cv estimation
+    def compute_cv(self):
+        """
+        # TODO move as standing-alone function?
+        """
+
+        sig = self.st[int(self.selectmu_cb.get())][self.col_cb.get()].transpose()
+        col_list = list(range(int(self.start_cb.get()), int(self.stop_cb.get())+1))
+        
+        sig = sig.iloc[col_list , :]
+        sig = sig.reset_index(drop=True)
+
+        # Verify that the signal is correcly oriented
+        if len(sig) > len(sig.columns):
+            raise ValueError(
+                "The number of signals exceeds the number of samples. Verify that each row represents a signal"
+            )
+        
+        if len(sig) > 3:
+            sig1 = sig.iloc[1]
+            sig2 = sig.iloc[2]
+        else:
+            sig1 = sig.iloc[0]
+            sig2 = sig.iloc[1]
+
+        initial_teta = find_teta(sig1, sig2, self.ied, self.fsamp) # TODO call assigning
+
+        self.cv, teta = mle_cv_est(sig, initial_teta, self.ied, self.fsamp)
+
+        print(self.cv)
