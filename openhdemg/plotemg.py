@@ -886,6 +886,7 @@ def plot_idr(
 
 
 # TODO_NEXT_kwargs for flexible plotting design (all the plots)
+# TODO add align option
 def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediately=True):
     """
     Plot MUAPs obtained from STA from one or multiple MUs.
@@ -1223,6 +1224,111 @@ def plot_muap(
     ax1.set_xlabel("Time (ms)" if timeinseconds else "Samples")
 
     showgoodlayout(tight_layout)
+    if showimmediately:
+        plt.show()
+
+    return fig
+
+
+def plot_muaps_for_cv(
+    sta_dict,
+    xcc_sta,
+    title="MUAPs for CV",
+    figsize=[20, 15],
+    showimmediately=True,
+):
+    """
+    Visualise MUAPs on which to calculate MUs CV.
+
+    Plot MUAPs obtained from the STA of the double differential signal and
+    their paired cross-correlation value.
+
+    Parameters
+    ----------
+    sta_dict : dict
+        dict containing the STA of the double-differential derivation of a
+        specific MU.
+    xcc_sta : dict # TODO
+        dict containing the normalised cross-correlation coefficient of the
+        double-differential derivation of a specific MU.
+    tile : str, default "MUAPs from STA"
+        Title of the plot.
+    figsize : list, default [20, 15]
+        Size of the figure in centimeters [width, height].
+    showimmediately : bool, default True
+        If True (default), plt.show() is called and the figure showed to the
+        user.
+        It is useful to set it to False when calling the function from the GUI.
+
+    Returns
+    -------
+    fig : pyplot `~.figure.Figure`
+
+    See also
+    --------
+    . # TODO
+
+    Notes
+    -----
+    .
+
+    Examples
+    --------
+    .
+    """
+
+    if not isinstance(sta_dict, dict):
+        raise TypeError("sta_dict must be a dict")
+
+    # Find the largest and smallest value to define y axis limits.
+    xmax = 0
+    xmin = 0
+    # Loop each column (c)
+    for c in sta_dict:
+        max_ = sta_dict[c].max().max()
+        min_ = sta_dict[c].min().min()
+        if max_ > xmax:
+            xmax = max_
+        if min_ < xmin:
+            xmin = min_
+
+    # Obtain number of columns and rows, this changes if we use different
+    # matrices.
+    cols = len(sta_dict)
+    rows = len(sta_dict["col0"].columns)
+    fig, axs = plt.subplots(
+        rows,
+        cols,
+        figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
+        num=title,
+        sharex=True,
+    )
+
+    # Plot all the MUAPs, c means matrix columns, r rows
+    keys = list(sta_dict.keys())
+    for r in range(rows):
+        for pos, c in enumerate(keys):
+            axs[r, pos].plot(sta_dict[c].iloc[:, r])
+
+            axs[r, pos].set_ylim(xmin, xmax)
+            axs[r, pos].xaxis.set_visible(False)
+            axs[r, pos].set(yticklabels=[])
+            axs[r, pos].tick_params(left=False)
+
+            if r != 0:
+                xcc = round(float(xcc_sta[c].iloc[:, r]), 2)
+                title = xcc
+                color = "k" if xcc >= 0.8 else "r"
+                axs[r, pos].set_title(
+                    title, fontsize=8, color=color, loc="left", pad=3
+                )
+
+            else:
+                axs[r, pos].set_title(c, fontsize=12, pad=20)
+
+            axs[r, pos].set_ylabel(r, fontsize=6, rotation=0, labelpad=0)
+
+    showgoodlayout(tight_layout=False, despined=True)
     if showimmediately:
         plt.show()
 
