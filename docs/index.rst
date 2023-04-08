@@ -10,6 +10,8 @@ Welcome to Open_HD-EMG's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   modules
+
 
 
 Indices and tables
