@@ -21,7 +21,8 @@ import tkinter as tk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from pandastable import Table, TableModel
-import pyperclip
+
+# import pyperclip
 
 
 def diff(sorted_rawemg):
@@ -189,9 +190,7 @@ def double_diff(sorted_rawemg):
 
 
 # This function exploits parallel processing to compute the STA
-def sta(
-    emgfile, sorted_rawemg, firings=[0, 50], timewindow=100
-):
+def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
     """
     Computes the spike-triggered average (STA) of every MUs.
 
@@ -234,7 +233,7 @@ def sta(
     Calculate STA of all the MUs in the emgfile on the first 25 firings
     and in a 50 ms time-window.
     Access the STA of the column 0 of the first MU (number 0).
-    
+
     >>> import openhdemg as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
@@ -450,7 +449,7 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
         dict containing a dict of ST MUAPs (pd.DataFrame) for every MUs.
         pd.DataFrames containing the ST MUAPs are organised based on matrix
         rows (dict) and matrix channel.
-        For example, the ST MUAPs of the first MU (0), in the second electrode 
+        For example, the ST MUAPs of the first MU (0), in the second electrode
         of the matrix can be accessed as stmuap[0]["col0"][1].
 
     See also
@@ -633,9 +632,7 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     no_nan_sta2 = df2.dropna(axis=1, inplace=False)
 
     # Compute 2dxcorr to identify a common lag/delay
-    normxcorr_df, normxcorr_max = norm_twod_xcorr(
-        no_nan_sta1, no_nan_sta2, mode="same"
-    )
+    normxcorr_df, normxcorr_max = norm_twod_xcorr(no_nan_sta1, no_nan_sta2, mode="same")
 
     # Detect the time leads or lags from 2dxcorr
     corr_lags = signal.correlation_lags(
@@ -744,7 +741,7 @@ def tracking(
     -----
     UserWarning
         If the number of plots to show exceeds that of available cores.
-    
+
     See also
     --------
     sta : computes the STA of every MUs.
@@ -797,15 +794,11 @@ def tracking(
     """
 
     # Get the STAs
-    emgfile1_sorted = sort_rawemg(
-        emgfile1, code=matrixcode, orientation=orientation
-    )
+    emgfile1_sorted = sort_rawemg(emgfile1, code=matrixcode, orientation=orientation)
     sta_emgfile1 = sta(
         emgfile1, emgfile1_sorted, firings=firings, timewindow=timewindow * 2
     )
-    emgfile2_sorted = sort_rawemg(
-        emgfile2, code=matrixcode, orientation=orientation
-    )
+    emgfile2_sorted = sort_rawemg(emgfile2, code=matrixcode, orientation=orientation)
     sta_emgfile2 = sta(
         emgfile2, emgfile2_sorted, firings=firings, timewindow=timewindow * 2
     )
@@ -819,9 +812,7 @@ def tracking(
         for mu_file2 in range(emgfile2["NUMBER_OF_MUS"]):
             # Firs, align the STAs
             aligned_sta1, aligned_sta2 = align_by_xcorr(
-                sta_emgfile1[mu_file1],
-                sta_emgfile2[mu_file2],
-                finalduration=0.5
+                sta_emgfile1[mu_file1], sta_emgfile2[mu_file2], finalduration=0.5
             )
 
             # Second, compute 2d cross-correlation
@@ -829,9 +820,7 @@ def tracking(
             df1.dropna(axis=1, inplace=True)
             df2 = unpack_sta(aligned_sta2)
             df2.dropna(axis=1, inplace=True)
-            normxcorr_df, normxcorr_max = norm_twod_xcorr(
-                df1, df2, mode="full"
-            )
+            normxcorr_df, normxcorr_max = norm_twod_xcorr(df1, df2, mode="full")
 
             # Third, fill the tracking_res
             if exclude_belowthreshold is False:
@@ -869,9 +858,7 @@ def tracking(
     # Filter the results
     if filter:
         # Sort file by MUs in file 1 and XCC to have first the highest XCC
-        sorted_res = tracking_res.sort_values(
-            by=["MU_file1", "XCC"], ascending=False
-        )
+        sorted_res = tracking_res.sort_values(by=["MU_file1", "XCC"], ascending=False)
         # Get unique MUs from file 1
         unique = sorted_res["MU_file1"].unique()
 
@@ -884,9 +871,7 @@ def tracking(
             res_unique.loc[pos, :] = this_res.iloc[0, :]
 
         # Now repeat the task with MUs from file 2
-        sorted_res = res_unique.sort_values(
-            by=["MU_file2", "XCC"], ascending=False
-        )
+        sorted_res = res_unique.sort_values(by=["MU_file2", "XCC"], ascending=False)
         unique = sorted_res["MU_file2"].unique()
         res_unique = pd.DataFrame(columns=sorted_res.columns)
         for pos, mu2 in enumerate(unique):
@@ -906,7 +891,8 @@ def tracking(
 
     # Plot the MUs pairs
     if show:
-        def parallel(ind): # Function for the parallel execution of plotting
+
+        def parallel(ind):  # Function for the parallel execution of plotting
             if tracking_res["XCC"].loc[ind] >= threshold:
                 # Align STA
                 aligned_sta1, aligned_sta2 = align_by_xcorr(
@@ -922,7 +908,7 @@ def tracking(
                 plot_muaps(
                     sta_dict=[aligned_sta1, aligned_sta2],
                     title=title,
-                    showimmediately=False
+                    showimmediately=False,
                 )
 
             plt.show()
@@ -1126,6 +1112,7 @@ def remove_duplicates_between(
             f"which can be one of 'munumber', 'PNR', 'SIL'. {which} was passed instead"
         )
 
+
 # TODO_NEXT_ try if replacing at/iat with loc/iloc can improve performance or use np arrays.
 
 
@@ -1153,7 +1140,9 @@ def xcc_sta(sta):
     -------- # TODO
     """
 
-    from openhdemg.mathtools import norm_xcorr  # TODO should we call all the functions within openhdemg inside the functions?
+    from openhdemg.mathtools import (
+        norm_xcorr,
+    )  # TODO should we call all the functions within openhdemg inside the functions?
 
     # Obtain the structure of the sta_xcc dict
     xcc_sta = copy.deepcopy(sta)
@@ -1168,16 +1157,18 @@ def xcc_sta(sta):
             reversed_col.reverse()
 
             for pos, col in enumerate(reversed_col):
-                if pos != len(reversed_col)-1:
-                    this_c = df.loc[: , reversed_col[pos]].to_numpy()  # For performance
-                    next_c = df.loc[: , reversed_col[pos+1]].to_numpy()
+                if pos != len(reversed_col) - 1:
+                    this_c = df.loc[:, reversed_col[pos]].to_numpy()  # For performance
+                    next_c = df.loc[:, reversed_col[pos + 1]].to_numpy()
                     xcc = norm_xcorr(sig1=this_c, sig2=next_c)
                 else:
                     xcc = np.nan
 
                 xcc_sta[mu_number][matrix_col][col] = xcc
 
-            xcc_sta[mu_number][matrix_col] = xcc_sta[mu_number][matrix_col].drop_duplicates()
+            xcc_sta[mu_number][matrix_col] = xcc_sta[mu_number][
+                matrix_col
+            ].drop_duplicates()
 
     return xcc_sta
 
@@ -1251,8 +1242,8 @@ class MUcv_gui:
 
         # After that, set up the GUI
         self.root = tk.Tk()
-        self.root.title('MUs cv estimation')
-        self.root.geometry('1010x675')
+        self.root.title("MUs cv estimation")
+        self.root.geometry("1010x675")
 
         # Create main frame, assign structure and minimum spacing
         self.frm = ttk.Frame(self.root, padding=15)
@@ -1270,7 +1261,7 @@ class MUcv_gui:
             self.frm,
             textvariable=tk.StringVar(),
             values=self.all_mus,
-            state='readonly',
+            state="readonly",
             width=15,
         )
         self.selectmu_cb.grid(row=1, column=0, columnspan=1, sticky=tk.W)
@@ -1279,7 +1270,7 @@ class MUcv_gui:
         # method is passing two arguments: the event object and the function
         # itself. Use lambda to avoid the error.
         self.selectmu_cb.bind(
-            '<<ComboboxSelected>>',
+            "<<ComboboxSelected>>",
             lambda event: self.gui_plot(),
         )
 
@@ -1300,7 +1291,7 @@ class MUcv_gui:
             self.frm,
             textvariable=tk.StringVar(),
             values=self.columns,
-            state='readonly',
+            state="readonly",
             width=15,
         )
         self.col_cb.grid(row=1, column=3, columnspan=1, sticky=tk.W)
@@ -1316,7 +1307,7 @@ class MUcv_gui:
             self.frm,
             textvariable=tk.StringVar(),
             values=self.rows,
-            state='readonly',
+            state="readonly",
             width=15,
         )
         self.start_cb.grid(row=1, column=4, columnspan=1, sticky=tk.W)
@@ -1329,7 +1320,7 @@ class MUcv_gui:
             self.frm,
             textvariable=tk.StringVar(),
             values=self.rows,
-            state='readonly',
+            state="readonly",
             width=15,
         )
         self.stop_cb.grid(row=1, column=5, columnspan=1, sticky=tk.W)
@@ -1358,7 +1349,7 @@ class MUcv_gui:
         )
         self.textbox = tk.Text(self.frm, width=20)
         self.textbox.grid(row=2, column=8, sticky="ns")
-        self.textbox.insert('1.0', self.res_df.to_string())
+        self.textbox.insert("1.0", self.res_df.to_string())
 
         # Create a button to copy the dataframe to clipboard
         copy_btn = ttk.Button(
@@ -1405,7 +1396,8 @@ class MUcv_gui:
         """
         Copy the dataframe to clipboard in csv format.
         """
-        pyperclip.copy(self.res_df.to_csv(index=False, sep='\t'))
+        pass
+        # pyperclip.copy(self.res_df.to_csv(index=False, sep='\t'))
 
     # Define functions for cv estimation
     def compute_cv(self):
@@ -1417,7 +1409,7 @@ class MUcv_gui:
         # different rows (as requested by the functions find_teta and
         # mle_cv_est).
         sig = self.st[int(self.selectmu_cb.get())][self.col_cb.get()].transpose()
-        col_list = list(range(int(self.start_cb.get()), int(self.stop_cb.get())+1))
+        col_list = list(range(int(self.start_cb.get()), int(self.stop_cb.get()) + 1))
 
         sig = sig.iloc[col_list, :]
         sig = sig.reset_index(drop=True)
@@ -1454,5 +1446,7 @@ class MUcv_gui:
 
         # Update the self.res_df and the self.textbox
         self.res_df.loc[int(self.selectmu_cb.get()), "CV"] = round(self.cv, 3)
-        self.textbox.replace('1.0', 'end', self.res_df.to_string())
+        self.textbox.replace("1.0", "end", self.res_df.to_string())
+
+
 # TODO return average XCC
