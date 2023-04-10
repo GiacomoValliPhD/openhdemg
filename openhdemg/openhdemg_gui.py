@@ -23,7 +23,7 @@ matplotlib.use("TkAgg")
 import openhdemg
 
 
-class GUI:
+class emgGUI:
     """
     A class representing a Tkinter TK instance.
 
@@ -2799,8 +2799,10 @@ class GUI:
 
 # -----------------------------------------------------------------------------------------------
 
-# Run GUI upon calling
-if __name__ == "__main__":
-    root = Tk()
-    gui = GUI(root)
-    root.mainloop()
+
+def run_main():
+    # Run GUI upon calling
+    if __name__ == "__main__":
+        root = Tk()
+        emgGUI(root)
+        root.mainloop()
