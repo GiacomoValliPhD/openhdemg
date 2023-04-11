@@ -1186,8 +1186,8 @@ class MUcv_gui:
     """
     Graphical user interface for the estimation of MUs conduction velocity.
 
-    This GUI allows also to delete MUs with a bad action potential shape and
-    to save the edited file.
+    GUI for the estimation of MUs conduction velocity (CV) and amplitude of
+    the action potentials (root mean square - RMS).
 
     Parameters
     ----------
@@ -1252,7 +1252,6 @@ class MUcv_gui:
         # After that, set up the GUI
         self.root = tk.Tk()
         self.root.title('MUs cv estimation')
-        self.root.geometry('1010x675')
 
         # Create main frame, assign structure and minimum spacing
         self.frm = ttk.Frame(self.root, padding=15)
@@ -1350,15 +1349,15 @@ class MUcv_gui:
         self.emp2 = ttk.Label(self.frm, text="", width=5)
         self.emp2.grid(row=0, column=7, columnspan=1, sticky=tk.W)
 
-        # Add text frame to show the results
+        # Add text frame to show the results (only CV and RMS)
         self.res_df = pd.DataFrame(
             data=0,
             index=self.all_mus,
-            columns=["CV", "RMS"],
+            columns=["CV", "RMS", "XCC"],
         )
         self.textbox = tk.Text(self.frm, width=20)
         self.textbox.grid(row=2, column=8, sticky="ns")
-        self.textbox.insert('1.0', self.res_df.to_string())
+        self.textbox.insert('1.0', self.res_df.loc[:, ["CV", "RMS"]].to_string())
 
         # Create a button to copy the dataframe to clipboard
         copy_btn = ttk.Button(
@@ -1444,15 +1443,30 @@ class MUcv_gui:
         )
 
         # Calculate CV (and return only positive values)
-        self.cv, teta = mle_cv_est(
+        cv, teta = mle_cv_est(
             sig=sig,
             initial_teta=initial_teta,
             ied=self.ied,
             fsamp=self.fsamp,
         )
-        self.cv = abs(self.cv)
+        cv = abs(cv)
+
+        # Calculate RMS
+        sig = sig.to_numpy()
+        rms = np.mean(np.sqrt((np.mean(sig**2, axis=1))))
 
         # Update the self.res_df and the self.textbox
-        self.res_df.loc[int(self.selectmu_cb.get()), "CV"] = round(self.cv, 3)
-        self.textbox.replace('1.0', 'end', self.res_df.to_string())
-# TODO return average XCC
+        mu = int(self.selectmu_cb.get())
+        
+        self.res_df.loc[mu, "CV"] = cv
+        self.res_df.loc[mu, "RMS"] = rms
+
+        xcc_col_list = list(range(int(self.start_cb.get())+1, int(self.stop_cb.get())+1))
+        xcc = self.sta_xcc[mu][self.col_cb.get()].iloc[: , xcc_col_list].mean().mean()
+        self.res_df.loc[mu, "XCC"] = xcc
+
+        self.textbox.replace(
+            '1.0',
+            'end',
+            self.res_df.loc[:, ["CV", "RMS"]].round(3).to_string(),
+        )
