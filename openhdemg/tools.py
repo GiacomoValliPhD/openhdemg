@@ -183,7 +183,8 @@ def resize_emgfile(emgfile, area=None):
     
     PNR and SIL are computed again in the new resized area.
     """
-
+    # TODO resize does not work if plotting MUAPs, need to reset indexes when resizing
+    
     # Identify the area of interest
     if isinstance(area, list) and len(area) == 2:
         start_ = area[0]

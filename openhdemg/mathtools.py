@@ -79,7 +79,7 @@ def norm_xcorr(sig1, sig2):
     norm_twod_xcorr : Normalised 2-dimensional cross-correlation of STAs of
         two MUS.
     """
-    
+
     # Implementation corresponding to:
     # MATLAB => xcorr(a, b, 'normalized')
     # From:
@@ -88,8 +88,8 @@ def norm_xcorr(sig1, sig2):
     a = sig1 / norm_a
     norm_b = np.linalg.norm(sig2)
     b = sig2 / norm_b
-    c = np.correlate(a, b, mode = 'full')
-    
+    c = np.correlate(a, b, mode='full')
+
     return max(c)
 
 
@@ -180,7 +180,7 @@ def norm_twod_xcorr(df1, df2, mode="full"): # TODO Consider changing names df1, 
     """
 
     # Perform 2d xcorr
-    correlate2d = signal.correlate2d(in1=df1, in2=df2, mode=mode)
+    correlate2d = signal.correlate2d(in1=df1, in2=df2, mode=mode) # TODO convert to np for performance
 
     # Normalise the result of 2d xcorr for the different energy levels
     # MATLAB equivalent:
@@ -384,11 +384,8 @@ def derivatives_beamforming(sig, row, teta):
 
     See also
     --------
-    # TODO
-
-    Examples
-    --------
-    # TODO
+    mle_cv_est : Estimate conduction velocity (CV) via maximum likelihood
+        estimation.
     """
 
     # TODO _NEXT_ implement with nympy arrays instead of pd.Series for
@@ -486,7 +483,7 @@ def derivatives_beamforming(sig, row, teta):
 
             term_de12 = term_de12 - np.real(s_fft * s_conj * s_exp * (s_last**2))
 
-    term_de12= (term_de12 * 2) / (m ** 2)
+    term_de12 = (term_de12 * 2) / (m ** 2)
 
     # Calculate the second term of the second derivative
     for i in range(m):
@@ -514,8 +511,6 @@ def derivatives_beamforming(sig, row, teta):
 
 def mle_cv_est(sig, initial_teta, ied, fsamp):
     """
-    Estimate CV via MLE.
-
     Estimate conduction velocity (CV) via maximum likelihood estimation.
 
     Parameters
@@ -539,16 +534,18 @@ def mle_cv_est(sig, initial_teta, ied, fsamp):
 
     See also
     --------
-    # TODO
+    find_teta : Find the starting value for teta.
+    MUcv_gui : Graphical user interface for the estimation of MUs conduction
+        velocity.
 
     Examples
     --------
-    # TODO
+    Refer to the examples of find_teta to obtain sig and initial_teta.
     """
 
     # Set index to 0
     sig = sig.reset_index(drop=True)
-    
+
     # Calculate ied in meters
     ied = ied / 1000
 
@@ -615,11 +612,62 @@ def find_teta(sig1, sig2, ied, fsamp):
 
     See also
     --------
-    # TODO
+    mle_cv_est : Estimate conduction velocity (CV) via maximum likelihood
+        estimation.
+    MUcv_gui : Graphical user interface for the estimation of MUs conduction
+        velocity.
 
     Examples
     --------
-    # TODO
+    Calculate the starting point for the maximum likelihood estimation.
+    In this example we calculate teta for the first MU on the channels 5,6,7
+    in the third column ("col3") of the double differential representation of
+    the MUAPs.
+    First, obtain the spike-triggered average of the double differential
+    derivation.
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    ... sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ...     dividebycolumn=True
+    ... )
+    >>> dd = emg.double_diff(sorted_rawemg=sorted_rawemg)
+    >>> sta = emg.sta(
+    ...     emgfile=emgfile,
+    ...     sorted_rawemg=sorted_rawemg,
+    ...     firings=[0,50],
+    ...     timewindow=50,
+    ... )
+
+    Second, prepare the signals for the estimation of teta.
+    The input (sig) provided for the estimation of teta contains a channel
+    each row and all the instants are contained in columns. For this reason,
+    the original content of the spike-triggered average has to be transposed.
+    After that, the 1D signals used to estimate teta are defined based on the
+    number of available channels.
+
+    >>> sig = sta[1]["col3"].transpose()
+    >>> sig = sig.iloc[[5,6,7], :]
+    >>> sig = sig.reset_index(drop=True)
+    >>> if len(sig) > 3:
+    >>>     sig1 = sig.iloc[1]
+    >>>     sig2 = sig.iloc[2]
+    >>> else:
+    >>>     sig1 = sig.iloc[0]
+    >>>     sig2 = sig.iloc[1]
+
+    Third, estimate teta.
+
+    >>> initial_teta = emg.find_teta(
+    ...     sig1=sig1,
+    ...     sig2=sig2,
+    ...     ied=emgfile["IED"],
+    ...     fsamp=emgfile["FSAMP"],
+    ... )
+    1
     """
 
     # Define an arbitrary range for possible CV values (slightly larger than
@@ -649,7 +697,7 @@ def find_teta(sig1, sig2, ied, fsamp):
         corrpos[idx-teta_min+1] = np.sum(sig1_tosum * sig2_tosum)
 
     pos = corrpos.argmax() + 1
-    # +1 is necessary to overcome base 0 and prevent beta from beeing 0
+    # +1 is necessary to overcome base 0 and prevent teta from beeing 0
 
     if pos > 1 and pos < len(delay):
         x = delay[pos-2 : pos+1]

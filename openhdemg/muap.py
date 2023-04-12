@@ -5,7 +5,7 @@ This module contains functions to produce and analyse MUs anction potentials
 
 import pandas as pd
 from openhdemg.tools import delete_mus
-from openhdemg.mathtools import norm_twod_xcorr, find_teta, mle_cv_est
+from openhdemg.mathtools import norm_twod_xcorr, norm_xcorr, find_teta, mle_cv_est
 from openhdemg.otbelectrodes import sort_rawemg
 from openhdemg.plotemg import plot_muaps, plot_muaps_for_cv
 from scipy import signal
@@ -1149,11 +1149,28 @@ def xcc_sta(sta):
         A dict containing the XCC for all the pairs of channels and all the
         MUs. This dict is organised as the sta dict.
 
-    See also
-    -------- # TODO
-    """
+    Examples
+    --------
+    Calculate the XCC of adjacent channels of the double differential derivation
+    as done to calculate MUs conduction velocity.
 
-    from openhdemg.mathtools import norm_xcorr  # TODO should we call all the functions within openhdemg inside the functions?
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ...     dividebycolumn=True
+    ... )
+    >>> dd = emg.double_diff(sorted_rawemg)
+    >>> sta = emg.sta(
+    ...     emgfile=emgfile,
+    ...     sorted_rawemg=dd,
+    ...     firings=[0, 50],
+    ...     timewindow=50,
+    ... )
+    >>> xcc_sta = emg.xcc_sta(sta)
+    """
 
     # Obtain the structure of the sta_xcc dict
     xcc_sta = copy.deepcopy(sta)
@@ -1390,7 +1407,7 @@ class MUcv_gui:
         # Get the figure
         fig = plot_muaps_for_cv(
             sta_dict=self.st[mu],
-            xcc_sta=self.sta_xcc[mu],
+            xcc_sta_dict=self.sta_xcc[mu],
             showimmediately=False,
         )
 
