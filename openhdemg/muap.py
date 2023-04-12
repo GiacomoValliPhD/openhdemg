@@ -5,9 +5,9 @@ This module contains functions to produce and analyse MUs anction potentials
 
 import pandas as pd
 from openhdemg.tools import delete_mus
-from openhdemg.mathtools import norm_twod_xcorr
+from openhdemg.mathtools import norm_twod_xcorr, norm_xcorr, find_teta, mle_cv_est
 from openhdemg.otbelectrodes import sort_rawemg
-from openhdemg.plotemg import plot_muaps
+from openhdemg.plotemg import plot_muaps, plot_muaps_for_cv
 from scipy import signal
 import matplotlib.pyplot as plt
 from functools import reduce
@@ -17,6 +17,11 @@ from joblib import Parallel, delayed
 import copy
 import os
 import warnings
+import tkinter as tk
+from tkinter import ttk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from pandastable import Table, TableModel
+import pyperclip
 
 
 def diff(sorted_rawemg):
@@ -1117,6 +1122,368 @@ def remove_duplicates_between(
         return emgfile1, emgfile2
 
     else:
-        raise ValueError(f"which can be one of 'munumber', 'PNR', 'SIL'. {which} was passed instead")
+        raise ValueError(
+            f"which can be one of 'munumber', 'PNR', 'SIL'. {which} was passed instead"
+        )
 
-# TODO_NEXT_ try if replacing at/iat with loc/iloc can improve performance.
+# TODO_NEXT_ try if replacing at/iat with loc/iloc can improve performance or use np arrays.
+
+
+def xcc_sta(sta):
+    """
+    Cross-correlation between the STA of adjacent channels.
+
+    Calculate the normalised cross-correlation coefficient (XCC) between the
+    MUs action potential shapes on adjacent channels.
+    The XCC will be calculated for all the MUs and all the pairs of electrodes.
+
+    Parameters
+    ----------
+    sta : dict
+        The dict containing the spike-triggered average (STA) of all the MUs
+        computed with the function sta().
+
+    Returns
+    -------
+    xcc_sta : dict
+        A dict containing the XCC for all the pairs of channels and all the
+        MUs. This dict is organised as the sta dict.
+
+    Examples
+    --------
+    Calculate the XCC of adjacent channels of the double differential derivation
+    as done to calculate MUs conduction velocity.
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ...     dividebycolumn=True
+    ... )
+    >>> dd = emg.double_diff(sorted_rawemg)
+    >>> sta = emg.sta(
+    ...     emgfile=emgfile,
+    ...     sorted_rawemg=dd,
+    ...     firings=[0, 50],
+    ...     timewindow=50,
+    ... )
+    >>> xcc_sta = emg.xcc_sta(sta)
+    """
+
+    # Obtain the structure of the sta_xcc dict
+    xcc_sta = copy.deepcopy(sta)
+
+    # Access all the MUs and matrix columns
+    for mu_number in sta:
+        for matrix_col in sta[mu_number].keys():
+            df = sta[mu_number][matrix_col]
+
+            # Reverse matrix columns to start pairs comparison from the last
+            reversed_col = list(df.columns)
+            reversed_col.reverse()
+
+            for pos, col in enumerate(reversed_col):
+                if pos != len(reversed_col)-1:
+                    this_c = df.loc[: , reversed_col[pos]].to_numpy()  # For performance
+                    next_c = df.loc[: , reversed_col[pos+1]].to_numpy()
+                    xcc = norm_xcorr(sig1=this_c, sig2=next_c)
+                else:
+                    xcc = np.nan
+
+                xcc_sta[mu_number][matrix_col][col] = xcc
+
+            xcc_sta[mu_number][matrix_col] = xcc_sta[mu_number][matrix_col].drop_duplicates()
+
+    return xcc_sta
+
+
+class MUcv_gui:
+    """
+    Graphical user interface for the estimation of MUs conduction velocity.
+
+    GUI for the estimation of MUs conduction velocity (CV) and amplitude of
+    the action potentials (root mean square - RMS).
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the first emgfile.
+    sorted_rawemg : dict
+        A dict containing the sorted electrodes.
+        Every key of the dictionary represents a different column of the
+        matrix.
+        Rows are stored in the dict as a pd.DataFrame.
+    n_firings : list or str {"all"}, default [0, 50]
+        The range of firnings to be used for the STA.
+        If a MU has less firings than the range, the upper limit
+        is adjusted accordingly.
+        ``all``
+            The STA is calculated over all the firings.
+    muaps_timewindow : int, default 50
+        Timewindow to compute ST MUAPs in milliseconds.
+
+    Examples
+    --------
+    Call the GUI.
+
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ...     dividebycolumn=True
+    ... )
+    >>> gui = emg.MUcv_gui(
+    ...     emgfile=emgfile,
+    ...     sorted_rawemg=sorted_rawemg,
+    ...     n_firings=[0,50],
+    ...     muaps_timewindow=50
+    ... )
+    """
+
+    def __init__(
+        self,
+        emgfile,
+        sorted_rawemg,
+        n_firings=[0, 50],
+        muaps_timewindow=50,
+    ):
+        """
+        Initialization of the master GUI window and of the necessary
+        attributes.
+        """
+
+        # On start, compute the necessary information
+        self.emgfile = emgfile
+        self.dd = double_diff(sorted_rawemg)
+        self.st = sta(
+            emgfile=emgfile,
+            sorted_rawemg=self.dd,
+            firings=n_firings,
+            timewindow=muaps_timewindow,
+        )
+        self.sta_xcc = xcc_sta(self.st)
+
+        # After that, set up the GUI
+        self.root = tk.Tk()
+        self.root.title('MUs cv estimation')
+
+        # Create main frame, assign structure and minimum spacing
+        self.frm = ttk.Frame(self.root, padding=15)
+        # Assign grid structure
+        self.frm.grid()
+
+        # Label MU number combobox
+        munumber_label = ttk.Label(self.frm, text="MU number", width=15)
+        munumber_label.grid(row=0, column=0, columnspan=1, sticky=tk.W)
+
+        # Create a combobox to change MU
+        self.all_mus = list(range(emgfile["NUMBER_OF_MUS"]))
+
+        self.selectmu_cb = ttk.Combobox(
+            self.frm,
+            textvariable=tk.StringVar(),
+            values=self.all_mus,
+            state='readonly',
+            width=15,
+        )
+        self.selectmu_cb.grid(row=1, column=0, columnspan=1, sticky=tk.W)
+        self.selectmu_cb.current(0)
+        # gui_plot() takes one positional argument (self), but the bind()
+        # method is passing two arguments: the event object and the function
+        # itself. Use lambda to avoid the error.
+        self.selectmu_cb.bind(
+            '<<ComboboxSelected>>',
+            lambda event: self.gui_plot(),
+        )
+
+        # Add 2 empty columns
+        emp0 = ttk.Label(self.frm, text="", width=15)
+        emp0.grid(row=0, column=1, columnspan=1, sticky=tk.W)
+        emp1 = ttk.Label(self.frm, text="", width=15)
+        emp1.grid(row=0, column=2, columnspan=1, sticky=tk.W)
+
+        # Create the widgets to calculate CV
+        # Label and combobox to select the matrix column
+        col_label = ttk.Label(self.frm, text="Column", width=15)
+        col_label.grid(row=0, column=3, columnspan=1, sticky=tk.W)
+
+        self.columns = list(self.st[0].keys())
+
+        self.col_cb = ttk.Combobox(
+            self.frm,
+            textvariable=tk.StringVar(),
+            values=self.columns,
+            state='readonly',
+            width=15,
+        )
+        self.col_cb.grid(row=1, column=3, columnspan=1, sticky=tk.W)
+        self.col_cb.current(0)
+
+        # Label and combobox to select the matrix channels
+        self.rows = list(range(len(list(self.st[0][self.columns[0]].columns))))
+
+        start_label = ttk.Label(self.frm, text="From row", width=15)
+        start_label.grid(row=0, column=4, columnspan=1, sticky=tk.W)
+
+        self.start_cb = ttk.Combobox(
+            self.frm,
+            textvariable=tk.StringVar(),
+            values=self.rows,
+            state='readonly',
+            width=15,
+        )
+        self.start_cb.grid(row=1, column=4, columnspan=1, sticky=tk.W)
+        self.start_cb.current(0)
+
+        self.stop_label = ttk.Label(self.frm, text="To row", width=15)
+        self.stop_label.grid(row=0, column=5, columnspan=1, sticky=tk.W)
+
+        self.stop_cb = ttk.Combobox(
+            self.frm,
+            textvariable=tk.StringVar(),
+            values=self.rows,
+            state='readonly',
+            width=15,
+        )
+        self.stop_cb.grid(row=1, column=5, columnspan=1, sticky=tk.W)
+        self.stop_cb.current(max(self.rows))
+
+        # Button to start CV estimation
+        self.ied = emgfile["IED"]
+        self.fsamp = emgfile["FSAMP"]
+        button_est = ttk.Button(
+            self.frm,
+            text="Estimate",
+            command=self.compute_cv,
+            width=15,
+        )
+        button_est.grid(row=1, column=6, columnspan=1, sticky="we")
+
+        # Add empty column
+        self.emp2 = ttk.Label(self.frm, text="", width=5)
+        self.emp2.grid(row=0, column=7, columnspan=1, sticky=tk.W)
+
+        # Add text frame to show the results (only CV and RMS)
+        self.res_df = pd.DataFrame(
+            data=0,
+            index=self.all_mus,
+            columns=["CV", "RMS", "XCC"],
+        )
+        self.textbox = tk.Text(self.frm, width=20)
+        self.textbox.grid(row=2, column=8, sticky="ns")
+        self.textbox.insert('1.0', self.res_df.loc[:, ["CV", "RMS"]].to_string())
+
+        # Create a button to copy the dataframe to clipboard
+        copy_btn = ttk.Button(
+            self.frm,
+            text="Copy results",
+            command=self.copy_to_clipboard,
+            width=20,
+        )
+        copy_btn.grid(row=1, column=8, columnspan=1, sticky="we")
+
+        # Plot MU 0 while opening the GUI,
+        # this will move the GUI in the foreground ??.
+        self.gui_plot()
+
+        # Bring back the GUI in in the foreground
+        self.root.lift()
+
+        # Start the main loop
+        self.root.mainloop()
+
+    # Define functions necessary for the GUI
+    def gui_plot(self):
+        """
+        Plot the MUAPs used to estimate CV.
+        """
+
+        # Get MU number
+        mu = int(self.selectmu_cb.get())
+
+        # Get the figure
+        fig = plot_muaps_for_cv(
+            sta_dict=self.st[mu],
+            xcc_sta_dict=self.sta_xcc[mu],
+            showimmediately=False,
+        )
+
+        # Place the figure in the GUI
+        canvas = FigureCanvasTkAgg(fig, master=self.frm)
+        canvas.draw()
+        canvas.get_tk_widget().grid(row=2, column=0, columnspan=7, sticky="we")
+        plt.close()
+
+    def copy_to_clipboard(self):
+        """
+        Copy the dataframe to clipboard in csv format.
+        """
+        pyperclip.copy(self.res_df.to_csv(index=False, sep='\t'))
+
+    # Define functions for cv estimation
+    def compute_cv(self):
+        """
+        Compute conduction velocity.
+        """
+
+        # Get the muaps of the selected columns and represent them in
+        # different rows (as requested by the functions find_teta and
+        # mle_cv_est).
+        sig = self.st[int(self.selectmu_cb.get())][self.col_cb.get()].transpose()
+        col_list = list(range(int(self.start_cb.get()), int(self.stop_cb.get())+1))
+
+        sig = sig.iloc[col_list, :]
+        sig = sig.reset_index(drop=True)
+
+        # Verify that the signal is correcly oriented
+        if len(sig) > len(sig.columns):
+            raise ValueError(
+                "The number of signals exceeds the number of samples. Verify that each row represents a signal"
+            )
+
+        # Prepare the input 1D signals for find_teta
+        if len(sig) > 3:
+            sig1 = sig.iloc[1]
+            sig2 = sig.iloc[2]
+        else:
+            sig1 = sig.iloc[0]
+            sig2 = sig.iloc[1]
+
+        initial_teta = find_teta(
+            sig1=sig1,
+            sig2=sig2,
+            ied=self.ied,
+            fsamp=self.fsamp,
+        )
+
+        # Calculate CV (and return only positive values)
+        cv, teta = mle_cv_est(
+            sig=sig,
+            initial_teta=initial_teta,
+            ied=self.ied,
+            fsamp=self.fsamp,
+        )
+        cv = abs(cv)
+
+        # Calculate RMS
+        sig = sig.to_numpy()
+        rms = np.mean(np.sqrt((np.mean(sig**2, axis=1))))
+
+        # Update the self.res_df and the self.textbox
+        mu = int(self.selectmu_cb.get())
+        
+        self.res_df.loc[mu, "CV"] = cv
+        self.res_df.loc[mu, "RMS"] = rms
+
+        xcc_col_list = list(range(int(self.start_cb.get())+1, int(self.stop_cb.get())+1))
+        xcc = self.sta_xcc[mu][self.col_cb.get()].iloc[: , xcc_col_list].mean().mean()
+        self.res_df.loc[mu, "XCC"] = xcc
+
+        self.textbox.replace(
+            '1.0',
+            'end',
+            self.res_df.loc[:, ["CV", "RMS"]].round(3).to_string(),
+        )
