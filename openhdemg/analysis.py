@@ -10,7 +10,7 @@ import warnings
 import math
 
 
-def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
+def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvc=0):
     """
     Calculates recruitment/derecruitment thresholds.
 
@@ -32,15 +32,15 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
     type_ : str {"abs_rel", "rel", "abs"}, default "abs_rel"
         The tipe of value to calculate.
 
-        ``abs_rel`` 
+        ``abs_rel``
             Both absolute and relative tresholds will be calculated.
-        ``rel`` 
+        ``rel``
             Only relative tresholds will be calculated.
-        ``abs`` 
+        ``abs``
             Only absolute tresholds will be calculated.
-    mvif : float, default 0
-        The maximum voluntary isometric force (MViF).
-        if mvif is 0, the user is asked to input mvif; otherwise, the value
+    mvc : float, default 0
+        The maximum voluntary contraction (MVC).
+        if mvc is 0, the user is asked to input MVC; otherwise, the value
         passed is used.
 
     Returns
@@ -100,16 +100,16 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
         raise ValueError(
             f"event_ must be one of : 'abs_rel', 'rel', 'abs'. {event_} was passed instead."
         )
-    
-    if not isinstance(mvif, (float, int)):
+
+    if not isinstance(mvc, (float, int)):
         raise TypeError(
-            f"mvif must be one of the following types: float, int. {type(mvif)} was passed instead."
+            f"mvc must be one of the following types: float, int. {type(mvc)} was passed instead."
         )
 
-    if type_ != "rel" and mvif == 0:
-        # Ask the user to input MViF
-        mvif = int(
-            input("--------------------------------\nEnter MViF value in newton: ")
+    if type_ != "rel" and mvc == 0:
+        # Ask the user to input MVC
+        mvc = int(
+            input("--------------------------------\nEnter MVC value in newton: ")
         )
 
     # Create an object to append the results
@@ -118,15 +118,15 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
     for i in range(NUMBER_OF_MUS):
         # Manage the exception of empty MUs
         if len(MUPULSES[i]) > 0:
-        # Detect the first and last firing of the MU and
+            # Detect the first and last firing of the MU and
             mup_rec = MUPULSES[i][0]
             mup_derec = MUPULSES[i][-1]
             # Calculate absolute and relative RT and DERT if requested
-            abs_RT = ((float(REF_SIGNAL.loc[mup_rec]) * float(mvif)) / 100)
-            abs_DERT = ((float(REF_SIGNAL.loc[mup_derec]) * float(mvif)) / 100)
+            abs_RT = ((float(REF_SIGNAL.loc[mup_rec]) * float(mvc)) / 100)
+            abs_DERT = ((float(REF_SIGNAL.loc[mup_derec]) * float(mvc)) / 100)
             rel_RT = float(REF_SIGNAL.loc[mup_rec])
             rel_DERT = float(REF_SIGNAL.loc[mup_derec])
-        
+
         else:
             abs_RT = np.nan
             abs_DERT = np.nan
@@ -401,7 +401,7 @@ def basic_mus_properties(
     n_firings_steady=10,
     start_steady=-1,
     end_steady=-1,
-    mvif=0,
+    mvc=0,
 ):
     """
     Calculate basic MUs properties on a trapezoidal contraction.
@@ -428,9 +428,9 @@ def basic_mus_properties(
         The start and end point (in samples) of the steady-state phase.
         If < 0 (default), the user will need to manually select the start and
         end of the steady-state phase.
-    mvif : float, default 0
-        The maximum voluntary isometric force (MViF). It is suggest to report
-        MViF in Newton (N). If 0 (default), the user will be asked to imput it
+    mvc : float, default 0
+        The maximum voluntary contraction (MVC). It is suggest to report
+        MVC in Newton (N). If 0 (default), the user will be asked to imput it
         manually. Otherwise, the passed value will be used.
 
     Returns
@@ -454,21 +454,21 @@ def basic_mus_properties(
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> df = emg.basic_mus_properties(emgfile=emgfile)
     >>> df
-        MViF  MU_number      abs_RT    abs_DERT     rel_RT   rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady     DR_all  COVisi_steady  COVisi_all  COV_steady
+         MVC  MU_number      abs_RT    abs_DERT     rel_RT   rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady     DR_all  COVisi_steady  COVisi_all  COV_steady
     0  786.0          1  146.709276  126.128587  18.665302  16.046894  5.701081  4.662196         7.467810       6.242360       6.902616   6.814342      11.296316   16.309681    1.423286
     1    NaN          2   35.854200   45.676801   4.561603   5.811298  7.051127  6.752467        11.798908       9.977337      11.784061  11.683134      15.871254   21.233615         NaN
     2    NaN          3   80.757524   87.150011  10.274494  11.087788  6.101529  4.789000         7.940926       5.846093       7.671361   8.055731      35.755090   35.308650         NaN
     3    NaN          4   34.606886   37.569257   4.402912   4.779804  6.345692  5.333535        11.484875       9.636914      11.594712  11.109796      24.611246   29.372524         NaN
 
-    We can bypass manual prompting the MViF by pre-specifying it and/or
-    bypass the manual selection of the steady state phase if previously 
+    We can bypass manual prompting the MVC by pre-specifying it and/or
+    bypass the manual selection of the steady state phase if previously
     calculated with an automated method.
 
     >>> import openhdemg as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> df = emg.basic_mus_properties(emgfile=emgfile, start_steady=20000, end_steady=50000, mvif=786)
+    >>> df = emg.basic_mus_properties(emgfile=emgfile, start_steady=20000, end_steady=50000, mvc=786)
     >>> df
-    MViF  MU_number      abs_RT    abs_DERT     rel_RT   rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady     DR_all  COVisi_steady  COVisi_all  COV_steady
+         MVC  MU_number      abs_RT    abs_DERT     rel_RT   rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady     DR_all  COVisi_steady  COVisi_all  COV_steady
     0  786.0          1  146.709276  126.128587  18.665302  16.046894  5.701081  4.662196         7.476697       6.271750       6.794170   6.814342      11.066966   16.309681    1.431752
     1    NaN          2   35.854200   45.676801   4.561603   5.811298  7.051127  6.752467        14.440561      10.019572      11.822081  11.683134      15.076819   21.233615         NaN
     2    NaN          3   80.757524   87.150011  10.274494  11.087788  6.101529  4.789000         7.293547       5.846093       7.589531   8.055731      36.996894   35.308650         NaN
@@ -486,14 +486,14 @@ def basic_mus_properties(
     # First: create a dataframe that contains all the output
     exportable_df = []
 
-    # Second: add basic information (MViF, MU number, PNR/SIL, Average PNR/SIL)
-    if mvif == 0:
-        # Ask the user to input MViF
-        mvif = int(
-            input("--------------------------------\nEnter MViF value in newton: ")
+    # Second: add basic information (MVC, MU number, PNR/SIL, Average PNR/SIL)
+    if mvc == 0:
+        # Ask the user to input MVC
+        mvc = int(
+            input("--------------------------------\nEnter MVC value in newton: ")
         )
 
-    exportable_df.append({"MViF": mvif})
+    exportable_df.append({"MVC": mvc})
     exportable_df = pd.DataFrame(exportable_df)
 
     # Basically, we create an empty list, append values, convert the
@@ -535,7 +535,7 @@ def basic_mus_properties(
     exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
     # Calculate RT and DERT
-    mus_thresholds = compute_thresholds(emgfile=emgfile, mvif=mvif)
+    mus_thresholds = compute_thresholds(emgfile=emgfile, mvc=mvc)
     exportable_df = pd.concat([exportable_df, mus_thresholds], axis=1)
 
     # Calculate DR at recruitment, derecruitment, all, start and end steady-state and all contraction

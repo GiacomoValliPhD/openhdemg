@@ -174,7 +174,7 @@ def plot_emgsig(
                 else emgfile["REF_SIGNAL"].index
             )
             sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
-            ax2.set_ylabel("MViF (%)")
+            ax2.set_ylabel("MVC")
 
         showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
         if showimmediately:
@@ -306,12 +306,12 @@ def plot_differentials(
                 else emgfile["REF_SIGNAL"].index
             )
             sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
-            ax2.set_ylabel("MViF (%)")
+            ax2.set_ylabel("MVC")
 
         showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
         if showimmediately:
             plt.show()
-        
+
         return fig
 
     else:
@@ -322,7 +322,7 @@ def plot_differentials(
 
 def plot_refsig(
     emgfile,
-    ylabel="% MViF",
+    ylabel="MVC",
     timeinseconds=True,
     figsize=[20, 15],
     showimmediately=True,
@@ -331,14 +331,14 @@ def plot_refsig(
     """
     Plot the REF_SIGNAL.
 
-    The REF_SIGNAL is expected to be expressed as % MViF for submaximal
+    The REF_SIGNAL is expected to be expressed as % MVC for submaximal
     contractions or as Kilograms (Kg) or Newtons (N) for maximal contractions.
 
     Parameters
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    ylabel : str, default "% MViF"
+    ylabel : str, default "MVC"
         The unit of measure to show on the Y axis.
     timeinseconds : bool, default True
         Whether to show the time on the x-axes in seconds (True)
@@ -543,7 +543,7 @@ def plot_mupulses(
             else emgfile["REF_SIGNAL"].index
         )
         sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
-        ax2.set_ylabel("MViF (%)")
+        ax2.set_ylabel("MVC")
 
     showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
     if showimmediately:
@@ -703,7 +703,7 @@ def plot_ipts(
                 else emgfile["REF_SIGNAL"].index
             )
             sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
-            ax2.set_ylabel("MViF (%)")
+            ax2.set_ylabel("MVC")
 
         showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
         if showimmediately:
@@ -876,7 +876,7 @@ def plot_idr(
             else emgfile["REF_SIGNAL"].index
         )
         sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
-        ax2.set_ylabel("MViF (%)")
+        ax2.set_ylabel("MVC")
 
     showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
     if showimmediately:

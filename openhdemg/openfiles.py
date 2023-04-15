@@ -217,7 +217,11 @@ def emg_from_demuse(filepath):
         MUPULSES = [np.array(MUPULSES)]
 
     # Collect firing times
-    BINARY_MUS_FIRING = create_binary_firings(EMG_LENGTH, NUMBER_OF_MUS, MUPULSES)
+    BINARY_MUS_FIRING = create_binary_firings(
+        emg_length=EMG_LENGTH,
+        number_of_mus=NUMBER_OF_MUS,
+        mupulses=MUPULSES,
+    )
 
     # Collect the raw EMG signal
     if "SIG" in mat_file.keys():
@@ -240,7 +244,11 @@ def emg_from_demuse(filepath):
         # Calculate the PNR
         to_append = []
         for mu in range(NUMBER_OF_MUS):
-            res = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu], fsamp=FSAMP)
+            res = compute_pnr(
+                ipts=IPTS[mu],
+                mupulses=MUPULSES[mu],
+                fsamp=FSAMP,
+            )
             to_append.append(res)
         PNR = pd.DataFrame(to_append)
 
@@ -250,7 +258,7 @@ def emg_from_demuse(filepath):
             res = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
             to_append.append(res)
         SIL = pd.DataFrame(to_append)
-    
+
     else:
         PNR = np.nan
         SIL = np.nan
@@ -319,10 +327,10 @@ def get_otb_refsignal(df, refsig):
                     columns={REF_SIGNAL_SUBSAMPLED.columns[0]: 0}
                 )
                 # Verify that there is no value above 100% since the
-                # REF_SIGNAL is expected to be expressed as % of the MViF
+                # REF_SIGNAL is expected to be expressed as % of the MVC
                 if max(REF_SIGNAL_SUBSAMPLED[0]) > 100:
                     warnings.warn(
-                        "\nALERT! Ref signal grater than 100, did you use values normalised to the MViF?\n"
+                        "\nALERT! Ref signal grater than 100, did you use values normalised to the MVC?\n"
                     )
 
                 return REF_SIGNAL_SUBSAMPLED
@@ -342,10 +350,10 @@ def get_otb_refsignal(df, refsig):
                     columns={REF_SIGNAL_FULLSAMPLED.columns[0]: 0}
                 )
                 # Verify that there is no value above 100% since the
-                # REF_SIGNAL is expected to be expressed as % of the MViF
+                # REF_SIGNAL is expected to be expressed as % of the MVC
                 if max(REF_SIGNAL_FULLSAMPLED[0]) > 100:
                     warnings.warn(
-                        "\nALERT! Ref signal grater than 100, did you use values normalised to the MViF?\n"
+                        "\nALERT! Ref signal grater than 100, did you use values normalised to the MVC?\n"
                     )
 
                 return REF_SIGNAL_FULLSAMPLED
@@ -565,7 +573,7 @@ def emg_from_otb(
         fullsampled and the subsampled version (in OTBioLab+ the "performed
         path" refers to the subsampled signal, the "acquired data" to the
         fullsampled signal), REF_SIGNAL is expected to be expressed as % of
-        the MViF (but not compulsory).
+        the MVC (but not compulsory).
     - Both the IPTS ('Source for decomposition...' in OTBioLab+) and the
         BINARY_MUS_FIRING ('Decomposition of...' in OTBioLab+) should be
         present.
@@ -736,7 +744,7 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
     - refsig signal: there should be both the fullsampled and the subsampled
         version (in OTBioLab+ the "performed path" refers to the subsampled
         signal, the "acquired data" to the fullsampled signal), REF_SIGNAL is
-        expected to be expressed as % of the MViF (but not compulsory).
+        expected to be expressed as % of the MVC (but not compulsory).
 
     Structure of the returned emg_refsig:
         emg_refsig = {
