@@ -20,7 +20,7 @@ import pandas as pd
 
 matplotlib.use("TkAgg")
 
-import library as openhdemg
+import openhdemg.library as openhdemg
 
 
 class emgGUI:
@@ -1686,7 +1686,6 @@ class emgGUI:
                 emgfile=self.resdict,
                 event_=self.ct_event.get(),
                 type_=self.ct_type.get(),
-                mvif=int(self.mvif_value.get()),
             )
             # Display results
             self.display_results(self.mu_thresholds)
@@ -1770,7 +1769,6 @@ class emgGUI:
                 emgfile=self.resdict,
                 n_firings_RecDerec=int(self.b_firings_rec.get()),
                 n_firings_steady=int(self.b_firings_ste.get()),
-                mvif=int(self.mvif_value.get()),
             )
             # Display results
             self.display_results(self.exportable_df)
@@ -2790,12 +2788,13 @@ class emgGUI:
 
 # -----------------------------------------------------------------------------------------------
 if __name__ == "__main__":
-        root = Tk()
-        emgGUI(root)
-        root.mainloop()
- 
+    root = Tk()
+    emgGUI(root)
+    root.mainloop()
+
+
 def run_main():
-     # Run GUI upon calling
+    # Run GUI upon calling
     if __name__ == "__main__":
         root = Tk()
         emgGUI(root)
