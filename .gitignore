@@ -1,7 +1,7 @@
 openhdemgenv
 __pycache__*
 .vscode/
-
+dist/
 prove.py
 prove_storage.py
 CV.ipynb

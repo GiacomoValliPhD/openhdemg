@@ -2787,15 +2787,15 @@ class emgGUI:
 
 
 # -----------------------------------------------------------------------------------------------
-if __name__ == "__main__":
-    root = Tk()
-    emgGUI(root)
-    root.mainloop()
-
-
 def run_main():
     # Run GUI upon calling
     if __name__ == "__main__":
         root = Tk()
         emgGUI(root)
         root.mainloop()
+
+
+if __name__ == "__main__":
+    root = Tk()
+    emgGUI(root)
+    root.mainloop()
