@@ -20,7 +20,7 @@ import pandas as pd
 
 matplotlib.use("TkAgg")
 
-import openhdemg
+import library as openhdemg
 
 
 class emgGUI:
@@ -578,7 +578,6 @@ class emgGUI:
             if self.filetype.get() in ["OTB", "DEMUSE", "Open_HD-EMG", "custom"]:
                 # Check filetype for processing
                 if self.filetype.get() == "OTB":
-
                     # Ask user to select the file
                     file_path = filedialog.askopenfilename(
                         title="Open OTB file", filetypes=[("MATLAB files", "*.mat")]
@@ -815,13 +814,10 @@ class emgGUI:
         if tk.messagebox.askokcancel(
             "Attention", "Do you really want to reset the analysis?"
         ):
-
             # user decided to rest analysis
             try:
-
                 # reload original file
                 if self.filetype.get() in ["OTB", "DEMUSE", "Open_HD-EMG", "custom"]:
-
                     if self.filetype.get() == "OTB":
                         self.resdict = openhdemg.emg_from_otb(
                             filepath=self.file_path,
@@ -2484,7 +2480,6 @@ class emgGUI:
         # Add Which widget and update the track button
         # to match functionalities required for duplicate removal
         if self.advanced_method.get() == "Duplicate Removal":
-
             # Add Which label
             ttk.Label(self.head, text="Which").grid(column=0, row=13)
             # Combobox for Which option
@@ -2505,7 +2500,6 @@ class emgGUI:
             )
 
         if self.advanced_method.get() == "Conduction Velocity":
-
             try:
                 # Destroy unnecessary pop-ups
                 self.head.destroy()
@@ -2550,7 +2544,6 @@ class emgGUI:
         """
         # Open OTB file
         if self.filetype_adv.get() == "OTB":
-
             self.emgfile1 = openhdemg.askopenfile(
                 filesource=self.filetype_adv.get(),
                 otb_ext_factor=int(self.extension_factor_adv.get()),
@@ -2578,7 +2571,6 @@ class emgGUI:
         """
         # Open OTB file
         if self.filetype_adv.get() == "OTB":
-
             self.emgfile2 = openhdemg.askopenfile(
                 filesource=self.filetype_adv.get(),
                 otb_ext_factor=int(self.extension_factor_adv.get()),
@@ -2741,7 +2733,6 @@ class emgGUI:
             )
 
     def calculate_conduct_vel(self):
-
         # Add result terminal
         track_terminal = ttk.LabelFrame(
             self.head, text="Conduction Velocity", height=100, relief="ridge"
@@ -2798,10 +2789,13 @@ class emgGUI:
 
 
 # -----------------------------------------------------------------------------------------------
-
-
+if __name__ == "__main__":
+        root = Tk()
+        emgGUI(root)
+        root.mainloop()
+ 
 def run_main():
-    # Run GUI upon calling
+     # Run GUI upon calling
     if __name__ == "__main__":
         root = Tk()
         emgGUI(root)

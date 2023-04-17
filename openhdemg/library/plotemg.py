@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import copy
-from openhdemg.tools import compute_idr
-from openhdemg.mathtools import min_max_scaling
+from openhdemg.library.tools import compute_idr
+from openhdemg.library.mathtools import min_max_scaling
 
 
 def showgoodlayout(tight_layout=True, despined=False):
@@ -23,7 +23,7 @@ def showgoodlayout(tight_layout=True, despined=False):
         False: left and bottom is not despined (standard plotting).
         True: all the sides are despined.
         ``2yaxes``
-            Only the top is despined. 
+            Only the top is despined.
             This is used for y axes both on the right and left side at the
             same time.
     """
@@ -311,7 +311,7 @@ def plot_differentials(
         showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
         if showimmediately:
             plt.show()
-        
+
         return fig
 
     else:
@@ -548,7 +548,7 @@ def plot_mupulses(
     showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
     if showimmediately:
         plt.show()
-    
+
     return fig
 
 
@@ -708,7 +708,7 @@ def plot_ipts(
         showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
         if showimmediately:
             plt.show()
-        
+
         return fig
 
     else:
@@ -887,7 +887,9 @@ def plot_idr(
 
 # TODO_NEXT_kwargs for flexible plotting design (all the plots)
 # TODO add align option
-def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediately=True):
+def plot_muaps(
+    sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediately=True
+):
     """
     Plot MUAPs obtained from STA from one or multiple MUs.
 
@@ -1011,7 +1013,7 @@ def plot_muaps(sta_dict, title="MUAPs from STA", figsize=[20, 15], showimmediate
         showgoodlayout(tight_layout=False, despined=True)
         if showimmediately:
             plt.show()
-        
+
         return fig
 
     else:
@@ -1055,7 +1057,7 @@ def plot_muap(
     channelprog : bool, default False
         Whether to use the real channel number or a progressive number
         (see channel).
-    average : bool, default True 
+    average : bool, default True
         Whether to plot also the MUAPs average obtained by spike triggered
         average.
     timeinseconds : bool, default True
@@ -1319,9 +1321,7 @@ def plot_muaps_for_cv(
                 xcc = round(float(xcc_sta[c].iloc[:, r]), 2)
                 title = xcc
                 color = "k" if xcc >= 0.8 else "r"
-                axs[r, pos].set_title(
-                    title, fontsize=8, color=color, loc="left", pad=3
-                )
+                axs[r, pos].set_title(title, fontsize=8, color=color, loc="left", pad=3)
 
             else:
                 axs[r, pos].set_title(c, fontsize=12, pad=20)

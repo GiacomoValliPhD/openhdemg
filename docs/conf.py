@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.abspath("../.."))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "Open_HD-EMG"
+project = "openhdemg"
 copyright = "2023, Giacomo Valli, Paul Ritsche"
 author = "Giacomo Valli, Paul Ritsche"
 release = "0.0.1"

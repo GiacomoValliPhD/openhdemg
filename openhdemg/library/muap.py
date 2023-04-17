@@ -4,10 +4,10 @@ This module contains functions to produce and analyse MUs anction potentials
 """
 
 import pandas as pd
-from openhdemg.tools import delete_mus
-from openhdemg.mathtools import norm_twod_xcorr, find_teta, mle_cv_est
-from openhdemg.otbelectrodes import sort_rawemg
-from openhdemg.plotemg import plot_muaps, plot_muaps_for_cv
+from openhdemg.library.tools import delete_mus
+from openhdemg.library.mathtools import norm_twod_xcorr, find_teta, mle_cv_est
+from openhdemg.library.otbelectrodes import sort_rawemg
+from openhdemg.library.plotemg import plot_muaps, plot_muaps_for_cv
 from scipy import signal
 import matplotlib.pyplot as plt
 from functools import reduce
@@ -303,12 +303,10 @@ def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
         # Loop the matrix columns
         sorted_rawemg_sta = {}
         for col in sorted_rawemg.keys():
-
             # Container of STA for matrix rows
             row_dict = {}
             # Loop the matrix rows
             for row in sorted_rawemg[col].columns:
-
                 # Find the mupulses
                 thismups = emgfile["MUPULSES"][mu][firings_[0] : firings_[1]]
 
@@ -506,12 +504,10 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
         # Loop the matrix columns
         sorted_rawemg_st = {}
         for col in sorted_rawemg.keys():
-
             # Container of ST MUAPs for matrix rows
             row_dict = {}
             # Loop the matrix rows
             for row in sorted_rawemg[col].columns:
-
                 # Find the mupulses
                 thismups = emgfile["MUPULSES"][mu]
 
@@ -679,6 +675,7 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
 
 
 # TODO_NEXT_ update matrixcode and orientation here and in otbelectrodes
+
 
 # This function exploits parallel processing:
 #   - sta: calls the emg.sta function which is executed in parallel

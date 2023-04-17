@@ -73,10 +73,10 @@ the function's description.
 from scipy.io import loadmat
 import pandas as pd
 import numpy as np
-from openhdemg.otbelectrodes import *
-from openhdemg.mathtools import compute_sil
-from openhdemg.mathtools import compute_pnr
-from openhdemg.tools import create_binary_firings
+from openhdemg.library.otbelectrodes import *
+from openhdemg.library.mathtools import compute_sil
+from openhdemg.library.mathtools import compute_pnr
+from openhdemg.library.tools import create_binary_firings
 from tkinter import *
 from tkinter import filedialog
 import json
@@ -87,6 +87,7 @@ import os
 
 # ---------------------------------------------------------------------
 # Main function to open decomposed files coming from DEMUSE.
+
 
 def emg_from_demuse(filepath):
     """
@@ -159,7 +160,6 @@ def emg_from_demuse(filepath):
 
     # Collect the REF_SIGNAL
     if "ref_signal" in mat_file.keys():
-
         # Catch the case for float values that cannot be directly added to a dataframe
         if isinstance(mat_file["ref_signal"], float):
             res = {0: mat_file["ref_signal"]}
@@ -250,7 +250,7 @@ def emg_from_demuse(filepath):
             res = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
             to_append.append(res)
         SIL = pd.DataFrame(to_append)
-    
+
     else:
         PNR = np.nan
         SIL = np.nan
@@ -277,6 +277,7 @@ def emg_from_demuse(filepath):
 # ---------------------------------------------------------------------
 # Define functions used in the OTB openfile function.
 # These functions are not exposed to the final user.
+
 
 def get_otb_refsignal(df, refsig):
     """
@@ -358,7 +359,9 @@ def get_otb_refsignal(df, refsig):
                 return np.nan
 
     else:
-        warnings.warn("\nNot searched for reference signal, it might be necessary for some analysis\n")
+        warnings.warn(
+            "\nNot searched for reference signal, it might be necessary for some analysis\n"
+        )
 
         return np.nan
 
@@ -503,11 +506,12 @@ def get_otb_rawsignal(df):
 # Main function to open decomposed files coming from OTBiolab+.
 # This function calls the functions defined above
 
+
 def emg_from_otb(
     filepath, ext_factor=8, refsig=[True, "fullsampled"], version="1.5.8.0"
 ):  # TODO test with a single MU
     """
-    Import the .mat file exportable by OTBiolab+.   
+    Import the .mat file exportable by OTBiolab+.
 
     This function is used to import the .mat file exportable by the OTBiolab+
     software as a dictionary of Python objects (mainly pandas dataframes).
@@ -618,9 +622,19 @@ def emg_from_otb(
         "1.5.8.0",
     ]
     if version not in valid_versions:
-        raise ValueError(f"Specified version is not valid. Use one of:\n{valid_versions}")
+        raise ValueError(
+            f"Specified version is not valid. Use one of:\n{valid_versions}"
+        )
 
-    if version in ["1.5.3.0", "1.5.4.0", "1.5.5.0", "1.5.6.0", "1.5.7.2", "1.5.7.3", "1.5.8.0"]:
+    if version in [
+        "1.5.3.0",
+        "1.5.4.0",
+        "1.5.5.0",
+        "1.5.6.0",
+        "1.5.7.2",
+        "1.5.7.3",
+        "1.5.8.0",
+    ]:
         # Simplify (rename) columns description and extract all the parameters
         # in a pd.DataFrame
         df = pd.DataFrame(mat_file["Data"], columns=mat_file["Description"])
@@ -631,7 +645,7 @@ def emg_from_otb(
         # Collect the IPTS and the firing times
         IPTS, BINARY_MUS_FIRING = get_otb_decomposition(df=df)
         # Align BINARY_MUS_FIRING to IPTS
-        BINARY_MUS_FIRING = BINARY_MUS_FIRING.shift(- int(ext_factor))
+        BINARY_MUS_FIRING = BINARY_MUS_FIRING.shift(-int(ext_factor))
         BINARY_MUS_FIRING.fillna(value=0, inplace=True)
 
         # Collect additional parameters
@@ -659,7 +673,7 @@ def emg_from_otb(
                 res = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
                 to_append.append(res)
             SIL = pd.DataFrame(to_append)
-        
+
         else:
             PNR = np.nan
             SIL = np.nan
@@ -773,9 +787,19 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
         "1.5.8.0",
     ]
     if version not in valid_versions:
-        raise ValueError(f"Specified version is not valid. Use one of:\n{valid_versions}")
+        raise ValueError(
+            f"Specified version is not valid. Use one of:\n{valid_versions}"
+        )
 
-    if version in ["1.5.3.0", "1.5.4.0", "1.5.5.0", "1.5.6.0", "1.5.7.2", "1.5.7.3", "1.5.8.0"]:
+    if version in [
+        "1.5.3.0",
+        "1.5.4.0",
+        "1.5.5.0",
+        "1.5.6.0",
+        "1.5.7.2",
+        "1.5.7.3",
+        "1.5.8.0",
+    ]:
         # Simplify (rename) columns description and extract all the parameters
         # in a pd.DataFrame
         df = pd.DataFrame(mat_file["Data"], columns=mat_file["Description"])
@@ -927,9 +951,7 @@ def emg_from_customcsv(
     if not IPTS.empty:
         IPTS.columns = [i for i in range(len(IPTS.columns))]
     else:
-        warnings.warn(
-            "\nipts not found, it might be necessary for some analysis\n"
-        )
+        warnings.warn("\nipts not found, it might be necessary for some analysis\n")
         IPTS = np.nan
 
     # Get MUPULSES
@@ -996,6 +1018,7 @@ def emg_from_customcsv(
 
 # ---------------------------------------------------------------------
 # Functions to convert and save the emgfile to JSON.
+
 
 def save_json_emgfile(emgfile, filepath):
     """
@@ -1315,7 +1338,8 @@ def emg_from_json(filepath):
 # ---------------------------------------------------------------------
 # Function to open files from a GUI in a single line of code.
 
-def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):   
+
+def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
     """
     Select and open files with a GUI.
 
@@ -1343,7 +1367,7 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
         Ignore if loading other files.
     otb_refsig_type : list, default [True, "fullsampled"]
         Whether to seacrh also for the REF_SIGNAL and whether to load the full
-        or sub-sampled one. The list is composed as [bool, str]. str can be 
+        or sub-sampled one. The list is composed as [bool, str]. str can be
         "fullsampled" or "subsampled".
         Ignore if loading other files.
     otb_version : str, default "1.5.8.0"
@@ -1503,23 +1527,27 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
             filepath=file_toOpen,
             ext_factor=kwargs.get("otb_ext_factor", 8),
             refsig=kwargs.get("otb_refsig_type", [True, "fullsampled"]),
-            version=kwargs.get("otb_version", "1.5.8.0")
+            version=kwargs.get("otb_version", "1.5.8.0"),
         )
     elif filesource == "OTB_refsig":
         ref = kwargs.get("otb_refsig_type", [True, "fullsampled"])
         emgfile = refsig_from_otb(
-            filepath=file_toOpen, refsig=ref[1], version=kwargs.get("otb_version", "1.5.8.0")
+            filepath=file_toOpen,
+            refsig=ref[1],
+            version=kwargs.get("otb_version", "1.5.8.0"),
         )
     elif filesource == "Open_HD-EMG":
         emgfile = emg_from_json(filepath=file_toOpen)
     else:  # custom
         emgfile = emg_from_customcsv(
-            filepath = file_toOpen,
+            filepath=file_toOpen,
             ref_signal=kwargs.get("custom_ref_signal", "REF_SIGNAL"),
             raw_signal=kwargs.get("custom_raw_signal", "RAW_SIGNAL"),
             ipts=kwargs.get("custom_ipts", "IPTS"),
             mupulses=kwargs.get("custom_mupulses", "MUPULSES"),
-            binary_mus_firing=kwargs.get("custom_binary_mus_firing", "BINARY_MUS_FIRING"),
+            binary_mus_firing=kwargs.get(
+                "custom_binary_mus_firing", "BINARY_MUS_FIRING"
+            ),
             fsamp=kwargs.get("custom_fsamp", 2048),
             ied=kwargs.get("custom_ied", 8),
         )

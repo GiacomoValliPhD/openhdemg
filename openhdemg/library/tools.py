@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 import warnings
-from openhdemg.mathtools import compute_pnr, compute_sil
+from openhdemg.library.mathtools import compute_pnr, compute_sil
 
 
 def showselect(emgfile, title="", nclic=2):
@@ -72,7 +72,7 @@ def showselect(emgfile, title="", nclic=2):
 
         plt.close()
         return start_point
-    
+
     elif nclic == 2:
         # Sort the input range. Used to resize the signal,
         # select the steady-state, calculate MViF
@@ -103,9 +103,11 @@ def showselect(emgfile, title="", nclic=2):
 
         plt.close()
         return start_point_tw, end_point_tw, start_point_rest, end_point_rest
-    
+
     else:
-        raise ValueError(f"nclic can be only one of 1, 2, 4. {nclic} was passed instead")
+        raise ValueError(
+            f"nclic can be only one of 1, 2, 4. {nclic} was passed instead"
+        )
 
 
 def create_binary_firings(EMG_LENGTH, NUMBER_OF_MUS, MUPULSES):
@@ -180,7 +182,7 @@ def resize_emgfile(emgfile, area=None):
     Notes
     -----
     Suggested names for the returned objects: rs_emgfile, start_, end_.
-    
+
     PNR and SIL are computed again in the new resized area.
     """
 
@@ -412,7 +414,9 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
 
     # Common part working for all the possible inputs to munumber
     # Drop PNR values and rename the index
-    del_emgfile["PNR"] = del_emgfile["PNR"].drop(munumber)  # Works with lists and integers
+    del_emgfile["PNR"] = del_emgfile["PNR"].drop(
+        munumber
+    )  # Works with lists and integers
     del_emgfile["PNR"].reset_index(inplace=True, drop=True)  # Drop the old index
 
     # Drop SIL values and rename the index
@@ -424,8 +428,12 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
     del_emgfile["IPTS"].columns = range(del_emgfile["IPTS"].shape[1])
 
     # Drop BINARY_MUS_FIRING by columns and rename the columns
-    del_emgfile["BINARY_MUS_FIRING"] = del_emgfile["BINARY_MUS_FIRING"].drop(munumber, axis=1)
-    del_emgfile["BINARY_MUS_FIRING"].columns = range(del_emgfile["BINARY_MUS_FIRING"].shape[1])
+    del_emgfile["BINARY_MUS_FIRING"] = del_emgfile["BINARY_MUS_FIRING"].drop(
+        munumber, axis=1
+    )
+    del_emgfile["BINARY_MUS_FIRING"].columns = range(
+        del_emgfile["BINARY_MUS_FIRING"].shape[1]
+    )
 
     if isinstance(munumber, int):
         # Delete MUPULSES by position in the list.
@@ -456,8 +464,8 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
 
 def sort_mus(emgfile):
     """
-    Sort the MUs in order of recruitment (ascending order) 
-    
+    Sort the MUs in order of recruitment (ascending order)
+
     Parameters
     ----------
     emgfile : dict
@@ -505,7 +513,7 @@ def sort_mus(emgfile):
     # Sort PNR (single column)
     for origpos, newpos in enumerate(sorting_order):
         sorted_emgfile["PNR"].loc[origpos] = emgfile["PNR"].loc[newpos]
-    
+
     # Sort SIL (single column)
     for origpos, newpos in enumerate(sorting_order):
         sorted_emgfile["SIL"].loc[origpos] = emgfile["SIL"].loc[newpos]
@@ -588,7 +596,7 @@ def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
     Band-pass filter RAW_SIGNAL.
 
     The filter is a Zero-lag band-pass Butterworth.
-    
+
     Parameters
     ----------
     emgfile : dict
@@ -610,9 +618,17 @@ def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
 
     # Calculate the components of the filter and apply them with filtfilt to obtain Zero-lag filtering
     # sos should be preferred over filtfilt as second-order sections have fewer numerical problems.
-    sos = signal.butter(N=order, Wn=[lowcut, highcut], btype="bandpass", output="sos", fs=filteredrawsig["FSAMP"])
+    sos = signal.butter(
+        N=order,
+        Wn=[lowcut, highcut],
+        btype="bandpass",
+        output="sos",
+        fs=filteredrawsig["FSAMP"],
+    )
     for col in filteredrawsig["RAW_SIGNAL"]:
-        filteredrawsig["RAW_SIGNAL"][col] = signal.sosfiltfilt(sos, x=filteredrawsig["RAW_SIGNAL"][col])
+        filteredrawsig["RAW_SIGNAL"][col] = signal.sosfiltfilt(
+            sos, x=filteredrawsig["RAW_SIGNAL"][col]
+        )
 
     return filteredrawsig
 
@@ -623,7 +639,7 @@ def filter_refsig(emgfile, order=4, cutoff=15):
 
     This function is used to low-pass filter the REF_SIGNAL and remove noise.
     The filter is a Zero-lag low-pass Butterworth.
-    
+
     Parameters
     ----------
     emgfile : dict
@@ -637,7 +653,7 @@ def filter_refsig(emgfile, order=4, cutoff=15):
     -------
     filteredrefsig : dict
         The dictionary containing the emgfile with a filtered REF_SIGNAL.
-    
+
     See also
     --------
     remove_offset : remove the offset from the REF_SIGNAL.
@@ -647,8 +663,12 @@ def filter_refsig(emgfile, order=4, cutoff=15):
 
     # Calculate the components of the filter and apply them with filtfilt to obtain Zero-lag filtering
     # sos should be preferred over filtfilt as second-order sections have fewer numerical problems.
-    sos = signal.butter(N=order, Wn=cutoff, btype="lowpass", output="sos", fs=filteredrefsig["FSAMP"])
-    filteredrefsig["REF_SIGNAL"][0] = signal.sosfiltfilt(sos, x=filteredrefsig["REF_SIGNAL"][0])
+    sos = signal.butter(
+        N=order, Wn=cutoff, btype="lowpass", output="sos", fs=filteredrefsig["FSAMP"]
+    )
+    filteredrefsig["REF_SIGNAL"][0] = signal.sosfiltfilt(
+        sos, x=filteredrefsig["REF_SIGNAL"][0]
+    )
 
     return filteredrefsig
 
@@ -709,7 +729,9 @@ def remove_offset(emgfile, offsetval=0, auto=0):
             )
             offsetval = offs_emgfile["REF_SIGNAL"].iloc[start_:end_].mean()
             # We need to convert the series offsetval into float
-            offs_emgfile["REF_SIGNAL"][0] = offs_emgfile["REF_SIGNAL"][0] - float(offsetval)
+            offs_emgfile["REF_SIGNAL"][0] = offs_emgfile["REF_SIGNAL"][0] - float(
+                offsetval
+            )
 
     else:
         # Compute and subtract the offset value.
@@ -774,26 +796,23 @@ def get_mvif(emgfile, how="showselect"):
     elif how == "showselect":
         # Select the area to measure the MViF (maximum value)
         start_, end_ = showselect(
-            emgfile, title="Select the start/end area to measure the MViF, then press enter"
+            emgfile,
+            title="Select the start/end area to measure the MViF, then press enter",
         )
         mvif = emgfile["REF_SIGNAL"].iloc[start_:end_].max()
         # We need to convert the series mvif into float
 
     else:
-        raise ValueError(f"how must be one of 'showselect' or 'all', {how} was passed instead")
-
+        raise ValueError(
+            f"how must be one of 'showselect' or 'all', {how} was passed instead"
+        )
 
     mvif = round(float(mvif), 2)
 
     return mvif
 
 
-def compute_rfd(
-    emgfile,
-    ms=[50, 100, 150, 200],
-    startpoint=None,
-    conversion_val=0
-):
+def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None, conversion_val=0):
     """
     Calculate the RFD.
 
@@ -882,6 +901,7 @@ def compute_rfd(
         rfd = rfd * conversion_val
 
     return rfd
+
 
 # TODO function to calculate the amplification factor and convert the ref signal
 # TODO in the article discuss also the correlation between PNR and SIL since we calculate both

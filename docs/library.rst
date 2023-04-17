@@ -1,10 +1,10 @@
 Submodules
 """"""""""
 
-openhdemg.openhdemg.mathtools module
+mathtools module
 ---------------------------------------------------------
 
-.. automodule:: openhdemg.openhdemg.library.mathtools
+.. automodule:: openhdemg.library.mathtools
    :members:
    :undoc-members:
    :show-inheritance:
