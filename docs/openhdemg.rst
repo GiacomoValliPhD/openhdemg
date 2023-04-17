@@ -12,7 +12,7 @@ Library
 Graphical User Interface
 ------------------------
 
-.. automodule:: openhdemg_gui
+.. automodule:: openhdemg.openhdemg_gui
    :members:
    :undoc-members:
    :show-inheritance:
