@@ -174,7 +174,7 @@ def plot_emgsig(
                 else emgfile["REF_SIGNAL"].index
             )
             sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
-            ax2.set_ylabel("MViF (%)")
+            ax2.set_ylabel("MVC")
 
         showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
         if showimmediately:
@@ -306,7 +306,7 @@ def plot_differentials(
                 else emgfile["REF_SIGNAL"].index
             )
             sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
-            ax2.set_ylabel("MViF (%)")
+            ax2.set_ylabel("MVC")
 
         showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
         if showimmediately:
@@ -322,7 +322,7 @@ def plot_differentials(
 
 def plot_refsig(
     emgfile,
-    ylabel="% MViF",
+    ylabel="MVC",
     timeinseconds=True,
     figsize=[20, 15],
     showimmediately=True,
@@ -331,14 +331,14 @@ def plot_refsig(
     """
     Plot the REF_SIGNAL.
 
-    The REF_SIGNAL is expected to be expressed as % MViF for submaximal
+    The REF_SIGNAL is expected to be expressed as % MVC for submaximal
     contractions or as Kilograms (Kg) or Newtons (N) for maximal contractions.
 
     Parameters
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    ylabel : str, default "% MViF"
+    ylabel : str, default "MVC"
         The unit of measure to show on the Y axis.
     timeinseconds : bool, default True
         Whether to show the time on the x-axes in seconds (True)
@@ -543,7 +543,7 @@ def plot_mupulses(
             else emgfile["REF_SIGNAL"].index
         )
         sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
-        ax2.set_ylabel("MViF (%)")
+        ax2.set_ylabel("MVC")
 
     showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
     if showimmediately:
@@ -703,7 +703,7 @@ def plot_ipts(
                 else emgfile["REF_SIGNAL"].index
             )
             sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
-            ax2.set_ylabel("MViF (%)")
+            ax2.set_ylabel("MVC")
 
         showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
         if showimmediately:
@@ -876,7 +876,7 @@ def plot_idr(
             else emgfile["REF_SIGNAL"].index
         )
         sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
-        ax2.set_ylabel("MViF (%)")
+        ax2.set_ylabel("MVC")
 
     showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
     if showimmediately:
@@ -1234,7 +1234,7 @@ def plot_muap(
 
 def plot_muaps_for_cv(
     sta_dict,
-    xcc_sta,
+    xcc_sta_dict,
     title="MUAPs for CV",
     figsize=[20, 15],
     showimmediately=True,
@@ -1250,7 +1250,7 @@ def plot_muaps_for_cv(
     sta_dict : dict
         dict containing the STA of the double-differential derivation of a
         specific MU.
-    xcc_sta : dict # TODO
+    xcc_sta_dict : dict
         dict containing the normalised cross-correlation coefficient of the
         double-differential derivation of a specific MU.
     tile : str, default "MUAPs from STA"
@@ -1266,17 +1266,32 @@ def plot_muaps_for_cv(
     -------
     fig : pyplot `~.figure.Figure`
 
-    See also
-    --------
-    . # TODO
-
-    Notes
-    -----
-    .
-
     Examples
     --------
-    .
+    Plot the double differential derivation and the XCC of adjacent channels
+    for the first MU (0).
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ...     dividebycolumn=True
+    ... )
+    >>> dd = emg.double_diff(sorted_rawemg)
+    >>> sta = emg.sta(
+    ...     emgfile=emgfile,
+    ...     sorted_rawemg=dd,
+    ...     firings=[0, 50],
+    ...     timewindow=50,
+    ... )
+    >>> xcc_sta = emg.xcc_sta(sta)
+    >>> fig = emg.plot_muaps_for_cv(
+    ...     sta_dict=sta[0],
+    ...     xcc_sta_dict=xcc_sta[0],
+    ...     showimmediately=False,
+    ... )
     """
 
     if not isinstance(sta_dict, dict):
@@ -1318,7 +1333,7 @@ def plot_muaps_for_cv(
             axs[r, pos].tick_params(left=False)
 
             if r != 0:
-                xcc = round(float(xcc_sta[c].iloc[:, r]), 2)
+                xcc = round(float(xcc_sta_dict[c].iloc[:, r]), 2)
                 title = xcc
                 color = "k" if xcc >= 0.8 else "r"
                 axs[r, pos].set_title(title, fontsize=8, color=color, loc="left", pad=3)

@@ -1,8 +1,8 @@
 """
-This module contains all the functions that don't properly apply to the plot
-or analysis (of the MUs properties) category.
-However, these functions are necessary for the usability of the library and
-can be considered as "tools" necessary to operate with the HD-EMG recordings.
+This module contains the functions that don't properly apply to the plot
+or analysis category but that are necessary for the usability of the library.
+The functions contained in this module can be considered as "tools" or
+shortcuts necessary to operate with the HD-EMG recordings.
 """
 
 import copy
@@ -11,7 +11,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 import warnings
-from openhdemg.library.mathtools import compute_pnr, compute_sil
+from openhdemg.library.mathtools import (
+    compute_pnr,
+    compute_sil,
+)  # TODO check how to import this
 
 
 def showselect(emgfile, title="", nclic=2):
@@ -49,7 +52,11 @@ def showselect(emgfile, title="", nclic=2):
 
     >>> import openhdemg as emg
     >>> emgfile = emg.askopenfile(filesource="OTB_refsig")
-    >>> start_point, end_point = emg.showselect(emgfile, title="Select 2 points", nclic=2)
+    >>> start_point, end_point = emg.showselect(
+    ...     emgfile,
+    ...     title="Select 2 points",
+    ...     nclic=2,
+    ... )
     >>> start_point, end_point
     16115 40473
     """
@@ -58,7 +65,7 @@ def showselect(emgfile, title="", nclic=2):
     plt.figure(num="Fig_ginput")
     plt.plot(emgfile["REF_SIGNAL"][0])
     plt.xlabel("Samples")
-    plt.ylabel("MViF")
+    plt.ylabel("MVC")
     plt.title(title, fontweight="bold")
     ginput_res = plt.ginput(n=-1, timeout=0, mouse_add=None)
 
@@ -75,7 +82,7 @@ def showselect(emgfile, title="", nclic=2):
 
     elif nclic == 2:
         # Sort the input range. Used to resize the signal,
-        # select the steady-state, calculate MViF
+        # select the steady-state, calculate MVC
         if ginput_res[0][0] < ginput_res[1][0]:
             start_point = round(ginput_res[0][0])
             end_point = round(ginput_res[1][0])
@@ -110,7 +117,7 @@ def showselect(emgfile, title="", nclic=2):
         )
 
 
-def create_binary_firings(EMG_LENGTH, NUMBER_OF_MUS, MUPULSES):
+def create_binary_firings(emg_length, number_of_mus, mupulses):
     """
     Create a binary representation of the MU firing.
 
@@ -119,28 +126,28 @@ def create_binary_firings(EMG_LENGTH, NUMBER_OF_MUS, MUPULSES):
 
     Parameters
     ----------
-    EMG_LENGTH : int
+    emg_length : int
         Number of samples (length) in the emg file.
-    NUMBER_OF_MUS : int
+    number_of_mus : int
         Number of MUs in the emg file.
-    MUPULSES : list of ndarrays
+    mupulses : list of ndarrays
         Each ndarray should contain the times of firing of each MU.
 
     Returns
     -------
-    mat : pd.DataFrame
-        A pd.DataFrame containing the requested variable
-        or np.nan if the variable was not found.
+    binary_MUs_firing : pd.DataFrame
+        A pd.DataFrame containing the binary representation of MUs firing or
+        np.nan if the variable was not found.
     """
 
-    if isinstance(MUPULSES, list):
-        # skip the step if I don't have the MUPULSES (is nan)
+    # skip the step if I don't have the mupulses (is nan)
+    if isinstance(mupulses, list):
         # create an empty pd.DataFrame containing zeros
-        binary_MUs_firing = pd.DataFrame(np.zeros((EMG_LENGTH, NUMBER_OF_MUS)))
+        binary_MUs_firing = pd.DataFrame(np.zeros((emg_length, number_of_mus)))
         # Loop through the columns (MUs) and isolate the data of interest
-        for i in range(NUMBER_OF_MUS):
+        for i in range(number_of_mus):
             this_mu_binary_firing = binary_MUs_firing[i]
-            this_mu_pulses = pd.DataFrame(MUPULSES[i])
+            this_mu_pulses = pd.DataFrame(mupulses[i])
 
             # Loop through the rows (time) and assign 1 if the MU is firing
             for position in range(len(this_mu_pulses)):
@@ -194,14 +201,14 @@ def resize_emgfile(emgfile, area=None):
     else:
         # Visualise and select the area to resize
         start_, end_ = showselect(
-            emgfile, title="Select the start/end area to resize then press enter"
+            emgfile,
+            title="Select the start/end area to resize, then press enter",
         )
 
     # Create the object to store the resized emgfile.
-    # Create a deepcopy to avoid changes in the original emgfile
     rs_emgfile = copy.deepcopy(emgfile)
     """
-    PNR and SIL should be re-computed on the new portion of the file ==>.
+    PNR and SIL should be re-computed on the new portion of the file.
     Need to be resized: ==>
     emgfile =   {
                 "SOURCE": SOURCE,
@@ -218,20 +225,34 @@ def resize_emgfile(emgfile, area=None):
                 ==> "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
                 }
     """
-    rs_emgfile["RAW_SIGNAL"] = rs_emgfile["RAW_SIGNAL"].iloc[start_:end_]
-    rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].iloc[start_:end_]
-    rs_emgfile["IPTS"] = rs_emgfile["IPTS"].iloc[start_:end_]
+
+    # Resize the reference signal and identify the first value of the index to
+    # resize the mupulses. Then, reset the index.
+    rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
+    first_idx = rs_emgfile["REF_SIGNAL"].index[0]
+    rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].reset_index(drop=True)
+    rs_emgfile["RAW_SIGNAL"] = (
+        rs_emgfile["RAW_SIGNAL"].loc[start_:end_].reset_index(drop=True)
+    )
+    rs_emgfile["IPTS"] = rs_emgfile["IPTS"].loc[start_:end_].reset_index(drop=True)
     rs_emgfile["EMG_LENGTH"] = int(len(rs_emgfile["IPTS"].index))
-    rs_emgfile["BINARY_MUS_FIRING"] = rs_emgfile["BINARY_MUS_FIRING"].iloc[start_:end_]
-    for i in range(rs_emgfile["NUMBER_OF_MUS"]):
-        # Here I need to mask the array based on a filter and return the values in an array with []
-        rs_emgfile["MUPULSES"][i] = rs_emgfile["MUPULSES"][i][
-            (rs_emgfile["MUPULSES"][i] >= start_) & (rs_emgfile["MUPULSES"][i] < end_)
-        ]
+    rs_emgfile["BINARY_MUS_FIRING"] = (
+        rs_emgfile["BINARY_MUS_FIRING"].loc[start_:end_].reset_index(drop=True)
+    )
+
+    for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
+        # Mask the array based on a filter and return the values in an array
+        rs_emgfile["MUPULSES"][mu] = (
+            rs_emgfile["MUPULSES"][mu][
+                (rs_emgfile["MUPULSES"][mu] >= start_)
+                & (rs_emgfile["MUPULSES"][mu] < end_)
+            ]
+            - first_idx
+        )
 
     # Compute PNR and SIL
     if rs_emgfile["NUMBER_OF_MUS"] > 0:
-        # Calculate the PNR
+        # Calculate PNR
         to_append = []
         for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
             res = compute_pnr(
@@ -242,7 +263,7 @@ def resize_emgfile(emgfile, area=None):
             to_append.append(res)
         rs_emgfile["PNR"] = pd.DataFrame(to_append)
 
-        # Calculate the SIL
+        # Calculate SIL
         to_append = []
         for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
             res = compute_sil(
@@ -307,12 +328,12 @@ def compute_idr(emgfile):
 
     # Compute the instantaneous discharge rate (IDR) from the MUPULSES
     if isinstance(emgfile["MUPULSES"], list):
-        # Empty dict to fill with dataframes containing the MUPULSES in [0] and idr in [1]
+        # Empty dict to fill with dataframes containing the MUPULSES
+        # information
         idr = {x: np.nan**2 for x in range(emgfile["NUMBER_OF_MUS"])}
 
         for mu in range(emgfile["NUMBER_OF_MUS"]):
-            # Manage the exception of a single MU
-            # Put the MUPULSES of the MU in the loop in a df
+            # Manage the exception of a single MU and add MUPULSES in column 0
             df = pd.DataFrame(
                 emgfile["MUPULSES"][mu]
                 if emgfile["NUMBER_OF_MUS"] > 1
@@ -323,12 +344,11 @@ def compute_idr(emgfile):
             df[1] = df[0].diff()
             # Calculate time in seconds and add it in column 2
             df[2] = df[0] / emgfile["FSAMP"]
-            # Calculate the istantaneous discharge rate (idr), add it in column 3
+            # Calculate the idr and add it in column 3
             df[3] = emgfile["FSAMP"] / df[0].diff()
 
-            df.rename(
+            df = df.rename(
                 columns={0: "mupulses", 1: "diff_mupulses", 2: "timesec", 3: "idr"},
-                inplace=True,
             )
 
             # Add the idr to the idr dict
@@ -369,14 +389,23 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
     -------
     emgfile : dict
         The dictionary containing the emgfile without the unwanted MUs.
+
+    Examples
+    --------
+    Delete MUs 1,4,5 from the emgfile.
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.delete_mus(emgfile=emgfile, munumber=[1,4,5])
     """
 
     # Check how to behave in case of a single MU
     if if_single_mu == "ignore":
-        # Check how many MUs we have, if we only have 1 MU, the entire file should be deleted instead.
+        # Check how many MUs we have, if we only have 1 MU, the entire file
+        # should be deleted instead.
         if emgfile["NUMBER_OF_MUS"] <= 1:
             warnings.warn(
-                "There is only 1 MU in the file, and it has not been removed. You can change this behaviour with if_single_mu='remove' in the function delete_mus"
+                "There is only 1 MU in the file, and it has not been removed. You can change this behaviour with if_single_mu='remove'"
             )
 
             return emgfile
@@ -392,7 +421,6 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
         )
 
     # Create the object to store the new emgfile without the specified MUs.
-    # Create a deepcopy to avoid changes in the original emgfile
     del_emgfile = copy.deepcopy(emgfile)
     """
     Need to be changed: ==>
@@ -413,15 +441,14 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
     """
 
     # Common part working for all the possible inputs to munumber
-    # Drop PNR values and rename the index
-    del_emgfile["PNR"] = del_emgfile["PNR"].drop(
-        munumber
-    )  # Works with lists and integers
-    del_emgfile["PNR"].reset_index(inplace=True, drop=True)  # Drop the old index
+    # Drop PNR values and reset the index
+    del_emgfile["PNR"] = del_emgfile["PNR"].drop(munumber)
+    # .drop() Works with lists and integers
+    del_emgfile["PNR"] = del_emgfile["PNR"].reset_index(drop=True)
 
-    # Drop SIL values and rename the index
+    # Drop SIL values and reset the index
     del_emgfile["SIL"] = del_emgfile["SIL"].drop(munumber)
-    del_emgfile["SIL"].reset_index(inplace=True, drop=True)
+    del_emgfile["SIL"] = del_emgfile["SIL"].reset_index(drop=True)
 
     # Drop IPTS by columns and rename the columns
     del_emgfile["IPTS"] = del_emgfile["IPTS"].drop(munumber, axis=1)
@@ -444,8 +471,8 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
 
     elif isinstance(munumber, list):
         # Delete all the content in the del_emgfile["MUPULSES"] and append
-        # only the MUs that we want to retain (exclude deleted MUs)
-        # This is a workaround to directly deleting, for safer implementation
+        # only the MUs that we want to retain (exclude deleted MUs).
+        # This is a workaround to directly deleting, for safer implementation.
         del_emgfile["MUPULSES"] = []
         for mu in range(emgfile["NUMBER_OF_MUS"]):
             if mu not in munumber:
@@ -464,7 +491,7 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
 
 def sort_mus(emgfile):
     """
-    Sort the MUs in order of recruitment (ascending order)
+    Sort the MUs in order of recruitment.
 
     Parameters
     ----------
@@ -488,21 +515,21 @@ def sort_mus(emgfile):
     Need to be changed: ==>
     emgfile =   {
                 "SOURCE" : SOURCE,
-                "RAW_SIGNAL" : RAW_SIGNAL, 
-                "REF_SIGNAL" : REF_SIGNAL, 
+                "RAW_SIGNAL" : RAW_SIGNAL,
+                "REF_SIGNAL" : REF_SIGNAL,
                 ==> "PNR" : PNR,
                 ==> "SIL": SIL,
-                ==> "IPTS" : IPTS, 
-                ==> "MUPULSES" : MUPULSES, 
-                "FSAMP" : FSAMP, 
-                "IED" : IED, 
-                "EMG_LENGTH" : EMG_LENGTH, 
-                "NUMBER_OF_MUS" : NUMBER_OF_MUS, 
+                ==> "IPTS" : IPTS,
+                ==> "MUPULSES" : MUPULSES,
+                "FSAMP" : FSAMP,
+                "IED" : IED,
+                "EMG_LENGTH" : EMG_LENGTH,
+                "NUMBER_OF_MUS" : NUMBER_OF_MUS,
                 ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
                 }
     """
 
-    # Identify sorting_order by sorting the the firsr MUpulse of every MUs
+    # Identify the sorting_order by the firsr MUpulse of every MUs
     df = pd.DataFrame()
     df["firstpulses"] = [
         emgfile["MUPULSES"][i][0] for i in range(emgfile["NUMBER_OF_MUS"])
@@ -522,14 +549,18 @@ def sort_mus(emgfile):
     sorted_emgfile["IPTS"] = sorted_emgfile["IPTS"].reindex(columns=sorting_order)
     sorted_emgfile["IPTS"].columns = np.arange(emgfile["NUMBER_OF_MUS"])
 
-    # Sort BINARY_MUS_FIRING (multiple columns, sort by columns, then reset columns' name)
+    # Sort BINARY_MUS_FIRING (multiple columns, sort by columns,
+    # then reset columns' name)
     sorted_emgfile["BINARY_MUS_FIRING"] = sorted_emgfile["BINARY_MUS_FIRING"].reindex(
         columns=sorting_order
     )
     sorted_emgfile["BINARY_MUS_FIRING"].columns = np.arange(emgfile["NUMBER_OF_MUS"])
 
-    # Sort MUPULSES (I preferred to use the sorting_order as a double-check, but could also use:
-    # sorted_emgfile["MUPULSES"] = sorted(sorted_emgfile["MUPULSES"], key=min, reverse=False))
+    # Sort MUPULSES.
+    # Preferable to use the sorting_order as a double-check in alternative to:
+    # sorted_emgfile["MUPULSES"] = sorted(
+    #   sorted_emgfile["MUPULSES"], key=min, reverse=False)
+    # )
     for origpos, newpos in enumerate(sorting_order):
         sorted_emgfile["MUPULSES"][origpos] = emgfile["MUPULSES"][newpos]
 
@@ -575,14 +606,19 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
 
     >>> import openhdemg as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> covsteady = emg.compute_covsteady(emgfile=emgfile, start_steady=3580, end_steady=15820)
+    >>> covsteady = emg.compute_covsteady(
+    ...     emgfile=emgfile,
+    ...     start_steady=3580,
+    ...     end_steady=15820,
+    ... )
     >>> covsteady
     35.611263
     """
 
     if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
         start_steady, end_steady = showselect(
-            emgfile, title="Select the start/end of the steady-state then press enter"
+            emgfile=emgfile,
+            title="Select the start/end of the steady-state then press enter",
         )
 
     ref = emgfile["REF_SIGNAL"].loc[start_steady:end_steady]
@@ -593,7 +629,7 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
 
 def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
     """
-    Band-pass filter RAW_SIGNAL.
+    Band-pass filter the RAW_SIGNAL.
 
     The filter is a Zero-lag band-pass Butterworth.
 
@@ -612,12 +648,17 @@ def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
     -------
     filteredrawsig : dict
         The dictionary containing the emgfile with a filtered RAW_SIGNAL.
+
+    See also
+    --------
+    filter_refsig : low-pass filter the REF_SIGNAL.
     """
 
     filteredrawsig = copy.deepcopy(emgfile)
 
-    # Calculate the components of the filter and apply them with filtfilt to obtain Zero-lag filtering
-    # sos should be preferred over filtfilt as second-order sections have fewer numerical problems.
+    # Calculate the components of the filter and apply them with filtfilt to
+    # obtain Zero-lag filtering. sos should be preferred over filtfilt as
+    # second-order sections have fewer numerical problems.
     sos = signal.butter(
         N=order,
         Wn=[lowcut, highcut],
@@ -627,7 +668,8 @@ def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
     )
     for col in filteredrawsig["RAW_SIGNAL"]:
         filteredrawsig["RAW_SIGNAL"][col] = signal.sosfiltfilt(
-            sos, x=filteredrawsig["RAW_SIGNAL"][col]
+            sos,
+            x=filteredrawsig["RAW_SIGNAL"][col],
         )
 
     return filteredrawsig
@@ -635,7 +677,7 @@ def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
 
 def filter_refsig(emgfile, order=4, cutoff=15):
     """
-    Low-pass filter REF_SIGNAL.
+    Low-pass filter the REF_SIGNAL.
 
     This function is used to low-pass filter the REF_SIGNAL and remove noise.
     The filter is a Zero-lag low-pass Butterworth.
@@ -657,17 +699,24 @@ def filter_refsig(emgfile, order=4, cutoff=15):
     See also
     --------
     remove_offset : remove the offset from the REF_SIGNAL.
+    filter_rawemg : band-pass filter the RAW_SIGNAL.
     """
 
     filteredrefsig = copy.deepcopy(emgfile)
 
-    # Calculate the components of the filter and apply them with filtfilt to obtain Zero-lag filtering
-    # sos should be preferred over filtfilt as second-order sections have fewer numerical problems.
+    # Calculate the components of the filter and apply them with filtfilt to
+    # obtain Zero-lag filtering. sos should be preferred over filtfilt as
+    # second-order sections have fewer numerical problems.
     sos = signal.butter(
-        N=order, Wn=cutoff, btype="lowpass", output="sos", fs=filteredrefsig["FSAMP"]
+        N=order,
+        Wn=cutoff,
+        btype="lowpass",
+        output="sos",
+        fs=filteredrefsig["FSAMP"],
     )
     filteredrefsig["REF_SIGNAL"][0] = signal.sosfiltfilt(
-        sos, x=filteredrefsig["REF_SIGNAL"][0]
+        sos,
+        x=filteredrefsig["REF_SIGNAL"][0],
     )
 
     return filteredrefsig
@@ -715,19 +764,20 @@ def remove_offset(emgfile, offsetval=0, auto=0):
     # Create a deepcopy to avoid changing the original refsig
     offs_emgfile = copy.deepcopy(emgfile)
 
-    # Act differently if the automatic removal of the offset is active (>0) or not
+    # Act differently if automatic removal of the offset is active (>0) or not
     if auto <= 0:
         if offsetval != 0:
             # Directly subtract the offset value.
             offs_emgfile["REF_SIGNAL"][0] = offs_emgfile["REF_SIGNAL"][0] - offsetval
 
         else:
-            # Select the area to calculate the offset (average value of the selected area)
+            # Select the area to calculate the offset
+            # (average value of the selected area)
             start_, end_ = showselect(
-                offs_emgfile,
+                emgfile=offs_emgfile,
                 title="Select the start/end of a resting area to calculate the offset, then press enter",
             )
-            offsetval = offs_emgfile["REF_SIGNAL"].iloc[start_:end_].mean()
+            offsetval = offs_emgfile["REF_SIGNAL"].loc[start_:end_].mean()
             # We need to convert the series offsetval into float
             offs_emgfile["REF_SIGNAL"][0] = offs_emgfile["REF_SIGNAL"][0] - float(
                 offsetval
@@ -742,9 +792,9 @@ def remove_offset(emgfile, offsetval=0, auto=0):
     return offs_emgfile
 
 
-def get_mvif(emgfile, how="showselect"):
+def get_mvc(emgfile, how="showselect", conversion_val=0):
     """
-    Measure the MViF.
+    Measure the maximum voluntary contraction (MVC).
 
     Parameters
     ----------
@@ -753,15 +803,21 @@ def get_mvif(emgfile, how="showselect"):
     how : str {"showselect", "all"}, default "showselect"
 
         ``showselect``
-            Ask the user to select the area where to calculate the MViF
+            Ask the user to select the area where to calculate the MVC
             with a GUI.
         ``all``
-            Calculate the MViF on the entire file.
+            Calculate the MVC on the entire file.
+    conversion_val : float or int, default 0
+        The conversion value to multiply the original reference signal.
+        I.e., if the original reference signal is in kilogram (kg) and
+        conversion_val=9.81, the output will be in Newton/Sec (N/Sec).
+        If conversion_val=0 (default), the results will simply be Original
+        measure unit. conversion_val can be any custom int or float.
 
     Returns
     -------
-    mvif : float
-        The MViF value in the original unit of measurement.
+    mvc : float
+        The MVC value in the original (or converted) unit of measurement.
 
     See also
     --------
@@ -771,45 +827,48 @@ def get_mvif(emgfile, how="showselect"):
 
     Examples
     --------
-    Load the EMG file, remove reference signal offset and get MViF value.
+    Load the EMG file, remove reference signal offset and get MVC value.
 
     >>> import openhdemg as emg
     >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
     >>> offs_refsig = emg.remove_offset(emgfile=emg_refsig)
-    >>> mvif = emg.get_mvif(emgfile=offs_refsig )
-    >>> mvif
+    >>> mvc = emg.get_mvc(emgfile=offs_refsig )
+    >>> mvc
     50.72
 
     The process can be automated by bypassing the GUI and
-    calculating the MViF of the entire file.
+    calculating the MVC of the entire file.
 
     >>> import openhdemg as emg
     >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
-    >>> mvif = emg.get_mvif(emgfile=emg_refsig, how="all")
-    >>> print(mvif)
+    >>> mvc = emg.get_mvc(emgfile=emg_refsig, how="all")
+    >>> print(mvc)
     50.86
     """
 
     if how == "all":
-        mvif = emgfile["REF_SIGNAL"].max()
+        mvc = emgfile["REF_SIGNAL"].max()
 
     elif how == "showselect":
-        # Select the area to measure the MViF (maximum value)
+        # Select the area to measure the MVC (maximum value)
         start_, end_ = showselect(
-            emgfile,
-            title="Select the start/end area to measure the MViF, then press enter",
+            emgfile=emgfile,
+            title="Select the start/end area to measure the MVC, then press enter",
         )
-        mvif = emgfile["REF_SIGNAL"].iloc[start_:end_].max()
-        # We need to convert the series mvif into float
+
+        mvc = emgfile["REF_SIGNAL"].loc[start_:end_].max()
 
     else:
         raise ValueError(
             f"how must be one of 'showselect' or 'all', {how} was passed instead"
         )
 
-    mvif = round(float(mvif), 2)
+    mvc = float(mvc)
 
-    return mvif
+    if conversion_val != 0:
+        mvc = mvc * conversion_val
+
+    return mvc
 
 
 def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None, conversion_val=0):
@@ -854,8 +913,16 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None, conversion_val
 
     >>> import openhdemg as emg
     >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
-    >>> filteredrefsig  = emg.filter_refsig(emgfile=emg_refsig, order=4, cutoff=15)
-    >>> rfd = emg.compute_rfd(emgfile=filteredrefsig, ms=[50, 100, 200], conversion_val=9.81)
+    >>> filteredrefsig  = emg.filter_refsig(
+    ...     emgfile=emg_refsig,
+    ...     order=4,
+    ...     cutoff=15,
+    ... )
+    >>> rfd = emg.compute_rfd(
+    ...     emgfile=filteredrefsig,
+    ...     ms=[50, 100, 200],
+    ...     conversion_val=9.81,
+    ...     )
     >>> rfd
             50         100        200
     0  68.34342  79.296188  41.308215
@@ -864,8 +931,16 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None, conversion_val
 
     >>> import openhdemg as emg
     >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
-    >>> filteredrefsig  = emg.filter_refsig(emgfile=emg_refsig, order=4, cutoff=15)
-    >>> rfd = emg.compute_rfd(emgfile=filteredrefsig, ms=[50, 100, 200], startpoint=3568)
+    >>> filteredrefsig  = emg.filter_refsig(
+    ...     emgfile=emg_refsig,
+    ...     order=4,
+    ...     cutoff=15,
+    ...     )
+    >>> rfd = emg.compute_rfd(
+    ...     emgfile=filteredrefsig,
+    ...     ms=[50, 100, 200],
+    ...     startpoint=3568,
+    ...     )
     >>> rfd
             50         100        200
     0  68.34342  79.296188  41.308215
@@ -888,10 +963,11 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None, conversion_val
     for thisms in ms:
         ms_insamples = round((int(thisms) * emgfile["FSAMP"]) / 1000)
 
-        n_0 = emgfile["REF_SIGNAL"].iloc[start_]
-        n_next = emgfile["REF_SIGNAL"].iloc[start_ + ms_insamples]
+        n_0 = emgfile["REF_SIGNAL"].loc[start_]
+        n_next = emgfile["REF_SIGNAL"].loc[start_ + ms_insamples]
 
-        rfdval = (n_next - n_0) / (thisms / 1000)  # (ms/1000 to convert mSec in Sec)
+        rfdval = (n_next - n_0) / (thisms / 1000)
+        # (ms/1000 to convert mSec in Sec)
 
         rfd_dict[thisms] = rfdval
 
@@ -904,8 +980,6 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None, conversion_val
 
 
 # TODO function to calculate the amplification factor and convert the ref signal
-# TODO in the article discuss also the correlation between PNR and SIL since we calculate both
-# Quante MUs sono sopra o sotto una specificas soglia, distribuzioni ecc...
 # TODO in the GUI, allow to convert the force for a conversion factor
 # TODO write extended documentation of how emgfile should be structured and why and how it
 # can be expanded to fit possible new necessities

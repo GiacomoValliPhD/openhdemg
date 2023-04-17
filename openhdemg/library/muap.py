@@ -5,7 +5,12 @@ This module contains functions to produce and analyse MUs anction potentials
 
 import pandas as pd
 from openhdemg.library.tools import delete_mus
-from openhdemg.library.mathtools import norm_twod_xcorr, find_teta, mle_cv_est
+from openhdemg.library.mathtools import (
+    norm_twod_xcorr,
+    norm_xcorr,
+    find_teta,
+    mle_cv_est,
+)
 from openhdemg.library.otbelectrodes import sort_rawemg
 from openhdemg.library.plotemg import plot_muaps, plot_muaps_for_cv
 from scipy import signal
@@ -20,9 +25,8 @@ import warnings
 import tkinter as tk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from pandastable import Table, TableModel
 
-# import pyperclip
+import pyperclip
 
 
 def diff(sorted_rawemg):
@@ -1133,13 +1137,28 @@ def xcc_sta(sta):
         A dict containing the XCC for all the pairs of channels and all the
         MUs. This dict is organised as the sta dict.
 
-    See also
-    -------- # TODO
-    """
+    Examples
+    --------
+    Calculate the XCC of adjacent channels of the double differential derivation
+    as done to calculate MUs conduction velocity.
 
-    from openhdemg.mathtools import (
-        norm_xcorr,
-    )  # TODO should we call all the functions within openhdemg inside the functions?
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ...     dividebycolumn=True
+    ... )
+    >>> dd = emg.double_diff(sorted_rawemg)
+    >>> sta = emg.sta(
+    ...     emgfile=emgfile,
+    ...     sorted_rawemg=dd,
+    ...     firings=[0, 50],
+    ...     timewindow=50,
+    ... )
+    >>> xcc_sta = emg.xcc_sta(sta)
+    """
 
     # Obtain the structure of the sta_xcc dict
     xcc_sta = copy.deepcopy(sta)
@@ -1174,8 +1193,8 @@ class MUcv_gui:
     """
     Graphical user interface for the estimation of MUs conduction velocity.
 
-    This GUI allows also to delete MUs with a bad action potential shape and
-    to save the edited file.
+    GUI for the estimation of MUs conduction velocity (CV) and amplitude of
+    the action potentials (root mean square - RMS).
 
     Parameters
     ----------
@@ -1240,7 +1259,6 @@ class MUcv_gui:
         # After that, set up the GUI
         self.root = tk.Tk()
         self.root.title("MUs cv estimation")
-        self.root.geometry("1010x675")
 
         # Create main frame, assign structure and minimum spacing
         self.frm = ttk.Frame(self.root, padding=15)
@@ -1338,15 +1356,15 @@ class MUcv_gui:
         self.emp2 = ttk.Label(self.frm, text="", width=5)
         self.emp2.grid(row=0, column=7, columnspan=1, sticky=tk.W)
 
-        # Add text frame to show the results
+        # Add text frame to show the results (only CV and RMS)
         self.res_df = pd.DataFrame(
             data=0,
             index=self.all_mus,
-            columns=["CV", "RMS"],
+            columns=["CV", "RMS", "XCC"],
         )
         self.textbox = tk.Text(self.frm, width=20)
         self.textbox.grid(row=2, column=8, sticky="ns")
-        self.textbox.insert("1.0", self.res_df.to_string())
+        self.textbox.insert("1.0", self.res_df.loc[:, ["CV", "RMS"]].to_string())
 
         # Create a button to copy the dataframe to clipboard
         copy_btn = ttk.Button(
@@ -1379,7 +1397,7 @@ class MUcv_gui:
         # Get the figure
         fig = plot_muaps_for_cv(
             sta_dict=self.st[mu],
-            xcc_sta=self.sta_xcc[mu],
+            xcc_sta_dict=self.sta_xcc[mu],
             showimmediately=False,
         )
 
@@ -1394,7 +1412,7 @@ class MUcv_gui:
         Copy the dataframe to clipboard in csv format.
         """
         pass
-        # pyperclip.copy(self.res_df.to_csv(index=False, sep='\t'))
+        pyperclip.copy(self.res_df.to_csv(index=False, sep="\t"))
 
     # Define functions for cv estimation
     def compute_cv(self):
@@ -1433,17 +1451,32 @@ class MUcv_gui:
         )
 
         # Calculate CV (and return only positive values)
-        self.cv, teta = mle_cv_est(
+        cv, teta = mle_cv_est(
             sig=sig,
             initial_teta=initial_teta,
             ied=self.ied,
             fsamp=self.fsamp,
         )
-        self.cv = abs(self.cv)
+        cv = abs(cv)
+
+        # Calculate RMS
+        sig = sig.to_numpy()
+        rms = np.mean(np.sqrt((np.mean(sig**2, axis=1))))
 
         # Update the self.res_df and the self.textbox
-        self.res_df.loc[int(self.selectmu_cb.get()), "CV"] = round(self.cv, 3)
-        self.textbox.replace("1.0", "end", self.res_df.to_string())
+        mu = int(self.selectmu_cb.get())
 
+        self.res_df.loc[mu, "CV"] = cv
+        self.res_df.loc[mu, "RMS"] = rms
 
-# TODO return average XCC
+        xcc_col_list = list(
+            range(int(self.start_cb.get()) + 1, int(self.stop_cb.get()) + 1)
+        )
+        xcc = self.sta_xcc[mu][self.col_cb.get()].iloc[:, xcc_col_list].mean().mean()
+        self.res_df.loc[mu, "XCC"] = xcc
+
+        self.textbox.replace(
+            "1.0",
+            "end",
+            self.res_df.loc[:, ["CV", "RMS"]].round(3).to_string(),
+        )

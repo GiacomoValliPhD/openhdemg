@@ -10,7 +10,7 @@ import warnings
 import math
 
 
-def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
+def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvc=0):
     """
     Calculates recruitment/derecruitment thresholds.
 
@@ -38,9 +38,9 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
             Only relative tresholds will be calculated.
         ``abs``
             Only absolute tresholds will be calculated.
-    mvif : float, default 0
-        The maximum voluntary isometric force (MViF).
-        if mvif is 0, the user is asked to input mvif; otherwise, the value
+    mvc : float, default 0
+        The maximum voluntary contraction (MVC).
+        if mvc is 0, the user is asked to input MVC; otherwise, the value
         passed is used.
 
     Returns
@@ -101,15 +101,15 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
             f"event_ must be one of : 'abs_rel', 'rel', 'abs'. {event_} was passed instead."
         )
 
-    if not isinstance(mvif, (float, int)):
+    if not isinstance(mvc, (float, int)):
         raise TypeError(
-            f"mvif must be one of the following types: float, int. {type(mvif)} was passed instead."
+            f"mvc must be one of the following types: float, int. {type(mvc)} was passed instead."
         )
 
-    if type_ != "rel" and mvif == 0:
-        # Ask the user to input MViF
-        mvif = int(
-            input("--------------------------------\nEnter MViF value in newton: ")
+    if type_ != "rel" and mvc == 0:
+        # Ask the user to input MVC
+        mvc = int(
+            input("--------------------------------\nEnter MVC value in newton: ")
         )
 
     # Create an object to append the results
@@ -122,8 +122,8 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvif=0):
             mup_rec = MUPULSES[i][0]
             mup_derec = MUPULSES[i][-1]
             # Calculate absolute and relative RT and DERT if requested
-            abs_RT = (float(REF_SIGNAL.loc[mup_rec]) * float(mvif)) / 100
-            abs_DERT = (float(REF_SIGNAL.loc[mup_derec]) * float(mvif)) / 100
+            abs_RT = (float(REF_SIGNAL.loc[mup_rec]) * float(mvc)) / 100
+            abs_DERT = (float(REF_SIGNAL.loc[mup_derec]) * float(mvc)) / 100
             rel_RT = float(REF_SIGNAL.loc[mup_rec])
             rel_DERT = float(REF_SIGNAL.loc[mup_derec])
 
@@ -409,78 +409,82 @@ def basic_mus_properties(
     n_firings_steady=10,
     start_steady=-1,
     end_steady=-1,
-    mvif=0,
+    mvc=0,
 ):
     """
-    Calculate basic MUs properties on a trapezoidal contraction.
+        Calculate basic MUs properties on a trapezoidal contraction.
 
-    The function is meant to be used on trapezoidal contractions and
-    calculates:
-    the absolute/relative recruitment/derecruitment thresholds,
-    the discharge rate at recruitment, derecruitment, during the steady-state
-    phase and the entire contraction,
-    the coefficient of variation of interspike interval,
-    the coefficient of variation of force signal.
+        The function is meant to be used on trapezoidal contractions and
+        calculates:
+        the absolute/relative recruitment/derecruitment thresholds,
+        the discharge rate at recruitment, derecruitment, during the steady-state
+        phase and the entire contraction,
+        the coefficient of variation of interspike interval,
+        the coefficient of variation of force signal.
 
-    Parameters
-    ----------
-    emgfile : dict
-        The dictionary containing the emgfile.
-    n_firings_RecDerec : int, default 4
-        The number of firings at recruitment and derecruitment to consider for
-        the calculation of the DR.
-    n_firings_steady : int, default 10
-        The number of firings to consider for the calculation of the DR at the
-        start and at the end of the steady-state phase.
-    start_steady, end_steady : int, default -1
-        The start and end point (in samples) of the steady-state phase.
-        If < 0 (default), the user will need to manually select the start and
-        end of the steady-state phase.
-    mvif : float, default 0
-        The maximum voluntary isometric force (MViF). It is suggest to report
-        MViF in Newton (N). If 0 (default), the user will be asked to imput it
-        manually. Otherwise, the passed value will be used.
+        Parameters
+        ----------
+        emgfile : dict
+            The dictionary containing the emgfile.
+        n_firings_RecDerec : int, default 4
+            The number of firings at recruitment and derecruitment to consider for
+            the calculation of the DR.
+        n_firings_steady : int, default 10
+            The number of firings to consider for the calculation of the DR at the
+            start and at the end of the steady-state phase.
+        start_steady, end_steady : int, default -1
+            The start and end point (in samples) of the steady-state phase.
+            If < 0 (default), the user will need to manually select the start and
+            end of the steady-state phase.
+        mvc : float, default 0
+            The maximum voluntary contraction (MVC). It is suggest to report
+            MVC in Newton (N). If 0 (default), the user will be asked to imput it
+            manually. Otherwise, the passed value will be used.
 
-    Returns
-    -------
-    exportable_df : pd.DataFrame
-        A pd.DataFrame containing the results of the analysis.
+        Returns
+        -------
+        exportable_df : pd.DataFrame
+            A pd.DataFrame containing the results of the analysis.
 
-    See also
-    --------
-    compute_thresholds : calculates recruitment/derecruitment thresholds.
-    compute_dr : calculate the discharge rate.
-    compute_covisi : calculate the coefficient of variation of interspike
-        interval.
-    compute_drvariability : claculate the DR variability.
+        See also
+        --------
+        compute_thresholds : calculates recruitment/derecruitment thresholds.
+        compute_dr : calculate the discharge rate.
+        compute_covisi : calculate the coefficient of variation of interspike
+            interval.
+        compute_drvariability : claculate the DR variability.
 
-    Examples
-    --------
-    Get full summary of all the MUs properties.
+        Examples
+        --------
+        Get full summary of all the MUs properties.
 
-    >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> df = emg.basic_mus_properties(emgfile=emgfile)
-    >>> df
-        MViF  MU_number      abs_RT    abs_DERT     rel_RT   rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady     DR_all  COVisi_steady  COVisi_all  COV_steady
-    0  786.0          1  146.709276  126.128587  18.665302  16.046894  5.701081  4.662196         7.467810       6.242360       6.902616   6.814342      11.296316   16.309681    1.423286
-    1    NaN          2   35.854200   45.676801   4.561603   5.811298  7.051127  6.752467        11.798908       9.977337      11.784061  11.683134      15.871254   21.233615         NaN
-    2    NaN          3   80.757524   87.150011  10.274494  11.087788  6.101529  4.789000         7.940926       5.846093       7.671361   8.055731      35.755090   35.308650         NaN
-    3    NaN          4   34.606886   37.569257   4.402912   4.779804  6.345692  5.333535        11.484875       9.636914      11.594712  11.109796      24.611246   29.372524         NaN
+        >>> import openhdemg as emg
+        >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+        >>> df = emg.basic_mus_properties(emgfile=emgfile)
+        >>> df
+             MVC  MU_number      abs_RT    abs_DERT     rel_RT   rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady     DR_all  COVisi_steady  COVisi_all  COV_steady
+        0  786.0          1  146.709276  126.128587  18.665302  16.046894  5.701081  4.662196         7.467810       6.242360       6.902616   6.814342      11.296316   16.309681    1.423286
+        1    NaN          2   35.854200   45.676801   4.561603   5.811298  7.051127  6.752467        11.798908       9.977337      11.784061  11.683134      15.871254   21.233615         NaN
+        2    NaN          3   80.757524   87.150011  10.274494  11.087788  6.101529  4.789000         7.940926       5.846093       7.671361   8.055731      35.755090   35.308650         NaN
+        3    NaN          4   34.606886   37.569257   4.402912   4.779804  6.345692  5.333535        11.484875       9.636914      11.594712  11.109796      24.611246   29.372524         NaN
 
-    We can bypass manual prompting the MViF by pre-specifying it and/or
-    bypass the manual selection of the steady state phase if previously
-    calculated with an automated method.
+    <<<<<<< HEAD:openhdemg/library/analysis.py
+        We can bypass manual prompting the MViF by pre-specifying it and/or
+    =======
+        We can bypass manual prompting the MVC by pre-specifying it and/or
+    >>>>>>> b1c1533dcb86d666354d0c54fdb3e47e882de136:openhdemg/analysis.py
+        bypass the manual selection of the steady state phase if previously
+        calculated with an automated method.
 
-    >>> import openhdemg as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> df = emg.basic_mus_properties(emgfile=emgfile, start_steady=20000, end_steady=50000, mvif=786)
-    >>> df
-    MViF  MU_number      abs_RT    abs_DERT     rel_RT   rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady     DR_all  COVisi_steady  COVisi_all  COV_steady
-    0  786.0          1  146.709276  126.128587  18.665302  16.046894  5.701081  4.662196         7.476697       6.271750       6.794170   6.814342      11.066966   16.309681    1.431752
-    1    NaN          2   35.854200   45.676801   4.561603   5.811298  7.051127  6.752467        14.440561      10.019572      11.822081  11.683134      15.076819   21.233615         NaN
-    2    NaN          3   80.757524   87.150011  10.274494  11.087788  6.101529  4.789000         7.293547       5.846093       7.589531   8.055731      36.996894   35.308650         NaN
-    3    NaN          4   34.606886   37.569257   4.402912   4.779804  6.345692  5.333535        13.289651       9.694317      11.613640  11.109796      26.028689   29.372524         NaN
+        >>> import openhdemg as emg
+        >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+        >>> df = emg.basic_mus_properties(emgfile=emgfile, start_steady=20000, end_steady=50000, mvc=786)
+        >>> df
+             MVC  MU_number      abs_RT    abs_DERT     rel_RT   rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady     DR_all  COVisi_steady  COVisi_all  COV_steady
+        0  786.0          1  146.709276  126.128587  18.665302  16.046894  5.701081  4.662196         7.476697       6.271750       6.794170   6.814342      11.066966   16.309681    1.431752
+        1    NaN          2   35.854200   45.676801   4.561603   5.811298  7.051127  6.752467        14.440561      10.019572      11.822081  11.683134      15.076819   21.233615         NaN
+        2    NaN          3   80.757524   87.150011  10.274494  11.087788  6.101529  4.789000         7.293547       5.846093       7.589531   8.055731      36.996894   35.308650         NaN
+        3    NaN          4   34.606886   37.569257   4.402912   4.779804  6.345692  5.333535        13.289651       9.694317      11.613640  11.109796      26.028689   29.372524         NaN
     """
 
     # Check if we need to select the steady-state phase
@@ -494,14 +498,14 @@ def basic_mus_properties(
     # First: create a dataframe that contains all the output
     exportable_df = []
 
-    # Second: add basic information (MViF, MU number, PNR/SIL, Average PNR/SIL)
-    if mvif == 0:
-        # Ask the user to input MViF
-        mvif = int(
-            input("--------------------------------\nEnter MViF value in newton: ")
+    # Second: add basic information (MVC, MU number, PNR/SIL, Average PNR/SIL)
+    if mvc == 0:
+        # Ask the user to input MVC
+        mvc = int(
+            input("--------------------------------\nEnter MVC value in newton: ")
         )
 
-    exportable_df.append({"MViF": mvif})
+    exportable_df.append({"MVC": mvc})
     exportable_df = pd.DataFrame(exportable_df)
 
     # Basically, we create an empty list, append values, convert the
@@ -543,7 +547,7 @@ def basic_mus_properties(
     exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
     # Calculate RT and DERT
-    mus_thresholds = compute_thresholds(emgfile=emgfile, mvif=mvif)
+    mus_thresholds = compute_thresholds(emgfile=emgfile, mvc=mvc)
     exportable_df = pd.concat([exportable_df, mus_thresholds], axis=1)
 
     # Calculate DR at recruitment, derecruitment, all, start and end steady-state and all contraction

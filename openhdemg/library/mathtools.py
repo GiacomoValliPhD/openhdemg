@@ -21,7 +21,7 @@ def min_max_scaling(series_or_df):
     Min-max feature scaling is often simply referred to as normalization,
     which rescales the dataset feature to a range of 0 - 1.
     It's calculated by subtracting the feature's minimum value from the value
-    and then dividing it by the difference between the maximum and minimum 
+    and then dividing it by the difference between the maximum and minimum
     value.
 
     The formula looks like this: xnorm = x - xmin / xmax - xmin.
@@ -79,7 +79,7 @@ def norm_xcorr(sig1, sig2):
     norm_twod_xcorr : Normalised 2-dimensional cross-correlation of STAs of
         two MUS.
     """
-    
+
     # Implementation corresponding to:
     # MATLAB => xcorr(a, b, 'normalized')
     # From:
@@ -88,12 +88,12 @@ def norm_xcorr(sig1, sig2):
     a = sig1 / norm_a
     norm_b = np.linalg.norm(sig2)
     b = sig2 / norm_b
-    c = np.correlate(a, b, mode = 'full')
-    
+    c = np.correlate(a, b, mode='full')
+
     return max(c)
 
 
-def norm_twod_xcorr(df1, df2, mode="full"): # TODO Consider changing names df1, df2, input and np arrays
+def norm_twod_xcorr(df1, df2, mode="full"):
     """
     Normalised 2-dimensional cross-correlation of STAs of two MUS.
 
@@ -103,7 +103,7 @@ def norm_twod_xcorr(df1, df2, mode="full"): # TODO Consider changing names df1, 
     Parameters
     ----------
     df1 : pd.DataFrame
-        A pd.DataFrame containing the STA of the first MU without np.nan 
+        A pd.DataFrame containing the STA of the first MU without np.nan
         column.
     df2 : pd.DataFrame
         A pd.DataFrame containing the STA of the second MU without np.nan
@@ -151,7 +151,11 @@ def norm_twod_xcorr(df1, df2, mode="full"): # TODO Consider changing names df1, 
     >>> import openhdemg as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emgfile = emg.filter_rawemg(emgfile, order=2, lowcut=20, highcut=500)
-    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ...     )
     >>> sta = emg.sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100)
     >>> mu0 = 0
     >>> mu1 = 1
@@ -161,7 +165,10 @@ def norm_twod_xcorr(df1, df2, mode="full"): # TODO Consider changing names df1, 
     >>> no_nan_sta1 = df1.dropna(axis=1, inplace=False)
     >>> df2 = emg.unpack_sta(sta_mu2)
     >>> no_nan_sta2 = df2.dropna(axis=1, inplace=False)
-    >>> normxcorr_df, normxcorr_max = emg.norm_twod_xcorr(no_nan_sta1, no_nan_sta2)
+    >>> normxcorr_df, normxcorr_max = emg.norm_twod_xcorr(
+    ...     no_nan_sta1,
+    ...     no_nan_sta2,
+    ...     )
     >>> normxcorr_max
     0.7241553627564273
     >>> normxcorr_df
@@ -181,6 +188,9 @@ def norm_twod_xcorr(df1, df2, mode="full"): # TODO Consider changing names df1, 
 
     # Perform 2d xcorr
     correlate2d = signal.correlate2d(in1=df1, in2=df2, mode=mode)
+    # There is no need to work with numpy.ndarrays as signal.correlate2d is
+    # already converting the pd.DataFrame into numpy.ndarray, and the rest of
+    # the code does not take much time to run.
 
     # Normalise the result of 2d xcorr for the different energy levels
     # MATLAB equivalent:
@@ -204,8 +214,8 @@ def compute_sil(ipts, mupulses):  # TODO _NEXT_ add refs in docs when necessary
     Calculate the Silhouette score for a single MU.
 
     The SIL is defined as the difference between the within-cluster sums of
-    point-to-centroid distances and the same measure calculated between clusters.
-    The measure was normalized dividing by the maximum of the two values.
+    point-to-centroid distances and the same measure calculated between
+    clusters. The output measure is normalised in a range between 0 and 1.
 
     Parameters
     ----------
@@ -226,7 +236,6 @@ def compute_sil(ipts, mupulses):  # TODO _NEXT_ add refs in docs when necessary
     """
 
     # Extract source and peaks and align source and peaks based on IPTS
-    # index to avoid errors in the resized files.
     source = ipts.to_numpy()
     peaks_idxs = mupulses - ipts.index[0]
 
@@ -235,8 +244,8 @@ def compute_sil(ipts, mupulses):  # TODO _NEXT_ add refs in docs when necessary
     noise_cluster = np.delete(source, peaks_idxs)
 
     # Create centroids for each cluster
-    peak_centroid = peak_cluster.mean()
-    noise_centroid = noise_cluster.mean()
+    peak_centroid = np.mean(peak_cluster)
+    noise_centroid = np.mean(noise_cluster)
 
     # Calculate within-cluster sums of point-to-centroid distances using the
     # squared Euclidean distance metric. It is defined as the sum of the
@@ -261,7 +270,7 @@ def compute_sil(ipts, mupulses):  # TODO _NEXT_ add refs in docs when necessary
     return sil
 
 
-def compute_pnr(ipts, mupulses, fsamp):
+def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
     """
     Calculate the pulse to noise ratio for a single MU.
 
@@ -272,6 +281,11 @@ def compute_pnr(ipts, mupulses, fsamp):
         interest.
     mupulses : ndarray
         The time of firing (MUPULSES[mu]) of the MU of interest.
+    separate_paired_firings : bool, default False
+        Whether to treat differently paired and non-paired firings during
+        the estimation of the signal/noise threshold. According to Holobar
+        2012, this is common in pathological tremor. This can be set to
+        True when working with pathological tremor.
 
     Returns
     -------
@@ -311,41 +325,60 @@ def compute_pnr(ipts, mupulses, fsamp):
     # However, this heuristic penalty function does not work in particular
     # types of contractions like explosive contractions (MUs discharge up to
     # 200 pps). Therefore, in this implementation of the PNR estimation we did
-    # not use a penality based on MUs discharge rate and we estimate
+    # not use a penality based on MUs discharge.
+    # Additionally, the user can decide whether to adopt the two coefficients
+    # of variations to estimate Pi or not.
+    # If both are used, Pi would be calculated as:
     # Pi = CoVIDI + CoVpIDI
     # which remains valid also in tremor.
+    # Otherwise, Pi would be calculated as:
+    # Pi = CoV_all_IDI
 
     # Calculate IDI
-    # Compute differences between consecutive elements
     idi = np.diff(mupulses)
 
-    # In order to increase robustness to outlier values, remove values greater
-    # than mean + 3* STD in the idi array. Do not remove the values below
-    # mean - 3* STD that could be common in tremor.
-    # Compute upper bound for accepted range of values
+    # In order to increase robustness to outlier values, remove values outside
+    # mean +- 3 * STD in the idi array.
     mean, std = np.mean(idi), np.std(idi)
     upper_bound = mean + 3*std
+    lower_bound = mean - 3*std
 
-    # Remove values above upper bound
     idi = idi[idi <= upper_bound]
-
-    # Divide the paired and non-paired IDIs before calculating specific CoV
-    idinonp = idi[idi >= (fsamp * 0.05)]
-    idip = idi[idi < (fsamp * 0.05)]
-
-    CoVIDI = np.std(idinonp) / np.average(idinonp)
-    if math.isnan(CoVIDI):
-        CoVIDI = 0
-
-    CoVpIDI = np.std(idip) / np.average(idip)
-    if math.isnan(CoVpIDI):
-        CoVpIDI = 0
+    idi = idi[idi >= lower_bound]
 
     # Calculate Pi
-    Pi = CoVIDI + CoVpIDI
+    if separate_paired_firings is False:
+        # Calculate Pi on all IDI
+        CoV_all_IDI = np.std(idi) / np.average(idi)
+
+        if math.isnan(CoV_all_IDI):
+            CoV_all_IDI = 0
+
+        Pi = CoV_all_IDI
+
+    else:
+        # Divide paired and non-paired IDIs before calculating specific CoV
+        idinonp = idi[idi >= (fsamp * 0.05)]
+        idip = idi[idi < (fsamp * 0.05)]
+
+        CoVIDI = np.std(idinonp) / np.average(idinonp)
+        if math.isnan(CoVIDI):
+            CoVIDI = 0
+
+        CoVpIDI = np.std(idip) / np.average(idip)
+        if math.isnan(CoVpIDI):
+            CoVpIDI = 0
+
+        # Calculate Pi
+        Pi = CoVIDI + CoVpIDI
 
     # Extract the source
     source = ipts.to_numpy()
+
+    # Use only absolute values from the source and normalise the source.
+    # This step is fundamental for the OTBiolab+ output.
+    source = np.abs(source)
+    source = (source - np.min(source)) / (np.max(source) - np.min(source))
 
     # Create clusters
     peak_cluster = source[source >= Pi]
@@ -355,7 +388,7 @@ def compute_pnr(ipts, mupulses, fsamp):
     noise_cluster = np.square(noise_cluster)
 
     # Calculate PNR
-    pnr = 10 * np.log10((peak_cluster.mean() / noise_cluster.mean()))
+    pnr = 10 * np.log10(np.mean(peak_cluster) / np.mean(noise_cluster))
 
     return pnr
 
@@ -384,11 +417,8 @@ def derivatives_beamforming(sig, row, teta):
 
     See also
     --------
-    # TODO
-
-    Examples
-    --------
-    # TODO
+    mle_cv_est : Estimate conduction velocity (CV) via maximum likelihood
+        estimation.
     """
 
     # TODO _NEXT_ implement with nympy arrays instead of pd.Series for
@@ -486,7 +516,7 @@ def derivatives_beamforming(sig, row, teta):
 
             term_de12 = term_de12 - np.real(s_fft * s_conj * s_exp * (s_last**2))
 
-    term_de12= (term_de12 * 2) / (m ** 2)
+    term_de12 = (term_de12 * 2) / (m ** 2)
 
     # Calculate the second term of the second derivative
     for i in range(m):
@@ -514,8 +544,6 @@ def derivatives_beamforming(sig, row, teta):
 
 def mle_cv_est(sig, initial_teta, ied, fsamp):
     """
-    Estimate CV via MLE.
-
     Estimate conduction velocity (CV) via maximum likelihood estimation.
 
     Parameters
@@ -539,16 +567,18 @@ def mle_cv_est(sig, initial_teta, ied, fsamp):
 
     See also
     --------
-    # TODO
+    find_teta : Find the starting value for teta.
+    MUcv_gui : Graphical user interface for the estimation of MUs conduction
+        velocity.
 
     Examples
     --------
-    # TODO
+    Refer to the examples of find_teta to obtain sig and initial_teta.
     """
 
     # Set index to 0
     sig = sig.reset_index(drop=True)
-    
+
     # Calculate ied in meters
     ied = ied / 1000
 
@@ -615,11 +645,62 @@ def find_teta(sig1, sig2, ied, fsamp):
 
     See also
     --------
-    # TODO
+    mle_cv_est : Estimate conduction velocity (CV) via maximum likelihood
+        estimation.
+    MUcv_gui : Graphical user interface for the estimation of MUs conduction
+        velocity.
 
     Examples
     --------
-    # TODO
+    Calculate the starting point for the maximum likelihood estimation.
+    In this example we calculate teta for the first MU on the channels 5,6,7
+    in the third column ("col3") of the double differential representation of
+    the MUAPs.
+    First, obtain the spike-triggered average of the double differential
+    derivation.
+
+    >>> import openhdemg as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    ... sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ...     dividebycolumn=True
+    ... )
+    >>> dd = emg.double_diff(sorted_rawemg=sorted_rawemg)
+    >>> sta = emg.sta(
+    ...     emgfile=emgfile,
+    ...     sorted_rawemg=sorted_rawemg,
+    ...     firings=[0,50],
+    ...     timewindow=50,
+    ... )
+
+    Second, prepare the signals for the estimation of teta.
+    The input (sig) provided for the estimation of teta contains a channel
+    each row and all the instants are contained in columns. For this reason,
+    the original content of the spike-triggered average has to be transposed.
+    After that, the 1D signals used to estimate teta are defined based on the
+    number of available channels.
+
+    >>> sig = sta[1]["col3"].transpose()
+    >>> sig = sig.iloc[[5,6,7], :]
+    >>> sig = sig.reset_index(drop=True)
+    >>> if len(sig) > 3:
+    >>>     sig1 = sig.iloc[1]
+    >>>     sig2 = sig.iloc[2]
+    >>> else:
+    >>>     sig1 = sig.iloc[0]
+    >>>     sig2 = sig.iloc[1]
+
+    Third, estimate teta.
+
+    >>> initial_teta = emg.find_teta(
+    ...     sig1=sig1,
+    ...     sig2=sig2,
+    ...     ied=emgfile["IED"],
+    ...     fsamp=emgfile["FSAMP"],
+    ... )
+    1
     """
 
     # Define an arbitrary range for possible CV values (slightly larger than
@@ -649,7 +730,7 @@ def find_teta(sig1, sig2, ied, fsamp):
         corrpos[idx-teta_min+1] = np.sum(sig1_tosum * sig2_tosum)
 
     pos = corrpos.argmax() + 1
-    # +1 is necessary to overcome base 0 and prevent beta from beeing 0
+    # +1 is necessary to overcome base 0 and prevent teta from beeing 0
 
     if pos > 1 and pos < len(delay):
         x = delay[pos-2 : pos+1]
