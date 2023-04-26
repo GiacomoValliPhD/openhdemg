@@ -5,3 +5,4 @@ dist/
 prove.py
 prove_storage.py
 CV.ipynb
+.DS_Store

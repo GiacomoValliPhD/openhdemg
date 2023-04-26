@@ -9,7 +9,16 @@ __all__ = [
     "info",
 ]
 
-from openhdemg.library.openfiles import *
+from openhdemg.library.openfiles import (
+    emg_from_otb,
+    emg_from_demuse,
+    refsig_from_otb,
+    emg_from_customcsv,
+    save_json_emgfile,
+    emg_from_json,
+    askopenfile,
+    asksavefile,
+)
 from openhdemg.library.analysis import *
 from openhdemg.library.plotemg import *
 from openhdemg.library.tools import *

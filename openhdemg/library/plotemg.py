@@ -6,9 +6,8 @@ the MUs properties or to save figures.
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-import copy
-from openhdemg.tools import compute_idr
-from openhdemg.mathtools import min_max_scaling
+from openhdemg.library.tools import compute_idr
+from openhdemg.library.mathtools import min_max_scaling
 
 
 def showgoodlayout(tight_layout=True, despined=False):

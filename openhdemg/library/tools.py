@@ -11,7 +11,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 import warnings
-from openhdemg.mathtools import compute_pnr, compute_sil # TODO check how to import this to avoid circular inputs
+from openhdemg.library.mathtools import compute_pnr, compute_sil
+# TODO check how to import this to avoid circular inputs
 
 
 def showselect(emgfile, title="", nclic=2):
