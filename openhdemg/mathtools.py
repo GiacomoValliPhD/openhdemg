@@ -90,6 +90,10 @@ def norm_xcorr(sig1, sig2):
     b = sig2 / norm_b
     c = np.correlate(a, b, mode='full')
 
+    # TODO verify: `numpy.correlate` may perform slowly in large arrays
+    # (i.e. n = 1e5) because it does not use the FFT to compute the
+    # convolution; in that case, `scipy.signal.correlate` might be preferable.
+
     return max(c)
 
 
@@ -421,8 +425,8 @@ def derivatives_beamforming(sig, row, teta):
         estimation.
     """
 
-    # TODO _NEXT_ implement with nympy arrays instead of pd.Series for
-    # performance.
+    # TODO implement with nympy arrays instead of pd.Series for performance.
+    # Check the use of pandas in row-major
 
     # Define some necessary variables
     total_rows = len(sig)

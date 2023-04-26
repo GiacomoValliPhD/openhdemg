@@ -20,10 +20,20 @@ OTBelectrodes_tuple = (
     "HD10MM0808",
 )
 """
-Electrodes name.
+Tuple containing the names of different recording electrodes.
 
 >>> OTBelectrodes_tuple
-('GR04MM1305', 'GR08MM1305', 'GR100ML1305', 'GR10MM0804', 'GR10MM0808', 'HD04MM1305', 'HD08MM1305', 'HD10MM0804', 'HD10MM0808')
+(
+    'GR04MM1305',
+    'GR08MM1305',
+    'GR100ML1305',
+    'GR10MM0804',
+    'GR10MM0808',
+    'HD04MM1305',
+    'HD08MM1305',
+    'HD10MM0804',
+    'HD10MM0808',
+)
 """
 
 OTBelectrodes_ied = {
@@ -38,10 +48,21 @@ OTBelectrodes_ied = {
     "HD10MM0808": 10,
 }
 """
-Interelectrode distance for each matrix.
+A dict containing information about the interelectrode distance for each
+matrix in OTBelectrodes_tuple.
 
 >>> OTBelectrodes_ied
-{'GR04MM1305': 4, 'GR08MM1305': 8, 'GR100ML1305': 2.5, 'GR10MM0804': 10, 'GR10MM0808': 10, 'HD04MM1305': 4, 'HD08MM1305': 8, 'HD10MM0804': 10, 'HD10MM0808': 10}
+{
+    'GR04MM1305': 4,
+    'GR08MM1305': 8,
+    'GR100ML1305': 2.5,
+    'GR10MM0804': 10,
+    'GR10MM0808': 10,
+    'HD04MM1305': 4,
+    'HD08MM1305': 8,
+    'HD10MM0804': 10,
+    'HD10MM0808': 10,
+}
 """
 
 OTBelectrodes_Nelectrodes = {
@@ -56,10 +77,21 @@ OTBelectrodes_Nelectrodes = {
     "HD10MM0808": 64,
 }
 """
-Number of electrodes for each matrix.
+A dict containing information about the number of electrodes for each
+matrix in OTBelectrodes_tuple.
 
 >>> OTBelectrodes_Nelectrodes
-{'GR04MM1305': 64, 'GR08MM1305': 64, 'GR100ML1305': 64, 'GR10MM0804': 32, 'GR10MM0808': 64, 'HD04MM1305': 64, 'HD08MM1305': 64, 'HD10MM0804': 32, 'HD10MM0808': 64}
+{
+    'GR04MM1305': 64,
+    'GR08MM1305': 64,
+    'GR100ML1305': 64,
+    'GR10MM0804': 32,
+    'GR10MM0808': 64,
+    'HD04MM1305': 64,
+    'HD08MM1305': 64,
+    'HD10MM0804': 32,
+    'HD10MM0808': 64,
+}
 """
 
 
@@ -76,11 +108,11 @@ def sort_rawemg(
     """
     Sort RAW_SIGNAL based on matrix type and orientation.
 
-    Built-in sorting functions have been implemented for the matrices:
-        Code       (Orientation)
-        GR08MM1305(0, 180),
-        GR04MM1305(0, 180),
-        GR10MM0808(0, 180).
+    To date, built-in sorting functions have been implemented for the matrices:
+        Code        (Orientation)
+        GR08MM1305  (0, 180),
+        GR04MM1305  (0, 180),
+        GR10MM0808  (0, 180).
 
     Parameters
     ----------
@@ -90,7 +122,8 @@ def sort_rawemg(
         The code of the matrix used.
     orientation : int {0, 180}, default 180
         Orientation in degree of the matrix (same as in OTBiolab).
-        E.g. 180 corresponds to the matrix connection toward the user.
+        E.g. 180 corresponds to the matrix connection toward the researcher or
+        the ground (depending on the limb).
 
     Returns
     -------
@@ -115,7 +148,12 @@ def sort_rawemg(
 
     >>> import openhdemg as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile=emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ...     dividebycolumn=True,
+    ... )
     >>> sorted_rawemg["col0"]
             0          1          2 ...        10         11         12
     0     NaN -11.189778   3.560384 ... -2.034505  -3.051758  -0.508626
@@ -133,7 +171,12 @@ def sort_rawemg(
     Sort emgfile RAW_SIGNAL without dividing it by columns.
 
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180, dividebycolumn=False)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ...     dividebycolumn=False,
+    ... )
     >>> sorted_rawemg
            0          1          2  ...        62         63         64
     0     NaN -11.189778   3.560384 ... -5.086263  -9.663899   2.034505
@@ -268,7 +311,7 @@ def sort_rawemg(
                 ]
 
         else:
-            pass # TODO_NEXT_ add other electrodes, and orientations?
+            pass  # TODO_NEXT_ add other electrodes, and orientations?
 
         # Once the order to sort channels has been retrieved,
         # Sort the channels based on pre-specified order and reset columns
@@ -288,24 +331,24 @@ def sort_rawemg(
         if code in ["GR08MM1305", "GR04MM1305"]:
             if orientation in [0, 180]:
                 sorted_rawemg = {
-                            "col0":sorted_rawemg.loc[:,0:12],
-                            "col1":sorted_rawemg.loc[:,13:25],
-                            "col2":sorted_rawemg.loc[:,26:38],
-                            "col3":sorted_rawemg.loc[:,39:51],
-                            "col4":sorted_rawemg.loc[:,52:64]
+                            "col0": sorted_rawemg.loc[:, 0:12],
+                            "col1": sorted_rawemg.loc[:, 13:25],
+                            "col2": sorted_rawemg.loc[:, 26:38],
+                            "col3": sorted_rawemg.loc[:, 39:51],
+                            "col4": sorted_rawemg.loc[:, 52:64]
                         }
 
         elif code == "GR10MM0808":
             if orientation in [0, 180]:
                 sorted_rawemg = {
-                            "col0":sorted_rawemg.loc[:,0:7],
-                            "col1":sorted_rawemg.loc[:,8:15],
-                            "col2":sorted_rawemg.loc[:,16:23],
-                            "col3":sorted_rawemg.loc[:,24:31],
-                            "col4":sorted_rawemg.loc[:,32:39],
-                            "col5":sorted_rawemg.loc[:,40:47],
-                            "col6":sorted_rawemg.loc[:,48:55],
-                            "col7":sorted_rawemg.loc[:,56:63]
+                            "col0": sorted_rawemg.loc[:, 0:7],
+                            "col1": sorted_rawemg.loc[:, 8:15],
+                            "col2": sorted_rawemg.loc[:, 16:23],
+                            "col3": sorted_rawemg.loc[:, 24:31],
+                            "col4": sorted_rawemg.loc[:, 32:39],
+                            "col5": sorted_rawemg.loc[:, 40:47],
+                            "col6": sorted_rawemg.loc[:, 48:55],
+                            "col7": sorted_rawemg.loc[:, 56:63]
                         }
 
         return sorted_rawemg

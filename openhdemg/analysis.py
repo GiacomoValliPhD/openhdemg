@@ -1,5 +1,6 @@
 """
-This module contains all the functions used to analyse the MUs properties.
+This module contains all the functions used to analyse the MUs properties if
+not involving the MUs action potential shape.
 """
 
 import pandas as pd
@@ -63,8 +64,11 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvc=0):
 
     >>> import openhdemg as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> mus_thresholds = emg.compute_thresholds(emgfile=emgfile, event_="rt_dert")
-    >>> mus_thresholds    
+    >>> mus_thresholds = emg.compute_thresholds(
+    ...     emgfile=emgfile,
+    ...     event_="rt_dert",
+    ... )
+    >>> mus_thresholds
            abs_RT    abs_DERT     rel_RT   rel_DERT
     0  160.148294  137.682351  18.665302  16.046894
     1   39.138554   49.860936   4.561603   5.811298
@@ -76,7 +80,11 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvc=0):
 
     >>> import openhdemg as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> mus_thresholds = emg.compute_thresholds(emgfile=emgfile, event_="rt", type_="abs")
+    >>> mus_thresholds = emg.compute_thresholds(
+    ...     emgfile=emgfile,
+    ...     event_="rt",
+    ...     type_="abs",
+    ... )
     >>> mus_thresholds
            abs_RT
     0  160.148294
@@ -91,12 +99,12 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvc=0):
     REF_SIGNAL = emgfile["REF_SIGNAL"]
 
     # Check that all the inputs are correct
-    if not event_ in ["rt_dert", "rt", "dert"]:
+    if event_ not in ["rt_dert", "rt", "dert"]:
         raise ValueError(
             f"event_ must be one of : 'rt_dert', 'rt', 'dert'. {event_} was passed instead."
         )
 
-    if not type_ in ["abs_rel", "rel", "abs"]:
+    if type_ not in ["abs_rel", "rel", "abs"]:
         raise ValueError(
             f"event_ must be one of : 'abs_rel', 'rel', 'abs'. {event_} was passed instead."
         )
@@ -115,12 +123,12 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvc=0):
     # Create an object to append the results
     toappend = []
     # Loop all the MUs
-    for i in range(NUMBER_OF_MUS):
+    for mu in range(NUMBER_OF_MUS):
         # Manage the exception of empty MUs
-        if len(MUPULSES[i]) > 0:
+        if len(MUPULSES[mu]) > 0:
             # Detect the first and last firing of the MU and
-            mup_rec = MUPULSES[i][0]
-            mup_derec = MUPULSES[i][-1]
+            mup_rec = MUPULSES[mu][0]
+            mup_derec = MUPULSES[mu][-1]
             # Calculate absolute and relative RT and DERT if requested
             abs_RT = ((float(REF_SIGNAL.loc[mup_rec]) * float(mvc)) / 100)
             abs_DERT = ((float(REF_SIGNAL.loc[mup_derec]) * float(mvc)) / 100)
@@ -194,7 +202,8 @@ def compute_dr(
         When to calculate the DR.
 
             ``rec_derec_steady``
-                DR is calculated at recruitment, derecruitment and during the steady-state phase.
+                DR is calculated at recruitment, derecruitment and during the
+                steady-state phase.
             ``rec``
                 DR is calculated at recruitment.
             ``derec``
@@ -258,7 +267,12 @@ def compute_dr(
 
     >>> import openhdemg as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> mus_dr = emg.compute_dr(emgfile=emgfile, start_steady=20000, end_steady=50000, event_="steady")
+    >>> mus_dr = emg.compute_dr(
+    ...     emgfile=emgfile,
+    ...     start_steady=20000,
+    ...     end_steady=50000,
+    ...     event_="steady",
+    ... )
     >>> mus_dr
        DR_start_steady  DR_end_steady  DR_all_steady     DR_all
     0         7.476697       6.271750       6.794170   6.814342
@@ -269,7 +283,7 @@ def compute_dr(
 
     # Check that all the inputs are correct
     errormessage = f"event_ must be one of the following strings: rec, derec, rec_derec, steady, rec_derec_steady. {event_} was passed instead."
-    if not event_ in [
+    if event_ not in [
         "rec",
         "derec",
         "rec_derec",
@@ -277,7 +291,7 @@ def compute_dr(
         "rec_derec_steady",
     ]:
         raise ValueError(errormessage)
-    
+
     if not isinstance(n_firings_RecDerec, int):
         raise TypeError(
             f"n_firings_RecDerec must be an integer. {type(n_firings_RecDerec)} was passed instead."
@@ -293,73 +307,94 @@ def compute_dr(
     if event_ == "rec_derec_steady" or event_ == "steady":
         if start_steady < 0 and end_steady < 0:
             start_steady, end_steady = showselect(
-                emgfile, title="Select the start/end of the steady-state then press enter"
+                emgfile,
+                title="Select the start/end of the steady-state then press enter",
             )
-    
+        elif start_steady < 0 or end_steady < 0:
+            start_steady, end_steady = showselect(
+                emgfile,
+                title="Select the start/end of the steady-state then press enter",
+            )
+        else:
+            pass
+
     # Create an object to append the results
     toappend_dr = []
-    for i in range(emgfile["NUMBER_OF_MUS"]):  # Loop all the MUs
-        
+    for mu in range(emgfile["NUMBER_OF_MUS"]):  # Loop all the MUs
         # DR rec/derec
-        if len(idr[i]["idr"]) >= n_firings_RecDerec:
-            selected_idr = idr[i]["idr"].iloc[0:n_firings_RecDerec]
+        if len(idr[mu]["idr"]) >= n_firings_RecDerec:
+            selected_idr = idr[mu]["idr"].iloc[0:n_firings_RecDerec]
             drrec = selected_idr.mean()
 
-            length = len(idr[i]["idr"])
-            selected_idr = idr[i]["idr"].iloc[length - n_firings_RecDerec + 1 : length]  # +1 because len() counts position 0
+            length = len(idr[mu]["idr"])
+            selected_idr = idr[mu]["idr"].iloc[
+                length - n_firings_RecDerec + 1: length
+            ]
+            # +1 because len() counts position 0
             drderec = selected_idr.mean()
 
         else:
             drrec = np.nan
             drderec = np.nan
 
-            warnings.warn("Calculation of DR at rec/derec failed, not enough firings")
+            warnings.warn(
+                "Calculation of DR at rec/derec failed, not enough firings"
+            )
 
-        # Reset indexes of previous cycle
+        # Set indexes for the steady-state firings
         index_startsteady = np.nan
         index_endsteady = np.nan
 
-        # Find indexes of start and end steady
-        for count, pulse in enumerate(idr[i]["mupulses"]):
+        # Find nex indexes of start and end steady if possible
+        for pos, pulse in enumerate(idr[mu]["mupulses"]):
             if pulse >= start_steady and pulse <= end_steady:
-                index_startsteady = count
+                index_startsteady = pos
                 break
 
         if not math.isnan(index_startsteady):
-            for count, pulse in enumerate(idr[i]["mupulses"]):
+            for pos, pulse in enumerate(idr[mu]["mupulses"]):
                 if pulse >= end_steady:
-                    index_endsteady = count
+                    index_endsteady = pos
                     break
 
                 else:
-                    # Account for MUs that stop firing before the end of the steady-state phase
-                    index_endsteady = count
+                    # Account for MUs that stop firing before the end of the
+                    # steady-state phase
+                    index_endsteady = pos
 
-        # But there can still be uncaught exceptions so use try-except
-        
-        # DR startsteady
-        try:
-            selected_idr = idr[i]["idr"].loc[index_startsteady + 1 : index_startsteady + n_firings_steady]  # +1 because to work only on the steady state
+        # Calculate DR at the steady-state phase if there is a steady-state
+        c1 = math.isnan(index_startsteady)
+        c2 = math.isnan(index_endsteady)
+
+        if not c1 and not c2:
+            # # DR drstartsteady
+            # Use +1 because to work only on the steady state (here and after)
+            # because the idr is calculated on the previous firing (on the
+            # ramp).
+            selected_idr = idr[mu]["idr"].loc[
+                index_startsteady + 1: index_startsteady + n_firings_steady
+            ]
             drstartsteady = selected_idr.mean()
-        except:
-            drstartsteady = np.nan
 
-        # DR endsteady
-        try:
-            selected_idr = idr[i]["idr"].loc[index_endsteady + 1 - n_firings_steady : index_endsteady]  # +1 because to work only on the steady state
+            # DR endsteady
+            selected_idr = idr[mu]["idr"].loc[
+                index_endsteady + 1 - n_firings_steady: index_endsteady
+            ]
             drendsteady = selected_idr.mean()
-        except:
-            drendsteady = np.nan
 
-        # DR steady
-        try:
-            selected_idr = idr[i]["idr"].loc[index_startsteady + 1 : index_endsteady]  # +1 because to work only on the steady state
+            # DR steady
+            selected_idr = idr[mu]["idr"].loc[
+                index_startsteady + 1: index_endsteady
+            ]
             drsteady = selected_idr.mean()
-        except:
+
+        else:
+            drstartsteady = np.nan
+            drendsteady = np.nan
             drsteady = np.nan
 
         # DR all contraction
-        selected_idr = idr[i]["idr"]
+        selected_idr = idr[mu]["idr"]
         drall = selected_idr.mean()
 
         if event_ == "rec":
@@ -410,7 +445,7 @@ def basic_mus_properties(
     calculates:
     the absolute/relative recruitment/derecruitment thresholds,
     the discharge rate at recruitment, derecruitment, during the steady-state
-    phase and the entire contraction,
+    phase and during the entire contraction,
     the coefficient of variation of interspike interval,
     the coefficient of variation of force signal.
 
@@ -466,7 +501,12 @@ def basic_mus_properties(
 
     >>> import openhdemg as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> df = emg.basic_mus_properties(emgfile=emgfile, start_steady=20000, end_steady=50000, mvc=786)
+    >>> df = emg.basic_mus_properties(
+    ...     emgfile=emgfile,
+    ...     start_steady=20000,
+    ...     end_steady=50000,
+    ...     mvc=786,
+    ... )
     >>> df
          MVC  MU_number      abs_RT    abs_DERT     rel_RT   rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady     DR_all  COVisi_steady  COVisi_all  COV_steady
     0  786.0          1  146.709276  126.128587  18.665302  16.046894  5.701081  4.662196         7.476697       6.271750       6.794170   6.814342      11.066966   16.309681    1.431752
@@ -478,11 +518,11 @@ def basic_mus_properties(
     # Check if we need to select the steady-state phase
     if start_steady < 0 and end_steady < 0:
         start_steady, end_steady = showselect(
-            emgfile, title="Select start/end area of the steady-state then press enter"
+            emgfile=emgfile,
+            title="Select start/end area of the steady-state then press enter",
         )
 
     # Collect the information to export
-    #
     # First: create a dataframe that contains all the output
     exportable_df = []
 
@@ -490,7 +530,9 @@ def basic_mus_properties(
     if mvc == 0:
         # Ask the user to input MVC
         mvc = int(
-            input("--------------------------------\nEnter MVC value in newton: ")
+            input(
+                "--------------------------------\nEnter MVC value in newton: "
+            )
         )
 
     exportable_df.append({"MVC": mvc})
@@ -518,27 +560,33 @@ def basic_mus_properties(
     exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
     # Calculate avrage PNR
-    toappend = pd.DataFrame([{"avg_PNR": np.average(exportable_df["PNR"])}])
+    # dropna to avoid nan average.
+    avg_pnr = exportable_df["PNR"].mean()
+    toappend = pd.DataFrame([{"avg_PNR": avg_pnr}])
     exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
     # Calculate SIL
-    # Repeat the task for every new column to fill and concatenate
     toappend = []
     for mu in range(emgfile["NUMBER_OF_MUS"]):
-        sil = compute_sil(ipts=emgfile["IPTS"][mu], mupulses=emgfile["MUPULSES"][mu])
+        sil = compute_sil(
+            ipts=emgfile["IPTS"][mu],
+            mupulses=emgfile["MUPULSES"][mu],
+        )
         toappend.append({"SIL": sil})
     toappend = pd.DataFrame(toappend)
     exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
     # Calculate avrage SIL
-    toappend = pd.DataFrame([{"avg_SIL": np.average(exportable_df["SIL"])}])
+    avg_sil = exportable_df["SIL"].mean()
+    toappend = pd.DataFrame([{"avg_SIL": avg_sil}])
     exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
     # Calculate RT and DERT
     mus_thresholds = compute_thresholds(emgfile=emgfile, mvc=mvc)
     exportable_df = pd.concat([exportable_df, mus_thresholds], axis=1)
 
-    # Calculate DR at recruitment, derecruitment, all, start and end steady-state and all contraction
+    # Calculate DR at recruitment, derecruitment, all, start, end of the
+    # steady-state and on all the contraction.
     mus_dr = compute_dr(
         emgfile=emgfile,
         n_firings_RecDerec=n_firings_RecDerec,
@@ -560,7 +608,9 @@ def basic_mus_properties(
 
     # Calculate COVsteady
     covsteady = compute_covsteady(
-        emgfile, start_steady=start_steady, end_steady=end_steady
+        emgfile=emgfile,
+        start_steady=start_steady,
+        end_steady=end_steady,
     )
     covsteady = pd.DataFrame([{"COV_steady": covsteady}])
     exportable_df = pd.concat([exportable_df, covsteady], axis=1)
@@ -597,7 +647,8 @@ def compute_covisi(
         When to calculate the COVisi.
 
             ``rec_derec_steady``
-                covisi is calculated at recruitment, derecruitment and during the steady-state phase.
+                covisi is calculated at recruitment, derecruitment and during
+                the steady-state phase.
             ``rec``
                 covisi is calculated at recruitment.
             ``derec``
@@ -648,7 +699,12 @@ def compute_covisi(
 
     >>> import openhdemg as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> df = emg.compute_covisi(emgfile=emgfile, event_="rec_derec", start_steady=20000, end_steady=50000)
+    >>> df = emg.compute_covisi(
+    ...     emgfile=emgfile,
+    ...     event_="rec_derec",
+    ...     start_steady=20000,
+    ...     end_steady=50000,
+    ... )
     >>> df
        COVisi_rec  COVisi_derec  COVisi_all
     0    8.600651     24.007405   16.309681
@@ -668,7 +724,7 @@ def compute_covisi(
 
     # Check that all the inputs are correct
     errormessage = f"event_ must be one of the following strings: rec, derec, rec_derec, steady, rec_derec_steady. {event_} was passed instead."
-    if not event_ in [
+    if event_ not in [
         "rec",
         "derec",
         "rec_derec",
@@ -676,47 +732,51 @@ def compute_covisi(
         "rec_derec_steady",
     ]:
         raise ValueError(errormessage)
-    
+
     if not isinstance(n_firings_RecDerec, int):
         raise TypeError(
             f"n_firings_RecDerec must be an integer. {type(n_firings_RecDerec)} was passed instead."
         )
 
-    idr = compute_idr(emgfile=emgfile)  # We use the idr to calculate the COVisi
+    # We use the idr pd.DataFrame to calculate the COVisi
+    idr = compute_idr(emgfile=emgfile)
 
     # Check if we need to analyse all the MUs or a single MU
     if single_mu_number < 0:
-        # Check if we need to manually select the area for the steady-state phase
+        # Check if we need to manually select the area for the steady-state
+        # phase.
         if event_ == "rec_derec_steady" or event_ == "steady":
             if start_steady < 0 and end_steady < 0:
                 start_steady, end_steady = showselect(
-                    emgfile,
+                    emgfile=emgfile,
                     title="Select the start/end area to consider then press enter",
                 )
 
         # Create an object to append the results
         toappend_covisi = []
-        for i in range(emgfile["NUMBER_OF_MUS"]):  # Loop all the MUs
+        for mu in range(emgfile["NUMBER_OF_MUS"]):  # Loop all the MUs
 
             # COVisi rec
-            selected_idr = idr[i]["diff_mupulses"].iloc[0:n_firings_RecDerec]
+            selected_idr = idr[mu]["diff_mupulses"].iloc[0: n_firings_RecDerec]
             covisirec = (selected_idr.std() / selected_idr.mean()) * 100
 
             # COVisi derec
-            length = len(idr[i]["diff_mupulses"])
-            selected_idr = idr[i]["diff_mupulses"].iloc[
-                length - n_firings_RecDerec + 1 : length
+            length = len(idr[mu]["diff_mupulses"])
+            selected_idr = idr[mu]["diff_mupulses"].iloc[
+                length - n_firings_RecDerec + 1: length
             ]  # +1 because len() counts position 0
             covisiderec = (selected_idr.std() / selected_idr.mean()) * 100
 
             # COVisi all steady
-            if (event_ == "rec_derec_steady" or event_ == "steady"):  # Check if we need the steady-state phase
-                idr_indexed = idr[i].set_index("mupulses")
-                selected_idr = idr_indexed["diff_mupulses"].loc[start_steady:end_steady]
+            if (event_ == "rec_derec_steady" or event_ == "steady"):
+                idr_indexed = idr[mu].set_index("mupulses")
+                selected_idr = idr_indexed["diff_mupulses"].loc[
+                    start_steady: end_steady
+                ]
                 covisisteady = (selected_idr.std() / selected_idr.mean()) * 100
 
             # COVisi all contraction
-            selected_idr = idr[i]["diff_mupulses"]
+            selected_idr = idr[mu]["diff_mupulses"]
             covisiall = (selected_idr.std() / selected_idr.mean()) * 100
 
             if event_ == "rec":
@@ -794,7 +854,8 @@ def compute_drvariability(
         When to calculate the DR variability.
 
             ``rec_derec_steady``
-                DR variability is calculated at recruitment, derecruitment and during the steady-state phase.
+                DR variability is calculated at recruitment, derecruitment and
+                during the steady-state phase.
             ``rec``
                 DR variability is calculated at recruitment.
             ``derec``
@@ -842,7 +903,12 @@ def compute_drvariability(
 
     >>> import openhdemg as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> df = emg.compute_covisi(emgfile=emgfile, event_="rec_derec", start_steady=20000, end_steady=50000)
+    >>> df = emg.compute_covisi(
+    ...     emgfile=emgfile,
+    ...     event_="rec_derec",
+    ...     start_steady=20000,
+    ...     end_steady=50000,
+    ... )
     >>> df
        DRvar_rec  DRvar_derec  DRvar_all
     0   8.560971    21.662783  13.937779
@@ -853,7 +919,7 @@ def compute_drvariability(
 
     # Check that all the inputs are correct
     errormessage = f"event_ must be one of the following strings: rec, derec, rec_derec, steady, rec_derec_steady. {event_} was passed instead."
-    if not event_ in [
+    if event_ not in [
         "rec",
         "derec",
         "rec_derec",
@@ -861,45 +927,46 @@ def compute_drvariability(
         "rec_derec_steady",
     ]:
         raise ValueError(errormessage)
-    
-    
+
     if not isinstance(n_firings_RecDerec, int):
         raise type(
             f"n_firings_RecDerec must be an integer. {type(n_firings_RecDerec)} was passed instead."
         )
 
-    idr = compute_idr(emgfile=emgfile)  # We use the idr to calculate the COVisi
+    # We use the idr pd.DataFrame to calculate the COVisi
+    idr = compute_idr(emgfile=emgfile)
 
     # Check if we need to manually select the area for the steady-state phase
     if event_ == "rec_derec_steady" or event_ == "steady":
         if start_steady < 0 and end_steady < 0:
             start_steady, end_steady = showselect(
-                emgfile, title="Select the start/end area to consider then press enter"
+                emgfile=emgfile,
+                title="Select the start/end area to consider then press enter",
             )
 
     # Create an object to append the results
     toappend_drvariability = []
-    for i in range(emgfile["NUMBER_OF_MUS"]):  # Loop all the MUs
+    for mu in range(emgfile["NUMBER_OF_MUS"]):  # Loop all the MUs
 
         # COVisi rec
-        selected_idr = idr[i]["idr"].iloc[0:n_firings_RecDerec]
+        selected_idr = idr[mu]["idr"].iloc[0:n_firings_RecDerec]
         drvariabilityrec = (selected_idr.std() / selected_idr.mean()) * 100
 
         # COVisi derec
-        length = len(idr[i]["idr"])
-        selected_idr = idr[i]["idr"].iloc[
-            length - n_firings_RecDerec + 1 : length
+        length = len(idr[mu]["idr"])
+        selected_idr = idr[mu]["idr"].iloc[
+            length - n_firings_RecDerec + 1: length
         ]  # +1 because len() counts position 0
         drvariabilityderec = (selected_idr.std() / selected_idr.mean()) * 100
 
         # COVisi all steady
-        if (event_ == "rec_derec_steady" or event_ == "steady"):  # Check if we need the steady-state phase
-            idr_indexed = idr[i].set_index("mupulses")
-            selected_idr = idr_indexed["idr"].loc[start_steady:end_steady]
+        if (event_ == "rec_derec_steady" or event_ == "steady"):
+            idr_indexed = idr[mu].set_index("mupulses")
+            selected_idr = idr_indexed["idr"].loc[start_steady: end_steady]
             drvariabilitysteady = (selected_idr.std() / selected_idr.mean()) * 100
 
         # COVisi all contraction
-        selected_idr = idr[i]["idr"]
+        selected_idr = idr[mu]["idr"]
         drvariabilityall = (selected_idr.std() / selected_idr.mean()) * 100
 
         if event_ == "rec":
@@ -908,7 +975,10 @@ def compute_drvariability(
             )
         elif event_ == "derec":
             toappend_drvariability.append(
-                {"DRvar_derec": drvariabilityderec, "DRvar_all": drvariabilityall}
+                {
+                    "DRvar_derec": drvariabilityderec,
+                    "DRvar_all": drvariabilityall,
+                }
             )
         elif event_ == "rec_derec":
             toappend_drvariability.append(
@@ -920,7 +990,10 @@ def compute_drvariability(
             )
         elif event_ == "steady":
             toappend_drvariability.append(
-                {"DRvar_steady": drvariabilitysteady, "DRvar_all": drvariabilityall}
+                {
+                    "DRvar_steady": drvariabilitysteady,
+                    "DRvar_all": drvariabilityall,
+                }
             )
         elif event_ == "rec_derec_steady":
             toappend_drvariability.append(

@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 import warnings
-from openhdemg.mathtools import compute_pnr, compute_sil # TODO check how to import this
+from openhdemg.mathtools import compute_pnr, compute_sil # TODO check how to import this to avoid circular inputs
 
 
 def showselect(emgfile, title="", nclic=2):
@@ -537,6 +537,7 @@ def sort_mus(emgfile):
     ]
     df.sort_values(by="firstpulses", inplace=True)
     sorting_order = list(df.index)
+    print(sorting_order)
 
     # Sort PNR (single column)
     for origpos, newpos in enumerate(sorting_order):
