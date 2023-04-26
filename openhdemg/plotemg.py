@@ -938,7 +938,6 @@ def plot_idr(
 
 
 # TODO_NEXT_kwargs for flexible plotting design (all the plots)
-# TODO add align option, non here? pass already aligned?
 def plot_muaps(
     sta_dict,
     title="MUAPs from STA",

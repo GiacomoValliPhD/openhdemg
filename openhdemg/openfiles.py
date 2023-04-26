@@ -47,7 +47,7 @@ Function's scope
 Notes
 -----
 Once opened, the file is returned as a dict with keys:
-    "SOURCE" : source of the file (i.e., "DEMUSE", "OTB")
+    "SOURCE" : source of the file (i.e., "DEMUSE", "OTB", "custom")
     "RAW_SIGNAL" : the raw EMG signal.
     "REF_SIGNAL" : the reference signal
     "PNR" : pulse to noise ratio
@@ -116,7 +116,7 @@ def emg_from_demuse(filepath):
     The returned file is called ``emgfile`` for convention.
 
     The demuse file contains 65 raw EMG channels (1 empty) instead of 64
-    (as for OTB matrix standards).
+    (as for OTB matrix standards) in the case of a 64 electrodes matrix.
 
     Structure of the emgfile:
         emgfile = {
@@ -160,7 +160,8 @@ def emg_from_demuse(filepath):
     # Collect the REF_SIGNAL
     if "ref_signal" in mat_file.keys():
 
-        # Catch the case for float values that cannot be directly added to a dataframe
+        # Catch the case for float values that cannot be directly added to a
+        # dataframe
         if isinstance(mat_file["ref_signal"], float):
             res = {0: mat_file["ref_signal"]}
             REF_SIGNAL = pd.DataFrame(res, index=[0])
@@ -244,19 +245,19 @@ def emg_from_demuse(filepath):
         # Calculate the PNR
         to_append = []
         for mu in range(NUMBER_OF_MUS):
-            res = compute_pnr(
+            pnr = compute_pnr(
                 ipts=IPTS[mu],
                 mupulses=MUPULSES[mu],
                 fsamp=FSAMP,
             )
-            to_append.append(res)
+            to_append.append(pnr)
         PNR = pd.DataFrame(to_append)
 
         # Calculate the SIL
         to_append = []
         for mu in range(NUMBER_OF_MUS):
-            res = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
-            to_append.append(res)
+            sil = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
+            to_append.append(sil)
         SIL = pd.DataFrame(to_append)
 
     else:
@@ -481,6 +482,7 @@ def get_otb_rawsignal(df):
     # Drop all the known columns different from the raw EMG signal.
     # This is a workaround since the OTBiolab+ software does not export a
     # unique name for the raw EMG signal.
+    # FIXME more extensive pattern could prevent errors if the user exports unexpected elements
     pattern = "Source for decomposition|Decomposition of|acquired data|performed path"
     emg_df = df[df.columns.drop(list(df.filter(regex=pattern)))]
 
@@ -513,9 +515,9 @@ def get_otb_rawsignal(df):
 
 def emg_from_otb(
     filepath, ext_factor=8, refsig=[True, "fullsampled"], version="1.5.8.0"
-):  # TODO test with a single MU
+):
     """
-    Import the .mat file exportable by OTBiolab+.   
+    Import the .mat file exportable by OTBiolab+.
 
     This function is used to import the .mat file exportable by the OTBiolab+
     software as a dictionary of Python objects (mainly pandas dataframes).
@@ -569,8 +571,8 @@ def emg_from_otb(
 
     The input .mat file exported from the OTBiolab+ software should have a
     specific content:
-    - refsig signal is optional but, if present, there should be both the
-        fullsampled and the subsampled version (in OTBioLab+ the "performed
+    - refsig signal is optional but, if present, there should be the
+        fullsampled or the subsampled version (in OTBioLab+ the "performed
         path" refers to the subsampled signal, the "acquired data" to the
         fullsampled signal), REF_SIGNAL is expected to be expressed as % of
         the MVC (but not compulsory).
@@ -628,7 +630,15 @@ def emg_from_otb(
     if version not in valid_versions:
         raise ValueError(f"Specified version is not valid. Use one of:\n{valid_versions}")
 
-    if version in ["1.5.3.0", "1.5.4.0", "1.5.5.0", "1.5.6.0", "1.5.7.2", "1.5.7.3", "1.5.8.0"]:
+    if version in [
+        "1.5.3.0",
+        "1.5.4.0",
+        "1.5.5.0",
+        "1.5.6.0",
+        "1.5.7.2",
+        "1.5.7.3",
+        "1.5.8.0",
+    ]:
         # Simplify (rename) columns description and extract all the parameters
         # in a pd.DataFrame
         df = pd.DataFrame(mat_file["Data"], columns=mat_file["Description"])
@@ -657,17 +667,17 @@ def emg_from_otb(
             # Calculate the PNR
             to_append = []
             for mu in range(NUMBER_OF_MUS):
-                res = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu], fsamp=FSAMP)
-                to_append.append(res)
+                pnr = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu], fsamp=FSAMP)
+                to_append.append(pnr)
             PNR = pd.DataFrame(to_append)
 
             # Calculate the SIL
             to_append = []
             for mu in range(NUMBER_OF_MUS):
-                res = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
-                to_append.append(res)
+                sil = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
+                to_append.append(sil)
             SIL = pd.DataFrame(to_append)
-        
+
         else:
             PNR = np.nan
             SIL = np.nan
@@ -741,7 +751,7 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
     The returned file is called ``emg_refsig`` for convention.
 
     The input .mat file exported from the OTBiolab+ software should contain:
-    - refsig signal: there should be both the fullsampled and the subsampled
+    - refsig signal: there should be the fullsampled or the subsampled
         version (in OTBioLab+ the "performed path" refers to the subsampled
         signal, the "acquired data" to the fullsampled signal), REF_SIGNAL is
         expected to be expressed as % of the MVC (but not compulsory).
@@ -781,9 +791,19 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
         "1.5.8.0",
     ]
     if version not in valid_versions:
-        raise ValueError(f"Specified version is not valid. Use one of:\n{valid_versions}")
+        raise ValueError(
+            f"Specified version is not valid. Use one of:\n{valid_versions}"
+        )
 
-    if version in ["1.5.3.0", "1.5.4.0", "1.5.5.0", "1.5.6.0", "1.5.7.2", "1.5.7.3", "1.5.8.0"]:
+    if version in [
+        "1.5.3.0",
+        "1.5.4.0",
+        "1.5.5.0",
+        "1.5.6.0",
+        "1.5.7.2",
+        "1.5.7.3",
+        "1.5.8.0",
+    ]:
         # Simplify (rename) columns description and extract all the parameters
         # in a pd.DataFrame
         df = pd.DataFrame(mat_file["Data"], columns=mat_file["Description"])
@@ -953,7 +973,9 @@ def emg_from_customcsv(
     # Get BINARY_MUS_FIRING
     BINARY_MUS_FIRING = csv.filter(regex=binary_mus_firing, axis=1)
     if not BINARY_MUS_FIRING.empty:
-        BINARY_MUS_FIRING.columns = [i for i in range(len(BINARY_MUS_FIRING.columns))]
+        BINARY_MUS_FIRING.columns = [
+            i for i in range(len(BINARY_MUS_FIRING.columns))
+        ]
     else:
         BINARY_MUS_FIRING = np.nan
 
@@ -968,15 +990,19 @@ def emg_from_customcsv(
         # Calculate the PNR
         to_append = []
         for mu in range(NUMBER_OF_MUS):
-            res = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu], fsamp=fsamp)
-            to_append.append(res)
+            pnr = compute_pnr(
+                ipts=IPTS[mu],
+                mupulses=MUPULSES[mu],
+                fsamp=fsamp,
+            )
+            to_append.append(pnr)
         PNR = pd.DataFrame(to_append)
 
         # Calculate the SIL
         to_append = []
         for mu in range(NUMBER_OF_MUS):
-            res = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
-            to_append.append(res)
+            sil = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
+            to_append.append(sil)
         SIL = pd.DataFrame(to_append)
 
     else:
@@ -1179,7 +1205,8 @@ def emg_from_json(filepath):
 
     Notes
     -----
-    The returned file is called ``emgfile`` for convention (or ``emg_refsig`` if SOURCE = "OTB_refsig").
+    The returned file is called ``emgfile`` for convention
+    (or ``emg_refsig`` if SOURCE = "OTB_refsig").
 
     For an extended explanation of the imported emgfile use:
     >>> import openhdemg as emg
@@ -1323,7 +1350,7 @@ def emg_from_json(filepath):
 # ---------------------------------------------------------------------
 # Function to open files from a GUI in a single line of code.
 
-def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):   
+def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
     """
     Select and open files with a GUI.
 
@@ -1365,21 +1392,22 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
             "1.5.7.3",
             "1.5.8.0",
         If your specific version is not available in the tested versions,
-        trying with the closer one usually works, but please double check the results.
-        Ignore if loading other files.
+        trying with the closer one usually works, but please double check the
+        results. Ignore if loading other files.
     custom_ref_signal : str, default 'REF_SIGNAL'
-        Label of the column(s) containing the reference signal of the custom file.
+        Label of the column(s) containing the reference signal of the custom
+        file.
         This and the following arguments are needed only for custom files.
         Ignore if loading other files.
     custom_raw_signal : str, default 'RAW_SIGNAL'
-        Label of the column(s) containing the raw emg signal of the custom file.
-        Ignore if loading other files.
+        Label of the column(s) containing the raw emg signal of the custom
+        file. Ignore if loading other files.
     custom_ipts : str, default 'IPTS'
         Label of the column(s) containing the pulse train of the custom file.
         Ignore if loading other files.
     custom_mupulses : str, default 'MUPULSES'
-        Label of the column(s) containing the times of firing of the custom file.
-        Ignore if loading other files.
+        Label of the column(s) containing the times of firing of the custom
+        file. Ignore if loading other files.
     custom_binary_mus_firing : str, default 'BINARY_MUS_FIRING'
         Label of the column(s) containing the binary representation
         of the MUs firings of the custom file.
@@ -1516,18 +1544,23 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
     elif filesource == "OTB_refsig":
         ref = kwargs.get("otb_refsig_type", [True, "fullsampled"])
         emgfile = refsig_from_otb(
-            filepath=file_toOpen, refsig=ref[1], version=kwargs.get("otb_version", "1.5.8.0")
+            filepath=file_toOpen,
+            refsig=ref[1],
+            version=kwargs.get("otb_version", "1.5.8.0"),
         )
     elif filesource == "Open_HD-EMG":
         emgfile = emg_from_json(filepath=file_toOpen)
     else:  # custom
         emgfile = emg_from_customcsv(
-            filepath = file_toOpen,
+            filepath=file_toOpen,
             ref_signal=kwargs.get("custom_ref_signal", "REF_SIGNAL"),
             raw_signal=kwargs.get("custom_raw_signal", "RAW_SIGNAL"),
             ipts=kwargs.get("custom_ipts", "IPTS"),
             mupulses=kwargs.get("custom_mupulses", "MUPULSES"),
-            binary_mus_firing=kwargs.get("custom_binary_mus_firing", "BINARY_MUS_FIRING"),
+            binary_mus_firing=kwargs.get(
+                "custom_binary_mus_firing",
+                "BINARY_MUS_FIRING"
+            ),
             fsamp=kwargs.get("custom_fsamp", 2048),
             ied=kwargs.get("custom_ied", 8),
         )

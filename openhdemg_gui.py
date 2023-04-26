@@ -123,10 +123,10 @@ class GUI:
         (i.e., the first MU in the file is the number 0).
     self.mu_thresholds : pd.DataFrame
         A DataFrame containing the requested thresholds.
-    self.mvif : float
-        The MViF value in the original unit of measurement.
-    self.mvif_df : pd.DataFrame
-        A Dataframe containing the detected MVIF value.
+    self.mvc : float
+        The MVC value in the original unit of measurement.
+    self.mvc_df : pd.DataFrame
+        A Dataframe containing the detected MVC value.
     self.offsetval: float, default 0
         Value of the offset. If offsetval is 0 (default), the user will be asked to manually
         select an aerea to compute the offset value.
@@ -246,8 +246,8 @@ class GUI:
     analyze_force()
         Opens seperate window to analyze force signal/values.
         Executed when button "Analyze force" in master GUI window pressed.
-    get_mvif()
-        Method used to calculate/select MVIF.
+    get_mvc()
+        Method used to calculate/select MVC.
     det_rfd()
         Method used to calculated RFD based on selected startpoint.
     mu_analysis()
@@ -782,8 +782,8 @@ class GUI:
             writer = pd.ExcelWriter(path + "/Results_" + self.filename + ".xlsx")
 
             # Check for attributes and write sheets
-            if hasattr(self, "mvif_df"):
-                self.mvif_df.to_excel(writer, sheet_name="MVIF")
+            if hasattr(self, "mvc_df"):
+                self.mvc_df.to_excel(writer, sheet_name="MVC")
 
             if hasattr(self, "rfd"):
                 self.rfd.to_excel(writer, sheet_name="RFD")
@@ -1432,8 +1432,8 @@ class GUI:
         )
         self.head.grab_set()
 
-        # Get MVIF
-        get_mvf = ttk.Button(self.head, text="Get MVIF", command=self.get_mvif)
+        # Get MVC
+        get_mvf = ttk.Button(self.head, text="Get MVC", command=self.get_mvc)
         get_mvf.grid(column=0, row=1, sticky=(W, E), padx=5, pady=5)
 
         # Get RFD
@@ -1454,11 +1454,11 @@ class GUI:
 
     ### Define functions for force analysis
 
-    def get_mvif(self):
+    def get_mvc(self):
         """
-        Instance methof to retrieve calculated MVIF based on user selection.
+        Instance methof to retrieve calculated MVC based on user selection.
 
-        Executed when button "Get MVIF" in Analyze Force window is pressed.
+        Executed when button "Get MVC" in Analyze Force window is pressed.
         The Results of the analysis are displayed in the results terminal.
 
         Raises
@@ -1468,16 +1468,16 @@ class GUI:
 
         See Also
         --------
-        get_mvif in library
+        get_mvc in the library
         """
         try:
-            # get MVIF
-            self.mvif = openhdemg.get_mvif(emgfile=self.resdict)
+            # get MVC
+            self.mvc = openhdemg.get_mvc(emgfile=self.resdict)
             # Define dictionary for pandas
-            mvf_dic = {"MVIF": [self.mvif]}
-            self.mvif_df = pd.DataFrame(data=mvf_dic)
+            mvc_dic = {"MVC": [self.mvc]}
+            self.mvc_df = pd.DataFrame(data=mvc_dic)
             # Display results
-            self.display_results(self.mvif_df)
+            self.display_results(self.mvc_df)
 
         except AttributeError:
             tk.messagebox.showerror("Information", "Make sure a file is loaded.")
@@ -1532,11 +1532,11 @@ class GUI:
         )
         self.head.grab_set()
 
-        # MVIF Entry
-        ttk.Label(self.head, text="Enter MVIF[n]:").grid(column=0, row=0, sticky=(W))
-        self.mvif_value = StringVar()
-        enter_mvif = ttk.Entry(self.head, width=20, textvariable=self.mvif_value)
-        enter_mvif.grid(column=1, row=0, sticky=(W, E))
+        # MVC Entry
+        ttk.Label(self.head, text="Enter MVC[n]:").grid(column=0, row=0, sticky=(W))
+        self.mvc_value = StringVar()
+        enter_mvc = ttk.Entry(self.head, width=20, textvariable=self.mvc_value)
+        enter_mvc.grid(column=1, row=0, sticky=(W, E))
 
         # Compute MU re-/derecruitement threshold
         separator = ttk.Separator(self.head, orient="horizontal")
@@ -1640,7 +1640,7 @@ class GUI:
         AttributeError
             When no file is loaded prior to calculation.
         ValueError
-            When entered MVIF is not valid (inexistent).
+            When entered MVC is not valid (inexistent).
         AssertionError
             When types/events are not specified.
 
@@ -1654,7 +1654,7 @@ class GUI:
                 emgfile=self.resdict,
                 event_=self.ct_event.get(),
                 type_=self.ct_type.get(),
-                mvif=int(self.mvif_value.get()),
+                mvc=int(self.mvc_value.get()),
             )
             # Display results
             self.display_results(self.mu_thresholds)
@@ -1663,7 +1663,7 @@ class GUI:
             tk.messagebox.showerror("Information", "Load file prior to computation.")
 
         except ValueError:
-            tk.messagebox.showerror("Information", "Enter valid MVIF.")
+            tk.messagebox.showerror("Information", "Enter valid MVC.")
 
         except AssertionError:
             tk.messagebox.showerror("Information", "Specify Event and/or Type.")
@@ -1738,7 +1738,7 @@ class GUI:
                 emgfile=self.resdict,
                 n_firings_RecDerec=int(self.b_firings_rec.get()),
                 n_firings_steady=int(self.b_firings_ste.get()),
-                mvif=int(self.mvif_value.get()),
+                mvc=int(self.mvc_value.get()),
             )
             # Display results
             self.display_results(self.exportable_df)
@@ -1747,7 +1747,7 @@ class GUI:
             tk.messagebox.showerror("Information", "Load file prior to computation.")
 
         except ValueError:
-            tk.messagebox.showerror("Information", "Enter valid MVIF.")
+            tk.messagebox.showerror("Information", "Enter valid MVC.")
 
         except AssertionError:
             tk.messagebox.showerror("Information", "Specify Event and/or Type.")

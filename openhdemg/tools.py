@@ -276,7 +276,7 @@ def resize_emgfile(emgfile, area=None):
 
 def compute_idr(emgfile):
     """
-    Compute the IDR. # TODO maybe it is not IDR
+    Compute the IDR.
 
     This function computes the instantaneous discharge rate (IDR) from the
     MUPULSES.
@@ -986,8 +986,3 @@ def compute_rfd(
         rfd = rfd * conversion_val
 
     return rfd
-
-# TODO function to calculate the amplification factor and convert the ref signal
-# TODO in the GUI, allow to convert the force for a conversion factor
-# TODO write extended documentation of how emgfile should be structured and why and how it
-# can be expanded to fit possible new necessities
