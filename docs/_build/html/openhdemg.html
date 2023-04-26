@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Open_HD-EMG package &mdash; openhdemg 0.0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Submodules" href="library.html" />
+    <link rel="prev" title="Documentation" href="modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            openhdemg
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Open_HD-EMG package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#library">Library</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="library.html">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-openhdemg.openhdemg_gui">Graphical User Interface</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI"><code class="docutils literal notranslate"><span class="pre">emgGUI</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.run_main"><code class="docutils literal notranslate"><span class="pre">run_main()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">openhdemg</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">Documentation</a></li>
+      <li class="breadcrumb-item active">Open_HD-EMG package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/openhdemg.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="open-hd-emg-package">
+<h1>Open_HD-EMG package<a class="headerlink" href="#open-hd-emg-package" title="Permalink to this heading"></a></h1>
+<section id="library">
+<h2>Library<a class="headerlink" href="#library" title="Permalink to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="library.html">Submodules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="library.html#module-openhdemg.library.mathtools">mathtools module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="library.html#openhdemg.library.mathtools.compute_pnr"><code class="docutils literal notranslate"><span class="pre">compute_pnr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="library.html#openhdemg.library.mathtools.compute_sil"><code class="docutils literal notranslate"><span class="pre">compute_sil()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="library.html#openhdemg.library.mathtools.derivatives_beamforming"><code class="docutils literal notranslate"><span class="pre">derivatives_beamforming()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="library.html#openhdemg.library.mathtools.find_teta"><code class="docutils literal notranslate"><span class="pre">find_teta()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="library.html#openhdemg.library.mathtools.min_max_scaling"><code class="docutils literal notranslate"><span class="pre">min_max_scaling()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="library.html#openhdemg.library.mathtools.mle_cv_est"><code class="docutils literal notranslate"><span class="pre">mle_cv_est()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="library.html#openhdemg.library.mathtools.norm_twod_xcorr"><code class="docutils literal notranslate"><span class="pre">norm_twod_xcorr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="library.html#openhdemg.library.mathtools.norm_xcorr"><code class="docutils literal notranslate"><span class="pre">norm_xcorr()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="module-openhdemg.openhdemg_gui">
+<span id="graphical-user-interface"></span><h2>Graphical User Interface<a class="headerlink" href="#module-openhdemg.openhdemg_gui" title="Permalink to this heading"></a></h2>
+<p>This file contains the gui functionalities of openhdemg.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">openhdemg.openhdemg_gui.</span></span><span class="sig-name descname"><span class="pre">emgGUI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">master</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class representing a Tkinter TK instance.</p>
+<p>This class is used to create a graphical user interface for
+the Open_HD-EMG library.</p>
+<section id="attributes">
+<h3>Attributes<a class="headerlink" href="#attributes" title="Permalink to this heading"></a></h3>
+<dl class="simple">
+<dt>self.auto_eval<span class="classifier">int, default 0</span></dt><dd><p>If auto &gt; 0, the script automatically removes the offset based on the number
+of samples passed in input.</p>
+</dd>
+<dt>self.b_firings_rec<span class="classifier">int, default 4</span></dt><dd><p>The number of firings at recruitment and derecruitment to consider for the
+calculation of the DR.</p>
+</dd>
+<dt>self.b_firings_ste<span class="classifier">int, default 10</span></dt><dd><p>The number of firings to consider for the calculation of the DR at the start and at the end
+of the steady-state phase.</p>
+</dd>
+<dt>self.canvas<span class="classifier">matplotlib.backends.backend_tkagg</span></dt><dd><p>Canvas for plotting figures inside the GUI.</p>
+</dd>
+<dt>self.channels<span class="classifier">int or list</span></dt><dd><p>The channel (int) or channels (list of int) to plot.
+The list can be passed as a manually-written with: “0,1,2,3,4,5…,n”,
+channels is expected to be with base 0.</p>
+</dd>
+<dt>self.cutoff_freq<span class="classifier">int, default 20</span></dt><dd><p>The cut-off frequency in Hz.</p>
+</dd>
+<dt>self.ct_event<span class="classifier">str, default “rt_dert”</span></dt><dd><dl class="simple">
+<dt>When to calculate the thresholds. Input parameters for <a href="#id46"><span class="problematic" id="id47">event_</span></a> are:</dt><dd><p>“rt_dert” means that both recruitment and derecruitment tresholds will be calculated.
+“rt” means that only recruitment tresholds will be calculated.
+“dert” means that only derecruitment tresholds will be calculated.</p>
+</dd>
+</dl>
+</dd>
+<dt>self.dr_event<span class="classifier">str, default “rec_derec_steady”</span></dt><dd><dl class="simple">
+<dt>When to calculate the DR. Input parameters for <a href="#id48"><span class="problematic" id="id49">event_</span></a> are:</dt><dd><p>“rec_derec_steady” means that the DR is calculated at recruitment, derecruitment and
+during the steady-state phase.
+“rec” means that the DR is calculated at recruitment.
+“derec” means that the DR is calculated at derecruitment.
+“rec_derec” means that the DR is calculated at recruitment and derecruitment.
+“steady” means that the DR is calculated during the steady-state phase.</p>
+</dd>
+</dl>
+</dd>
+<dt>self.end_area, self.start_area<span class="classifier">int</span></dt><dd><p>The start and end of the selection for file resizing (can be used for code automation).</p>
+</dd>
+<dt>self.exportable_df<span class="classifier">pd.DataFrame</span></dt><dd><p>A pd.DataFrame containing the results of the analysis.</p>
+</dd>
+<dt>self.fig<span class="classifier">matplotlib.figure</span></dt><dd><p>Figure to be plotted on Canvas.</p>
+</dd>
+<dt>self.filename<span class="classifier">str</span></dt><dd><p>String and name of the file to be analysed.</p>
+</dd>
+<dt>self.filepath<span class="classifier">str</span></dt><dd><p>String containing the path to EMG file selected for analysis.</p>
+</dd>
+<dt>self.filetype<span class="classifier">str</span></dt><dd><p>String containing the filetype of import EMG file.
+Filetype can be “OTB”, “Demuse”, or “Refsig”.</p>
+</dd>
+<dt>self.filter_order<span class="classifier">int, default 4</span></dt><dd><p>The filter order.</p>
+</dd>
+<dt>self.firings_rec<span class="classifier">int, default 4</span></dt><dd><p>The number of firings at recruitment and derecruitment to consider for the calculation
+of the DR.</p>
+</dd>
+<dt>self.firings_ste<span class="classifier">int, default 10</span></dt><dd><p>The number of firings to consider for the calculation of the DR at the start and at the end
+of the steady-state phase.</p>
+</dd>
+<dt>self.first_fig<span class="classifier">matplotlib.figure</span></dt><dd><p>Figure frame determinining size of all figures that are plotted on canvas.</p>
+</dd>
+<dt>self.head<span class="classifier">tk.toplevel</span></dt><dd><p>New tk.toplevel instance created everytime upon opnening a new window. This is needed
+for having a seperate window open.</p>
+</dd>
+<dt>self.left<span class="classifier">tk.frame</span></dt><dd><p>Left frame inside of master that contains all buttons and filespecs.</p>
+</dd>
+<dt>self.linewidth<span class="classifier">float, default 0.5</span></dt><dd><p>The width of the vertical lines representing the MU firing.</p>
+</dd>
+<dt>self.logo :</dt><dd><p>String containing the path to image file containing logo of Open_HD-EMG.</p>
+</dd>
+<dt>self.logo_canvas<span class="classifier">tk.canvas</span></dt><dd><p>Canvas to display logo of Open_HG-EMG when openend.</p>
+</dd>
+<dt>self.master: tk</dt><dd><p>TK master window containing all widget children for this GUI.</p>
+</dd>
+<dt>self.mus_dr: pd.DataFrame</dt><dd><p>A pd.DataFrame containing the requested DR.</p>
+</dd>
+<dt>self.mu_numb<span class="classifier">int or list, default “all”</span></dt><dd><p>By default, IPTS of all the MUs is plotted.
+Otherwise, a single MU (int) or multiple MUs (list of int) can be specified.
+The list can be passed as a manually-written list: “0,1,2,3,4,5,…,n”,
+self.m_numb is expected to be with base 0 (i.e., the first MU in the file is the number 0).</p>
+</dd>
+<dt>self.mu_numb_idr<span class="classifier">int or list, default “all”</span></dt><dd><p>By default, IDR of all the MUs is plotted.
+Otherwise, a single MU (int) or multiple MUs (list of int) can be specified.
+The list can be passed as a manually-written list: “0,1,2,3,4,5,…,n”,
+self.m_numb_idr is expected to be with base 0 (i.e., the first MU in the
+file is the number 0).</p>
+</dd>
+<dt>self.mu_to_remove<span class="classifier">int</span></dt><dd><p>The MUs to remove. If a single MU has to be removed, this should be an
+int (number of the MU).
+self.mu_to_remove is expected to be with base 0
+(i.e., the first MU in the file is the number 0).</p>
+</dd>
+<dt>self.mu_to_edit<span class="classifier">int</span></dt><dd><p>The MUs to edit singularly. If a single MU has to be edited, this should be an
+int (number of the MU).
+self.mu_to_edit is expected to be with base 0
+(i.e., the first MU in the file is the number 0).</p>
+</dd>
+<dt>self.mu_thresholds<span class="classifier">pd.DataFrame</span></dt><dd><p>A DataFrame containing the requested thresholds.</p>
+</dd>
+<dt>self.mvif<span class="classifier">float</span></dt><dd><p>The MViF value in the original unit of measurement.</p>
+</dd>
+<dt>self.mvif_df<span class="classifier">pd.DataFrame</span></dt><dd><p>A Dataframe containing the detected MVIF value.</p>
+</dd>
+<dt>self.offsetval: float, default 0</dt><dd><p>Value of the offset. If offsetval is 0 (default), the user will be asked to manually
+select an aerea to compute the offset value.
+Otherwise, the value passed to offsetval will be used. Negative offsetval can be passed.</p>
+</dd>
+<dt>self.resdict<span class="classifier">dict</span></dt><dd><p>Dictionary derived from input EMG file for further analysis.</p>
+</dd>
+<dt>self.rfd_df<span class="classifier">pd.DataFrame</span></dt><dd><p>A Dataframe containing the calculated RFD values.</p>
+</dd>
+<dt>self.rfdms<span class="classifier">list, default [50, 100, 150, 200]</span></dt><dd><p>Milliseconds (ms). A list containing the ranges in ms to calculate the RFD.</p>
+</dd>
+<dt>self.right<span class="classifier">tk.frame</span></dt><dd><p>Left frame inside of master that contains plotting canvas.</p>
+</dd>
+<dt>self.terminal<span class="classifier">ttk.Labelframe</span></dt><dd><p>Tkinter labelframe that is used to display the results table in the GUI.</p>
+</dd>
+<dt>self.mat_code<span class="classifier">str</span></dt><dd><p>The code containing the matrix identification number.</p>
+</dd>
+<dt>self.mat_orientation<span class="classifier">int</span></dt><dd><p>The orientation of the matrix in degrees. Can be 0, 180.</p>
+</dd>
+<dt>self.deriv_config<span class="classifier">str</span></dt><dd><p>The Method used to calculate the MUs deviation.</p>
+</dd>
+<dt>self.muap_config<span class="classifier">str</span></dt><dd><p>The Method used to calculate the MUs deviation.</p>
+</dd>
+<dt>self.deriv_matrix<span class="classifier">str</span></dt><dd><p>Column of the matrix to be plotted.</p>
+</dd>
+<dt>self.size_fig<span class="classifier">str, default [20,15]</span></dt><dd><p>Size of the figure to be plotted in centimeter.</p>
+</dd>
+<dt>self.ref_but<span class="classifier">str, default “False”</span></dt><dd><p>String value used to determine if reference signal should be
+added to the plot.</p>
+</dd>
+<dt>self.time_but<span class="classifier">str, default “False”</span></dt><dd><p>String value used to determine if time in seconds should be used
+in x-axis of plotting.</p>
+</dd>
+<dt>muap_munum<span class="classifier">int</span></dt><dd><p>Number of motor unit to be plotted.</p>
+</dd>
+<dt>muap_time<span class="classifier">int</span></dt><dd><p>Time window to be plotted.</p>
+</dd>
+<dt>self.info<span class="classifier">tk.PhotoImage</span></dt><dd><p>Information Icon displayed in GUI.</p>
+</dd>
+<dt>self.online<span class="classifier">tk.Photoimage</span></dt><dd><p>Online Icon displayed in GUI.</p>
+</dd>
+<dt>self.redirect<span class="classifier">tk.PhotoImage</span></dt><dd><p>Redirection Icon displayed in GUI.</p>
+</dd>
+<dt>self.contact<span class="classifier">tk.PhotoImage</span></dt><dd><p>Contact Icon displayed in GUI.</p>
+</dd>
+<dt>self.cite<span class="classifier">tk.PhotoImage</span></dt><dd><p>Citation Icon displayed in GUI.</p>
+</dd>
+<dt>self.otb_combobox<span class="classifier">ttk.Combobox</span></dt><dd><p>Combobox appearing in main GUI window or advanced
+analysis window when OTB files are loaded. Contains
+the extension factor for OTB files.
+Stringvariable containing the</p>
+</dd>
+<dt>self.extension_factor<span class="classifier">tk.Stringvar()</span></dt><dd><p>Stringvariable containing the OTB extension factor value.</p>
+</dd>
+<dt>self.advanced_method<span class="classifier">tk.Stringvar()</span></dt><dd><p>Stringvariable containing the selected method of advanced
+analysis.</p>
+</dd>
+<dt>self.emgfile1<span class="classifier">pd.Dataframe</span></dt><dd><p>Dataframe object containing the loaded first emgfile used
+for MU tracking.</p>
+</dd>
+<dt>self.emgfile2<span class="classifier">pd.Dataframe</span></dt><dd><p>Dataframe object containing the loaded first emgfile used
+for MU tracking.</p>
+</dd>
+<dt>self.thresh_adv<span class="classifier">tk.Stringvar()</span></dt><dd><p>Stringvariable containing the selected threshold for MU tracking.</p>
+</dd>
+<dt>self.filter_adv<span class="classifier">tk.Boolenvar()</span></dt><dd><p>Boolean determining whether filtering should be applied during MU
+tracking.</p>
+</dd>
+<dt>self.show_adv<span class="classifier">tk.Boolenvar()</span></dt><dd><p>Boolean determining whether results of MU tracking should be plotted.</p>
+</dd>
+<dt>self.exclude_thres<span class="classifier">tk.Boolenvar()</span></dt><dd><p>Boolean determining whether values below treshold should be excluded
+during MU tracking.</p>
+</dd>
+<dt>self.which_adv<span class="classifier">tk.Stringvar()</span></dt><dd><p>Stringvariable determining how MU duplicates are removed.</p>
+</dd>
+</dl>
+</section>
+<section id="methods">
+<h3>Methods<a class="headerlink" href="#methods" title="Permalink to this heading"></a></h3>
+<dl class="simple">
+<dt>__init__(master)</dt><dd><p>Initializes GUI class and main GUI window (master).</p>
+</dd>
+<dt>get_file_input()</dt><dd><p>Gets emgfile location and respective file is loaded.
+Executed when button “Load File” in master GUI window pressed.</p>
+</dd>
+<dt>save_emgfile()</dt><dd><p>Saves the edited emgfile dictionary to a .json file.
+Executed when button “Save File” in master GUI window pressed.</p>
+</dd>
+<dt>export_to_excel()</dt><dd><p>Saves the analysis results to a .xlsx file.
+Executed when button “Save Results” in master GUI window pressed.</p>
+</dd>
+<dt>reset_analysis()</dt><dd><p>Resets the whole analysis, restores the original input file and the graph.
+Executed when button “Reset analysis” in master GUI window pressed.</p>
+</dd>
+<dt>in_gui_plotting()</dt><dd><p>Method used for creating plot inside the GUI (on the GUI canvas).
+Executed when button “View MUs” in master GUI window pressed.</p>
+</dd>
+<dt>sort_mus()</dt><dd><p>Method used to sort motor units in Plot according to recruitement order.
+Executed when button “Sort MUs” in master GUI window pressed.</p>
+</dd>
+<dt>remove_mus()</dt><dd><p>Opens seperate window to select motor units to be removed.
+Executed when button “Remove MUs” in master GUI window pressed.</p>
+</dd>
+<dt>remove()</dt><dd><p>Method used to remove single motor units.</p>
+</dd>
+<dt>edit_refsig()</dt><dd><p>Opens seperate window to edit emg reference signal.
+Executed when button “RefSig Editing” in master GUI window pressed.</p>
+</dd>
+<dt>filter_refsig()</dt><dd><p>Method used to filter the emg reference signal.</p>
+</dd>
+<dt>remove_offset()</dt><dd><p>Method used to remove offset of emg reference signal.</p>
+</dd>
+<dt>resize_file()</dt><dd><p>Opens seperate window to resize emg file / reference signal.
+Executed when button “Resize File” in master GUI window pressed.</p>
+</dd>
+<dt>select_resize()</dt><dd><p>Method used to select start/end of resizing area manually on plot.</p>
+</dd>
+<dt>resize_emgfile()</dt><dd><p>Method used to resize the emg file according to specified start/end.</p>
+</dd>
+<dt>analyze_force()</dt><dd><p>Opens seperate window to analyze force signal/values.
+Executed when button “Analyze force” in master GUI window pressed.</p>
+</dd>
+<dt>get_mvif()</dt><dd><p>Method used to calculate/select MVIF.</p>
+</dd>
+<dt>det_rfd()</dt><dd><p>Method used to calculated RFD based on selected startpoint.</p>
+</dd>
+<dt>mu_analysis()</dt><dd><p>Opens seperate window to calculated specific motor unit properties.
+Executed when button “MU properties” in master GUI window pressed.</p>
+</dd>
+<dt>compute_mu_threshold()</dt><dd><p>Method used to calculate motor unit recruitement thresholds.</p>
+</dd>
+<dt>compute_mu_dr()</dt><dd><p>Method used to calculate motor unit discharge rate.</p>
+</dd>
+<dt>basic_mus_analysis()</dt><dd><p>Method used to calculate basic motor unit properties.</p>
+</dd>
+<dt>plot_emg()</dt><dd><p>Opens seperate window to plot emgsignal/motor unit properties.
+Executed when button “Plot EMG” in master GUI window pressed.</p>
+</dd>
+<dt>plt_emgsignal()</dt><dd><p>Method used to plot emgsignal.</p>
+</dd>
+<dt>plt_idr()</dt><dd><p>Method used to plot instanteous discharge rate.</p>
+</dd>
+<dt>plt_ipts()</dt><dd><p>Method used to plot the motor unit puls train (i.e., non-binary firing)</p>
+</dd>
+<dt>plt_refsignal()</dt><dd><p>Method used to plot the motor unit reference signal.</p>
+</dd>
+<dt>plt_mupulses()</dt><dd><p>Method used to plot the motor unit pulses.</p>
+</dd>
+<dt>plot_derivation()</dt><dd><p>Method to plot the differential derivation of the RAW_SIGNAL
+by matrix column.</p>
+</dd>
+<dt>plot_muaps()</dt><dd><p>Method to plot motor unit action potenital obtained from STA
+from one or multiple MUs.</p>
+</dd>
+<dt>open_pdf()</dt><dd><p>Method to open a PDF file in a seperate window.</p>
+</dd>
+<dt>advanced_analysis()</dt><dd><p>Method to open top-level windows based on the selected advanced method.</p>
+</dd>
+<dt>on_filetype_change()</dt><dd><p>Method do display extension factor combobx when filetype loaded is
+OTB.</p>
+</dd>
+<dt>open_emgfil1()</dt><dd><p>Method to open EMG file based on the selected file type and extension factor.</p>
+</dd>
+<dt>open_emgfile2()</dt><dd><p>Method to open EMG file based on the selected file type and extension factor.</p>
+</dd>
+<dt>track_mus()</dt><dd><p>Method to perform MUs tracking on the loaded EMG files.</p>
+</dd>
+<dt>display_results()</dt><dd><p>Method used to display result table containing analysis results.</p>
+</dd>
+</dl>
+</section>
+<section id="notes">
+<h3>Notes<a class="headerlink" href="#notes" title="Permalink to this heading"></a></h3>
+<p>Please note that altough we created a GUI class, the included methods/
+instances are highly specific. We did not conceptualize the methods/instances
+to be used seperately. Similar functionalities are available in the library
+and were specifically coded to be used seperately/singularly.</p>
+<p>Most instance methods of this class heavily rely on the functions provided in
+the library. In the section “See Also” at each instance method, the reader is
+referred to the corresponding function and extensive documentation in the library.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.advanced_analysis">
+<span class="sig-name descname"><span class="pre">advanced_analysis</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.advanced_analysis" title="Permalink to this definition"></a></dt>
+<dd><p>Open top-level windows based on the selected advanced method.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.analyze_force">
+<span class="sig-name descname"><span class="pre">analyze_force</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.analyze_force" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to open “Force analysis Window”.
+Options to analyse force singal are displayed.</p>
+<p>Executed when “Analyse Force” button in master GUI window is pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.basic_mus_properties">
+<span class="sig-name descname"><span class="pre">basic_mus_properties</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.basic_mus_properties" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to compute basic motor unit properties based in user
+selection in plot.</p>
+<p>Executed when button “Basic MU properties” in Motor Unit Properties Window
+is pressed. The analysis results are displayed in the result terminal.</p>
+<section id="raises">
+<h4>Raises<a class="headerlink" href="#raises" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>When no file is loaded prior to calculation.</p>
+</dd>
+<dt>ValueError</dt><dd><p>When entered Firings values are not valid (inexistent).</p>
+</dd>
+<dt>AssertionError</dt><dd><p>When types/events are not specified.</p>
+</dd>
+<dt>UnboundLocalError</dt><dd><p>When start/end area for calculations are specified wrongly.</p>
+</dd>
+</dl>
+</section>
+<section id="see-also">
+<h4>See Also<a class="headerlink" href="#see-also" title="Permalink to this heading"></a></h4>
+<p>basic_mus_properties in library.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.calculate_conduct_vel">
+<span class="sig-name descname"><span class="pre">calculate_conduct_vel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.calculate_conduct_vel" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.compute_mu_dr">
+<span class="sig-name descname"><span class="pre">compute_mu_dr</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.compute_mu_dr" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to compute the motor unit discharge rate
+based on user selection of Firings and Events.</p>
+<p>Executed when button “Compute discharge rate” in Motor Unit Properties Window
+is pressed. The analysis results are displayed in the result terminal.</p>
+<section id="id1">
+<h4>Raises<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>When no file is loaded prior to calculation.</p>
+</dd>
+<dt>ValueError</dt><dd><p>When entered Firings values are not valid (inexistent).</p>
+</dd>
+<dt>AssertionError</dt><dd><p>When types/events are not specified.</p>
+</dd>
+</dl>
+</section>
+<section id="id2">
+<h4>See Also<a class="headerlink" href="#id2" title="Permalink to this heading"></a></h4>
+<p>compute_dr in library.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.compute_mu_threshold">
+<span class="sig-name descname"><span class="pre">compute_mu_threshold</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.compute_mu_threshold" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to compute the motor unit recruitement thresholds
+based on user selection of events and types.</p>
+<p>Executed when button “Compute threshold” in Motor Unit Properties Window
+is pressed. The analysis results are displayed in the result terminal.</p>
+<section id="id3">
+<h4>Raises<a class="headerlink" href="#id3" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>When no file is loaded prior to calculation.</p>
+</dd>
+<dt>ValueError</dt><dd><p>When entered MVIF is not valid (inexistent).</p>
+</dd>
+<dt>AssertionError</dt><dd><p>When types/events are not specified.</p>
+</dd>
+</dl>
+</section>
+<section id="id4">
+<h4>See Also<a class="headerlink" href="#id4" title="Permalink to this heading"></a></h4>
+<p>compute_thresholds in library.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.decompose_file">
+<span class="sig-name descname"><span class="pre">decompose_file</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.decompose_file" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.display_results">
+<span class="sig-name descname"><span class="pre">display_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.display_results" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method that displays all analysis results in the
+output terminal using Pandastable. Input must be a Pandas dataframe.</p>
+<p>Executed trough functions with calculated anylsis results.</p>
+<section id="parameters">
+<h4>Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>input_df<span class="classifier">pd.DataFrame</span></dt><dd><p>Dataftame containing the analysis results.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.edit_refsig">
+<span class="sig-name descname"><span class="pre">edit_refsig</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.edit_refsig" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to open “Reference Signal Editing Window”. Options for
+refsig filtering and offset removal are displayed.</p>
+<p>Executed when button “RefSig Editing” in master GUI window is pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.export_to_excel">
+<span class="sig-name descname"><span class="pre">export_to_excel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.export_to_excel" title="Permalink to this definition"></a></dt>
+<dd><p>Instnace method to export any prior analysis results. Results are saved in an excel sheet
+in a directory specified by the user.</p>
+<p>Executed when button “Save Results” in master GUI window is pressed.</p>
+<section id="id5">
+<h4>Raises<a class="headerlink" href="#id5" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>IndexError</dt><dd><p>When no analysis has been performed prior to attempted savig.</p>
+</dd>
+<dt>AttributeError</dt><dd><p>When no file was loaded in the GUI.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.filter_refsig">
+<span class="sig-name descname"><span class="pre">filter_refsig</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.filter_refsig" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method that filters the refig based on user selected specs.</p>
+<p>Executed when button “Filter Refsig” in Reference Signal Editing Window is pressed.
+The emgfile and the GUI plot are updated.</p>
+<section id="id6">
+<h4>Raises<a class="headerlink" href="#id6" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>TypeError</dt><dd><p>When no reference signal file is available.</p>
+</dd>
+</dl>
+</section>
+<section id="id7">
+<h4>See Also<a class="headerlink" href="#id7" title="Permalink to this heading"></a></h4>
+<p>filter_refsig in library.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.get_file_input">
+<span class="sig-name descname"><span class="pre">get_file_input</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.get_file_input" title="Permalink to this definition"></a></dt>
+<dd><p>Instance Method to load the file for analysis. The user is asked to select the file.</p>
+<p>Executed when the button “Load File” in master GUI window is pressed.</p>
+<section id="id8">
+<h4>See Also<a class="headerlink" href="#id8" title="Permalink to this heading"></a></h4>
+<p>emg_from_demuse, emg_from_otb, refsig_from_otb and emg_from_json in library.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.get_mvif">
+<span class="sig-name descname"><span class="pre">get_mvif</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.get_mvif" title="Permalink to this definition"></a></dt>
+<dd><p>Instance methof to retrieve calculated MVIF based on user selection.</p>
+<p>Executed when button “Get MVIF” in Analyze Force window is pressed.
+The Results of the analysis are displayed in the results terminal.</p>
+<section id="id9">
+<h4>Raises<a class="headerlink" href="#id9" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>When no file is loaded prior to analysis.</p>
+</dd>
+</dl>
+</section>
+<section id="id10">
+<h4>See Also<a class="headerlink" href="#id10" title="Permalink to this heading"></a></h4>
+<p>get_mvif in library</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.get_rfd">
+<span class="sig-name descname"><span class="pre">get_rfd</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.get_rfd" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to calculate RFD at specified timepoints based on user selection.</p>
+<p>Executed when button “Get RFD” in Analyze Force window is pressed.
+The Results of the analysis are displayed in the results terminal.</p>
+<section id="id11">
+<h4>Raises<a class="headerlink" href="#id11" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>When no file is loaded prior to analysis.</p>
+</dd>
+</dl>
+</section>
+<section id="id12">
+<h4>See Also<a class="headerlink" href="#id12" title="Permalink to this heading"></a></h4>
+<p>get_rfd in library</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.in_gui_plotting">
+<span class="sig-name descname"><span class="pre">in_gui_plotting</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'idr'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.in_gui_plotting" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to plot any analysis results in the GUI for inspection. Plots are updated
+during the analysis process.</p>
+<p>Executed when button “View MUs” in master GUI window is pressed or when the original
+input file is changed.</p>
+<section id="id13">
+<h4>Raises<a class="headerlink" href="#id13" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>When no file was loaded in the GUI.</p>
+</dd>
+</dl>
+</section>
+<section id="id14">
+<h4>See Also<a class="headerlink" href="#id14" title="Permalink to this heading"></a></h4>
+<p>plot_refsig, plot_idr in the library.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.mu_analysis">
+<span class="sig-name descname"><span class="pre">mu_analysis</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.mu_analysis" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to open “Motor Unit Properties Window”. Options to analyse motor
+unit properties such as recruitement threshold, discharge rate or
+basic properties computing are displayed.</p>
+<p>Executed when button “MU Properties” button in master GUI window is pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.on_filetype_change">
+<span class="sig-name descname"><span class="pre">on_filetype_change</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.on_filetype_change" title="Permalink to this definition"></a></dt>
+<dd><p>This function is called when the value of the filetype variable is changed.
+When the filetype is set to “OTB” it will create a second combobox on the grid at column 0 and row 2,
+and when the filetype is set to something else it will remove the second combobox from the grid.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.on_filetype_change_adv">
+<span class="sig-name descname"><span class="pre">on_filetype_change_adv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.on_filetype_change_adv" title="Permalink to this definition"></a></dt>
+<dd><p>This function is called when the value of the filetype variable is changed.
+When the filetype is set to “OTB” it will create a second combobox on the grid at column 0 and row 2,
+and when the filetype is set to something else it will remove the second combobox from the grid.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.open_advanced_tools">
+<span class="sig-name descname"><span class="pre">open_advanced_tools</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.open_advanced_tools" title="Permalink to this definition"></a></dt>
+<dd><p>Open a window for advanced analysis tools.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.open_emgfile1">
+<span class="sig-name descname"><span class="pre">open_emgfile1</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.open_emgfile1" title="Permalink to this definition"></a></dt>
+<dd><p>Open EMG file based on the selected file type and extension factor.</p>
+<p>This function is used to open and store the first emgfile that is
+required for the MU tracking. As both files required are loaded by
+different buttons, two functions storing the two files were created.</p>
+<section id="id15">
+<h4>See Also<a class="headerlink" href="#id15" title="Permalink to this heading"></a></h4>
+<p>open_emgfile1(), openhdemg.askopenfile()</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.open_emgfile2">
+<span class="sig-name descname"><span class="pre">open_emgfile2</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.open_emgfile2" title="Permalink to this definition"></a></dt>
+<dd><p>Open EMG file based on the selected file type and extension factor.</p>
+<p>This function is used to open and store the first emgfile that is
+required for the MU tracking. As both files required are loaded by
+different buttons, two functions storing the two files were created.</p>
+<section id="id16">
+<h4>See Also<a class="headerlink" href="#id16" title="Permalink to this heading"></a></h4>
+<p>open_emgfile1(), openhdemg.askopenfile()</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.open_pdf">
+<span class="sig-name descname"><span class="pre">open_pdf</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.open_pdf" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to open a PDF file in a seperate window.</p>
+<p>The standard program for opening PDF files is used.
+The file can be handled independantly from the GUI.
+The specific usecase here is to open a tutorial for the
+“Plot Window” offline.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.plot_derivation">
+<span class="sig-name descname"><span class="pre">plot_derivation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.plot_derivation" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to plot the differential derivation of the RAW_SIGNAL by matrix column.</p>
+<p>Both the single and the double differencials can be plotted.
+This function is used to plot also the sorted RAW_SIGNAL.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.plot_emg">
+<span class="sig-name descname"><span class="pre">plot_emg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.plot_emg" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to open “Plot Window”. Options to create
+several plots from the emgfile are displayed.</p>
+<p>Executed when button “Plot EMG” in master GUI window is pressed.
+The plots are displayed in seperate windows.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.plot_muaps">
+<span class="sig-name descname"><span class="pre">plot_muaps</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.plot_muaps" title="Permalink to this definition"></a></dt>
+<dd><p>Instance methos to plot motor unit action potenital obtained from STA from one or
+multiple MUs.</p>
+<p>There is no limit to the number of MUs and STA files that can be overplotted.
+<code class="docutils literal notranslate"><span class="pre">Remember:</span> <span class="pre">the</span> <span class="pre">different</span> <span class="pre">STAs</span> <span class="pre">should</span> <span class="pre">be</span> <span class="pre">matched</span></code> with same number of electrode,
+processing (i.e., differential) and computed on the same timewindow.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.plt_emgsignal">
+<span class="sig-name descname"><span class="pre">plt_emgsignal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.plt_emgsignal" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to plot the raw emg signal in an seperate plot window.
+The channels selected by the user are plotted. The plot can be saved and
+partly edited using the matplotlib options.</p>
+<p>Executed when button “Plot EMGsig” in Plot Window is pressed.</p>
+<section id="id17">
+<h4>Raises<a class="headerlink" href="#id17" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>When no file is loaded prior to calculation.</p>
+</dd>
+<dt>ValueError</dt><dd><p>When entered channel number is not valid (inexistent).</p>
+</dd>
+<dt>KeyError</dt><dd><p>When entered channel number is out of bounds.</p>
+</dd>
+</dl>
+</section>
+<section id="id18">
+<h4>See Also<a class="headerlink" href="#id18" title="Permalink to this heading"></a></h4>
+<p>plot_emgsignal in library.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.plt_idr">
+<span class="sig-name descname"><span class="pre">plt_idr</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.plt_idr" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to plot the instanteous discharge rate in an seperate plot window.
+The motor units selected by the user are plotted. The plot can be saved and
+partly edited using the matplotlib options.</p>
+<p>Executed when button “Plot IDR” in Plot Window is pressed.</p>
+<section id="id19">
+<h4>Raises<a class="headerlink" href="#id19" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>When no file is loaded prior to calculation.</p>
+</dd>
+<dt>ValueError</dt><dd><p>When entered channel number is not valid (inexistent).</p>
+</dd>
+<dt>KeyError</dt><dd><p>When entered channel number is out of bounds.</p>
+</dd>
+</dl>
+</section>
+<section id="id20">
+<h4>See Also<a class="headerlink" href="#id20" title="Permalink to this heading"></a></h4>
+<p>plot_idr in library.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.plt_ipts">
+<span class="sig-name descname"><span class="pre">plt_ipts</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.plt_ipts" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to plot the motor unit pulse train in an seperate plot window.
+The motor units selected by the user are plotted. The plot can be saved and
+partly edited using the matplotlib options.</p>
+<p>Executed when button “Plot IPTS” in Plot Window is pressed.</p>
+<section id="id21">
+<h4>Raises<a class="headerlink" href="#id21" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>When no file is loaded prior to calculation.</p>
+</dd>
+<dt>ValueError</dt><dd><p>When entered motor unit number is not valid (inexistent).</p>
+</dd>
+<dt>KeyError</dt><dd><p>When entered motor number is out of bounds.</p>
+</dd>
+</dl>
+</section>
+<section id="id22">
+<h4>See Also<a class="headerlink" href="#id22" title="Permalink to this heading"></a></h4>
+<p>plot_ipts in library.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.plt_mupulses">
+<span class="sig-name descname"><span class="pre">plt_mupulses</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.plt_mupulses" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to plot the mu pulses in an seperate plot window.
+The linewidth selected by the user is used. The plot can be saved and
+partly edited using the matplotlib options.</p>
+<p>Executed when button “Plot MUpulses” in Plot Window is pressed.</p>
+<section id="id23">
+<h4>Raises<a class="headerlink" href="#id23" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>When no file is loaded prior to calculation.</p>
+</dd>
+<dt>ValueError</dt><dd><p>When entered channel number is not valid (inexistent).</p>
+</dd>
+</dl>
+</section>
+<section id="id24">
+<h4>See Also<a class="headerlink" href="#id24" title="Permalink to this heading"></a></h4>
+<p>plot_mupulses in library.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.plt_refsignal">
+<span class="sig-name descname"><span class="pre">plt_refsignal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.plt_refsignal" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to plot the reference signal in an seperate plot window.
+The plot can be saved and partly edited using the matplotlib options.</p>
+<p>Executed when button “Plot REFsig” in Plot Window is pressed.</p>
+<section id="id25">
+<h4>Raises<a class="headerlink" href="#id25" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>When no file is loaded prior to calculation.</p>
+</dd>
+</dl>
+</section>
+<section id="id26">
+<h4>See Also<a class="headerlink" href="#id26" title="Permalink to this heading"></a></h4>
+<p>plot_refsig in library.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.remove">
+<span class="sig-name descname"><span class="pre">remove</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.remove" title="Permalink to this definition"></a></dt>
+<dd><p>Instance methof that actually removes a selected motor unit based on user specification.</p>
+<p>Executed when button “Remove MU” in Motor Unit Removal Window is pressed.
+The emgfile and the plot are subsequently updated.</p>
+<section id="id27">
+<h4>See Also<a class="headerlink" href="#id27" title="Permalink to this heading"></a></h4>
+<p>delete_mus in library.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.remove_duplicates_between">
+<span class="sig-name descname"><span class="pre">remove_duplicates_between</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.remove_duplicates_between" title="Permalink to this definition"></a></dt>
+<dd><p>Perform duplicate removal between two EMG files.</p>
+<section id="id28">
+<h4>Notes<a class="headerlink" href="#id28" title="Permalink to this heading"></a></h4>
+<p>The function uses the openhdemg.remove_duplicates_between function to remove duplicates between two EMG files.
+If the required parameters are not provided, the function will raise an AttributeError or ValueError.</p>
+</section>
+<section id="id29">
+<h4>Raises<a class="headerlink" href="#id29" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>If the required EMG files have not been loaded.</p>
+</dd>
+<dt>ValueError</dt><dd><p>If the input parameters are not valid.</p>
+</dd>
+</dl>
+</section>
+<section id="id30">
+<h4>See Also<a class="headerlink" href="#id30" title="Permalink to this heading"></a></h4>
+<p>openhdemg.remove_duplicates_between(), openhdemg.asksavefile()</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.remove_mus">
+<span class="sig-name descname"><span class="pre">remove_mus</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.remove_mus" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to open “Motor Unit Removal Window”. Further option to select and
+remove MUs are displayed.</p>
+<p>Executed when button “Remove MUs” in master GUI window is pressed.</p>
+<section id="id31">
+<h4>Raises<a class="headerlink" href="#id31" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>When no file is loaded prior to analysis.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.remove_offset">
+<span class="sig-name descname"><span class="pre">remove_offset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.remove_offset" title="Permalink to this definition"></a></dt>
+<dd><p>Instance Method that remves user specified/selected Refsig offset.</p>
+<p>Executed when button “Remove offset” in Reference Signal Editing Window is pressed.
+The emgfile and the GUI plot are updated.</p>
+<section id="id32">
+<h4>Raises<a class="headerlink" href="#id32" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>TypeError</dt><dd><p>When no reference signal file is available</p>
+</dd>
+</dl>
+</section>
+<section id="id33">
+<h4>See Also<a class="headerlink" href="#id33" title="Permalink to this heading"></a></h4>
+<p>remove_offset in library.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.reset_analysis">
+<span class="sig-name descname"><span class="pre">reset_analysis</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.reset_analysis" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to restore the GUI to base data. Any analysis progress will be deleted by
+reloading the original file.</p>
+<p>Executed when button “Reset Analysis” in master GUI window is pressed. The emgfile is
+updated to its original state.</p>
+<section id="id34">
+<h4>Raises<a class="headerlink" href="#id34" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>When no file was loaded in the GUI.</p>
+</dd>
+<dt>FileNotFoundError</dt><dd><p>When no file was loaded in the GUI.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.resize_emgfile">
+<span class="sig-name descname"><span class="pre">resize_emgfile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.resize_emgfile" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to get resize are from user specification and
+resize the emgfile.</p>
+<p>Executed when button “Resize File” in Resize file window is pressed.
+The emgfile and the GUI plot are updated.</p>
+<section id="id35">
+<h4>Raises<a class="headerlink" href="#id35" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>When no file is loaded prior to analysis.</p>
+</dd>
+</dl>
+</section>
+<section id="id36">
+<h4>See Also<a class="headerlink" href="#id36" title="Permalink to this heading"></a></h4>
+<p>resize_emgfile in library.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.resize_file">
+<span class="sig-name descname"><span class="pre">resize_file</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.resize_file" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to open “Resize EMG File Window”. Options to resize
+the emgfile by specified area are displayed.</p>
+<p>Executed when button “Resize File” in master GUI window is pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.save_emgfile">
+<span class="sig-name descname"><span class="pre">save_emgfile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.save_emgfile" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to save the edited emgfile. Results are saves in .json file.</p>
+<p>Executed when the button “Save File” in master GUI window is pressed.</p>
+<section id="id37">
+<h4>Raises<a class="headerlink" href="#id37" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>When file was not loaded in the GUI.</p>
+</dd>
+</dl>
+</section>
+<section id="id38">
+<h4>See Also<a class="headerlink" href="#id38" title="Permalink to this heading"></a></h4>
+<p>save_json_emgfile in library.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.select_resize">
+<span class="sig-name descname"><span class="pre">select_resize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.select_resize" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to get resize area from user specification on plot and
+resize emgfile.</p>
+<p>Executed when button “Select Resize” is pressed in Resize file window.
+The emgfile and the GUI plot are updated.</p>
+<section id="id39">
+<h4>Raises<a class="headerlink" href="#id39" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>When no file is loaded prior to analysis.</p>
+</dd>
+</dl>
+</section>
+<section id="id40">
+<h4>See Also<a class="headerlink" href="#id40" title="Permalink to this heading"></a></h4>
+<p>showselect, resize_emgfile in library.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.sort_mus">
+<span class="sig-name descname"><span class="pre">sort_mus</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.sort_mus" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to sort motor units ascending according to recruitement order.</p>
+<p>Executed when button “Sort MUs” in master GUI window is pressed. The plot of the MUs
+and the emgfile are subsequently updated.</p>
+<section id="id41">
+<h4>Raises<a class="headerlink" href="#id41" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>When no file was loaded in the GUI.</p>
+</dd>
+</dl>
+</section>
+<section id="id42">
+<h4>See Also<a class="headerlink" href="#id42" title="Permalink to this heading"></a></h4>
+<p>sort_mus in library.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.track_mus">
+<span class="sig-name descname"><span class="pre">track_mus</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.track_mus" title="Permalink to this definition"></a></dt>
+<dd><p>Perform MUs tracking on the loaded EMG files.</p>
+<section id="id43">
+<h4>Notes<a class="headerlink" href="#id43" title="Permalink to this heading"></a></h4>
+<p>The function uses the openhdemg.tracking
+function to perform the tracking of MUs.</p>
+</section>
+<section id="id44">
+<h4>Raises<a class="headerlink" href="#id44" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>AttributeError</dt><dd><p>If the required EMG files have not been loaded.</p>
+</dd>
+<dt>ValueError</dt><dd><p>If the input parameters are not valid.</p>
+</dd>
+</dl>
+</section>
+<section id="id45">
+<h4>See Also<a class="headerlink" href="#id45" title="Permalink to this heading"></a></h4>
+<p>openhdemg.tracking()</p>
+</section>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.run_main">
+<span class="sig-prename descclassname"><span class="pre">openhdemg.openhdemg_gui.</span></span><span class="sig-name descname"><span class="pre">run_main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.run_main" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="modules.html" class="btn btn-neutral float-left" title="Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="library.html" class="btn btn-neutral float-right" title="Submodules" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Giacomo Valli, Paul Ritsche.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
