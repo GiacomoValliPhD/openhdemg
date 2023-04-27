@@ -28,7 +28,7 @@ class GUI:
     A class representing a Tkinter TK instance.
 
     This class is used to create a graphical user interface for
-    the Open_HD-EMG library.
+    the openhdemg library.
 
     Attributes
     ----------
@@ -93,7 +93,7 @@ class GUI:
     self.linewidth : float, default 0.5
         The width of the vertical lines representing the MU firing.
     self.logo :
-        String containing the path to image file containing logo of Open_HD-EMG.
+        String containing the path to image file containing logo of openhdemg.
     self.logo_canvas : tk.canvas
         Canvas to display logo of Open_HG-EMG when openend.
     self.master: tk
@@ -317,9 +317,9 @@ class GUI:
         """
         # Set up GUI
         self.master = master
-        self.master.title("Open_HD-EMG")
+        self.master.title("openhdemg")
         master_path = os.path.dirname(os.path.abspath(__file__))
-        iconpath = master_path + "/gui_files/logo.ico"
+        iconpath = master_path + "/gui_files/Icon.ico"
         self.master.iconbitmap(iconpath)
 
         # Create left side framing for functionalities
@@ -481,7 +481,7 @@ class GUI:
         self.logo_canvas = Canvas(self.right, height=590, width=800, bg="white")
         self.logo_canvas.grid(row=0, column=0, rowspan=5)
 
-        logo_path = master_path + "/gui_files/logo.png"  # Get logo path
+        logo_path = master_path + "/gui_files/Logo.png"  # Get logo path
         self.logo = tk.PhotoImage(file=logo_path)
 
         # self.matrix = tk.PhotoImage(file="Matrix_illustration.png")
@@ -646,7 +646,7 @@ class GUI:
                 # Add filename to label
                 self.master.title(self.filename)
 
-                # load Open_HD-EMG (.json)
+                # load openhdemg (.json)
                 self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
 
                 # Add filespecs
@@ -911,7 +911,7 @@ class GUI:
         self.head = tk.Toplevel(bg="LightBlue4", height=200)
         self.head.title("Advanced Tools Window")
         self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
         )
         self.head.grab_set()
 
@@ -1051,7 +1051,7 @@ class GUI:
             self.head = tk.Toplevel(bg="LightBlue4")
             self.head.title("Motor Unit Removal Window")
             self.head.iconbitmap(
-                os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+                os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
             )
             self.head.grab_set()
 
@@ -1180,7 +1180,7 @@ class GUI:
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("Reference Signal Eiditing Window")
         self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
         )
         self.head.grab_set()
 
@@ -1302,7 +1302,7 @@ class GUI:
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("Resize EMG File Window")
         self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
         )
         self.head.grab_set()
 
@@ -1428,7 +1428,7 @@ class GUI:
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("Force Analysis Window")
         self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
         )
         self.head.grab_set()
 
@@ -1528,7 +1528,7 @@ class GUI:
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("Motor Unit Properties Window")
         self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
         )
         self.head.grab_set()
 
@@ -1771,7 +1771,7 @@ class GUI:
             self.head = tk.Toplevel(bg="LightBlue4")
             self.head.title("Plot Window")
             self.head.iconbitmap(
-                os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+                os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
             )
             self.head.grab_set()
 
@@ -2362,13 +2362,13 @@ class GUI:
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("MUs tracking window")
         self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
         )
         self.head.grab_set()
 
         # Specify Signal
         self.filetype_adv = StringVar()
-        signal_value = ("OTB", "DEMUSE", "Open_HD-EMG")
+        signal_value = ("OTB", "DEMUSE", "openhdemg")
         signal_entry = ttk.Combobox(
             self.head, text="Signal", width=8, textvariable=self.filetype_adv
         )
