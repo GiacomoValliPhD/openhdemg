@@ -9,5 +9,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
         "Topic :: High Density EMG :: Muscle",
     ],
-    python_requires="=3.10",
+    python_requires="=3.9",
 )
