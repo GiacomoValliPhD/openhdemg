@@ -824,16 +824,16 @@ def tracking(
 
     # Get the STAs
     emgfile1_sorted = sort_rawemg(
-        emgfile1, code=matrixcode, orientation=orientation
+        emgfile1, code=matrixcode, orientation=orientation,
     )
     sta_emgfile1 = sta(
-        emgfile1, emgfile1_sorted, firings=firings, timewindow=timewindow * 2
+        emgfile1, emgfile1_sorted, firings=firings, timewindow=timewindow * 2,
     )
     emgfile2_sorted = sort_rawemg(
         emgfile2, code=matrixcode, orientation=orientation
     )
     sta_emgfile2 = sta(
-        emgfile2, emgfile2_sorted, firings=firings, timewindow=timewindow * 2
+        emgfile2, emgfile2_sorted, firings=firings, timewindow=timewindow * 2,
     )
 
     # Tracking function to run in parallel
@@ -844,11 +844,12 @@ def tracking(
         # Compare mu_file1 against all the MUs in file2
         for mu_file2 in range(emgfile2["NUMBER_OF_MUS"]):
             # Firs, align the STAs
-            aligned_sta1, aligned_sta2 = align_by_xcorr(
+            """ aligned_sta1, aligned_sta2 = align_by_xcorr(
                 sta_emgfile1[mu_file1],
                 sta_emgfile2[mu_file2],
                 finalduration=0.5
-            )
+            ) """
+            aligned_sta1, aligned_sta2 = sta_emgfile1[mu_file1], sta_emgfile2[mu_file2]
 
             # Second, compute 2d cross-correlation
             df1 = unpack_sta(aligned_sta1)
@@ -1215,7 +1216,7 @@ def xcc_sta(sta):
                     # Use np.ndarrays for performance
                     this_c = df.loc[:, reversed_col[pos]].to_numpy()
                     next_c = df.loc[:, reversed_col[pos+1]].to_numpy()
-                    xcc = norm_xcorr(sig1=this_c, sig2=next_c)
+                    xcc = norm_xcorr(sig1=this_c, sig2=next_c, out="max")
                 else:
                     xcc = np.nan
 

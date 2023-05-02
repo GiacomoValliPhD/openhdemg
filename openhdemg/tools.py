@@ -339,7 +339,7 @@ def compute_idr(emgfile):
             # Calculate time in seconds and add it in column 2
             df[2] = df[0] / emgfile["FSAMP"]
             # Calculate the idr and add it in column 3
-            df[3] = emgfile["FSAMP"] / df[0].diff()
+            df[3] = emgfile["FSAMP"] / df[1]
 
             df = df.rename(
                 columns={

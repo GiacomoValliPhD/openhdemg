@@ -59,7 +59,7 @@ def min_max_scaling(series_or_df):
         )
 
 
-def norm_xcorr(sig1, sig2):
+def norm_xcorr(sig1, sig2, out="both"):
     """
     Normalized cross-correlation of 2 signals.
 
@@ -68,17 +68,29 @@ def norm_xcorr(sig1, sig2):
     sig1, sig2 : pd.Series or np.ndarray
         The two signals to correlate.
         These signals must be 1-dimensional and of same length.
+    out : str {"both", "max"}, default "both"
+        A string indicating the output value:
+
+        ``both``
+           The output is the greatest positive or negative cross-correlation
+           value.
+        ``max``
+           The output is the maximum cross-correlation value.
 
     Returns
     -------
     xcc : float
-        The maximum cross-correlation value.
+        The cross-correlation value depending on "out".
 
     See also
     --------
     norm_twod_xcorr : Normalised 2-dimensional cross-correlation of STAs of
         two MUS.
     """
+
+    # Convert input to ndarray
+    sig1 = np.asarray(sig1)
+    sig2 = np.asarray(sig2)
 
     # Implementation corresponding to:
     # MATLAB => xcorr(a, b, 'normalized')
@@ -94,7 +106,14 @@ def norm_xcorr(sig1, sig2):
     # (i.e. n = 1e5) because it does not use the FFT to compute the
     # convolution; in that case, `scipy.signal.correlate` might be preferable.
 
-    return max(c)
+    # Calculate xcc based on out
+    if out == "max":
+        xcc = np.max(c)
+    else:
+        max_abs_index = np.abs(c).argmax()
+        xcc = np.abs(c[max_abs_index]) * np.sign(c[max_abs_index])
+
+    return xcc
 
 
 def norm_twod_xcorr(df1, df2, mode="full"):
@@ -353,7 +372,7 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
     # Calculate Pi
     if separate_paired_firings is False:
         # Calculate Pi on all IDI
-        CoV_all_IDI = np.std(idi) / np.average(idi)
+        CoV_all_IDI = np.std(idi) / np.mean(idi)
 
         if math.isnan(CoV_all_IDI):
             CoV_all_IDI = 0
@@ -365,11 +384,11 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
         idinonp = idi[idi >= (fsamp * 0.05)]
         idip = idi[idi < (fsamp * 0.05)]
 
-        CoVIDI = np.std(idinonp) / np.average(idinonp)
+        CoVIDI = np.std(idinonp) / np.mean(idinonp)
         if math.isnan(CoVIDI):
             CoVIDI = 0
 
-        CoVpIDI = np.std(idip) / np.average(idip)
+        CoVpIDI = np.std(idip) / np.mean(idip)
         if math.isnan(CoVpIDI):
             CoVpIDI = 0
 
