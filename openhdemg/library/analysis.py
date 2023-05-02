@@ -5,8 +5,8 @@ not involving the MUs action potential shape.
 
 import pandas as pd
 import numpy as np
-from openhdemg.tools import showselect, compute_idr, compute_covsteady
-from openhdemg.mathtools import compute_pnr, compute_sil
+from openhdemg.library.tools import showselect, compute_idr, compute_covsteady
+from openhdemg.library.mathtools import compute_pnr, compute_sil
 import warnings
 import math
 

@@ -4,10 +4,15 @@ This module contains functions to produce and analyse MUs anction potentials
 """
 
 import pandas as pd
-from openhdemg.tools import delete_mus
-from openhdemg.mathtools import norm_twod_xcorr, norm_xcorr, find_teta, mle_cv_est
-from openhdemg.otbelectrodes import sort_rawemg
-from openhdemg.plotemg import plot_muaps, plot_muaps_for_cv
+from openhdemg.library.tools import delete_mus
+from openhdemg.library.mathtools import (
+    norm_twod_xcorr,
+    norm_xcorr,
+    find_teta,
+    mle_cv_est,
+)
+from openhdemg.library.otbelectrodes import sort_rawemg
+from openhdemg.library.plotemg import plot_muaps, plot_muaps_for_cv
 from scipy import signal
 import matplotlib.pyplot as plt
 from functools import reduce

@@ -73,10 +73,9 @@ the function's description.
 from scipy.io import loadmat
 import pandas as pd
 import numpy as np
-from openhdemg.otbelectrodes import *
-from openhdemg.mathtools import compute_sil
-from openhdemg.mathtools import compute_pnr
-from openhdemg.tools import create_binary_firings
+from openhdemg.library.otbelectrodes import *
+from openhdemg.library.mathtools import compute_pnr, compute_sil
+from openhdemg.library.tools import create_binary_firings
 from tkinter import *
 from tkinter import filedialog
 import json

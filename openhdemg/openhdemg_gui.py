@@ -20,15 +20,15 @@ import pandas as pd
 
 matplotlib.use("TkAgg")
 
-import openhdemg
+import openhdemg.library as openhdemg
 
 
-class GUI:
+class emgGUI:
     """
     A class representing a Tkinter TK instance.
 
     This class is used to create a graphical user interface for
-    the openhdemg library.
+    the Open_HD-EMG library.
 
     Attributes
     ----------
@@ -93,7 +93,7 @@ class GUI:
     self.linewidth : float, default 0.5
         The width of the vertical lines representing the MU firing.
     self.logo :
-        String containing the path to image file containing logo of openhdemg.
+        String containing the path to image file containing logo of Open_HD-EMG.
     self.logo_canvas : tk.canvas
         Canvas to display logo of Open_HG-EMG when openend.
     self.master: tk
@@ -317,9 +317,9 @@ class GUI:
         """
         # Set up GUI
         self.master = master
-        self.master.title("openhdemg")
+        self.master.title("Open_HD-EMG")
         master_path = os.path.dirname(os.path.abspath(__file__))
-        iconpath = master_path + "/gui_files/Icon.ico"
+        iconpath = master_path + "/gui_files/logo.ico"
         self.master.iconbitmap(iconpath)
 
         # Create left side framing for functionalities
@@ -347,7 +347,7 @@ class GUI:
 
         # Specify Signal
         self.filetype = StringVar()
-        signal_value = ("OTB", "DEMUSE", "REFSIG", "JSON")
+        signal_value = ("OTB", "DEMUSE", "REFSIG", "Open_HD-EMG", "custom")
         signal_entry = ttk.Combobox(
             self.left, text="Signal", width=10, textvariable=self.filetype
         )
@@ -481,7 +481,7 @@ class GUI:
         self.logo_canvas = Canvas(self.right, height=590, width=800, bg="white")
         self.logo_canvas.grid(row=0, column=0, rowspan=5)
 
-        logo_path = master_path + "/gui_files/Logo.png"  # Get logo path
+        logo_path = master_path + "/gui_files/logo.png"  # Get logo path
         self.logo = tk.PhotoImage(file=logo_path)
 
         # self.matrix = tk.PhotoImage(file="Matrix_illustration.png")
@@ -575,79 +575,57 @@ class GUI:
         emg_from_demuse, emg_from_otb, refsig_from_otb and emg_from_json in library.
         """
         try:
-            # Check filetype for processing
-            if self.filetype.get() == "OTB":
+            if self.filetype.get() in ["OTB", "DEMUSE", "Open_HD-EMG", "custom"]:
+                # Check filetype for processing
+                if self.filetype.get() == "OTB":
+                    # Ask user to select the file
+                    file_path = filedialog.askopenfilename(
+                        title="Open OTB file", filetypes=[("MATLAB files", "*.mat")]
+                    )
+                    self.file_path = file_path
+                    # Load file
+                    self.resdict = openhdemg.emg_from_otb(
+                        filepath=self.file_path,
+                        ext_factor=int(self.extension_factor.get()),
+                    )
 
-                # Ask user to select the file
-                file_path = filedialog.askopenfilename(
-                    title="Open OTB file", filetypes=[("MATLAB files", "*.mat")]
-                )
-                self.file_path = file_path
+                elif self.filetype.get() == "DEMUSE":
+                    # Ask user to select the file
+                    file_path = filedialog.askopenfilename(
+                        title="Open DEMUSE file", filetypes=[("MATLAB files", "*.mat")]
+                    )
+                    self.file_path = file_path
+
+                    # load file
+                    self.resdict = openhdemg.emg_from_demuse(filepath=self.file_path)
+
+                elif self.filetype.get() == "Open_HD-EMG":
+                    # Ask user to select the file
+                    file_path = filedialog.askopenfilename(
+                        title="Open JSON file", filetypes=[("JSON files", "*.json")]
+                    )
+                    self.file_path = file_path
+
+                    # load Open_HD-EMG (.json)
+                    self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
+
+                else:
+                    # Ask user to select the file
+                    file_path = filedialog.askopenfilename(
+                        title="Open CUSTOM file",
+                        filetypes=[("CSV files", ".csv")],
+                    )
+                    self.file_path = file_path
+
+                    # load refsig
+                    self.resdict = openhdemg.emg_from_customcsv(filepath=self.file_path)
+
                 # Get filename
                 filename = os.path.splitext(os.path.basename(file_path))[0]
                 self.filename = filename
 
                 # Add filename to label
                 self.master.title(self.filename)
-
-                # Load file
-                self.resdict = openhdemg.emg_from_otb(
-                    filepath=self.file_path, ext_factor=int(self.extension_factor.get())
-                )
-
-                # Add filespecs
-                ttk.Label(
-                    self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
-                ).grid(column=2, row=2, sticky=(W, E))
-                ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
-                    column=2, row=3, sticky=(W, E)
-                )
-                ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
-                    column=2, row=4, sticky=(W, E)
-                )
-
-            elif self.filetype.get() == "DEMUSE":
-                # Ask user to select the file
-                file_path = filedialog.askopenfilename(
-                    title="Open DEMUSE file", filetypes=[("MATLAB files", "*.mat")]
-                )
-                self.file_path = file_path
-                # Get filename
-                filename = os.path.splitext(os.path.basename(file_path))[0]
-                self.filename = filename
-
-                # Add filename to label
-                self.master.title(self.filename)
-
-                # load file
-                self.resdict = openhdemg.emg_from_demuse(filepath=self.file_path)
-
-                # Add filespecs
-                ttk.Label(
-                    self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
-                ).grid(column=2, row=2, sticky=(W, E))
-                ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
-                    column=2, row=3, sticky=(W, E)
-                )
-                ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
-                    column=2, row=4, sticky=(W, E)
-                )
-
-            elif self.filetype.get() == "JSON":
-                # Ask user to select the file
-                file_path = filedialog.askopenfilename(
-                    title="Open JSON file", filetypes=[("JSON files", "*.json")]
-                )
-                self.file_path = file_path
-                # Get filename
-                filename = os.path.splitext(os.path.basename(file_path))[0]
-                self.filename = filename
-
-                # Add filename to label
-                self.master.title(self.filename)
-
-                # load openhdemg (.json)
-                self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
 
                 # Add filespecs
                 ttk.Label(
@@ -664,7 +642,10 @@ class GUI:
                 # Ask user to select the file
                 file_path = filedialog.askopenfilename(
                     title="Open REFSIG file",
-                    filetypes=[("MATLAB files", "*.mat"), ("JSON files", "*.json")],
+                    filetypes=[
+                        ("MATLAB files", "*.mat"),
+                        ("JSON files", "*.json"),
+                    ],
                 )
                 self.file_path = file_path
                 # Get filename
@@ -833,30 +814,28 @@ class GUI:
         if tk.messagebox.askokcancel(
             "Attention", "Do you really want to reset the analysis?"
         ):
-
             # user decided to rest analysis
             try:
-
                 # reload original file
-                if self.filetype.get() == "OTB":
-                    self.resdict = openhdemg.emg_from_otb(
-                        filepath=self.file_path,
-                        ext_factor=int(self.extension_factor.get()),
-                    )
+                if self.filetype.get() in ["OTB", "DEMUSE", "Open_HD-EMG", "custom"]:
+                    if self.filetype.get() == "OTB":
+                        self.resdict = openhdemg.emg_from_otb(
+                            filepath=self.file_path,
+                            ext_factor=int(self.extension_factor.get()),
+                        )
 
-                    # Update Filespecs
-                    ttk.Label(
-                        self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
-                    ).grid(column=2, row=2, sticky=(W, E))
-                    ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
-                        column=2, row=3, sticky=(W, E)
-                    )
-                    ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
-                        column=2, row=4, sticky=(W, E)
-                    )
+                    elif self.filetype.get() == "DEMUSE":
+                        self.resdict = openhdemg.emg_from_demuse(
+                            filepath=self.file_path
+                        )
 
-                elif self.filetype.get() == "DEMUSE":
-                    self.resdict = openhdemg.emg_from_demuse(filepath=self.file_path)
+                    elif self.filetype.get() == "Open_HD-EMG":
+                        self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
+
+                    elif self.filetype.get() == "custom":
+                        self.resdict = openhdemg.emg_from_customcsv(
+                            filepath=self.file_path
+                        )
 
                     # Update Filespecs
                     ttk.Label(
@@ -906,32 +885,85 @@ class GUI:
                 tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
     def open_advanced_tools(self):
-        """ """
+        """
+        Open a window for advanced analysis tools.
+        """
         # Open window
-        self.head = tk.Toplevel(bg="LightBlue4", height=200)
-        self.head.title("Advanced Tools Window")
-        self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
+        self.a_window = tk.Toplevel(bg="LightBlue4", height=200)
+        self.a_window.title("Advanced Tools Window")
+        self.a_window.iconbitmap(
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
         )
-        self.head.grab_set()
+        self.a_window.grab_set()
 
         # Add Label
         ttk.Label(
-            self.head, text="Select the tool you need!", font=("Verdana", 16, "bold")
-        ).grid(row=0, column=0, pady=5)
+            self.a_window, text="Select tool and matrix:", font=("Verdana", 14, "bold")
+        ).grid(row=0, column=0)
 
+        # Analysis Tool
+        ttk.Label(self.a_window, text="Analysis Tool").grid(
+            row=2, column=0, sticky=(W, E)
+        )
         # Add Selection Combobox
         self.advanced_method = StringVar()
-        adv_box = ttk.Combobox(self.head, width=30, textvariable=self.advanced_method)
-        adv_box["values"] = ("MUs tracking", "Duplicate Removal", "Conduction Velocity")
-        adv_box["state"] = "readonly"
-        adv_box.grid(row=2, column=0, padx=20, pady=5)
-        adv_box.set("MUs tracking")
-
-        adv_button = ttk.Button(
-            self.head, text="Advanced Analysis", command=self.advanced_analysis
+        adv_box = ttk.Combobox(
+            self.a_window, width=15, textvariable=self.advanced_method
         )
-        adv_button.grid(column=0, row=3, padx=5, pady=5)
+        adv_box["values"] = (
+            "Motor Unit Tracking",
+            "Duplicate Removal",
+            "Conduction Velocity",
+        )
+        adv_box["state"] = "readonly"
+        adv_box.grid(row=2, column=1, sticky=(W, E))
+        adv_box.set("Motor Unit Tracking")
+
+        # Matrix Orientation
+        ttk.Label(self.a_window, text="Matrix Orientation*").grid(
+            row=3, column=0, sticky=(W, E)
+        )
+        self.mat_orientation_adv = StringVar()
+        orientation = ttk.Combobox(
+            self.a_window, width=8, textvariable=self.mat_orientation_adv
+        )
+        orientation["values"] = ("0", "180")
+        orientation["state"] = "readonly"
+        orientation.grid(row=3, column=1, sticky=(W, E))
+        self.mat_orientation_adv.set("180")
+
+        # Matrix code
+        ttk.Label(self.a_window, text="Matrix Code*").grid(
+            row=4, column=0, sticky=(W, E)
+        )
+        self.mat_code_adv = StringVar()
+        matrix_code = ttk.Combobox(
+            self.a_window, width=10, textvariable=self.mat_code_adv
+        )
+        matrix_code["values"] = ("GR08MM1305", "GR04MM1305")
+        matrix_code["state"] = "readonly"
+        matrix_code.grid(row=4, column=1, sticky=(W, E))
+        self.mat_code_adv.set("GR08MM1305")
+
+        # Instruction
+        ttk.Label(
+            self.a_window,
+            text="*Ignored for DEMUSE files, \ninsert random values",
+            font=("Arial", 8),
+        ).grid(row=5, column=1, sticky=W)
+
+        # Analysis Button
+        adv_button = ttk.Button(
+            self.a_window,
+            text="Advanced Analysis",
+            command=self.advanced_analysis,
+            style="B.TButton",
+        )
+        adv_button.grid(column=0, row=6)
+
+        # Add padding to widgets
+        for child in self.a_window.winfo_children():
+            child.grid_configure(padx=5, pady=5)
 
     def open_pdf(self):
         """
@@ -1051,7 +1083,7 @@ class GUI:
             self.head = tk.Toplevel(bg="LightBlue4")
             self.head.title("Motor Unit Removal Window")
             self.head.iconbitmap(
-                os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
+                os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
             )
             self.head.grab_set()
 
@@ -1180,7 +1212,7 @@ class GUI:
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("Reference Signal Eiditing Window")
         self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
         )
         self.head.grab_set()
 
@@ -1302,7 +1334,7 @@ class GUI:
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("Resize EMG File Window")
         self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
         )
         self.head.grab_set()
 
@@ -1428,7 +1460,7 @@ class GUI:
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("Force Analysis Window")
         self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
         )
         self.head.grab_set()
 
@@ -1528,7 +1560,7 @@ class GUI:
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("Motor Unit Properties Window")
         self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
         )
         self.head.grab_set()
 
@@ -1771,7 +1803,7 @@ class GUI:
             self.head = tk.Toplevel(bg="LightBlue4")
             self.head.title("Plot Window")
             self.head.iconbitmap(
-                os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
+                os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
             )
             self.head.grab_set()
 
@@ -2362,13 +2394,13 @@ class GUI:
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("MUs tracking window")
         self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
         )
         self.head.grab_set()
 
         # Specify Signal
         self.filetype_adv = StringVar()
-        signal_value = ("OTB", "DEMUSE", "openhdemg")
+        signal_value = ("OTB", "DEMUSE", "Open_HD-EMG", "custom")
         signal_entry = ttk.Combobox(
             self.head, text="Signal", width=8, textvariable=self.filetype_adv
         )
@@ -2385,33 +2417,6 @@ class GUI:
         # Load file
         load2 = ttk.Button(self.head, text="Load File 2", command=self.open_emgfile2)
         load2.grid(column=0, row=3, sticky=(W, E))
-
-        # Matrix code
-        ttk.Label(self.head, text="Matrix Code*").grid(row=6, column=0, sticky=(W))
-        self.mat_code_adv = StringVar()
-        matrix_code = ttk.Combobox(self.head, width=10, textvariable=self.mat_code_adv)
-        matrix_code["values"] = ("GR08MM1305", "GR04MM1305")
-        matrix_code["state"] = "readonly"
-        matrix_code.grid(row=6, column=1, sticky=(W, E))
-        self.mat_code_adv.set("GR08MM1305")
-
-        # Matrix Orientation
-        ttk.Label(self.head, text="Orientation*").grid(row=7, column=0, sticky=(W))
-        self.mat_orientation_adv = StringVar()
-        orientation = ttk.Combobox(
-            self.head, width=8, textvariable=self.mat_orientation_adv
-        )
-        orientation["values"] = ("0", "180")
-        orientation["state"] = "readonly"
-        orientation.grid(row=7, column=1, sticky=(W, E))
-        self.mat_orientation_adv.set("180")
-
-        # Instruction
-        ttk.Label(
-            self.head,
-            text="*Ignored for DEMUSE files, \ninsert random values",
-            font=("Arial", 8),
-        ).grid(row=8, column=0, sticky=W)
 
         # Threshold label
         threshold_label = ttk.Label(self.head, text="Threshold:")
@@ -2475,7 +2480,6 @@ class GUI:
         # Add Which widget and update the track button
         # to match functionalities required for duplicate removal
         if self.advanced_method.get() == "Duplicate Removal":
-
             # Add Which label
             ttk.Label(self.head, text="Which").grid(column=0, row=13)
             # Combobox for Which option
@@ -2496,30 +2500,33 @@ class GUI:
             )
 
         if self.advanced_method.get() == "Conduction Velocity":
+            try:
+                # Destroy unnecessary pop-ups
+                self.head.destroy()
+                self.a_window.destroy()
 
-            # Forget load two button
-            load2.grid_forget()
+                # Sort emg file
+                sorted_rawemg = openhdemg.sort_rawemg(
+                    self.resdict,
+                    code=self.mat_code_adv.get(),
+                    orientation=int(self.mat_orientation_adv.get()),
+                )
 
-            # Forget threshold
-            threshold_label.grid_forget()
-            threshold_combobox.grid_forget()
+                openhdemg.MUcv_gui(
+                    emgfile=self.resdict,
+                    sorted_rawemg=sorted_rawemg,
+                )
 
-            # Forget exclude below threshold
-            exclude_checkbox.grid_forget()
-            exclude_label.grid_forget()
+            except AttributeError:
+                tk.messagebox.showerror(
+                    "Information",
+                    "Please make sure to load a file"
+                    + "prior to Conduction velocity calculation.",
+                )
+                self.head.destroy()
 
-            # Forget filter
-            filter_label.grid_forget()
-            filter_checkbox.grid_forget()
-
-            # Forget show
-            show_label.grid_forget()
-            show_checkbox.grid_forget()
-
-            # Configute button to calculate conduction velocity
-            track_button.config(
-                text="Caclculate CV and RMS", command=self.calculate_conduct_vel
-            )
+        # Destroy first window to avoid too many pop-ups
+        self.a_window.destroy()
 
     ### Define function for advanced analysis tools
 
@@ -2537,7 +2544,6 @@ class GUI:
         """
         # Open OTB file
         if self.filetype_adv.get() == "OTB":
-
             self.emgfile1 = openhdemg.askopenfile(
                 filesource=self.filetype_adv.get(),
                 otb_ext_factor=int(self.extension_factor_adv.get()),
@@ -2565,7 +2571,6 @@ class GUI:
         """
         # Open OTB file
         if self.filetype_adv.get() == "OTB":
-
             self.emgfile2 = openhdemg.askopenfile(
                 filesource=self.filetype_adv.get(),
                 otb_ext_factor=int(self.extension_factor_adv.get()),
@@ -2700,7 +2705,6 @@ class GUI:
                 threshold=float(self.threshold_adv.get()),
                 matrixcode=self.mat_code_adv.get(),
                 orientation=int(self.mat_orientation_adv.get()),
-                exclude_belowthreshold=self.exclude_thres.get(),
                 filter=self.filter_adv.get(),
                 show=self.show_adv.get(),
                 which=self.which_adv.get(),
@@ -2729,7 +2733,6 @@ class GUI:
             )
 
     def calculate_conduct_vel(self):
-
         # Add result terminal
         track_terminal = ttk.LabelFrame(
             self.head, text="Conduction Velocity", height=100, relief="ridge"
@@ -2786,9 +2789,15 @@ class GUI:
 
 
 # -----------------------------------------------------------------------------------------------
+def run_main():
+    # Run GUI upon calling
+    if __name__ == "__main__":
+        root = Tk()
+        emgGUI(root)
+        root.mainloop()
 
-# Run GUI upon calling
+
 if __name__ == "__main__":
     root = Tk()
-    gui = GUI(root)
+    emgGUI(root)
     root.mainloop()
