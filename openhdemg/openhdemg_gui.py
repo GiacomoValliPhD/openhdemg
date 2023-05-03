@@ -319,7 +319,7 @@ class emgGUI:
         self.master = master
         self.master.title("Open_HD-EMG")
         master_path = os.path.dirname(os.path.abspath(__file__))
-        iconpath = master_path + "/gui_files/logo.ico"
+        iconpath = master_path + "/gui_files/Icon.ico"
         self.master.iconbitmap(iconpath)
 
         # Create left side framing for functionalities
@@ -892,7 +892,7 @@ class emgGUI:
         self.a_window = tk.Toplevel(bg="LightBlue4", height=200)
         self.a_window.title("Advanced Tools Window")
         self.a_window.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
         )
         self.a_window.grab_set()
 
@@ -1083,7 +1083,7 @@ class emgGUI:
             self.head = tk.Toplevel(bg="LightBlue4")
             self.head.title("Motor Unit Removal Window")
             self.head.iconbitmap(
-                os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+                os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
             )
             self.head.grab_set()
 
@@ -1212,7 +1212,7 @@ class emgGUI:
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("Reference Signal Eiditing Window")
         self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
         )
         self.head.grab_set()
 
@@ -1334,7 +1334,7 @@ class emgGUI:
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("Resize EMG File Window")
         self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
         )
         self.head.grab_set()
 
@@ -1460,7 +1460,7 @@ class emgGUI:
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("Force Analysis Window")
         self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
         )
         self.head.grab_set()
 
@@ -1560,7 +1560,7 @@ class emgGUI:
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("Motor Unit Properties Window")
         self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
         )
         self.head.grab_set()
 
@@ -1803,7 +1803,7 @@ class emgGUI:
             self.head = tk.Toplevel(bg="LightBlue4")
             self.head.title("Plot Window")
             self.head.iconbitmap(
-                os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+                os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
             )
             self.head.grab_set()
 
@@ -2394,7 +2394,7 @@ class emgGUI:
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title("MUs tracking window")
         self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/logo.ico"
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
         )
         self.head.grab_set()
 

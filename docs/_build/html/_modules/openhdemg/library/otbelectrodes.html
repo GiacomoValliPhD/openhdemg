@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>openhdemg.library.otbelectrodes &mdash; openhdemg 0.1.0-beta documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            openhdemg
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">openhdemg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../openhdemg.html">openhdemg package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../openhdemg.library.html">openhdemg.library package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">openhdemg</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">openhdemg.library.otbelectrodes</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for openhdemg.library.otbelectrodes</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module contains informations about the electrodes commonly used for</span>
+<span class="sd">HD-EMG recordings.</span>
+<span class="sd">Functions to sort the electrode position are also included.</span>
+<span class="sd">The files saved from the DEMUSE software are supposed to be already sorted.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+
+<span class="n">OTBelectrodes_tuple</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;GR04MM1305&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;GR08MM1305&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;GR100ML1305&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;GR10MM0804&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;GR10MM0808&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;HD04MM1305&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;HD08MM1305&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;HD10MM0804&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;HD10MM0808&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Tuple containing the names of different recording electrodes.</span>
+
+<span class="sd">&gt;&gt;&gt; OTBelectrodes_tuple</span>
+<span class="sd">(</span>
+<span class="sd">    &#39;GR04MM1305&#39;,</span>
+<span class="sd">    &#39;GR08MM1305&#39;,</span>
+<span class="sd">    &#39;GR100ML1305&#39;,</span>
+<span class="sd">    &#39;GR10MM0804&#39;,</span>
+<span class="sd">    &#39;GR10MM0808&#39;,</span>
+<span class="sd">    &#39;HD04MM1305&#39;,</span>
+<span class="sd">    &#39;HD08MM1305&#39;,</span>
+<span class="sd">    &#39;HD10MM0804&#39;,</span>
+<span class="sd">    &#39;HD10MM0808&#39;,</span>
+<span class="sd">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">OTBelectrodes_ied</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;GR04MM1305&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="s2">&quot;GR08MM1305&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="s2">&quot;GR100ML1305&quot;</span><span class="p">:</span> <span class="mf">2.5</span><span class="p">,</span>
+    <span class="s2">&quot;GR10MM0804&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="s2">&quot;GR10MM0808&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="s2">&quot;HD04MM1305&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="s2">&quot;HD08MM1305&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="s2">&quot;HD10MM0804&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="s2">&quot;HD10MM0808&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A dict containing information about the interelectrode distance for each</span>
+<span class="sd">matrix in OTBelectrodes_tuple.</span>
+
+<span class="sd">&gt;&gt;&gt; OTBelectrodes_ied</span>
+<span class="sd">{</span>
+<span class="sd">    &#39;GR04MM1305&#39;: 4,</span>
+<span class="sd">    &#39;GR08MM1305&#39;: 8,</span>
+<span class="sd">    &#39;GR100ML1305&#39;: 2.5,</span>
+<span class="sd">    &#39;GR10MM0804&#39;: 10,</span>
+<span class="sd">    &#39;GR10MM0808&#39;: 10,</span>
+<span class="sd">    &#39;HD04MM1305&#39;: 4,</span>
+<span class="sd">    &#39;HD08MM1305&#39;: 8,</span>
+<span class="sd">    &#39;HD10MM0804&#39;: 10,</span>
+<span class="sd">    &#39;HD10MM0808&#39;: 10,</span>
+<span class="sd">}</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">OTBelectrodes_Nelectrodes</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;GR04MM1305&quot;</span><span class="p">:</span> <span class="mi">64</span><span class="p">,</span>
+    <span class="s2">&quot;GR08MM1305&quot;</span><span class="p">:</span> <span class="mi">64</span><span class="p">,</span>
+    <span class="s2">&quot;GR100ML1305&quot;</span><span class="p">:</span> <span class="mi">64</span><span class="p">,</span>
+    <span class="s2">&quot;GR10MM0804&quot;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
+    <span class="s2">&quot;GR10MM0808&quot;</span><span class="p">:</span> <span class="mi">64</span><span class="p">,</span>
+    <span class="s2">&quot;HD04MM1305&quot;</span><span class="p">:</span> <span class="mi">64</span><span class="p">,</span>
+    <span class="s2">&quot;HD08MM1305&quot;</span><span class="p">:</span> <span class="mi">64</span><span class="p">,</span>
+    <span class="s2">&quot;HD10MM0804&quot;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
+    <span class="s2">&quot;HD10MM0808&quot;</span><span class="p">:</span> <span class="mi">64</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A dict containing information about the number of electrodes for each</span>
+<span class="sd">matrix in OTBelectrodes_tuple.</span>
+
+<span class="sd">&gt;&gt;&gt; OTBelectrodes_Nelectrodes</span>
+<span class="sd">{</span>
+<span class="sd">    &#39;GR04MM1305&#39;: 64,</span>
+<span class="sd">    &#39;GR08MM1305&#39;: 64,</span>
+<span class="sd">    &#39;GR100ML1305&#39;: 64,</span>
+<span class="sd">    &#39;GR10MM0804&#39;: 32,</span>
+<span class="sd">    &#39;GR10MM0808&#39;: 64,</span>
+<span class="sd">    &#39;HD04MM1305&#39;: 64,</span>
+<span class="sd">    &#39;HD08MM1305&#39;: 64,</span>
+<span class="sd">    &#39;HD10MM0804&#39;: 32,</span>
+<span class="sd">    &#39;HD10MM0808&#39;: 64,</span>
+<span class="sd">}</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------</span>
+<span class="c1"># Sort the electrodes of different matrices.</span>
+
+
+<div class="viewcode-block" id="sort_rawemg"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.otbelectrodes.sort_rawemg">[docs]</a><span class="k">def</span> <span class="nf">sort_rawemg</span><span class="p">(</span>
+    <span class="n">emgfile</span><span class="p">,</span>
+    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;GR08MM1305&quot;</span><span class="p">,</span>
+    <span class="n">orientation</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span>
+    <span class="n">dividebycolumn</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sort RAW_SIGNAL based on matrix type and orientation.</span>
+
+<span class="sd">    To date, built-in sorting functions have been implemented for the matrices:</span>
+<span class="sd">        Code        (Orientation)</span>
+<span class="sd">        GR08MM1305  (0, 180),</span>
+<span class="sd">        GR04MM1305  (0, 180),</span>
+<span class="sd">        GR10MM0808  (0, 180).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile.</span>
+<span class="sd">    code : str {&quot;GR08MM1305&quot;, &quot;GR04MM1305&quot;, &quot;GR10MM0808&quot;}, default &quot;GR08MM1305&quot;</span>
+<span class="sd">        The code of the matrix used.</span>
+<span class="sd">    orientation : int {0, 180}, default 180</span>
+<span class="sd">        Orientation in degree of the matrix (same as in OTBiolab).</span>
+<span class="sd">        E.g. 180 corresponds to the matrix connection toward the researcher or</span>
+<span class="sd">        the ground (depending on the limb).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    sorted_rawemg : dict or pd.DataFrame</span>
+<span class="sd">        If dividebycolumn == True a dict containing the sorted electrodes.</span>
+<span class="sd">        Every key of the dictionary represents a different column of the</span>
+<span class="sd">        matrix. Rows are stored in the dict as a pd.DataFrame.</span>
+<span class="sd">        If dividebycolumn == False a pd.DataFrame containing the sorted</span>
+<span class="sd">        electrodes. The matrix channels are stored in the pd.DataFrame columns.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The returned file is called ``sorted_rawemg`` for convention.</span>
+<span class="sd">    Files coming from DEMUSE or OTBiolab+ have the same final format.</span>
+
+<span class="sd">    DEMUSE files are supposed to be already sorted and are therefore only</span>
+<span class="sd">    divided by columns if requested.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Sort emgfile RAW_SIGNAL and divide it by columns.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; sorted_rawemg = emg.sort_rawemg(</span>
+<span class="sd">    ...     emgfile=emgfile,</span>
+<span class="sd">    ...     code=&quot;GR08MM1305&quot;,</span>
+<span class="sd">    ...     orientation=180,</span>
+<span class="sd">    ...     dividebycolumn=True,</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; sorted_rawemg[&quot;col0&quot;]</span>
+<span class="sd">            0          1          2 ...        10         11         12</span>
+<span class="sd">    0     NaN -11.189778   3.560384 ... -2.034505  -3.051758  -0.508626</span>
+<span class="sd">    1     NaN -12.715657   4.577637 ...  2.034505  -7.120768  -0.508626</span>
+<span class="sd">    2     NaN   0.508626  21.870932 ... 17.801920   8.646647  16.276041</span>
+<span class="sd">    3     NaN   6.103516  26.957193 ... 26.448568  19.327799  19.836426</span>
+<span class="sd">    4     NaN  -5.594889  13.224284 ... 10.681152   2.034505   3.560384</span>
+<span class="sd">    ...    ..        ...        ... ...       ...        ...        ...</span>
+<span class="sd">    63483 NaN -15.767415 -22.379557 ...-12.207031 -12.207031 -15.767415</span>
+<span class="sd">    63484 NaN  -9.155273 -19.327799 ... -7.629395  -8.138021  -8.138021</span>
+<span class="sd">    63485 NaN  -6.103516 -12.207031 ... -6.103516  -5.086263  -3.051758</span>
+<span class="sd">    63486 NaN  -6.103516 -15.767415 ... -3.560384  -0.508626   2.543132</span>
+<span class="sd">    63487 NaN  -8.138021 -18.819174 ... -2.034505  -1.525879   3.560384</span>
+
+<span class="sd">    Sort emgfile RAW_SIGNAL without dividing it by columns.</span>
+
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; sorted_rawemg = emg.sort_rawemg(</span>
+<span class="sd">    ...     emgfile,</span>
+<span class="sd">    ...     code=&quot;GR08MM1305&quot;,</span>
+<span class="sd">    ...     orientation=180,</span>
+<span class="sd">    ...     dividebycolumn=False,</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; sorted_rawemg</span>
+<span class="sd">           0          1          2  ...        62         63         64</span>
+<span class="sd">    0     NaN -11.189778   3.560384 ... -5.086263  -9.663899   2.034505</span>
+<span class="sd">    1     NaN -12.715657   4.577637 ... -3.560384  -8.646647   1.017253</span>
+<span class="sd">    2     NaN   0.508626  21.870932 ... 11.189778   6.612142  17.293295</span>
+<span class="sd">    3     NaN   6.103516  26.957193 ... 22.888184  14.750163  21.362305</span>
+<span class="sd">    4     NaN  -5.594889  13.224284 ...  9.663899   1.525879   6.612142</span>
+<span class="sd">    ...    ..        ...        ... ...       ...        ...        ...</span>
+<span class="sd">    63483 NaN -15.767415 -22.379557 ... -8.646647 -20.345053 -15.258789</span>
+<span class="sd">    63484 NaN  -9.155273 -19.327799 ... -7.120768 -19.327799 -13.732910</span>
+<span class="sd">    63485 NaN  -6.103516 -12.207031 ... -3.051758 -10.681152  -6.103516</span>
+<span class="sd">    63486 NaN  -6.103516 -15.767415 ...  2.543132  -7.120768  -4.069010</span>
+<span class="sd">    63487 NaN  -8.138021 -18.819174 ...  2.034505  -3.051758  -0.508626</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># DEMUSE files are supposed to be already sorted</span>
+    <span class="k">if</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;SOURCE&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;OTB&quot;</span><span class="p">,</span> <span class="s2">&quot;custom&quot;</span><span class="p">]:</span>
+        <span class="c1"># Work on a copy of the RAW_SIGNAL</span>
+        <span class="n">rawemg</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;RAW_SIGNAL&quot;</span><span class="p">])</span>
+
+        <span class="c1"># Get sorting order by matrix</span>
+        <span class="k">if</span> <span class="n">code</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;GR08MM1305&quot;</span><span class="p">,</span> <span class="s2">&quot;GR04MM1305&quot;</span><span class="p">]:</span>
+            <span class="c1"># Get sorting order by matrix orientation</span>
+            <span class="k">if</span> <span class="n">orientation</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="w">                </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                MUST REMEMBER: python loops from 0 and the emg channels start</span>
+<span class="sd">                from 0 but the channel order reflects the real channels and</span>
+<span class="sd">                starts from 1! This order is for the user, while the script</span>
+<span class="sd">                uses the base0_sorting_order.</span>
+
+<span class="sd">                base0_sorting_order provides the sorting order while</span>
+<span class="sd">                base0_nanpos indicates the position of the empty (np.nan)</span>
+<span class="sd">                channel.</span>
+
+<span class="sd">                Channel Order GR08MM1305</span>
+<span class="sd">                       0   1   2   3   4</span>
+<span class="sd">                0     64  39  38  13  12</span>
+<span class="sd">                1     63  40  37  14  11</span>
+<span class="sd">                2     62  41  36  15  10</span>
+<span class="sd">                3     61  42  35  16   9</span>
+<span class="sd">                4     60  43  34  17   8</span>
+<span class="sd">                5     59  44  33  18   7</span>
+<span class="sd">                6     58  45  32  19   6</span>
+<span class="sd">                7     57  46  31  20   5</span>
+<span class="sd">                8     56  47  30  21   4</span>
+<span class="sd">                9     55  48  29  22   3</span>
+<span class="sd">                10    54  49  28  23   2</span>
+<span class="sd">                11    53  50  27  24   1</span>
+<span class="sd">                12    52  51  26  25 NaN</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+                <span class="n">base0_sorting_order</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="mi">63</span><span class="p">,</span><span class="mi">62</span><span class="p">,</span><span class="mi">61</span><span class="p">,</span><span class="mi">60</span><span class="p">,</span><span class="mi">59</span><span class="p">,</span><span class="mi">58</span><span class="p">,</span><span class="mi">57</span><span class="p">,</span><span class="mi">56</span><span class="p">,</span><span class="mi">55</span><span class="p">,</span><span class="mi">54</span><span class="p">,</span><span class="mi">53</span><span class="p">,</span><span class="mi">52</span><span class="p">,</span>    <span class="mi">51</span><span class="p">,</span>
+                    <span class="mi">38</span><span class="p">,</span><span class="mi">39</span><span class="p">,</span><span class="mi">40</span><span class="p">,</span><span class="mi">41</span><span class="p">,</span><span class="mi">42</span><span class="p">,</span><span class="mi">43</span><span class="p">,</span><span class="mi">44</span><span class="p">,</span><span class="mi">45</span><span class="p">,</span><span class="mi">46</span><span class="p">,</span><span class="mi">47</span><span class="p">,</span><span class="mi">48</span><span class="p">,</span><span class="mi">49</span><span class="p">,</span>    <span class="mi">50</span><span class="p">,</span>
+                    <span class="mi">37</span><span class="p">,</span><span class="mi">36</span><span class="p">,</span><span class="mi">35</span><span class="p">,</span><span class="mi">34</span><span class="p">,</span><span class="mi">33</span><span class="p">,</span><span class="mi">32</span><span class="p">,</span><span class="mi">31</span><span class="p">,</span><span class="mi">30</span><span class="p">,</span><span class="mi">29</span><span class="p">,</span><span class="mi">28</span><span class="p">,</span><span class="mi">27</span><span class="p">,</span><span class="mi">26</span><span class="p">,</span>    <span class="mi">25</span><span class="p">,</span>
+                    <span class="mi">12</span><span class="p">,</span><span class="mi">13</span><span class="p">,</span><span class="mi">14</span><span class="p">,</span><span class="mi">15</span><span class="p">,</span><span class="mi">16</span><span class="p">,</span><span class="mi">17</span><span class="p">,</span><span class="mi">18</span><span class="p">,</span><span class="mi">19</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">21</span><span class="p">,</span><span class="mi">22</span><span class="p">,</span><span class="mi">23</span><span class="p">,</span>    <span class="mi">24</span><span class="p">,</span>
+                    <span class="mi">11</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                <span class="p">]</span>
+
+            <span class="k">elif</span> <span class="n">orientation</span> <span class="o">==</span> <span class="mi">180</span><span class="p">:</span>
+<span class="w">                </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                Channel Order GR08MM1305</span>
+<span class="sd">                       0   1   2   3   4</span>
+<span class="sd">                0    NaN  25  26  51  52</span>
+<span class="sd">                1      1  24  27  50  53</span>
+<span class="sd">                2      2  23  28  49  54</span>
+<span class="sd">                3      3  22  29  48  55</span>
+<span class="sd">                4      4  21  30  47  56</span>
+<span class="sd">                5      5  20  31  46  57</span>
+<span class="sd">                6      6  19  32  45  58</span>
+<span class="sd">                7      7  18  33  44  59</span>
+<span class="sd">                8      8  17  34  43  60</span>
+<span class="sd">                9      9  16  35  42  61</span>
+<span class="sd">                10    10  15  36  41  62</span>
+<span class="sd">                11    11  14  37  40  63</span>
+<span class="sd">                12    12  13  38  39  64</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+                <span class="n">base0_sorting_order</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span> <span class="p">,</span><span class="mi">2</span> <span class="p">,</span><span class="mi">3</span> <span class="p">,</span><span class="mi">4</span> <span class="p">,</span><span class="mi">5</span> <span class="p">,</span><span class="mi">6</span> <span class="p">,</span><span class="mi">7</span> <span class="p">,</span><span class="mi">8</span> <span class="p">,</span><span class="mi">9</span> <span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">11</span><span class="p">,</span>
+                    <span class="mi">24</span>    <span class="p">,</span><span class="mi">23</span><span class="p">,</span><span class="mi">22</span><span class="p">,</span><span class="mi">21</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">19</span><span class="p">,</span><span class="mi">18</span><span class="p">,</span><span class="mi">17</span><span class="p">,</span><span class="mi">16</span><span class="p">,</span><span class="mi">15</span><span class="p">,</span><span class="mi">14</span><span class="p">,</span><span class="mi">13</span><span class="p">,</span><span class="mi">12</span><span class="p">,</span>
+                    <span class="mi">25</span>    <span class="p">,</span><span class="mi">26</span><span class="p">,</span><span class="mi">27</span><span class="p">,</span><span class="mi">28</span><span class="p">,</span><span class="mi">29</span><span class="p">,</span><span class="mi">30</span><span class="p">,</span><span class="mi">31</span><span class="p">,</span><span class="mi">32</span><span class="p">,</span><span class="mi">33</span><span class="p">,</span><span class="mi">34</span><span class="p">,</span><span class="mi">35</span><span class="p">,</span><span class="mi">36</span><span class="p">,</span><span class="mi">37</span><span class="p">,</span>
+                    <span class="mi">50</span>    <span class="p">,</span><span class="mi">49</span><span class="p">,</span><span class="mi">48</span><span class="p">,</span><span class="mi">47</span><span class="p">,</span><span class="mi">46</span><span class="p">,</span><span class="mi">45</span><span class="p">,</span><span class="mi">44</span><span class="p">,</span><span class="mi">43</span><span class="p">,</span><span class="mi">42</span><span class="p">,</span><span class="mi">41</span><span class="p">,</span><span class="mi">40</span><span class="p">,</span><span class="mi">39</span><span class="p">,</span><span class="mi">38</span><span class="p">,</span>
+                    <span class="mi">51</span>    <span class="p">,</span><span class="mi">52</span><span class="p">,</span><span class="mi">53</span><span class="p">,</span><span class="mi">54</span><span class="p">,</span><span class="mi">55</span><span class="p">,</span><span class="mi">56</span><span class="p">,</span><span class="mi">57</span><span class="p">,</span><span class="mi">58</span><span class="p">,</span><span class="mi">59</span><span class="p">,</span><span class="mi">60</span><span class="p">,</span><span class="mi">61</span><span class="p">,</span><span class="mi">62</span><span class="p">,</span><span class="mi">63</span>
+                <span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">code</span> <span class="o">==</span> <span class="s2">&quot;GR10MM0808&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">orientation</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="w">                </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                Channel Order GR10MM0808</span>
+<span class="sd">                    0   1   2   3   4   5   6   7</span>
+<span class="sd">                0  57  49  41  33  25  17   9   1</span>
+<span class="sd">                1  58  50  42  34  26  18  10   2</span>
+<span class="sd">                2  59  51  43  35  27  19  11   3</span>
+<span class="sd">                3  60  52  44  36  28  20  12   4</span>
+<span class="sd">                4  61  53  45  37  29  21  13   5</span>
+<span class="sd">                5  62  54  46  38  30  22  14   6</span>
+<span class="sd">                6  63  55  47  39  31  23  15   7</span>
+<span class="sd">                7  64  56  48  40  32  24  16   8</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+                <span class="n">base0_sorting_order</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="mi">56</span><span class="p">,</span> <span class="mi">57</span><span class="p">,</span> <span class="mi">58</span><span class="p">,</span> <span class="mi">59</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">61</span><span class="p">,</span> <span class="mi">62</span><span class="p">,</span> <span class="mi">63</span><span class="p">,</span>
+                    <span class="mi">48</span><span class="p">,</span> <span class="mi">49</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">51</span><span class="p">,</span> <span class="mi">52</span><span class="p">,</span> <span class="mi">53</span><span class="p">,</span> <span class="mi">54</span><span class="p">,</span> <span class="mi">55</span><span class="p">,</span>
+                    <span class="mi">40</span><span class="p">,</span> <span class="mi">41</span><span class="p">,</span> <span class="mi">42</span><span class="p">,</span> <span class="mi">43</span><span class="p">,</span> <span class="mi">44</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">46</span><span class="p">,</span> <span class="mi">47</span><span class="p">,</span>
+                    <span class="mi">33</span><span class="p">,</span> <span class="mi">33</span><span class="p">,</span> <span class="mi">34</span><span class="p">,</span> <span class="mi">35</span><span class="p">,</span> <span class="mi">36</span><span class="p">,</span> <span class="mi">37</span><span class="p">,</span> <span class="mi">38</span><span class="p">,</span> <span class="mi">39</span><span class="p">,</span>
+                    <span class="mi">24</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">26</span><span class="p">,</span> <span class="mi">27</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">29</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">31</span><span class="p">,</span>
+                    <span class="mi">16</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span>
+                     <span class="mi">8</span><span class="p">,</span>  <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span>
+                     <span class="mi">0</span><span class="p">,</span>  <span class="mi">1</span><span class="p">,</span>  <span class="mi">2</span><span class="p">,</span>  <span class="mi">3</span><span class="p">,</span>  <span class="mi">4</span><span class="p">,</span>  <span class="mi">5</span><span class="p">,</span>  <span class="mi">6</span><span class="p">,</span>  <span class="mi">7</span><span class="p">,</span>
+                <span class="p">]</span>
+
+            <span class="k">elif</span> <span class="n">orientation</span> <span class="o">==</span> <span class="mi">180</span><span class="p">:</span>
+<span class="w">                </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                Channel Order GR10MM0808</span>
+<span class="sd">                    0   1   2   3   4   5   6   7</span>
+<span class="sd">                0   8  16  24  32  40  48  56  64</span>
+<span class="sd">                1   7  16  23  31  39  47  55  63</span>
+<span class="sd">                2   6  14  22  30  38  46  54  62</span>
+<span class="sd">                3   5  13  21  29  37  45  53  61</span>
+<span class="sd">                4   4  12  20  28  36  44  52  60</span>
+<span class="sd">                5   3  11  19  27  35  43  51  59</span>
+<span class="sd">                6   2  10  18  26  34  42  50  58</span>
+<span class="sd">                7   1   9  17  25  33  41  49  57</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+                <span class="n">base0_sorting_order</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="mi">7</span><span class="p">,</span>   <span class="mi">6</span><span class="p">,</span>  <span class="mi">5</span><span class="p">,</span>  <span class="mi">4</span><span class="p">,</span>  <span class="mi">3</span><span class="p">,</span>  <span class="mi">2</span><span class="p">,</span>  <span class="mi">1</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>
+                    <span class="mi">15</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span>  <span class="mi">9</span><span class="p">,</span>  <span class="mi">8</span><span class="p">,</span>
+                    <span class="mi">23</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span>
+                    <span class="mi">31</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">29</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">27</span><span class="p">,</span> <span class="mi">26</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span>
+                    <span class="mi">39</span><span class="p">,</span> <span class="mi">38</span><span class="p">,</span> <span class="mi">37</span><span class="p">,</span> <span class="mi">36</span><span class="p">,</span> <span class="mi">35</span><span class="p">,</span> <span class="mi">34</span><span class="p">,</span> <span class="mi">33</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span>
+                    <span class="mi">47</span><span class="p">,</span> <span class="mi">46</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">44</span><span class="p">,</span> <span class="mi">43</span><span class="p">,</span> <span class="mi">42</span><span class="p">,</span> <span class="mi">41</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span>
+                    <span class="mi">55</span><span class="p">,</span> <span class="mi">54</span><span class="p">,</span> <span class="mi">53</span><span class="p">,</span> <span class="mi">52</span><span class="p">,</span> <span class="mi">51</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">49</span><span class="p">,</span> <span class="mi">48</span><span class="p">,</span>
+                    <span class="mi">63</span><span class="p">,</span> <span class="mi">62</span><span class="p">,</span> <span class="mi">61</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">59</span><span class="p">,</span> <span class="mi">58</span><span class="p">,</span> <span class="mi">57</span><span class="p">,</span> <span class="mi">56</span><span class="p">,</span>
+                <span class="p">]</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">pass</span>  <span class="c1"># TODO_NEXT_ add other electrodes, and orientations?</span>
+
+        <span class="c1"># Once the order to sort channels has been retrieved,</span>
+        <span class="c1"># Sort the channels based on pre-specified order and reset columns</span>
+        <span class="n">sorted_rawemg</span> <span class="o">=</span> <span class="n">rawemg</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">base0_sorting_order</span><span class="p">)</span>
+        <span class="n">sorted_rawemg</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">sorted_rawemg</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;SOURCE&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;DEMUSE&quot;</span><span class="p">:</span>
+        <span class="c1"># For DEMUSE files (supposed to be already sorted)</span>
+        <span class="c1"># Work on a copy of the RAW_SIGNAL</span>
+        <span class="n">sorted_rawemg</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;RAW_SIGNAL&quot;</span><span class="p">])</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Source </span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;SOURCE&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> not valid&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Check if we need the sorted RAW_SIGNAL divided by column</span>
+    <span class="k">if</span> <span class="n">dividebycolumn</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">code</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;GR08MM1305&quot;</span><span class="p">,</span> <span class="s2">&quot;GR04MM1305&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">orientation</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">180</span><span class="p">]:</span>
+                <span class="n">sorted_rawemg</span> <span class="o">=</span> <span class="p">{</span>
+                            <span class="s2">&quot;col0&quot;</span><span class="p">:</span> <span class="n">sorted_rawemg</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">12</span><span class="p">],</span>
+                            <span class="s2">&quot;col1&quot;</span><span class="p">:</span> <span class="n">sorted_rawemg</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="mi">13</span><span class="p">:</span><span class="mi">25</span><span class="p">],</span>
+                            <span class="s2">&quot;col2&quot;</span><span class="p">:</span> <span class="n">sorted_rawemg</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="mi">26</span><span class="p">:</span><span class="mi">38</span><span class="p">],</span>
+                            <span class="s2">&quot;col3&quot;</span><span class="p">:</span> <span class="n">sorted_rawemg</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="mi">39</span><span class="p">:</span><span class="mi">51</span><span class="p">],</span>
+                            <span class="s2">&quot;col4&quot;</span><span class="p">:</span> <span class="n">sorted_rawemg</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="mi">52</span><span class="p">:</span><span class="mi">64</span><span class="p">]</span>
+                        <span class="p">}</span>
+
+        <span class="k">elif</span> <span class="n">code</span> <span class="o">==</span> <span class="s2">&quot;GR10MM0808&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">orientation</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">180</span><span class="p">]:</span>
+                <span class="n">sorted_rawemg</span> <span class="o">=</span> <span class="p">{</span>
+                            <span class="s2">&quot;col0&quot;</span><span class="p">:</span> <span class="n">sorted_rawemg</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">7</span><span class="p">],</span>
+                            <span class="s2">&quot;col1&quot;</span><span class="p">:</span> <span class="n">sorted_rawemg</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="mi">8</span><span class="p">:</span><span class="mi">15</span><span class="p">],</span>
+                            <span class="s2">&quot;col2&quot;</span><span class="p">:</span> <span class="n">sorted_rawemg</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="mi">16</span><span class="p">:</span><span class="mi">23</span><span class="p">],</span>
+                            <span class="s2">&quot;col3&quot;</span><span class="p">:</span> <span class="n">sorted_rawemg</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="mi">24</span><span class="p">:</span><span class="mi">31</span><span class="p">],</span>
+                            <span class="s2">&quot;col4&quot;</span><span class="p">:</span> <span class="n">sorted_rawemg</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="mi">32</span><span class="p">:</span><span class="mi">39</span><span class="p">],</span>
+                            <span class="s2">&quot;col5&quot;</span><span class="p">:</span> <span class="n">sorted_rawemg</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="mi">40</span><span class="p">:</span><span class="mi">47</span><span class="p">],</span>
+                            <span class="s2">&quot;col6&quot;</span><span class="p">:</span> <span class="n">sorted_rawemg</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="mi">48</span><span class="p">:</span><span class="mi">55</span><span class="p">],</span>
+                            <span class="s2">&quot;col7&quot;</span><span class="p">:</span> <span class="n">sorted_rawemg</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="mi">56</span><span class="p">:</span><span class="mi">63</span><span class="p">]</span>
+                        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">sorted_rawemg</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">sorted_rawemg</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Giacomo Valli.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

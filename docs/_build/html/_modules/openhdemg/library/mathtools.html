@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>openhdemg.library.mathtools &mdash; openhdemg 0.1.0-beta documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            openhdemg
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">openhdemg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../openhdemg.html">openhdemg package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../openhdemg.library.html">openhdemg.library package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">openhdemg</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">openhdemg.library.mathtools</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for openhdemg.library.mathtools</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module contains all the mathematical functions that are necessary for the</span>
+<span class="sd">library.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">numpy.polynomial.polynomial</span> <span class="k">as</span> <span class="nn">poly</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">signal</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial.distance</span> <span class="kn">import</span> <span class="n">cdist</span>
+<span class="kn">from</span> <span class="nn">scipy.fftpack</span> <span class="kn">import</span> <span class="n">fft</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+
+<div class="viewcode-block" id="min_max_scaling"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.mathtools.min_max_scaling">[docs]</a><span class="k">def</span> <span class="nf">min_max_scaling</span><span class="p">(</span><span class="n">series_or_df</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Min-max scaling of pd.series or pd.dataframes.</span>
+
+<span class="sd">    Min-max feature scaling is often simply referred to as normalization,</span>
+<span class="sd">    which rescales the dataset feature to a range of 0 - 1.</span>
+<span class="sd">    It&#39;s calculated by subtracting the feature&#39;s minimum value from the value</span>
+<span class="sd">    and then dividing it by the difference between the maximum and minimum</span>
+<span class="sd">    value.</span>
+
+<span class="sd">    The formula looks like this: xnorm = x - xmin / xmax - xmin.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    series_or_df : pd.Series or pd.DataFrame</span>
+<span class="sd">        The min-max scaling is performed for the entire series,</span>
+<span class="sd">        or for single columns in a pd.DataFrame.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    object : pd.Series or pd.DataFrame</span>
+<span class="sd">        The normalised pd.Series or pd.DataFrame (normalised by column).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Create a deepcopy to avoid modifying the original series or df</span>
+    <span class="nb">object</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">series_or_df</span><span class="p">)</span>
+
+    <span class="c1"># Automatically act depending on the object received</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">object</span> <span class="o">-</span> <span class="nb">object</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">/</span> <span class="p">(</span><span class="nb">object</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="nb">object</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">object</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="nb">object</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nb">object</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">-</span> <span class="nb">object</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">/</span> <span class="p">(</span>
+                <span class="nb">object</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="nb">object</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">object</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;series_or_df must a pandas series or a dataframe. </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">series_or_df</span><span class="p">)</span><span class="si">}</span><span class="s2"> was passed instead.&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="norm_xcorr"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.mathtools.norm_xcorr">[docs]</a><span class="k">def</span> <span class="nf">norm_xcorr</span><span class="p">(</span><span class="n">sig1</span><span class="p">,</span> <span class="n">sig2</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">&quot;both&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Normalized cross-correlation of 2 signals.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sig1, sig2 : pd.Series or np.ndarray</span>
+<span class="sd">        The two signals to correlate.</span>
+<span class="sd">        These signals must be 1-dimensional and of same length.</span>
+<span class="sd">    out : str {&quot;both&quot;, &quot;max&quot;}, default &quot;both&quot;</span>
+<span class="sd">        A string indicating the output value:</span>
+
+<span class="sd">        ``both``</span>
+<span class="sd">           The output is the greatest positive or negative cross-correlation</span>
+<span class="sd">           value.</span>
+<span class="sd">        ``max``</span>
+<span class="sd">           The output is the maximum cross-correlation value.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    xcc : float</span>
+<span class="sd">        The cross-correlation value depending on &quot;out&quot;.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    norm_twod_xcorr : Normalised 2-dimensional cross-correlation of STAs of</span>
+<span class="sd">        two MUS.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Convert input to ndarray</span>
+    <span class="n">sig1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sig1</span><span class="p">)</span>
+    <span class="n">sig2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sig2</span><span class="p">)</span>
+
+    <span class="c1"># Implementation corresponding to:</span>
+    <span class="c1"># MATLAB =&gt; xcorr(a, b, &#39;normalized&#39;)</span>
+    <span class="c1"># From:</span>
+    <span class="c1"># https://stackoverflow.com/questions/53436231/normalized-cross-correlation-in-python</span>
+    <span class="n">norm_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">sig1</span><span class="p">)</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">sig1</span> <span class="o">/</span> <span class="n">norm_a</span>
+    <span class="n">norm_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">sig2</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">sig2</span> <span class="o">/</span> <span class="n">norm_b</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">)</span>
+
+    <span class="c1"># TODO verify: `numpy.correlate` may perform slowly in large arrays</span>
+    <span class="c1"># (i.e. n = 1e5) because it does not use the FFT to compute the</span>
+    <span class="c1"># convolution; in that case, `scipy.signal.correlate` might be preferable.</span>
+
+    <span class="c1"># Calculate xcc based on out</span>
+    <span class="k">if</span> <span class="n">out</span> <span class="o">==</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span>
+        <span class="n">xcc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">max_abs_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span>
+        <span class="n">xcc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="n">max_abs_index</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="n">max_abs_index</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">xcc</span></div>
+
+
+<div class="viewcode-block" id="norm_twod_xcorr"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.mathtools.norm_twod_xcorr">[docs]</a><span class="k">def</span> <span class="nf">norm_twod_xcorr</span><span class="p">(</span><span class="n">df1</span><span class="p">,</span> <span class="n">df2</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;full&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Normalised 2-dimensional cross-correlation of STAs of two MUS.</span>
+
+<span class="sd">    Any pre-processing of the RAW_SIGNAL (i.e., normal, differential or double</span>
+<span class="sd">    differential) can be passed as long as the two inputs have same shape.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df1 : pd.DataFrame</span>
+<span class="sd">        A pd.DataFrame containing the STA of the first MU without np.nan</span>
+<span class="sd">        column.</span>
+<span class="sd">    df2 : pd.DataFrame</span>
+<span class="sd">        A pd.DataFrame containing the STA of the second MU without np.nan</span>
+<span class="sd">        column.</span>
+<span class="sd">    mode : str {&quot;full&quot;, &quot;valid&quot;, &quot;same&quot;}, default &quot;full&quot;</span>
+<span class="sd">        A string indicating the size of the output:</span>
+
+<span class="sd">        ``full``</span>
+<span class="sd">           The output is the full discrete linear cross-correlation</span>
+<span class="sd">           of the inputs. (Default)</span>
+<span class="sd">        ``valid``</span>
+<span class="sd">           The output consists only of those elements that do not</span>
+<span class="sd">           rely on the zero-padding. In &#39;valid&#39; mode, either `sta_mu1` or</span>
+<span class="sd">           `sta_mu2` must be at least as large as the other in every dimension.</span>
+<span class="sd">        ``same``</span>
+<span class="sd">           The output is the same size as `in1`, centered</span>
+<span class="sd">           with respect to the &#39;full&#39; output.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    normxcorr_df : pd.DataFrame</span>
+<span class="sd">        The results of the normalised 2d cross-correlation.</span>
+<span class="sd">    normxcorr_max : float</span>
+<span class="sd">        The maximum value of the 2d cross-correlation.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    align_by_xcorr : to align the two STAs before calling norm_twod_xcorr.</span>
+<span class="sd">    unpack_sta : for unpacking the sta dict in a pd.DataFrame</span>
+<span class="sd">        before passing it to norm_twod_xcorr.</span>
+<span class="sd">    pack_sta : for packing the sta pd.DataFrame in a dict where</span>
+<span class="sd">        each matrix column corresponds to a dict key.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Full steps to pass two dataframes to norm_twod_xcorr from the same EMG</span>
+<span class="sd">    file.</span>
+<span class="sd">    1 Load the EMG file and band-pass filter the raw EMG signal</span>
+<span class="sd">    2 Sort the matrix channels and compute the spike-triggered average</span>
+<span class="sd">    3 Extract the STA of the MUs of interest from all the STAs</span>
+<span class="sd">    4 Unpack the STAs of single MUs and remove np.nan to pas them to</span>
+<span class="sd">        norm_twod_xcorr</span>
+<span class="sd">    5 Compute 2dxcorr to identify a common lag/delay</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.filter_rawemg(emgfile, order=2, lowcut=20, highcut=500)</span>
+<span class="sd">    &gt;&gt;&gt; sorted_rawemg = emg.sort_rawemg(</span>
+<span class="sd">    ...     emgfile,</span>
+<span class="sd">    ...     code=&quot;GR08MM1305&quot;,</span>
+<span class="sd">    ...     orientation=180,</span>
+<span class="sd">    ...     )</span>
+<span class="sd">    &gt;&gt;&gt; sta = emg.sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100)</span>
+<span class="sd">    &gt;&gt;&gt; mu0 = 0</span>
+<span class="sd">    &gt;&gt;&gt; mu1 = 1</span>
+<span class="sd">    &gt;&gt;&gt; sta_mu1 = sta[mu0]</span>
+<span class="sd">    &gt;&gt;&gt; sta_mu2 = sta[mu1]</span>
+<span class="sd">    &gt;&gt;&gt; df1 = emg.unpack_sta(sta_mu1)</span>
+<span class="sd">    &gt;&gt;&gt; no_nan_sta1 = df1.dropna(axis=1, inplace=False)</span>
+<span class="sd">    &gt;&gt;&gt; df2 = emg.unpack_sta(sta_mu2)</span>
+<span class="sd">    &gt;&gt;&gt; no_nan_sta2 = df2.dropna(axis=1, inplace=False)</span>
+<span class="sd">    &gt;&gt;&gt; normxcorr_df, normxcorr_max = emg.norm_twod_xcorr(</span>
+<span class="sd">    ...     no_nan_sta1,</span>
+<span class="sd">    ...     no_nan_sta2,</span>
+<span class="sd">    ...     )</span>
+<span class="sd">    &gt;&gt;&gt; normxcorr_max</span>
+<span class="sd">    0.7241553627564273</span>
+<span class="sd">    &gt;&gt;&gt; normxcorr_df</span>
+<span class="sd">                0             1             2               125       126</span>
+<span class="sd">    0   -0.000002 -1.467778e-05 -3.013564e-05 ... -1.052780e-06  0.000001</span>
+<span class="sd">    1   -0.000004 -2.818055e-05 -6.024427e-05 ... -4.452469e-06  0.000001</span>
+<span class="sd">    2   -0.000007 -4.192479e-05 -9.223725e-05 ... -1.549197e-05 -0.000002</span>
+<span class="sd">    3   -0.000009 -5.071660e-05 -1.174545e-04 ... -3.078518e-05 -0.000007</span>
+<span class="sd">    4   -0.000007 -4.841255e-05 -1.239106e-04 ... -4.232094e-05 -0.000012</span>
+<span class="sd">    ..        ...           ...           ... ...           ...       ...</span>
+<span class="sd">    402  0.000005  1.641773e-05  3.994943e-05 ...  8.170792e-07 -0.000006</span>
+<span class="sd">    403 -0.000001  4.535878e-06  1.858700e-05 ...  2.087135e-06 -0.000003</span>
+<span class="sd">    404 -0.000004 -1.241530e-06  5.704194e-06 ...  1.027966e-05  0.000002</span>
+<span class="sd">    405 -0.000004 -1.693078e-06  1.054646e-06 ...  1.811828e-05  0.000007</span>
+<span class="sd">    406 -0.000002 -2.473282e-07  6.006046e-07 ...  1.605406e-05  0.000007</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Perform 2d xcorr</span>
+    <span class="n">correlate2d</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">correlate2d</span><span class="p">(</span><span class="n">in1</span><span class="o">=</span><span class="n">df1</span><span class="p">,</span> <span class="n">in2</span><span class="o">=</span><span class="n">df2</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+    <span class="c1"># There is no need to work with numpy.ndarrays as signal.correlate2d is</span>
+    <span class="c1"># already converting the pd.DataFrame into numpy.ndarray, and the rest of</span>
+    <span class="c1"># the code does not take much time to run.</span>
+
+    <span class="c1"># Normalise the result of 2d xcorr for the different energy levels</span>
+    <span class="c1"># MATLAB equivalent:</span>
+    <span class="c1"># acor_norm = xcorr(x,y)/sqrt(sum(abs(x).^2)*sum(abs(y).^2))</span>
+    <span class="n">absx</span> <span class="o">=</span> <span class="n">df1</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+    <span class="n">absy</span> <span class="o">=</span> <span class="n">df2</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+    <span class="n">expx</span> <span class="o">=</span> <span class="n">absx</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">expy</span> <span class="o">=</span> <span class="n">absy</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">sumx</span> <span class="o">=</span> <span class="n">expx</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">sumy</span> <span class="o">=</span> <span class="n">expy</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">acor_norm</span> <span class="o">=</span> <span class="n">correlate2d</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sumx</span> <span class="o">*</span> <span class="n">sumy</span><span class="p">)</span>
+
+    <span class="n">normxcorr_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">acor_norm</span><span class="p">)</span>
+    <span class="n">normxcorr_max</span> <span class="o">=</span> <span class="n">normxcorr_df</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">normxcorr_df</span><span class="p">,</span> <span class="n">normxcorr_max</span></div>
+
+
+<div class="viewcode-block" id="compute_sil"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.mathtools.compute_sil">[docs]</a><span class="k">def</span> <span class="nf">compute_sil</span><span class="p">(</span><span class="n">ipts</span><span class="p">,</span> <span class="n">mupulses</span><span class="p">):</span>  <span class="c1"># TODO _NEXT_ add refs in docs when necessary</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the Silhouette score for a single MU.</span>
+
+<span class="sd">    The SIL is defined as the difference between the within-cluster sums of</span>
+<span class="sd">    point-to-centroid distances and the same measure calculated between</span>
+<span class="sd">    clusters. The output measure is normalised in a range between 0 and 1.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ipts : pd.Series</span>
+<span class="sd">        The source of decomposition (or pulse train, IPTS[mu]) of the MU of</span>
+<span class="sd">        interest.</span>
+<span class="sd">    mupulses : ndarray</span>
+<span class="sd">        The time of firing (MUPULSES[mu]) of the MU of interest.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    sil : float</span>
+<span class="sd">        The SIL score.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    compute_pnr : to calculate the Pulse to Noise ratio of a single MU.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Extract source and peaks and align source and peaks based on IPTS</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">ipts</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">peaks_idxs</span> <span class="o">=</span> <span class="n">mupulses</span> <span class="o">-</span> <span class="n">ipts</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># Create clusters</span>
+    <span class="n">peak_cluster</span> <span class="o">=</span> <span class="n">source</span><span class="p">[</span><span class="n">peaks_idxs</span><span class="p">]</span>
+    <span class="n">noise_cluster</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">peaks_idxs</span><span class="p">)</span>
+
+    <span class="c1"># Create centroids for each cluster</span>
+    <span class="n">peak_centroid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">peak_cluster</span><span class="p">)</span>
+    <span class="n">noise_centroid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">noise_cluster</span><span class="p">)</span>
+
+    <span class="c1"># Calculate within-cluster sums of point-to-centroid distances using the</span>
+    <span class="c1"># squared Euclidean distance metric. It is defined as the sum of the</span>
+    <span class="c1"># squares of the differences between the corresponding elements of the two</span>
+    <span class="c1"># vectors.</span>
+    <span class="n">intra_sums</span> <span class="o">=</span> <span class="n">cdist</span><span class="p">(</span>
+        <span class="n">peak_cluster</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="n">peak_centroid</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;sqeuclidean&quot;</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="c1"># Calculate between-cluster sums of point-to-centroid distances</span>
+    <span class="n">inter_sums</span> <span class="o">=</span> <span class="n">cdist</span><span class="p">(</span>
+        <span class="n">peak_cluster</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="n">noise_centroid</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;sqeuclidean&quot;</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="c1"># Calculate silhouette coefficient</span>
+    <span class="n">sil</span> <span class="o">=</span> <span class="p">(</span><span class="n">inter_sums</span> <span class="o">-</span> <span class="n">intra_sums</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">intra_sums</span><span class="p">,</span> <span class="n">inter_sums</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">sil</span></div>
+
+
+<div class="viewcode-block" id="compute_pnr"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.mathtools.compute_pnr">[docs]</a><span class="k">def</span> <span class="nf">compute_pnr</span><span class="p">(</span><span class="n">ipts</span><span class="p">,</span> <span class="n">mupulses</span><span class="p">,</span> <span class="n">fsamp</span><span class="p">,</span> <span class="n">separate_paired_firings</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the pulse to noise ratio for a single MU.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ipts : pd.Series</span>
+<span class="sd">        The source of decomposition (or pulse train, IPTS[mu]) of the MU of</span>
+<span class="sd">        interest.</span>
+<span class="sd">    mupulses : ndarray</span>
+<span class="sd">        The time of firing (MUPULSES[mu]) of the MU of interest.</span>
+<span class="sd">    separate_paired_firings : bool, default False</span>
+<span class="sd">        Whether to treat differently paired and non-paired firings during</span>
+<span class="sd">        the estimation of the signal/noise threshold. According to Holobar</span>
+<span class="sd">        2012, this is common in pathological tremor. This can be set to</span>
+<span class="sd">        True when working with pathological tremor.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pnr : float</span>
+<span class="sd">        The PNR in decibels.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    compute_sil : to calculate the Silhouette score for a single MU.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># According to Holobar 2014, the PNR is calculated as:</span>
+    <span class="c1"># 10 * log10((mean of firings) / (mean of noise))</span>
+    <span class="c1"># Where instants in the source of decomposition are classified as firings</span>
+    <span class="c1"># or noise based on a threshold value named &quot;Pi&quot; or &quot;r&quot;.</span>
+    <span class="c1">#</span>
+    <span class="c1"># Pi is calculated via a heuristic penalty funtion described in Holobar</span>
+    <span class="c1"># 2012 as:</span>
+    <span class="c1"># Pi = D · χ[3,50](D) + CoVIDI + CoVpIDI</span>
+    <span class="c1"># Where:</span>
+    <span class="c1"># D is the median of the low-pass filtered instantaneous motor unit</span>
+    <span class="c1"># discharge rate (first-order Butterworth filter, cut-off frequency 3 Hz)</span>
+    <span class="c1"># χ[3,50](D) stands for an indicator function that penalizes motor units</span>
+    <span class="c1"># with filtered discharge rate D below 3 pulses per second (pps) or above</span>
+    <span class="c1"># 50 pps:</span>
+    <span class="c1"># χ[3,50](D) = 0 if D is between 3 and 50 or 1 if D is not between 3 and 50</span>
+    <span class="c1"># Two separate coefficients of variation for inter-discharge interval (IDI)</span>
+    <span class="c1"># calculated as standard deviation (SD) of IDI divided by the mean IDI,</span>
+    <span class="c1"># are used. CoVIDI is the coefficient of variation for IDI of non-paired</span>
+    <span class="c1"># MUs discharges only, whereas CoVpIDI is the coefficient of variation for</span>
+    <span class="c1"># IDI of paired MUs discharges.</span>
+    <span class="c1"># Holobar 2012 considered MUs discharges paired whenever the second</span>
+    <span class="c1"># discharge was within 50 ms of the first.</span>
+    <span class="c1"># Paired discharges are typical in pathological tremor and the use of both</span>
+    <span class="c1"># CoVIDI and CoVpIDI accounts for this condition.</span>
+    <span class="c1">#</span>
+    <span class="c1"># However, this heuristic penalty function does not work in particular</span>
+    <span class="c1"># types of contractions like explosive contractions (MUs discharge up to</span>
+    <span class="c1"># 200 pps). Therefore, in this implementation of the PNR estimation we did</span>
+    <span class="c1"># not use a penality based on MUs discharge.</span>
+    <span class="c1"># Additionally, the user can decide whether to adopt the two coefficients</span>
+    <span class="c1"># of variations to estimate Pi or not.</span>
+    <span class="c1"># If both are used, Pi would be calculated as:</span>
+    <span class="c1"># Pi = CoVIDI + CoVpIDI</span>
+    <span class="c1"># which remains valid also in tremor.</span>
+    <span class="c1"># Otherwise, Pi would be calculated as:</span>
+    <span class="c1"># Pi = CoV_all_IDI</span>
+
+    <span class="c1"># Calculate IDI</span>
+    <span class="n">idi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">mupulses</span><span class="p">)</span>
+
+    <span class="c1"># In order to increase robustness to outlier values, remove values outside</span>
+    <span class="c1"># mean +- 3 * STD in the idi array.</span>
+    <span class="n">mean</span><span class="p">,</span> <span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">idi</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">idi</span><span class="p">)</span>
+    <span class="n">upper_bound</span> <span class="o">=</span> <span class="n">mean</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="n">std</span>
+    <span class="n">lower_bound</span> <span class="o">=</span> <span class="n">mean</span> <span class="o">-</span> <span class="mi">3</span><span class="o">*</span><span class="n">std</span>
+
+    <span class="n">idi</span> <span class="o">=</span> <span class="n">idi</span><span class="p">[</span><span class="n">idi</span> <span class="o">&lt;=</span> <span class="n">upper_bound</span><span class="p">]</span>
+    <span class="n">idi</span> <span class="o">=</span> <span class="n">idi</span><span class="p">[</span><span class="n">idi</span> <span class="o">&gt;=</span> <span class="n">lower_bound</span><span class="p">]</span>
+
+    <span class="c1"># Calculate Pi</span>
+    <span class="k">if</span> <span class="n">separate_paired_firings</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="c1"># Calculate Pi on all IDI</span>
+        <span class="n">CoV_all_IDI</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">idi</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">idi</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">CoV_all_IDI</span><span class="p">):</span>
+            <span class="n">CoV_all_IDI</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">Pi</span> <span class="o">=</span> <span class="n">CoV_all_IDI</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Divide paired and non-paired IDIs before calculating specific CoV</span>
+        <span class="n">idinonp</span> <span class="o">=</span> <span class="n">idi</span><span class="p">[</span><span class="n">idi</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="n">fsamp</span> <span class="o">*</span> <span class="mf">0.05</span><span class="p">)]</span>
+        <span class="n">idip</span> <span class="o">=</span> <span class="n">idi</span><span class="p">[</span><span class="n">idi</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">fsamp</span> <span class="o">*</span> <span class="mf">0.05</span><span class="p">)]</span>
+
+        <span class="n">CoVIDI</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">idinonp</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">idinonp</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">CoVIDI</span><span class="p">):</span>
+            <span class="n">CoVIDI</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">CoVpIDI</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">idip</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">idip</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">CoVpIDI</span><span class="p">):</span>
+            <span class="n">CoVpIDI</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Calculate Pi</span>
+        <span class="n">Pi</span> <span class="o">=</span> <span class="n">CoVIDI</span> <span class="o">+</span> <span class="n">CoVpIDI</span>
+
+    <span class="c1"># Extract the source</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">ipts</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+
+    <span class="c1"># Use only absolute values from the source and normalise the source.</span>
+    <span class="c1"># This step is fundamental for the OTBiolab+ output.</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="p">(</span><span class="n">source</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">source</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">source</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">source</span><span class="p">))</span>
+
+    <span class="c1"># Create clusters</span>
+    <span class="n">peak_cluster</span> <span class="o">=</span> <span class="n">source</span><span class="p">[</span><span class="n">source</span> <span class="o">&gt;=</span> <span class="n">Pi</span><span class="p">]</span>
+    <span class="n">noise_cluster</span> <span class="o">=</span> <span class="n">source</span><span class="p">[</span><span class="n">source</span> <span class="o">&lt;</span> <span class="n">Pi</span><span class="p">]</span>
+
+    <span class="n">peak_cluster</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">peak_cluster</span><span class="p">)</span>
+    <span class="n">noise_cluster</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">noise_cluster</span><span class="p">)</span>
+
+    <span class="c1"># Calculate PNR</span>
+    <span class="n">pnr</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">peak_cluster</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">noise_cluster</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">pnr</span></div>
+
+
+<div class="viewcode-block" id="derivatives_beamforming"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.mathtools.derivatives_beamforming">[docs]</a><span class="k">def</span> <span class="nf">derivatives_beamforming</span><span class="p">(</span><span class="n">sig</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">teta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate devivatives for the beamforming technique.</span>
+
+<span class="sd">    Calculate the first and second devivative of the mean square error for the</span>
+<span class="sd">    beamforming technique with the first signal as reference.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sig : pd.Dataframe</span>
+<span class="sd">        The source signal to be used for the calculation.</span>
+<span class="sd">        Different channels should be organised in different rows.</span>
+<span class="sd">    row : int</span>
+<span class="sd">        The actual row in the iterative procedure.</span>
+<span class="sd">    teta : float</span>
+<span class="sd">        The value of teta.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    de1, de2 : float</span>
+<span class="sd">        The value of the first and second derivative.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    mle_cv_est : Estimate conduction velocity (CV) via maximum likelihood</span>
+<span class="sd">        estimation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># TODO implement with nympy arrays instead of pd.Series for performance.</span>
+    <span class="c1"># Check the use of pandas in row-major</span>
+
+    <span class="c1"># Define some necessary variables</span>
+    <span class="n">total_rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sig</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">total_rows</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">total_columns</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+    <span class="n">half_of_the_columns</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">((</span><span class="nb">round</span><span class="p">(</span><span class="n">total_columns</span><span class="o">/</span><span class="mi">2</span><span class="p">))))</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="c1"># Create a custom position index with negative and mirrored values for</span>
+    <span class="c1"># index &lt; row.</span>
+    <span class="n">position</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+    <span class="n">position</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># + 1 used to overcome base 0 here and following</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">row</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">position</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span><span class="o">-</span><span class="p">(</span><span class="n">row</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="o">-</span><span class="n">row</span><span class="p">):</span>
+        <span class="n">position</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="n">row</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="n">position</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Shift sig and move the value contained in sig[row] to sig[0]</span>
+    <span class="n">this_row</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">row</span><span class="p">])</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+    <span class="n">sig</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">row</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sig</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">this_row</span><span class="p">,</span> <span class="n">sig</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Calculate fft row-wise (for each signal)</span>
+    <span class="n">sigfft</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">total_rows</span><span class="p">),</span> <span class="n">columns</span><span class="o">=</span><span class="n">sig</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">total_rows</span><span class="p">):</span>
+        <span class="n">sigfft</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">fft</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">())</span>
+
+    <span class="c1"># Create the series used to store the terms of the derivatives</span>
+    <span class="n">term_de1</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">half_of_the_columns</span><span class="p">)))</span>
+    <span class="n">term_de2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">half_of_the_columns</span><span class="p">)))</span>
+    <span class="n">term_de12</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">half_of_the_columns</span><span class="p">)))</span>
+    <span class="n">term_de22</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">half_of_the_columns</span><span class="p">)))</span>
+
+    <span class="c1"># Calculate the first term of the first derivative</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
+
+            <span class="n">s_fft</span> <span class="o">=</span> <span class="n">sigfft</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">half_of_the_columns</span><span class="p">)]</span>
+            <span class="n">s_conj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">sigfft</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">u</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">half_of_the_columns</span><span class="p">)])</span>
+            <span class="n">s_exp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">half_of_the_columns</span> <span class="o">*</span> <span class="p">(</span><span class="n">position</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">position</span><span class="p">[</span><span class="n">u</span><span class="p">])</span> <span class="o">*</span> <span class="n">teta</span> <span class="o">/</span> <span class="n">total_columns</span><span class="p">)</span>
+            <span class="n">s_last</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">half_of_the_columns</span> <span class="o">*</span> <span class="p">(</span><span class="n">position</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">position</span><span class="p">[</span><span class="n">u</span><span class="p">])</span> <span class="o">/</span> <span class="n">total_columns</span>
+
+            <span class="n">s_fft</span> <span class="o">=</span> <span class="n">s_fft</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">s_conj</span> <span class="o">=</span> <span class="n">s_conj</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">s_exp</span> <span class="o">=</span> <span class="n">s_exp</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">s_last</span> <span class="o">=</span> <span class="n">s_last</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="n">image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">s_fft</span> <span class="o">*</span> <span class="n">s_conj</span> <span class="o">*</span> <span class="n">s_exp</span> <span class="o">*</span> <span class="n">s_last</span><span class="p">)</span>
+
+            <span class="n">term_de1</span> <span class="o">=</span> <span class="n">term_de1</span><span class="o">-</span><span class="n">image</span>
+
+    <span class="n">term_de1</span> <span class="o">=</span> <span class="p">(</span><span class="n">term_de1</span><span class="o">*</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">m</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># Calculate the second term of the first derivative</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+
+        <span class="n">s_fft</span> <span class="o">=</span> <span class="n">sigfft</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">half_of_the_columns</span><span class="p">)]</span>
+        <span class="n">s_exp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">half_of_the_columns</span> <span class="o">*</span> <span class="n">position</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">teta</span> <span class="o">/</span> <span class="n">total_columns</span><span class="p">)</span>
+        <span class="n">s_last</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">half_of_the_columns</span> <span class="o">*</span> <span class="n">position</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">total_columns</span>
+
+        <span class="n">s_fft</span> <span class="o">=</span> <span class="n">s_fft</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">s_exp</span> <span class="o">=</span> <span class="n">s_exp</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">s_last</span> <span class="o">=</span> <span class="n">s_last</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">term_de2</span> <span class="o">=</span> <span class="n">term_de2</span> <span class="o">+</span> <span class="p">(</span><span class="n">s_fft</span> <span class="o">*</span> <span class="n">s_exp</span> <span class="o">*</span> <span class="n">s_last</span><span class="p">)</span>
+
+    <span class="n">s_conj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">sigfft</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">half_of_the_columns</span><span class="p">)])</span>
+    <span class="n">s_conj</span> <span class="o">=</span> <span class="n">s_conj</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">term_de2</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">s_conj</span> <span class="o">*</span> <span class="n">term_de2</span><span class="p">)</span> <span class="o">/</span> <span class="n">m</span>
+
+    <span class="c1"># Calculate the first derivative</span>
+    <span class="n">de1</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">total_columns</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">term_de1</span> <span class="o">+</span> <span class="n">term_de2</span><span class="p">)</span>
+
+    <span class="c1"># Calculate the first term of the second derivative</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
+
+            <span class="n">s_fft</span> <span class="o">=</span> <span class="n">sigfft</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">half_of_the_columns</span><span class="p">)]</span>
+            <span class="n">s_conj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">sigfft</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">u</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">half_of_the_columns</span><span class="p">)])</span>
+            <span class="n">s_exp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">half_of_the_columns</span> <span class="o">*</span> <span class="p">(</span><span class="n">position</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">position</span><span class="p">[</span><span class="n">u</span><span class="p">])</span> <span class="o">*</span> <span class="n">teta</span> <span class="o">/</span> <span class="n">total_columns</span><span class="p">)</span>
+            <span class="n">s_last</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">half_of_the_columns</span> <span class="o">*</span> <span class="p">(</span><span class="n">position</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">position</span><span class="p">[</span><span class="n">u</span><span class="p">])</span> <span class="o">/</span> <span class="n">total_columns</span>
+
+            <span class="n">s_fft</span> <span class="o">=</span> <span class="n">s_fft</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">s_conj</span> <span class="o">=</span> <span class="n">s_conj</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">s_exp</span> <span class="o">=</span> <span class="n">s_exp</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">s_last</span> <span class="o">=</span> <span class="n">s_last</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="n">term_de12</span> <span class="o">=</span> <span class="n">term_de12</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">s_fft</span> <span class="o">*</span> <span class="n">s_conj</span> <span class="o">*</span> <span class="n">s_exp</span> <span class="o">*</span> <span class="p">(</span><span class="n">s_last</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="n">term_de12</span> <span class="o">=</span> <span class="p">(</span><span class="n">term_de12</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">m</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># Calculate the second term of the second derivative</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+
+        <span class="n">s_fft</span> <span class="o">=</span> <span class="n">sigfft</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">half_of_the_columns</span><span class="p">)]</span>
+        <span class="n">s_exp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">half_of_the_columns</span> <span class="o">*</span> <span class="n">position</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">teta</span> <span class="o">/</span> <span class="n">total_columns</span><span class="p">)</span>
+        <span class="n">s_last</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">half_of_the_columns</span> <span class="o">*</span> <span class="n">position</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">total_columns</span>
+
+        <span class="n">s_fft</span> <span class="o">=</span> <span class="n">s_fft</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">s_exp</span> <span class="o">=</span> <span class="n">s_exp</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">s_last</span> <span class="o">=</span> <span class="n">s_last</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">term_de22</span> <span class="o">=</span> <span class="n">term_de22</span> <span class="o">+</span> <span class="p">(</span><span class="n">s_fft</span> <span class="o">*</span> <span class="n">s_exp</span> <span class="o">*</span> <span class="p">(</span><span class="n">s_last</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="n">s_conj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">sigfft</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">half_of_the_columns</span><span class="p">)])</span>
+    <span class="n">s_conj</span> <span class="o">=</span> <span class="n">s_conj</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">term_de22</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">s_conj</span> <span class="o">*</span> <span class="n">term_de22</span><span class="p">)</span> <span class="o">/</span> <span class="n">m</span>
+
+    <span class="c1"># Calculate the second derivative</span>
+    <span class="n">de2</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">total_columns</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">term_de12</span> <span class="o">+</span> <span class="n">term_de22</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">de1</span><span class="p">,</span> <span class="n">de2</span></div>
+
+
+<div class="viewcode-block" id="mle_cv_est"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.mathtools.mle_cv_est">[docs]</a><span class="k">def</span> <span class="nf">mle_cv_est</span><span class="p">(</span><span class="n">sig</span><span class="p">,</span> <span class="n">initial_teta</span><span class="p">,</span> <span class="n">ied</span><span class="p">,</span> <span class="n">fsamp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Estimate conduction velocity (CV) via maximum likelihood estimation.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sig : pd.Dataframe</span>
+<span class="sd">        The source signal to be used for the calculation.</span>
+<span class="sd">        Different channels should be organised in different rows.</span>
+<span class="sd">    initial_teta : int</span>
+<span class="sd">        The starting value teta.</span>
+<span class="sd">    ied : int</span>
+<span class="sd">        Interelectrode distance (mm).</span>
+<span class="sd">    fsamp : int</span>
+<span class="sd">        Sampling frequency (Hz).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    cv : float</span>
+<span class="sd">        Conduction velocity (M/s).</span>
+<span class="sd">    teta : float</span>
+<span class="sd">        The final value of teta.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    find_teta : Find the starting value for teta.</span>
+<span class="sd">    MUcv_gui : Graphical user interface for the estimation of MUs conduction</span>
+<span class="sd">        velocity.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Refer to the examples of find_teta to obtain sig and initial_teta.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Set index to 0</span>
+    <span class="n">sig</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Calculate ied in meters</span>
+    <span class="n">ied</span> <span class="o">=</span> <span class="n">ied</span> <span class="o">/</span> <span class="mi">1000</span>
+
+    <span class="c1"># Assign the initial value of teta to t</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">initial_teta</span>
+    <span class="c1"># Set teta to 10 just to start the while loop</span>
+    <span class="n">teta</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">trial</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">eps</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">float_info</span><span class="o">.</span><span class="n">epsilon</span>
+
+    <span class="k">while</span> <span class="nb">abs</span><span class="p">(</span><span class="n">teta</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">5e-5</span> <span class="ow">and</span> <span class="n">trial</span> <span class="o">&lt;</span> <span class="mi">30</span><span class="p">:</span>
+        <span class="n">trial</span> <span class="o">=</span> <span class="n">trial</span><span class="o">+</span><span class="mi">1</span>
+        <span class="n">teta</span> <span class="o">=</span> <span class="n">t</span>
+        <span class="c1"># Initialize the first and second derivatives</span>
+        <span class="n">de1</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">de2</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Calculate the first and second derivatives</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sig</span><span class="p">)):</span>
+            <span class="n">de1t</span><span class="p">,</span> <span class="n">de2t</span> <span class="o">=</span> <span class="n">derivatives_beamforming</span><span class="p">(</span><span class="n">sig</span><span class="o">=</span><span class="n">sig</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">teta</span><span class="o">=</span><span class="n">teta</span><span class="p">)</span>
+            <span class="n">de1</span> <span class="o">=</span> <span class="n">de1</span> <span class="o">+</span> <span class="n">de1t</span> <span class="o">+</span> <span class="n">eps</span>
+            <span class="n">de2</span> <span class="o">=</span> <span class="n">de2</span> <span class="o">+</span> <span class="n">de2t</span> <span class="o">+</span> <span class="n">eps</span>
+
+        <span class="c1"># Newton&#39;s criteria</span>
+        <span class="k">if</span> <span class="n">de2</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># calculate step size using Newton&#39;s method</span>
+            <span class="n">u</span> <span class="o">=</span> <span class="o">-</span><span class="n">de1</span> <span class="o">/</span> <span class="n">de2</span>
+            <span class="c1"># if the step size is too large, limit it to 0.5</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">:</span>
+                <span class="n">u</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">de1</span><span class="p">)</span> <span class="o">/</span> <span class="n">de1</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">u</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">de1</span><span class="p">)</span> <span class="o">/</span> <span class="n">de1</span>
+
+        <span class="c1"># Update t using step size and teta</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">teta</span> <span class="o">+</span> <span class="n">u</span>
+
+    <span class="n">cv</span> <span class="o">=</span> <span class="n">ied</span> <span class="o">/</span> <span class="p">(</span><span class="n">teta</span> <span class="o">/</span> <span class="n">fsamp</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cv</span><span class="p">,</span> <span class="n">teta</span></div>
+
+
+<div class="viewcode-block" id="find_teta"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.mathtools.find_teta">[docs]</a><span class="k">def</span> <span class="nf">find_teta</span><span class="p">(</span><span class="n">sig1</span><span class="p">,</span> <span class="n">sig2</span><span class="p">,</span> <span class="n">ied</span><span class="p">,</span> <span class="n">fsamp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find the starting value for teta.</span>
+
+<span class="sd">    It is important to don&#39;t fix teta and use a non-fixed starting point for</span>
+<span class="sd">    the CV algorithm.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sig1, sig2 : pd.Series</span>
+<span class="sd">        The two signals based on which to calculate teta.</span>
+<span class="sd">        These must be pd.Series, i.e., 1-dimensional data structures.</span>
+<span class="sd">    ied : int</span>
+<span class="sd">        Interelectrode distance (mm).</span>
+<span class="sd">    fsamp : int</span>
+<span class="sd">        Sampling frequency (Hz).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    teta : int</span>
+<span class="sd">        The starting value teta.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    mle_cv_est : Estimate conduction velocity (CV) via maximum likelihood</span>
+<span class="sd">        estimation.</span>
+<span class="sd">    MUcv_gui : Graphical user interface for the estimation of MUs conduction</span>
+<span class="sd">        velocity.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Calculate the starting point for the maximum likelihood estimation.</span>
+<span class="sd">    In this example we calculate teta for the first MU on the channels 5,6,7</span>
+<span class="sd">    in the third column (&quot;col3&quot;) of the double differential representation of</span>
+<span class="sd">    the MUAPs.</span>
+<span class="sd">    First, obtain the spike-triggered average of the double differential</span>
+<span class="sd">    derivation.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    ... sorted_rawemg = emg.sort_rawemg(</span>
+<span class="sd">    ...     emgfile,</span>
+<span class="sd">    ...     code=&quot;GR08MM1305&quot;,</span>
+<span class="sd">    ...     orientation=180,</span>
+<span class="sd">    ...     dividebycolumn=True</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; dd = emg.double_diff(sorted_rawemg=sorted_rawemg)</span>
+<span class="sd">    &gt;&gt;&gt; sta = emg.sta(</span>
+<span class="sd">    ...     emgfile=emgfile,</span>
+<span class="sd">    ...     sorted_rawemg=sorted_rawemg,</span>
+<span class="sd">    ...     firings=[0,50],</span>
+<span class="sd">    ...     timewindow=50,</span>
+<span class="sd">    ... )</span>
+
+<span class="sd">    Second, prepare the signals for the estimation of teta.</span>
+<span class="sd">    The input (sig) provided for the estimation of teta contains a channel</span>
+<span class="sd">    each row and all the instants are contained in columns. For this reason,</span>
+<span class="sd">    the original content of the spike-triggered average has to be transposed.</span>
+<span class="sd">    After that, the 1D signals used to estimate teta are defined based on the</span>
+<span class="sd">    number of available channels.</span>
+
+<span class="sd">    &gt;&gt;&gt; sig = sta[1][&quot;col3&quot;].transpose()</span>
+<span class="sd">    &gt;&gt;&gt; sig = sig.iloc[[5,6,7], :]</span>
+<span class="sd">    &gt;&gt;&gt; sig = sig.reset_index(drop=True)</span>
+<span class="sd">    &gt;&gt;&gt; if len(sig) &gt; 3:</span>
+<span class="sd">    &gt;&gt;&gt;     sig1 = sig.iloc[1]</span>
+<span class="sd">    &gt;&gt;&gt;     sig2 = sig.iloc[2]</span>
+<span class="sd">    &gt;&gt;&gt; else:</span>
+<span class="sd">    &gt;&gt;&gt;     sig1 = sig.iloc[0]</span>
+<span class="sd">    &gt;&gt;&gt;     sig2 = sig.iloc[1]</span>
+
+<span class="sd">    Third, estimate teta.</span>
+
+<span class="sd">    &gt;&gt;&gt; initial_teta = emg.find_teta(</span>
+<span class="sd">    ...     sig1=sig1,</span>
+<span class="sd">    ...     sig2=sig2,</span>
+<span class="sd">    ...     ied=emgfile[&quot;IED&quot;],</span>
+<span class="sd">    ...     fsamp=emgfile[&quot;FSAMP&quot;],</span>
+<span class="sd">    ... )</span>
+<span class="sd">    1</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Define an arbitrary range for possible CV values (slightly larger than</span>
+    <span class="c1"># the physiological range) based on which to calculate teta.</span>
+    <span class="n">min_cv</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">max_cv</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">teta_min</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">ied</span> <span class="o">/</span> <span class="n">max_cv</span> <span class="o">*</span> <span class="n">fsamp</span><span class="p">)</span>
+    <span class="n">teta_max</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">ied</span> <span class="o">/</span> <span class="n">min_cv</span> <span class="o">*</span> <span class="n">fsamp</span><span class="p">)</span>
+
+    <span class="c1"># Work with numpy arrays for better performance</span>
+    <span class="n">sig1</span> <span class="o">=</span> <span class="n">sig1</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">sig2</span> <span class="o">=</span> <span class="n">sig2</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+
+    <span class="c1"># Verify that the input is a 1D array. If not, it will affect the</span>
+    <span class="c1"># calculation of corrpos.</span>
+    <span class="k">if</span> <span class="n">sig1</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;sig1 is not 1 dimensional&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sig2</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;sig2 is not 1 dimesional&quot;</span><span class="p">)</span>
+
+    <span class="n">delay</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">teta_min</span><span class="p">,</span> <span class="n">teta_max</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">corrpos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">delay</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">delay</span><span class="p">):</span>
+        <span class="n">sig1_tosum</span> <span class="o">=</span> <span class="n">sig1</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">sig1</span><span class="p">)</span><span class="o">-</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">sig2_tosum</span> <span class="o">=</span> <span class="n">sig2</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span>
+
+        <span class="n">corrpos</span><span class="p">[</span><span class="n">idx</span><span class="o">-</span><span class="n">teta_min</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">sig1_tosum</span> <span class="o">*</span> <span class="n">sig2_tosum</span><span class="p">)</span>
+
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">corrpos</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="c1"># +1 is necessary to overcome base 0 and prevent teta from beeing 0</span>
+
+    <span class="k">if</span> <span class="n">pos</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">pos</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">delay</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">delay</span><span class="p">[</span><span class="n">pos</span><span class="o">-</span><span class="mi">2</span> <span class="p">:</span> <span class="n">pos</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">corrpos</span><span class="p">[</span><span class="n">pos</span><span class="o">-</span><span class="mi">2</span> <span class="p">:</span> <span class="n">pos</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">coefs</span> <span class="o">=</span> <span class="n">poly</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">deg</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="c1"># The polyfit function originally returns flipped coefficients</span>
+        <span class="n">coefs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">coefs</span><span class="p">)</span>
+
+        <span class="n">teta</span> <span class="o">=</span> <span class="o">-</span><span class="n">coefs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">coefs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">teta</span> <span class="o">=</span> <span class="n">pos</span>
+
+    <span class="k">return</span> <span class="n">teta</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Giacomo Valli.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

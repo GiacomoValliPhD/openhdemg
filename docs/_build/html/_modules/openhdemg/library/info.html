@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>openhdemg.library.info &mdash; openhdemg 0.1.0-beta documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            openhdemg
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">openhdemg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../openhdemg.html">openhdemg package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../openhdemg.library.html">openhdemg.library package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">openhdemg</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">openhdemg.library.info</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for openhdemg.library.info</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module contains all the informations regarding:</span>
+<span class="sd">    - Data</span>
+<span class="sd">        - Structures of data</span>
+<span class="sd">        - How to access data</span>
+
+<span class="sd">    - Abbreviations</span>
+
+<span class="sd">    - AboutUs</span>
+<span class="sd">    - Contacts</span>
+<span class="sd">    - Links</span>
+<span class="sd">    - CiteUs</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">textwrap</span> <span class="kn">import</span> <span class="n">dedent</span>
+
+
+<div class="viewcode-block" id="info"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.info.info">[docs]</a><span class="k">class</span> <span class="nc">info</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A class used to obtain info.</span>
+
+<span class="sd">    Methods</span>
+<span class="sd">    -------</span>
+<span class="sd">    data(emgfile)</span>
+<span class="sd">        Print a description of the emgfile data structure.</span>
+<span class="sd">    abbreviations()</span>
+<span class="sd">        Print common abbreviations.</span>
+<span class="sd">    aboutus()</span>
+<span class="sd">        Print informations about the library and the authors.</span>
+<span class="sd">    contacts()</span>
+<span class="sd">        Print the contacts.</span>
+<span class="sd">    links()</span>
+<span class="sd">        Print a collection of useful links.</span>
+<span class="sd">    citeus()</span>
+<span class="sd">        Print how to cite the project.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="info.data"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.info.info.data">[docs]</a>    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">emgfile</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Print a description of the emgfile data structure.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        emgfile : dict</span>
+<span class="sd">            The dictionary containing the emgfile.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;SOURCE&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;DEMUSE&quot;</span><span class="p">,</span> <span class="s2">&quot;OTB&quot;</span><span class="p">,</span> <span class="s2">&quot;custom&quot;</span><span class="p">]:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Data structure of the emgfile loaded with the function emg_from_otb.&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;--------------------------------------------------------------------</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile type is:</span><span class="se">\n</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile keys are:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Any key can be acced as emgfile[key].</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile[&#39;SOURCE&#39;] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;SOURCE&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> of value:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;SOURCE&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile[&#39;FILENAME&#39;] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;FILENAME&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> of value:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;FILENAME&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;MUST NOTE: emgfile from OTB has 64 channels, from DEMUSE 65 (includes empty channel).&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile[&#39;RAW_SIGNAL&#39;] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;RAW_SIGNAL&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> of value:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;RAW_SIGNAL&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile[&#39;REF_SIGNAL&#39;] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;REF_SIGNAL&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> of value:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;REF_SIGNAL&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile[&#39;PNR&#39;] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;PNR&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> of value:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;PNR&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile[&#39;SIL&#39;] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;SIL&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> of value:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;SIL&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile[&#39;IPTS&#39;] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;IPTS&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> of value:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;IPTS&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile[&#39;MUPULSES&#39;] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;MUPULSES&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> of length depending on total MUs number.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;NUMBER_OF_MUS&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># Manage exceptions</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;MUPULSES for each MU can be accessed as emgfile[&#39;MUPULSES&#39;][MUnumber].</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile[&#39;MUPULSES&#39;][0] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;MUPULSES&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2"> of value:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;MUPULSES&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile[&#39;FSAMP&#39;] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;FSAMP&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> of value:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;FSAMP&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile[&#39;IED&#39;] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;IED&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> of value:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;IED&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile[&#39;EMG_LENGTH&#39;] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;EMG_LENGTH&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> of value:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;EMG_LENGTH&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile[&#39;NUMBER_OF_MUS&#39;] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;NUMBER_OF_MUS&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> of value:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;NUMBER_OF_MUS&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile[&#39;BINARY_MUS_FIRING&#39;] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;BINARY_MUS_FIRING&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> of value:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;BINARY_MUS_FIRING&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;SOURCE&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;OTB_refsig&quot;</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Data structure of the emgfile loaded with the function refsig_from_otb.&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-----------------------------------------------------------------------</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile type is:</span><span class="se">\n</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile keys are:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Any key can be acced as emgfile[key].</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile[&#39;SOURCE&#39;] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;SOURCE&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> of value:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;SOURCE&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile[&#39;FILENAME&#39;] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;FILENAME&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> of value:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;FILENAME&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile[&#39;FSAMP&#39;] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;FSAMP&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> of value:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;FSAMP&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;emgfile[&#39;REF_SIGNAL&#39;] is a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;REF_SIGNAL&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> of value:</span><span class="se">\n</span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;REF_SIGNAL&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Source &#39;</span><span class="si">{</span><span class="n">emgfile</span><span class="p">[</span><span class="s1">&#39;SOURCE&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; not recognised&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="info.abbreviations"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.info.info.abbreviations">[docs]</a>    <span class="k">def</span> <span class="nf">abbreviations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Print common abbreviations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">abbr</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;COV&quot;</span><span class="p">:</span> <span class="s2">&quot;Coefficient of variation&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;DERT&quot;</span><span class="p">:</span> <span class="s2">&quot;DERecruitment threshold&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;DD&quot;</span><span class="p">:</span> <span class="s2">&quot;Double differential&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;DR&quot;</span><span class="p">:</span> <span class="s2">&quot;Discharge rate&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;FSAMP&quot;</span><span class="p">:</span> <span class="s2">&quot;Sampling frequency&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;IDR&quot;</span><span class="p">:</span> <span class="s2">&quot;Instantaneous discharge rate&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;IED&quot;</span><span class="p">:</span> <span class="s2">&quot;Inter electrode distance&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;IPTS&quot;</span><span class="p">:</span> <span class="s2">&quot;Impulse train per second&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;MU&quot;</span><span class="p">:</span> <span class="s2">&quot;Motor units&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;MUAP&quot;</span><span class="p">:</span> <span class="s2">&quot;MUs action potential&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;PNR&quot;</span><span class="p">:</span> <span class="s2">&quot;Pulse to noise ratio&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;RT&quot;</span><span class="p">:</span> <span class="s2">&quot;Recruitment threshold&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;SD&quot;</span><span class="p">:</span> <span class="s2">&quot;Single differential&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;SIL&quot;</span><span class="p">:</span> <span class="s2">&quot;Silhouette score&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;STA&quot;</span><span class="p">:</span> <span class="s2">&quot;Spike-triggered average&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;XCC&quot;</span><span class="p">:</span> <span class="s2">&quot;Cross-correlation coefficient&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Pretty dict printing</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Abbreviations:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">abbr</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">abbr</span></div>
+
+<div class="viewcode-block" id="info.aboutus"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.info.info.aboutus">[docs]</a>    <span class="k">def</span> <span class="nf">aboutus</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Print informations about the library and the authors.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">about</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            About</span>
+<span class="s2">            -----</span>
+
+<span class="s2">            The openhdemg project was born in 2022 with the aim to provide a</span>
+<span class="s2">            free and open-source framework to analyse HIGH-DENSITY EMG</span>
+<span class="s2">            recordings.</span>
+
+<span class="s2">            The field of EMG analysis in humans has always be characterised by</span>
+<span class="s2">            little or no software available for signal post-processing and</span>
+<span class="s2">            analysis and this forced users to code their own scripts.</span>
+<span class="s2">            Although coding can be funny, it can lead to a number of problems,</span>
+<span class="s2">            especially when the utilised scripts are not shared open-source.</span>
+<span class="s2">            Why?</span>
+
+<span class="s2">            - If different users use different scripts, the results can differ.</span>
+<span class="s2">            - Any code can contain errors, if the code is not shared, the error</span>
+<span class="s2">                will never be known and it will repeat in the following</span>
+<span class="s2">                analysis.</span>
+<span class="s2">            - There is a huge difference between the paper methods and the</span>
+<span class="s2">                practical implementation of a script. Only rarely it will be</span>
+<span class="s2">                possible to reproduce a script solely based on words (thus</span>
+<span class="s2">                making the reproducibility of a study unrealistic).</span>
+<span class="s2">            - Anyone who doesn&#39;t code, will not be able to analyse the</span>
+<span class="s2">                recordings.</span>
+
+<span class="s2">            In order to overcome these (and many other) problems of private</span>
+<span class="s2">            scripts, we developed a fully transparent framework with</span>
+<span class="s2">            appropriate documentation to allow all the users to check the</span>
+<span class="s2">            correctness of the script and to perform reproducible analysis.</span>
+
+<span class="s2">            This project is aimed at users that already know the Python</span>
+<span class="s2">            language, as well as for those willing to learn it and even for</span>
+<span class="s2">            those not interested in coding thanks to a friendly graphical user</span>
+<span class="s2">            interface (GUI).</span>
+
+<span class="s2">            Both the openhdemg project and its contributors adhere to the Open</span>
+<span class="s2">            Science Principles and especially to the idea of public release of</span>
+<span class="s2">            data and other scientific resources necessary to conduct honest</span>
+<span class="s2">            research.</span>
+<span class="s2">            &quot;&quot;&quot;</span>
+
+        <span class="n">us</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        Us</span>
+<span class="s2">        --</span>
+
+<span class="s2">        People that contributed to the development of this project are:</span>
+
+<span class="s2">        Mr. Giacomo Valli:</span>
+<span class="s2">            The creator of the project and the developer of the library.</span>
+<span class="s2">            </span><span class="se">\x1B</span><span class="s2">[3m</span>
+<span class="s2">            Mr. Giacomo Valli obtained a master degree in Sports Science and a</span>
+<span class="s2">            research fellowship in molecular biology of exercise at the</span>
+<span class="s2">            University of Urbino (IT).</span>
+<span class="s2">            He is currently a PhD student at the University of Padova (IT) in</span>
+<span class="s2">            neuromuscular physiology.</span>
+<span class="s2">            He is investigating the electrophysiological modifications</span>
+<span class="s2">            happening during disuse, disease and aging and linking this</span>
+<span class="s2">            information to the molecular alterations of the muscle.</span>
+<span class="s2">            </span><span class="se">\x1B</span><span class="s2">[0m</span>
+<span class="s2">        Mr. Paul Ritsche:</span>
+<span class="s2">            The developer of the GUI.</span>
+<span class="s2">            </span><span class="se">\x1B</span><span class="s2">[3m</span>
+<span class="s2">            Mr. Paul Ritsche obtained a master degree in Sports Science at the</span>
+<span class="s2">            University of Basel (CH).</span>
+<span class="s2">            He is currently a research associate at the University of Basel</span>
+<span class="s2">            (CH) focusing on muscle ultrasonography.</span>
+<span class="s2">            He is investigating automatic ultrasonography image analysis</span>
+<span class="s2">            methods to evaluate muscle morphological as well architectural</span>
+<span class="s2">            parameters.</span>
+<span class="s2">            </span><span class="se">\x1B</span><span class="s2">[0m</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Make Text Bold and Italic with Escape Sequence</span>
+        <span class="c1"># &#39;\x1B[3m&#39; makes it italic</span>
+        <span class="c1"># &#39;\x1B[1m&#39; makes it bold</span>
+        <span class="c1"># &#39;\x1B[1;3m&#39; makes it bold and italic</span>
+        <span class="c1"># &#39;\x1B[0m&#39; is the closing tag</span>
+
+        <span class="c1"># Pretty print indented multiline str</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">dedent</span><span class="p">(</span><span class="n">about</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">dedent</span><span class="p">(</span><span class="n">us</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">about</span><span class="p">,</span> <span class="n">us</span></div>
+
+<div class="viewcode-block" id="info.contacts"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.info.info.contacts">[docs]</a>    <span class="k">def</span> <span class="nf">contacts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Print the contacts.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">contact</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;Name&quot;</span><span class="p">:</span> <span class="s2">&quot;Giacomo Valli&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Email&quot;</span><span class="p">:</span> <span class="s2">&quot;giacomo.valli@phd.unipd.it&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Twitter&quot;</span><span class="p">:</span> <span class="s2">&quot;@giacomo_valli&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Pretty dict printing</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Contacts:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">contact</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">contact</span></div>
+
+<div class="viewcode-block" id="info.links"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.info.info.links">[docs]</a>    <span class="k">def</span> <span class="nf">links</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Print a collection of useful links.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">link</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;Topic&quot;</span><span class="p">:</span> <span class="s2">&quot;We are working on this! Stay Tuned&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Pretty dict printing</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Links:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">link</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">link</span></div>
+
+<div class="viewcode-block" id="info.citeus"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.info.info.citeus">[docs]</a>    <span class="k">def</span> <span class="nf">citeus</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Print how to cite the project.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">cite</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;Journal&quot;</span><span class="p">:</span> <span class="s2">&quot;Waiting for publication...&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Title&quot;</span><span class="p">:</span> <span class="s2">&quot;Thinking about it...&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Pretty dict printing</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Cite Us:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">cite</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">cite</span></div></div>
+<span class="c1"># TODO complete infos</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Giacomo Valli.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

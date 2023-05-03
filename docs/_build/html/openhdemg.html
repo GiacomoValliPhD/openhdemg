@@ -1,0 +1,2077 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>openhdemg package &mdash; openhdemg 0.1.0-beta documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="openhdemg.library package" href="openhdemg.library.html" />
+    <link rel="prev" title="openhdemg" href="modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            openhdemg
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">openhdemg</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">openhdemg package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html">openhdemg.library package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-openhdemg.openhdemg_gui">openhdemg.openhdemg_gui module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI"><code class="docutils literal notranslate"><span class="pre">emgGUI</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.auto_eval"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.auto_eval</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.b_firings_rec"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.b_firings_rec</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.b_firings_ste"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.b_firings_ste</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.canvas"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.canvas</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.channels"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.channels</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.cutoff_freq"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.cutoff_freq</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.ct_event"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.ct_event</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.dr_event"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.dr_event</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.exportable_df"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.exportable_df</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.fig"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.fig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.filename"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.filename</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.filepath"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.filepath</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.filetype"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.filetype</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.filter_order"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.filter_order</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.firings_rec"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.firings_rec</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.firings_ste"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.firings_ste</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.first_fig"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.first_fig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.head"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.head</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.left"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.left</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.linewidth"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.linewidth</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.logo"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.logo</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.logo_canvas"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.logo_canvas</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.master"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.master</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mus_dr"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mus_dr</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mu_numb"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mu_numb</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mu_numb_idr"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mu_numb_idr</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mu_to_remove"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mu_to_remove</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mu_to_edit"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mu_to_edit</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mu_thresholds"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mu_thresholds</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mvc"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mvc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mvc_df"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mvc_df</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.offsetval"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.offsetval</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.resdict"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.resdict</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.rfd_df"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.rfd_df</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.rfdms"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.rfdms</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.right"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.right</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.terminal"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.terminal</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mat_code"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mat_code</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mat_orientation"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mat_orientation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.deriv_config"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.deriv_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.muap_config"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.muap_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.deriv_matrix"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.deriv_matrix</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.size_fig"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.size_fig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.ref_but"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.ref_but</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.time_but"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.time_but</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.info"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.info</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.online"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.online</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.redirect"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.redirect</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.contact"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.contact</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.cite"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.cite</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.otb_combobox"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.otb_combobox</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.extension_factor"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.extension_factor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.advanced_method"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.advanced_method</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.emgfile1"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.emgfile1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.emgfile2"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.emgfile2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.thresh_adv"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.thresh_adv</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.filter_adv"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.filter_adv</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.show_adv"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.show_adv</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.exclude_thres"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.exclude_thres</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.which_adv"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.which_adv</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.run_main"><code class="docutils literal notranslate"><span class="pre">run_main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg-prove-module">openhdemg.prove module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-openhdemg.prove_storage">openhdemg.prove_storage module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-openhdemg">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">openhdemg package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html">openhdemg.library package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-openhdemg.openhdemg_gui">openhdemg.openhdemg_gui module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI"><code class="docutils literal notranslate"><span class="pre">emgGUI</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.muap_munum"><code class="docutils literal notranslate"><span class="pre">emgGUI.muap_munum</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.muap_time"><code class="docutils literal notranslate"><span class="pre">emgGUI.muap_time</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.__init__"><code class="docutils literal notranslate"><span class="pre">emgGUI.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.get_file_input"><code class="docutils literal notranslate"><span class="pre">emgGUI.get_file_input()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.save_emgfile"><code class="docutils literal notranslate"><span class="pre">emgGUI.save_emgfile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.export_to_excel"><code class="docutils literal notranslate"><span class="pre">emgGUI.export_to_excel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.reset_analysis"><code class="docutils literal notranslate"><span class="pre">emgGUI.reset_analysis()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.in_gui_plotting"><code class="docutils literal notranslate"><span class="pre">emgGUI.in_gui_plotting()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.sort_mus"><code class="docutils literal notranslate"><span class="pre">emgGUI.sort_mus()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.remove_mus"><code class="docutils literal notranslate"><span class="pre">emgGUI.remove_mus()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.remove"><code class="docutils literal notranslate"><span class="pre">emgGUI.remove()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.edit_refsig"><code class="docutils literal notranslate"><span class="pre">emgGUI.edit_refsig()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.filter_refsig"><code class="docutils literal notranslate"><span class="pre">emgGUI.filter_refsig()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.remove_offset"><code class="docutils literal notranslate"><span class="pre">emgGUI.remove_offset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.resize_file"><code class="docutils literal notranslate"><span class="pre">emgGUI.resize_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.select_resize"><code class="docutils literal notranslate"><span class="pre">emgGUI.select_resize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.resize_emgfile"><code class="docutils literal notranslate"><span class="pre">emgGUI.resize_emgfile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.analyze_force"><code class="docutils literal notranslate"><span class="pre">emgGUI.analyze_force()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.get_mvc"><code class="docutils literal notranslate"><span class="pre">emgGUI.get_mvc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.det_rfd"><code class="docutils literal notranslate"><span class="pre">emgGUI.det_rfd()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.mu_analysis"><code class="docutils literal notranslate"><span class="pre">emgGUI.mu_analysis()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.compute_mu_threshold"><code class="docutils literal notranslate"><span class="pre">emgGUI.compute_mu_threshold()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.compute_mu_dr"><code class="docutils literal notranslate"><span class="pre">emgGUI.compute_mu_dr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.basic_mus_analysis"><code class="docutils literal notranslate"><span class="pre">emgGUI.basic_mus_analysis()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.plot_emg"><code class="docutils literal notranslate"><span class="pre">emgGUI.plot_emg()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.plt_emgsignal"><code class="docutils literal notranslate"><span class="pre">emgGUI.plt_emgsignal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.plt_idr"><code class="docutils literal notranslate"><span class="pre">emgGUI.plt_idr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.plt_ipts"><code class="docutils literal notranslate"><span class="pre">emgGUI.plt_ipts()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.plt_refsignal"><code class="docutils literal notranslate"><span class="pre">emgGUI.plt_refsignal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.plt_mupulses"><code class="docutils literal notranslate"><span class="pre">emgGUI.plt_mupulses()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.plot_derivation"><code class="docutils literal notranslate"><span class="pre">emgGUI.plot_derivation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.plot_muaps"><code class="docutils literal notranslate"><span class="pre">emgGUI.plot_muaps()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.open_pdf"><code class="docutils literal notranslate"><span class="pre">emgGUI.open_pdf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.advanced_analysis"><code class="docutils literal notranslate"><span class="pre">emgGUI.advanced_analysis()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.on_filetype_change"><code class="docutils literal notranslate"><span class="pre">emgGUI.on_filetype_change()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.open_emgfil1"><code class="docutils literal notranslate"><span class="pre">emgGUI.open_emgfil1()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.open_emgfile2"><code class="docutils literal notranslate"><span class="pre">emgGUI.open_emgfile2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.track_mus"><code class="docutils literal notranslate"><span class="pre">emgGUI.track_mus()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.display_results"><code class="docutils literal notranslate"><span class="pre">emgGUI.display_results()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">emgGUI.get_file_input()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">emgGUI.on_filetype_change()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.decompose_file"><code class="docutils literal notranslate"><span class="pre">emgGUI.decompose_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2"><code class="docutils literal notranslate"><span class="pre">emgGUI.save_emgfile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">emgGUI.export_to_excel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4"><code class="docutils literal notranslate"><span class="pre">emgGUI.reset_analysis()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.open_advanced_tools"><code class="docutils literal notranslate"><span class="pre">emgGUI.open_advanced_tools()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5"><code class="docutils literal notranslate"><span class="pre">emgGUI.open_pdf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id6"><code class="docutils literal notranslate"><span class="pre">emgGUI.in_gui_plotting()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id7"><code class="docutils literal notranslate"><span class="pre">emgGUI.sort_mus()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id8"><code class="docutils literal notranslate"><span class="pre">emgGUI.remove_mus()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id9"><code class="docutils literal notranslate"><span class="pre">emgGUI.remove()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id10"><code class="docutils literal notranslate"><span class="pre">emgGUI.edit_refsig()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id11"><code class="docutils literal notranslate"><span class="pre">emgGUI.filter_refsig()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id12"><code class="docutils literal notranslate"><span class="pre">emgGUI.remove_offset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id13"><code class="docutils literal notranslate"><span class="pre">emgGUI.resize_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id14"><code class="docutils literal notranslate"><span class="pre">emgGUI.select_resize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id15"><code class="docutils literal notranslate"><span class="pre">emgGUI.resize_emgfile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id16"><code class="docutils literal notranslate"><span class="pre">emgGUI.analyze_force()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id17"><code class="docutils literal notranslate"><span class="pre">emgGUI.get_mvc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.get_rfd"><code class="docutils literal notranslate"><span class="pre">emgGUI.get_rfd()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id18"><code class="docutils literal notranslate"><span class="pre">emgGUI.mu_analysis()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id19"><code class="docutils literal notranslate"><span class="pre">emgGUI.compute_mu_threshold()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id20"><code class="docutils literal notranslate"><span class="pre">emgGUI.compute_mu_dr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.basic_mus_properties"><code class="docutils literal notranslate"><span class="pre">emgGUI.basic_mus_properties()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id21"><code class="docutils literal notranslate"><span class="pre">emgGUI.plot_emg()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id22"><code class="docutils literal notranslate"><span class="pre">emgGUI.plt_emgsignal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id23"><code class="docutils literal notranslate"><span class="pre">emgGUI.plt_refsignal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id24"><code class="docutils literal notranslate"><span class="pre">emgGUI.plt_mupulses()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id25"><code class="docutils literal notranslate"><span class="pre">emgGUI.plt_ipts()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id26"><code class="docutils literal notranslate"><span class="pre">emgGUI.plt_idr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id27"><code class="docutils literal notranslate"><span class="pre">emgGUI.plot_derivation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id28"><code class="docutils literal notranslate"><span class="pre">emgGUI.plot_muaps()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id29"><code class="docutils literal notranslate"><span class="pre">emgGUI.advanced_analysis()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.open_emgfile1"><code class="docutils literal notranslate"><span class="pre">emgGUI.open_emgfile1()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id30"><code class="docutils literal notranslate"><span class="pre">emgGUI.open_emgfile2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.on_filetype_change_adv"><code class="docutils literal notranslate"><span class="pre">emgGUI.on_filetype_change_adv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id31"><code class="docutils literal notranslate"><span class="pre">emgGUI.track_mus()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.remove_duplicates_between"><code class="docutils literal notranslate"><span class="pre">emgGUI.remove_duplicates_between()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.calculate_conduct_vel"><code class="docutils literal notranslate"><span class="pre">emgGUI.calculate_conduct_vel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id32"><code class="docutils literal notranslate"><span class="pre">emgGUI.display_results()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.auto_eval"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.auto_eval</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.b_firings_rec"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.b_firings_rec</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.b_firings_ste"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.b_firings_ste</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.canvas"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.canvas</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.channels"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.channels</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.cutoff_freq"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.cutoff_freq</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.ct_event"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.ct_event</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.dr_event"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.dr_event</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.exportable_df"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.exportable_df</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.fig"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.fig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.filename"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.filename</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.filepath"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.filepath</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.filetype"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.filetype</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.filter_order"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.filter_order</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.firings_rec"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.firings_rec</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.firings_ste"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.firings_ste</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.first_fig"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.first_fig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.head"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.head</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.left"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.left</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.linewidth"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.linewidth</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.logo"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.logo</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.logo_canvas"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.logo_canvas</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.master"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.master</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mus_dr"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mus_dr</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mu_numb"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mu_numb</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mu_numb_idr"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mu_numb_idr</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mu_to_remove"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mu_to_remove</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mu_to_edit"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mu_to_edit</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mu_thresholds"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mu_thresholds</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mvc"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mvc</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mvc_df"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mvc_df</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.offsetval"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.offsetval</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.resdict"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.resdict</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.rfd_df"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.rfd_df</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.rfdms"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.rfdms</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.right"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.right</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.terminal"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.terminal</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mat_code"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mat_code</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.mat_orientation"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.mat_orientation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.deriv_config"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.deriv_config</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.muap_config"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.muap_config</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.deriv_matrix"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.deriv_matrix</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.size_fig"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.size_fig</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.ref_but"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.ref_but</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.time_but"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.time_but</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.info"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.info</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.online"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.online</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.redirect"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.redirect</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.contact"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.contact</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.cite"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.cite</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.otb_combobox"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.otb_combobox</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.extension_factor"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.extension_factor</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.advanced_method"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.advanced_method</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.emgfile1"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.emgfile1</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.emgfile2"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.emgfile2</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.thresh_adv"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.thresh_adv</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.filter_adv"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.filter_adv</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.show_adv"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.show_adv</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.exclude_thres"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.exclude_thres</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.self.which_adv"><code class="docutils literal notranslate"><span class="pre">emgGUI.self.which_adv</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openhdemg.openhdemg_gui.run_main"><code class="docutils literal notranslate"><span class="pre">run_main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#openhdemg-prove-module">openhdemg.prove module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-openhdemg.prove_storage">openhdemg.prove_storage module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-openhdemg">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="openhdemg.library.html">openhdemg.library package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">openhdemg</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">openhdemg</a></li>
+      <li class="breadcrumb-item active">openhdemg package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/openhdemg.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="openhdemg-package">
+<h1>openhdemg package<a class="headerlink" href="#openhdemg-package" title="Permalink to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="openhdemg.library.html">openhdemg.library package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="openhdemg.library.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openhdemg.library.html#module-openhdemg.library.analysis">openhdemg.library.analysis module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.analysis.compute_thresholds"><code class="docutils literal notranslate"><span class="pre">compute_thresholds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.analysis.compute_dr"><code class="docutils literal notranslate"><span class="pre">compute_dr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.analysis.basic_mus_properties"><code class="docutils literal notranslate"><span class="pre">basic_mus_properties()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.analysis.compute_covisi"><code class="docutils literal notranslate"><span class="pre">compute_covisi()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.analysis.compute_drvariability"><code class="docutils literal notranslate"><span class="pre">compute_drvariability()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="openhdemg.library.html#module-openhdemg.library.info">openhdemg.library.info module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.info.info"><code class="docutils literal notranslate"><span class="pre">info</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.info.info.data"><code class="docutils literal notranslate"><span class="pre">info.data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.info.info.abbreviations"><code class="docutils literal notranslate"><span class="pre">info.abbreviations()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.info.info.aboutus"><code class="docutils literal notranslate"><span class="pre">info.aboutus()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.info.info.contacts"><code class="docutils literal notranslate"><span class="pre">info.contacts()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.info.info.links"><code class="docutils literal notranslate"><span class="pre">info.links()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.info.info.citeus"><code class="docutils literal notranslate"><span class="pre">info.citeus()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#id0"><code class="docutils literal notranslate"><span class="pre">info.data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#id1"><code class="docutils literal notranslate"><span class="pre">info.abbreviations()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#id2"><code class="docutils literal notranslate"><span class="pre">info.aboutus()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#id3"><code class="docutils literal notranslate"><span class="pre">info.contacts()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#id4"><code class="docutils literal notranslate"><span class="pre">info.links()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#id5"><code class="docutils literal notranslate"><span class="pre">info.citeus()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="openhdemg.library.html#module-openhdemg.library.mathtools">openhdemg.library.mathtools module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.mathtools.min_max_scaling"><code class="docutils literal notranslate"><span class="pre">min_max_scaling()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.mathtools.norm_xcorr"><code class="docutils literal notranslate"><span class="pre">norm_xcorr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.mathtools.norm_twod_xcorr"><code class="docutils literal notranslate"><span class="pre">norm_twod_xcorr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.mathtools.compute_sil"><code class="docutils literal notranslate"><span class="pre">compute_sil()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.mathtools.compute_pnr"><code class="docutils literal notranslate"><span class="pre">compute_pnr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.mathtools.derivatives_beamforming"><code class="docutils literal notranslate"><span class="pre">derivatives_beamforming()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.mathtools.mle_cv_est"><code class="docutils literal notranslate"><span class="pre">mle_cv_est()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.mathtools.find_teta"><code class="docutils literal notranslate"><span class="pre">find_teta()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="openhdemg.library.html#module-openhdemg.library.muap">openhdemg.library.muap module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.muap.diff"><code class="docutils literal notranslate"><span class="pre">diff()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.muap.double_diff"><code class="docutils literal notranslate"><span class="pre">double_diff()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.muap.sta"><code class="docutils literal notranslate"><span class="pre">sta()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.muap.st_muap"><code class="docutils literal notranslate"><span class="pre">st_muap()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.muap.unpack_sta"><code class="docutils literal notranslate"><span class="pre">unpack_sta()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.muap.pack_sta"><code class="docutils literal notranslate"><span class="pre">pack_sta()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.muap.align_by_xcorr"><code class="docutils literal notranslate"><span class="pre">align_by_xcorr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.muap.tracking"><code class="docutils literal notranslate"><span class="pre">tracking()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.muap.remove_duplicates_between"><code class="docutils literal notranslate"><span class="pre">remove_duplicates_between()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.muap.xcc_sta"><code class="docutils literal notranslate"><span class="pre">xcc_sta()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.muap.MUcv_gui"><code class="docutils literal notranslate"><span class="pre">MUcv_gui</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.muap.MUcv_gui.gui_plot"><code class="docutils literal notranslate"><span class="pre">MUcv_gui.gui_plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.muap.MUcv_gui.copy_to_clipboard"><code class="docutils literal notranslate"><span class="pre">MUcv_gui.copy_to_clipboard()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.muap.MUcv_gui.compute_cv"><code class="docutils literal notranslate"><span class="pre">MUcv_gui.compute_cv()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="openhdemg.library.html#module-openhdemg.library.openfiles">openhdemg.library.openfiles module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#description">Description</a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#function-s-scope">Function’s scope</a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.openfiles.emg_from_demuse"><code class="docutils literal notranslate"><span class="pre">emg_from_demuse()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.openfiles.get_otb_refsignal"><code class="docutils literal notranslate"><span class="pre">get_otb_refsignal()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.openfiles.get_otb_decomposition"><code class="docutils literal notranslate"><span class="pre">get_otb_decomposition()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.openfiles.get_otb_mupulses"><code class="docutils literal notranslate"><span class="pre">get_otb_mupulses()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.openfiles.get_otb_ied"><code class="docutils literal notranslate"><span class="pre">get_otb_ied()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.openfiles.get_otb_rawsignal"><code class="docutils literal notranslate"><span class="pre">get_otb_rawsignal()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.openfiles.emg_from_otb"><code class="docutils literal notranslate"><span class="pre">emg_from_otb()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.openfiles.refsig_from_otb"><code class="docutils literal notranslate"><span class="pre">refsig_from_otb()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.openfiles.emg_from_customcsv"><code class="docutils literal notranslate"><span class="pre">emg_from_customcsv()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.openfiles.save_json_emgfile"><code class="docutils literal notranslate"><span class="pre">save_json_emgfile()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.openfiles.emg_from_json"><code class="docutils literal notranslate"><span class="pre">emg_from_json()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.openfiles.askopenfile"><code class="docutils literal notranslate"><span class="pre">askopenfile()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.openfiles.asksavefile"><code class="docutils literal notranslate"><span class="pre">asksavefile()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="openhdemg.library.html#module-openhdemg.library.otbelectrodes">openhdemg.library.otbelectrodes module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.otbelectrodes.OTBelectrodes_tuple"><code class="docutils literal notranslate"><span class="pre">OTBelectrodes_tuple</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.otbelectrodes.OTBelectrodes_ied"><code class="docutils literal notranslate"><span class="pre">OTBelectrodes_ied</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.otbelectrodes.OTBelectrodes_Nelectrodes"><code class="docutils literal notranslate"><span class="pre">OTBelectrodes_Nelectrodes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.otbelectrodes.sort_rawemg"><code class="docutils literal notranslate"><span class="pre">sort_rawemg()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="openhdemg.library.html#module-openhdemg.library.plotemg">openhdemg.library.plotemg module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.plotemg.showgoodlayout"><code class="docutils literal notranslate"><span class="pre">showgoodlayout()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.plotemg.plot_emgsig"><code class="docutils literal notranslate"><span class="pre">plot_emgsig()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.plotemg.plot_differentials"><code class="docutils literal notranslate"><span class="pre">plot_differentials()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.plotemg.plot_refsig"><code class="docutils literal notranslate"><span class="pre">plot_refsig()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.plotemg.plot_mupulses"><code class="docutils literal notranslate"><span class="pre">plot_mupulses()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.plotemg.plot_ipts"><code class="docutils literal notranslate"><span class="pre">plot_ipts()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.plotemg.plot_idr"><code class="docutils literal notranslate"><span class="pre">plot_idr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.plotemg.plot_muaps"><code class="docutils literal notranslate"><span class="pre">plot_muaps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.plotemg.plot_muap"><code class="docutils literal notranslate"><span class="pre">plot_muap()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.plotemg.plot_muaps_for_cv"><code class="docutils literal notranslate"><span class="pre">plot_muaps_for_cv()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="openhdemg.library.html#module-openhdemg.library.tools">openhdemg.library.tools module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.tools.showselect"><code class="docutils literal notranslate"><span class="pre">showselect()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.tools.create_binary_firings"><code class="docutils literal notranslate"><span class="pre">create_binary_firings()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.tools.resize_emgfile"><code class="docutils literal notranslate"><span class="pre">resize_emgfile()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.tools.compute_idr"><code class="docutils literal notranslate"><span class="pre">compute_idr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.tools.delete_mus"><code class="docutils literal notranslate"><span class="pre">delete_mus()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.tools.sort_mus"><code class="docutils literal notranslate"><span class="pre">sort_mus()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.tools.compute_covsteady"><code class="docutils literal notranslate"><span class="pre">compute_covsteady()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.tools.filter_rawemg"><code class="docutils literal notranslate"><span class="pre">filter_rawemg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.tools.filter_refsig"><code class="docutils literal notranslate"><span class="pre">filter_refsig()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.tools.remove_offset"><code class="docutils literal notranslate"><span class="pre">remove_offset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.tools.get_mvc"><code class="docutils literal notranslate"><span class="pre">get_mvc()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.tools.compute_rfd"><code class="docutils literal notranslate"><span class="pre">compute_rfd()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="openhdemg.library.html#module-openhdemg.library">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.info"><code class="docutils literal notranslate"><span class="pre">info</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.info.data"><code class="docutils literal notranslate"><span class="pre">info.data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.info.abbreviations"><code class="docutils literal notranslate"><span class="pre">info.abbreviations()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.info.aboutus"><code class="docutils literal notranslate"><span class="pre">info.aboutus()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.info.contacts"><code class="docutils literal notranslate"><span class="pre">info.contacts()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.info.links"><code class="docutils literal notranslate"><span class="pre">info.links()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#openhdemg.library.info.citeus"><code class="docutils literal notranslate"><span class="pre">info.citeus()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#id14"><code class="docutils literal notranslate"><span class="pre">info.data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#id15"><code class="docutils literal notranslate"><span class="pre">info.abbreviations()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#id16"><code class="docutils literal notranslate"><span class="pre">info.aboutus()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#id17"><code class="docutils literal notranslate"><span class="pre">info.contacts()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#id18"><code class="docutils literal notranslate"><span class="pre">info.links()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="openhdemg.library.html#id19"><code class="docutils literal notranslate"><span class="pre">info.citeus()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-openhdemg.openhdemg_gui">
+<span id="openhdemg-openhdemg-gui-module"></span><h2>openhdemg.openhdemg_gui module<a class="headerlink" href="#module-openhdemg.openhdemg_gui" title="Permalink to this heading"></a></h2>
+<p>This file contains the gui functionalities of openhdemg.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">openhdemg.openhdemg_gui.</span></span><span class="sig-name descname"><span class="pre">emgGUI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">master</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class representing a Tkinter TK instance.</p>
+<p>This class is used to create a graphical user interface for
+the Open_HD-EMG library.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.auto_eval">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">auto_eval</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.auto_eval" title="Permalink to this definition"></a></dt>
+<dd><p>If auto &gt; 0, the script automatically removes the offset based on the number
+of samples passed in input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int, default 0</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.b_firings_rec">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">b_firings_rec</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.b_firings_rec" title="Permalink to this definition"></a></dt>
+<dd><p>The number of firings at recruitment and derecruitment to consider for the
+calculation of the DR.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int, default 4</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.b_firings_ste">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">b_firings_ste</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.b_firings_ste" title="Permalink to this definition"></a></dt>
+<dd><p>The number of firings to consider for the calculation of the DR at the start and at the end
+of the steady-state phase.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int, default 10</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.canvas">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">canvas</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.canvas" title="Permalink to this definition"></a></dt>
+<dd><p>Canvas for plotting figures inside the GUI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>matplotlib.backends.backend_tkagg</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.channels">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">channels</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.channels" title="Permalink to this definition"></a></dt>
+<dd><p>The channel (int) or channels (list of int) to plot.
+The list can be passed as a manually-written with: “0,1,2,3,4,5…,n”,
+channels is expected to be with base 0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int or list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.cutoff_freq">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">cutoff_freq</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.cutoff_freq" title="Permalink to this definition"></a></dt>
+<dd><p>The cut-off frequency in Hz.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int, default 20</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.ct_event">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">ct_event</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.ct_event" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>When to calculate the thresholds. Input parameters for <a href="#id33"><span class="problematic" id="id34">event_</span></a> are:</dt><dd><p>“rt_dert” means that both recruitment and derecruitment tresholds will be calculated.
+“rt” means that only recruitment tresholds will be calculated.
+“dert” means that only derecruitment tresholds will be calculated.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str, default “rt_dert”</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.dr_event">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">dr_event</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.dr_event" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>When to calculate the DR. Input parameters for <a href="#id35"><span class="problematic" id="id36">event_</span></a> are:</dt><dd><p>“rec_derec_steady” means that the DR is calculated at recruitment, derecruitment and
+during the steady-state phase.
+“rec” means that the DR is calculated at recruitment.
+“derec” means that the DR is calculated at derecruitment.
+“rec_derec” means that the DR is calculated at recruitment and derecruitment.
+“steady” means that the DR is calculated during the steady-state phase.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str, default “rec_derec_steady”</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">self.end_area,</span> <span class="pre">self.start_area</span></span></dt>
+<dd><p>The start and end of the selection for file resizing (can be used for code automation).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.exportable_df">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">exportable_df</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.exportable_df" title="Permalink to this definition"></a></dt>
+<dd><p>A pd.DataFrame containing the results of the analysis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.fig">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">fig</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.fig" title="Permalink to this definition"></a></dt>
+<dd><p>Figure to be plotted on Canvas.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>matplotlib.figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.filename">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">filename</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.filename" title="Permalink to this definition"></a></dt>
+<dd><p>String and name of the file to be analysed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.filepath">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">filepath</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.filepath" title="Permalink to this definition"></a></dt>
+<dd><p>String containing the path to EMG file selected for analysis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.filetype">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">filetype</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.filetype" title="Permalink to this definition"></a></dt>
+<dd><p>String containing the filetype of import EMG file.
+Filetype can be “OTB”, “Demuse”, or “Refsig”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.filter_order">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">filter_order</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.filter_order" title="Permalink to this definition"></a></dt>
+<dd><p>The filter order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int, default 4</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.firings_rec">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">firings_rec</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.firings_rec" title="Permalink to this definition"></a></dt>
+<dd><p>The number of firings at recruitment and derecruitment to consider for the calculation
+of the DR.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int, default 4</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.firings_ste">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">firings_ste</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.firings_ste" title="Permalink to this definition"></a></dt>
+<dd><p>The number of firings to consider for the calculation of the DR at the start and at the end
+of the steady-state phase.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int, default 10</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.first_fig">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">first_fig</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.first_fig" title="Permalink to this definition"></a></dt>
+<dd><p>Figure frame determinining size of all figures that are plotted on canvas.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>matplotlib.figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.head">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">head</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.head" title="Permalink to this definition"></a></dt>
+<dd><p>New tk.toplevel instance created everytime upon opnening a new window. This is needed
+for having a seperate window open.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk.toplevel</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.left">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">left</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.left" title="Permalink to this definition"></a></dt>
+<dd><p>Left frame inside of master that contains all buttons and filespecs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk.frame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.linewidth">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">linewidth</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.linewidth" title="Permalink to this definition"></a></dt>
+<dd><p>The width of the vertical lines representing the MU firing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float, default 0.5</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.logo">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">logo</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.logo" title="Permalink to this definition"></a></dt>
+<dd><p>String containing the path to image file containing logo of Open_HD-EMG.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.logo_canvas">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">logo_canvas</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.logo_canvas" title="Permalink to this definition"></a></dt>
+<dd><p>Canvas to display logo of Open_HG-EMG when openend.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk.canvas</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.master">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">master</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.master" title="Permalink to this definition"></a></dt>
+<dd><p>TK master window containing all widget children for this GUI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.mus_dr">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">mus_dr</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.mus_dr" title="Permalink to this definition"></a></dt>
+<dd><p>A pd.DataFrame containing the requested DR.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.mu_numb">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">mu_numb</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.mu_numb" title="Permalink to this definition"></a></dt>
+<dd><p>By default, IPTS of all the MUs is plotted.
+Otherwise, a single MU (int) or multiple MUs (list of int) can be specified.
+The list can be passed as a manually-written list: “0,1,2,3,4,5,…,n”,
+self.m_numb is expected to be with base 0 (i.e., the first MU in the file is the number 0).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int or list, default “all”</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.mu_numb_idr">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">mu_numb_idr</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.mu_numb_idr" title="Permalink to this definition"></a></dt>
+<dd><p>By default, IDR of all the MUs is plotted.
+Otherwise, a single MU (int) or multiple MUs (list of int) can be specified.
+The list can be passed as a manually-written list: “0,1,2,3,4,5,…,n”,
+self.m_numb_idr is expected to be with base 0 (i.e., the first MU in the
+file is the number 0).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int or list, default “all”</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.mu_to_remove">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">mu_to_remove</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.mu_to_remove" title="Permalink to this definition"></a></dt>
+<dd><p>The MUs to remove. If a single MU has to be removed, this should be an
+int (number of the MU).
+self.mu_to_remove is expected to be with base 0
+(i.e., the first MU in the file is the number 0).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.mu_to_edit">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">mu_to_edit</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.mu_to_edit" title="Permalink to this definition"></a></dt>
+<dd><p>The MUs to edit singularly. If a single MU has to be edited, this should be an
+int (number of the MU).
+self.mu_to_edit is expected to be with base 0
+(i.e., the first MU in the file is the number 0).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.mu_thresholds">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">mu_thresholds</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.mu_thresholds" title="Permalink to this definition"></a></dt>
+<dd><p>A DataFrame containing the requested thresholds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.mvc">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">mvc</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.mvc" title="Permalink to this definition"></a></dt>
+<dd><p>The MVC value in the original unit of measurement.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.mvc_df">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">mvc_df</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.mvc_df" title="Permalink to this definition"></a></dt>
+<dd><p>A Dataframe containing the detected MVC value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.offsetval">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">offsetval</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.offsetval" title="Permalink to this definition"></a></dt>
+<dd><p>Value of the offset. If offsetval is 0 (default), the user will be asked to manually
+select an aerea to compute the offset value.
+Otherwise, the value passed to offsetval will be used. Negative offsetval can be passed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float, default 0</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.resdict">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">resdict</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.resdict" title="Permalink to this definition"></a></dt>
+<dd><p>Dictionary derived from input EMG file for further analysis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.rfd_df">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">rfd_df</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.rfd_df" title="Permalink to this definition"></a></dt>
+<dd><p>A Dataframe containing the calculated RFD values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.rfdms">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">rfdms</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.rfdms" title="Permalink to this definition"></a></dt>
+<dd><p>Milliseconds (ms). A list containing the ranges in ms to calculate the RFD.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list, default [50, 100, 150, 200]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.right">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">right</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.right" title="Permalink to this definition"></a></dt>
+<dd><p>Left frame inside of master that contains plotting canvas.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk.frame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.terminal">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">terminal</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.terminal" title="Permalink to this definition"></a></dt>
+<dd><p>Tkinter labelframe that is used to display the results table in the GUI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ttk.Labelframe</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.mat_code">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">mat_code</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.mat_code" title="Permalink to this definition"></a></dt>
+<dd><p>The code containing the matrix identification number.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.mat_orientation">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">mat_orientation</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.mat_orientation" title="Permalink to this definition"></a></dt>
+<dd><p>The orientation of the matrix in degrees. Can be 0, 180.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.deriv_config">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">deriv_config</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.deriv_config" title="Permalink to this definition"></a></dt>
+<dd><p>The Method used to calculate the MUs deviation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.muap_config">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">muap_config</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.muap_config" title="Permalink to this definition"></a></dt>
+<dd><p>The Method used to calculate the MUs deviation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.deriv_matrix">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">deriv_matrix</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.deriv_matrix" title="Permalink to this definition"></a></dt>
+<dd><p>Column of the matrix to be plotted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.size_fig">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">size_fig</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.size_fig" title="Permalink to this definition"></a></dt>
+<dd><p>Size of the figure to be plotted in centimeter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str, default [20,15]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.ref_but">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">ref_but</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.ref_but" title="Permalink to this definition"></a></dt>
+<dd><p>String value used to determine if reference signal should be
+added to the plot.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str, default “False”</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.time_but">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">time_but</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.time_but" title="Permalink to this definition"></a></dt>
+<dd><p>String value used to determine if time in seconds should be used
+in x-axis of plotting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str, default “False”</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.muap_munum">
+<span class="sig-name descname"><span class="pre">muap_munum</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.muap_munum" title="Permalink to this definition"></a></dt>
+<dd><p>Number of motor unit to be plotted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.muap_time">
+<span class="sig-name descname"><span class="pre">muap_time</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.muap_time" title="Permalink to this definition"></a></dt>
+<dd><p>Time window to be plotted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.info">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">info</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.info" title="Permalink to this definition"></a></dt>
+<dd><p>Information Icon displayed in GUI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk.PhotoImage</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.online">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">online</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.online" title="Permalink to this definition"></a></dt>
+<dd><p>Online Icon displayed in GUI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk.Photoimage</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.redirect">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">redirect</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.redirect" title="Permalink to this definition"></a></dt>
+<dd><p>Redirection Icon displayed in GUI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk.PhotoImage</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.contact">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">contact</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.contact" title="Permalink to this definition"></a></dt>
+<dd><p>Contact Icon displayed in GUI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk.PhotoImage</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.cite">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">cite</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.cite" title="Permalink to this definition"></a></dt>
+<dd><p>Citation Icon displayed in GUI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk.PhotoImage</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.otb_combobox">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">otb_combobox</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.otb_combobox" title="Permalink to this definition"></a></dt>
+<dd><p>Combobox appearing in main GUI window or advanced
+analysis window when OTB files are loaded. Contains
+the extension factor for OTB files.
+Stringvariable containing the</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ttk.Combobox</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.extension_factor">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">extension_factor</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.extension_factor" title="Permalink to this definition"></a></dt>
+<dd><p>Stringvariable containing the OTB extension factor value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk.Stringvar()</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.advanced_method">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">advanced_method</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.advanced_method" title="Permalink to this definition"></a></dt>
+<dd><p>Stringvariable containing the selected method of advanced
+analysis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk.Stringvar()</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.emgfile1">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">emgfile1</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.emgfile1" title="Permalink to this definition"></a></dt>
+<dd><p>Dataframe object containing the loaded first emgfile used
+for MU tracking.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.Dataframe</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.emgfile2">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">emgfile2</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.emgfile2" title="Permalink to this definition"></a></dt>
+<dd><p>Dataframe object containing the loaded first emgfile used
+for MU tracking.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.Dataframe</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.thresh_adv">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">thresh_adv</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.thresh_adv" title="Permalink to this definition"></a></dt>
+<dd><p>Stringvariable containing the selected threshold for MU tracking.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk.Stringvar()</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.filter_adv">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">filter_adv</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.filter_adv" title="Permalink to this definition"></a></dt>
+<dd><p>Boolean determining whether filtering should be applied during MU
+tracking.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk.Boolenvar()</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.show_adv">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">show_adv</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.show_adv" title="Permalink to this definition"></a></dt>
+<dd><p>Boolean determining whether results of MU tracking should be plotted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk.Boolenvar()</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.exclude_thres">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">exclude_thres</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.exclude_thres" title="Permalink to this definition"></a></dt>
+<dd><p>Boolean determining whether values below treshold should be excluded
+during MU tracking.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk.Boolenvar()</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.self.which_adv">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">which_adv</span></span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.self.which_adv" title="Permalink to this definition"></a></dt>
+<dd><p>Stringvariable determining how MU duplicates are removed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk.Stringvar()</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">master</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Initializes GUI class and main GUI window (master).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.get_file_input">
+<span class="sig-name descname"><span class="pre">get_file_input</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.get_file_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.get_file_input" title="Permalink to this definition"></a></dt>
+<dd><p>Gets emgfile location and respective file is loaded.
+Executed when button “Load File” in master GUI window pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.save_emgfile">
+<span class="sig-name descname"><span class="pre">save_emgfile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.save_emgfile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.save_emgfile" title="Permalink to this definition"></a></dt>
+<dd><p>Saves the edited emgfile dictionary to a .json file.
+Executed when button “Save File” in master GUI window pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.export_to_excel">
+<span class="sig-name descname"><span class="pre">export_to_excel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.export_to_excel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.export_to_excel" title="Permalink to this definition"></a></dt>
+<dd><p>Saves the analysis results to a .xlsx file.
+Executed when button “Save Results” in master GUI window pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.reset_analysis">
+<span class="sig-name descname"><span class="pre">reset_analysis</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.reset_analysis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.reset_analysis" title="Permalink to this definition"></a></dt>
+<dd><p>Resets the whole analysis, restores the original input file and the graph.
+Executed when button “Reset analysis” in master GUI window pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.in_gui_plotting">
+<span class="sig-name descname"><span class="pre">in_gui_plotting</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.in_gui_plotting"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.in_gui_plotting" title="Permalink to this definition"></a></dt>
+<dd><p>Method used for creating plot inside the GUI (on the GUI canvas).
+Executed when button “View MUs” in master GUI window pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.sort_mus">
+<span class="sig-name descname"><span class="pre">sort_mus</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.sort_mus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.sort_mus" title="Permalink to this definition"></a></dt>
+<dd><p>Method used to sort motor units in Plot according to recruitement order.
+Executed when button “Sort MUs” in master GUI window pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.remove_mus">
+<span class="sig-name descname"><span class="pre">remove_mus</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.remove_mus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.remove_mus" title="Permalink to this definition"></a></dt>
+<dd><p>Opens seperate window to select motor units to be removed.
+Executed when button “Remove MUs” in master GUI window pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.remove">
+<span class="sig-name descname"><span class="pre">remove</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.remove"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.remove" title="Permalink to this definition"></a></dt>
+<dd><p>Method used to remove single motor units.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.edit_refsig">
+<span class="sig-name descname"><span class="pre">edit_refsig</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.edit_refsig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.edit_refsig" title="Permalink to this definition"></a></dt>
+<dd><p>Opens seperate window to edit emg reference signal.
+Executed when button “RefSig Editing” in master GUI window pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.filter_refsig">
+<span class="sig-name descname"><span class="pre">filter_refsig</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.filter_refsig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.filter_refsig" title="Permalink to this definition"></a></dt>
+<dd><p>Method used to filter the emg reference signal.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.remove_offset">
+<span class="sig-name descname"><span class="pre">remove_offset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.remove_offset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.remove_offset" title="Permalink to this definition"></a></dt>
+<dd><p>Method used to remove offset of emg reference signal.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.resize_file">
+<span class="sig-name descname"><span class="pre">resize_file</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.resize_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.resize_file" title="Permalink to this definition"></a></dt>
+<dd><p>Opens seperate window to resize emg file / reference signal.
+Executed when button “Resize File” in master GUI window pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.select_resize">
+<span class="sig-name descname"><span class="pre">select_resize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.select_resize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.select_resize" title="Permalink to this definition"></a></dt>
+<dd><p>Method used to select start/end of resizing area manually on plot.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.resize_emgfile">
+<span class="sig-name descname"><span class="pre">resize_emgfile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.resize_emgfile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.resize_emgfile" title="Permalink to this definition"></a></dt>
+<dd><p>Method used to resize the emg file according to specified start/end.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.analyze_force">
+<span class="sig-name descname"><span class="pre">analyze_force</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.analyze_force"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.analyze_force" title="Permalink to this definition"></a></dt>
+<dd><p>Opens seperate window to analyze force signal/values.
+Executed when button “Analyze force” in master GUI window pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.get_mvc">
+<span class="sig-name descname"><span class="pre">get_mvc</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.get_mvc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.get_mvc" title="Permalink to this definition"></a></dt>
+<dd><p>Method used to calculate/select MVC.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.det_rfd">
+<span class="sig-name descname"><span class="pre">det_rfd</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.det_rfd" title="Permalink to this definition"></a></dt>
+<dd><p>Method used to calculated RFD based on selected startpoint.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.mu_analysis">
+<span class="sig-name descname"><span class="pre">mu_analysis</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.mu_analysis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.mu_analysis" title="Permalink to this definition"></a></dt>
+<dd><p>Opens seperate window to calculated specific motor unit properties.
+Executed when button “MU properties” in master GUI window pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.compute_mu_threshold">
+<span class="sig-name descname"><span class="pre">compute_mu_threshold</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.compute_mu_threshold"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.compute_mu_threshold" title="Permalink to this definition"></a></dt>
+<dd><p>Method used to calculate motor unit recruitement thresholds.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.compute_mu_dr">
+<span class="sig-name descname"><span class="pre">compute_mu_dr</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.compute_mu_dr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.compute_mu_dr" title="Permalink to this definition"></a></dt>
+<dd><p>Method used to calculate motor unit discharge rate.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.basic_mus_analysis">
+<span class="sig-name descname"><span class="pre">basic_mus_analysis</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.basic_mus_analysis" title="Permalink to this definition"></a></dt>
+<dd><p>Method used to calculate basic motor unit properties.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.plot_emg">
+<span class="sig-name descname"><span class="pre">plot_emg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.plot_emg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.plot_emg" title="Permalink to this definition"></a></dt>
+<dd><p>Opens seperate window to plot emgsignal/motor unit properties.
+Executed when button “Plot EMG” in master GUI window pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.plt_emgsignal">
+<span class="sig-name descname"><span class="pre">plt_emgsignal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.plt_emgsignal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.plt_emgsignal" title="Permalink to this definition"></a></dt>
+<dd><p>Method used to plot emgsignal.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.plt_idr">
+<span class="sig-name descname"><span class="pre">plt_idr</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.plt_idr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.plt_idr" title="Permalink to this definition"></a></dt>
+<dd><p>Method used to plot instanteous discharge rate.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.plt_ipts">
+<span class="sig-name descname"><span class="pre">plt_ipts</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.plt_ipts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.plt_ipts" title="Permalink to this definition"></a></dt>
+<dd><p>Method used to plot the motor unit puls train (i.e., non-binary firing)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.plt_refsignal">
+<span class="sig-name descname"><span class="pre">plt_refsignal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.plt_refsignal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.plt_refsignal" title="Permalink to this definition"></a></dt>
+<dd><p>Method used to plot the motor unit reference signal.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.plt_mupulses">
+<span class="sig-name descname"><span class="pre">plt_mupulses</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.plt_mupulses"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.plt_mupulses" title="Permalink to this definition"></a></dt>
+<dd><p>Method used to plot the motor unit pulses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.plot_derivation">
+<span class="sig-name descname"><span class="pre">plot_derivation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.plot_derivation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.plot_derivation" title="Permalink to this definition"></a></dt>
+<dd><p>Method to plot the differential derivation of the RAW_SIGNAL
+by matrix column.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.plot_muaps">
+<span class="sig-name descname"><span class="pre">plot_muaps</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.plot_muaps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.plot_muaps" title="Permalink to this definition"></a></dt>
+<dd><p>Method to plot motor unit action potenital obtained from STA
+from one or multiple MUs.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.open_pdf">
+<span class="sig-name descname"><span class="pre">open_pdf</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.open_pdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.open_pdf" title="Permalink to this definition"></a></dt>
+<dd><p>Method to open a PDF file in a seperate window.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.advanced_analysis">
+<span class="sig-name descname"><span class="pre">advanced_analysis</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.advanced_analysis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.advanced_analysis" title="Permalink to this definition"></a></dt>
+<dd><p>Method to open top-level windows based on the selected advanced method.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.on_filetype_change">
+<span class="sig-name descname"><span class="pre">on_filetype_change</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.on_filetype_change"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.on_filetype_change" title="Permalink to this definition"></a></dt>
+<dd><p>Method do display extension factor combobx when filetype loaded is
+OTB.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.open_emgfil1">
+<span class="sig-name descname"><span class="pre">open_emgfil1</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.open_emgfil1" title="Permalink to this definition"></a></dt>
+<dd><p>Method to open EMG file based on the selected file type and extension factor.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.open_emgfile2">
+<span class="sig-name descname"><span class="pre">open_emgfile2</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.open_emgfile2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.open_emgfile2" title="Permalink to this definition"></a></dt>
+<dd><p>Method to open EMG file based on the selected file type and extension factor.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.track_mus">
+<span class="sig-name descname"><span class="pre">track_mus</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.track_mus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.track_mus" title="Permalink to this definition"></a></dt>
+<dd><p>Method to perform MUs tracking on the loaded EMG files.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.display_results">
+<span class="sig-name descname"><span class="pre">display_results</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.display_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.display_results" title="Permalink to this definition"></a></dt>
+<dd><p>Method used to display result table containing analysis results.</p>
+</dd></dl>
+
+<p class="rubric">Notes</p>
+<p>Please note that altough we created a GUI class, the included methods/
+instances are highly specific. We did not conceptualize the methods/instances
+to be used seperately. Similar functionalities are available in the library
+and were specifically coded to be used seperately/singularly.</p>
+<p>Most instance methods of this class heavily rely on the functions provided in
+the library. In the section “See Also” at each instance method, the reader is
+referred to the corresponding function and extensive documentation in the library.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">get_file_input</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.get_file_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id0" title="Permalink to this definition"></a></dt>
+<dd><p>Instance Method to load the file for analysis. The user is asked to select the file.</p>
+<p>Executed when the button “Load File” in master GUI window is pressed.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">emg_from_demuse</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">emg_from_otb</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">refsig_from_otb</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">on_filetype_change</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.on_filetype_change"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id1" title="Permalink to this definition"></a></dt>
+<dd><p>This function is called when the value of the filetype variable is changed.
+When the filetype is set to “OTB” it will create a second combobox on the grid at column 0 and row 2,
+and when the filetype is set to something else it will remove the second combobox from the grid.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.decompose_file">
+<span class="sig-name descname"><span class="pre">decompose_file</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.decompose_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.decompose_file" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-name descname"><span class="pre">save_emgfile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.save_emgfile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id2" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to save the edited emgfile. Results are saves in .json file.</p>
+<p>Executed when the button “Save File” in master GUI window is pressed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>AttributeError</strong> – When file was not loaded in the GUI.</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_json_emgfile</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">export_to_excel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.export_to_excel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id3" title="Permalink to this definition"></a></dt>
+<dd><p>Instnace method to export any prior analysis results. Results are saved in an excel sheet
+in a directory specified by the user.</p>
+<p>Executed when button “Save Results” in master GUI window is pressed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>IndexError</strong> – When no analysis has been performed prior to attempted savig.</p></li>
+<li><p><strong>AttributeError</strong> – When no file was loaded in the GUI.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">reset_analysis</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.reset_analysis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id4" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to restore the GUI to base data. Any analysis progress will be deleted by
+reloading the original file.</p>
+<p>Executed when button “Reset Analysis” in master GUI window is pressed. The emgfile is
+updated to its original state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>AttributeError</strong> – When no file was loaded in the GUI.</p></li>
+<li><p><strong>FileNotFoundError</strong> – When no file was loaded in the GUI.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.open_advanced_tools">
+<span class="sig-name descname"><span class="pre">open_advanced_tools</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.open_advanced_tools"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.open_advanced_tools" title="Permalink to this definition"></a></dt>
+<dd><p>Open a window for advanced analysis tools.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id5">
+<span class="sig-name descname"><span class="pre">open_pdf</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.open_pdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id5" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to open a PDF file in a seperate window.</p>
+<p>The standard program for opening PDF files is used.
+The file can be handled independantly from the GUI.
+The specific usecase here is to open a tutorial for the
+“Plot Window” offline.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id6">
+<span class="sig-name descname"><span class="pre">in_gui_plotting</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'idr'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.in_gui_plotting"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id6" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to plot any analysis results in the GUI for inspection. Plots are updated
+during the analysis process.</p>
+<p>Executed when button “View MUs” in master GUI window is pressed or when the original
+input file is changed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>AttributeError</strong> – When no file was loaded in the GUI.</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_refsig</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_idr</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id7">
+<span class="sig-name descname"><span class="pre">sort_mus</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.sort_mus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id7" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to sort motor units ascending according to recruitement order.</p>
+<p>Executed when button “Sort MUs” in master GUI window is pressed. The plot of the MUs
+and the emgfile are subsequently updated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>AttributeError</strong> – When no file was loaded in the GUI.</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="#id7" title="openhdemg.openhdemg_gui.emgGUI.sort_mus"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sort_mus</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id8">
+<span class="sig-name descname"><span class="pre">remove_mus</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.remove_mus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id8" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to open “Motor Unit Removal Window”. Further option to select and
+remove MUs are displayed.</p>
+<p>Executed when button “Remove MUs” in master GUI window is pressed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>AttributeError</strong> – When no file is loaded prior to analysis.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id9">
+<span class="sig-name descname"><span class="pre">remove</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.remove"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id9" title="Permalink to this definition"></a></dt>
+<dd><p>Instance methof that actually removes a selected motor unit based on user specification.</p>
+<p>Executed when button “Remove MU” in Motor Unit Removal Window is pressed.
+The emgfile and the plot are subsequently updated.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete_mus</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id10">
+<span class="sig-name descname"><span class="pre">edit_refsig</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.edit_refsig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id10" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to open “Reference Signal Editing Window”. Options for
+refsig filtering and offset removal are displayed.</p>
+<p>Executed when button “RefSig Editing” in master GUI window is pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id11">
+<span class="sig-name descname"><span class="pre">filter_refsig</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.filter_refsig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id11" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method that filters the refig based on user selected specs.</p>
+<p>Executed when button “Filter Refsig” in Reference Signal Editing Window is pressed.
+The emgfile and the GUI plot are updated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>TypeError</strong> – When no reference signal file is available.</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="#id11" title="openhdemg.openhdemg_gui.emgGUI.filter_refsig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_refsig</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id12">
+<span class="sig-name descname"><span class="pre">remove_offset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.remove_offset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id12" title="Permalink to this definition"></a></dt>
+<dd><p>Instance Method that remves user specified/selected Refsig offset.</p>
+<p>Executed when button “Remove offset” in Reference Signal Editing Window is pressed.
+The emgfile and the GUI plot are updated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>TypeError</strong> – When no reference signal file is available</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="#id12" title="openhdemg.openhdemg_gui.emgGUI.remove_offset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_offset</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id13">
+<span class="sig-name descname"><span class="pre">resize_file</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.resize_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id13" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to open “Resize EMG File Window”. Options to resize
+the emgfile by specified area are displayed.</p>
+<p>Executed when button “Resize File” in master GUI window is pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id14">
+<span class="sig-name descname"><span class="pre">select_resize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.select_resize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id14" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to get resize area from user specification on plot and
+resize emgfile.</p>
+<p>Executed when button “Select Resize” is pressed in Resize file window.
+The emgfile and the GUI plot are updated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>AttributeError</strong> – When no file is loaded prior to analysis.</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">showselect</span></code>, <a class="reference internal" href="#id15" title="openhdemg.openhdemg_gui.emgGUI.resize_emgfile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resize_emgfile</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id15">
+<span class="sig-name descname"><span class="pre">resize_emgfile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.resize_emgfile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id15" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to get resize are from user specification and
+resize the emgfile.</p>
+<p>Executed when button “Resize File” in Resize file window is pressed.
+The emgfile and the GUI plot are updated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>AttributeError</strong> – When no file is loaded prior to analysis.</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="#id15" title="openhdemg.openhdemg_gui.emgGUI.resize_emgfile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resize_emgfile</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id16">
+<span class="sig-name descname"><span class="pre">analyze_force</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.analyze_force"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id16" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to open “Force analysis Window”.
+Options to analyse force singal are displayed.</p>
+<p>Executed when “Analyse Force” button in master GUI window is pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id17">
+<span class="sig-name descname"><span class="pre">get_mvc</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.get_mvc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id17" title="Permalink to this definition"></a></dt>
+<dd><p>Instance methof to retrieve calculated MVC based on user selection.</p>
+<p>Executed when button “Get MVC” in Analyze Force window is pressed.
+The Results of the analysis are displayed in the results terminal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>AttributeError</strong> – When no file is loaded prior to analysis.</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="#id17" title="openhdemg.openhdemg_gui.emgGUI.get_mvc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_mvc</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.get_rfd">
+<span class="sig-name descname"><span class="pre">get_rfd</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.get_rfd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.get_rfd" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to calculate RFD at specified timepoints based on user selection.</p>
+<p>Executed when button “Get RFD” in Analyze Force window is pressed.
+The Results of the analysis are displayed in the results terminal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>AttributeError</strong> – When no file is loaded prior to analysis.</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.get_rfd" title="openhdemg.openhdemg_gui.emgGUI.get_rfd"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_rfd</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id18">
+<span class="sig-name descname"><span class="pre">mu_analysis</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.mu_analysis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id18" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to open “Motor Unit Properties Window”. Options to analyse motor
+unit properties such as recruitement threshold, discharge rate or
+basic properties computing are displayed.</p>
+<p>Executed when button “MU Properties” button in master GUI window is pressed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id19">
+<span class="sig-name descname"><span class="pre">compute_mu_threshold</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.compute_mu_threshold"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id19" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to compute the motor unit recruitement thresholds
+based on user selection of events and types.</p>
+<p>Executed when button “Compute threshold” in Motor Unit Properties Window
+is pressed. The analysis results are displayed in the result terminal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>AttributeError</strong> – When no file is loaded prior to calculation.</p></li>
+<li><p><strong>ValueError</strong> – When entered MVC is not valid (inexistent).</p></li>
+<li><p><strong>AssertionError</strong> – When types/events are not specified.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_thresholds</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id20">
+<span class="sig-name descname"><span class="pre">compute_mu_dr</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.compute_mu_dr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id20" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to compute the motor unit discharge rate
+based on user selection of Firings and Events.</p>
+<p>Executed when button “Compute discharge rate” in Motor Unit Properties Window
+is pressed. The analysis results are displayed in the result terminal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>AttributeError</strong> – When no file is loaded prior to calculation.</p></li>
+<li><p><strong>ValueError</strong> – When entered Firings values are not valid (inexistent).</p></li>
+<li><p><strong>AssertionError</strong> – When types/events are not specified.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_dr</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.basic_mus_properties">
+<span class="sig-name descname"><span class="pre">basic_mus_properties</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.basic_mus_properties"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.basic_mus_properties" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to compute basic motor unit properties based in user
+selection in plot.</p>
+<p>Executed when button “Basic MU properties” in Motor Unit Properties Window
+is pressed. The analysis results are displayed in the result terminal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>AttributeError</strong> – When no file is loaded prior to calculation.</p></li>
+<li><p><strong>ValueError</strong> – When entered Firings values are not valid (inexistent).</p></li>
+<li><p><strong>AssertionError</strong> – When types/events are not specified.</p></li>
+<li><p><strong>UnboundLocalError</strong> – When start/end area for calculations are specified wrongly.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.basic_mus_properties" title="openhdemg.openhdemg_gui.emgGUI.basic_mus_properties"><code class="xref py py-obj docutils literal notranslate"><span class="pre">basic_mus_properties</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id21">
+<span class="sig-name descname"><span class="pre">plot_emg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.plot_emg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id21" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to open “Plot Window”. Options to create
+several plots from the emgfile are displayed.</p>
+<p>Executed when button “Plot EMG” in master GUI window is pressed.
+The plots are displayed in seperate windows.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id22">
+<span class="sig-name descname"><span class="pre">plt_emgsignal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.plt_emgsignal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id22" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to plot the raw emg signal in an seperate plot window.
+The channels selected by the user are plotted. The plot can be saved and
+partly edited using the matplotlib options.</p>
+<p>Executed when button “Plot EMGsig” in Plot Window is pressed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>AttributeError</strong> – When no file is loaded prior to calculation.</p></li>
+<li><p><strong>ValueError</strong> – When entered channel number is not valid (inexistent).</p></li>
+<li><p><strong>KeyError</strong> – When entered channel number is out of bounds.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_emgsignal</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id23">
+<span class="sig-name descname"><span class="pre">plt_refsignal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.plt_refsignal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id23" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to plot the reference signal in an seperate plot window.
+The plot can be saved and partly edited using the matplotlib options.</p>
+<p>Executed when button “Plot REFsig” in Plot Window is pressed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>AttributeError</strong> – When no file is loaded prior to calculation.</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_refsig</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id24">
+<span class="sig-name descname"><span class="pre">plt_mupulses</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.plt_mupulses"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id24" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to plot the mu pulses in an seperate plot window.
+The linewidth selected by the user is used. The plot can be saved and
+partly edited using the matplotlib options.</p>
+<p>Executed when button “Plot MUpulses” in Plot Window is pressed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>AttributeError</strong> – When no file is loaded prior to calculation.</p></li>
+<li><p><strong>ValueError</strong> – When entered channel number is not valid (inexistent).</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_mupulses</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id25">
+<span class="sig-name descname"><span class="pre">plt_ipts</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.plt_ipts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id25" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to plot the motor unit pulse train in an seperate plot window.
+The motor units selected by the user are plotted. The plot can be saved and
+partly edited using the matplotlib options.</p>
+<p>Executed when button “Plot IPTS” in Plot Window is pressed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>AttributeError</strong> – When no file is loaded prior to calculation.</p></li>
+<li><p><strong>ValueError</strong> – When entered motor unit number is not valid (inexistent).</p></li>
+<li><p><strong>KeyError</strong> – When entered motor number is out of bounds.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_ipts</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id26">
+<span class="sig-name descname"><span class="pre">plt_idr</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.plt_idr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id26" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to plot the instanteous discharge rate in an seperate plot window.
+The motor units selected by the user are plotted. The plot can be saved and
+partly edited using the matplotlib options.</p>
+<p>Executed when button “Plot IDR” in Plot Window is pressed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>AttributeError</strong> – When no file is loaded prior to calculation.</p></li>
+<li><p><strong>ValueError</strong> – When entered channel number is not valid (inexistent).</p></li>
+<li><p><strong>KeyError</strong> – When entered channel number is out of bounds.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_idr</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id27">
+<span class="sig-name descname"><span class="pre">plot_derivation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.plot_derivation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id27" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method to plot the differential derivation of the RAW_SIGNAL by matrix column.</p>
+<p>Both the single and the double differencials can be plotted.
+This function is used to plot also the sorted RAW_SIGNAL.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id28">
+<span class="sig-name descname"><span class="pre">plot_muaps</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.plot_muaps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id28" title="Permalink to this definition"></a></dt>
+<dd><p>Instance methos to plot motor unit action potenital obtained from STA from one or
+multiple MUs.</p>
+<p>There is no limit to the number of MUs and STA files that can be overplotted.
+<code class="docutils literal notranslate"><span class="pre">Remember:</span> <span class="pre">the</span> <span class="pre">different</span> <span class="pre">STAs</span> <span class="pre">should</span> <span class="pre">be</span> <span class="pre">matched</span></code> with same number of electrode,
+processing (i.e., differential) and computed on the same timewindow.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id29">
+<span class="sig-name descname"><span class="pre">advanced_analysis</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.advanced_analysis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id29" title="Permalink to this definition"></a></dt>
+<dd><p>Open top-level windows based on the selected advanced method.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.open_emgfile1">
+<span class="sig-name descname"><span class="pre">open_emgfile1</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.open_emgfile1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.open_emgfile1" title="Permalink to this definition"></a></dt>
+<dd><p>Open EMG file based on the selected file type and extension factor.</p>
+<p>This function is used to open and store the first emgfile that is
+required for the MU tracking. As both files required are loaded by
+different buttons, two functions storing the two files were created.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.open_emgfile1" title="openhdemg.openhdemg_gui.emgGUI.open_emgfile1"><code class="xref py py-obj docutils literal notranslate"><span class="pre">open_emgfile1</span></code></a>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">openhdemg.askopenfile</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id30">
+<span class="sig-name descname"><span class="pre">open_emgfile2</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.open_emgfile2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id30" title="Permalink to this definition"></a></dt>
+<dd><p>Open EMG file based on the selected file type and extension factor.</p>
+<p>This function is used to open and store the first emgfile that is
+required for the MU tracking. As both files required are loaded by
+different buttons, two functions storing the two files were created.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="#openhdemg.openhdemg_gui.emgGUI.open_emgfile1" title="openhdemg.openhdemg_gui.emgGUI.open_emgfile1"><code class="xref py py-obj docutils literal notranslate"><span class="pre">open_emgfile1</span></code></a>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">openhdemg.askopenfile</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.on_filetype_change_adv">
+<span class="sig-name descname"><span class="pre">on_filetype_change_adv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.on_filetype_change_adv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.on_filetype_change_adv" title="Permalink to this definition"></a></dt>
+<dd><p>This function is called when the value of the filetype variable is changed.
+When the filetype is set to “OTB” it will create a second combobox on the grid at column 0 and row 2,
+and when the filetype is set to something else it will remove the second combobox from the grid.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id31">
+<span class="sig-name descname"><span class="pre">track_mus</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.track_mus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id31" title="Permalink to this definition"></a></dt>
+<dd><p>Perform MUs tracking on the loaded EMG files.</p>
+<p class="rubric">Notes</p>
+<p>The function uses the openhdemg.tracking
+function to perform the tracking of MUs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>AttributeError</strong> – If the required EMG files have not been loaded.</p></li>
+<li><p><strong>ValueError</strong> – If the input parameters are not valid.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">openhdemg.tracking</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.remove_duplicates_between">
+<span class="sig-name descname"><span class="pre">remove_duplicates_between</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.remove_duplicates_between"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.remove_duplicates_between" title="Permalink to this definition"></a></dt>
+<dd><p>Perform duplicate removal between two EMG files.</p>
+<p class="rubric">Notes</p>
+<p>The function uses the openhdemg.remove_duplicates_between function to remove duplicates between two EMG files.
+If the required parameters are not provided, the function will raise an AttributeError or ValueError.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>AttributeError</strong> – If the required EMG files have not been loaded.</p></li>
+<li><p><strong>ValueError</strong> – If the input parameters are not valid.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">openhdemg.remove_duplicates_between</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">openhdemg.asksavefile</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.emgGUI.calculate_conduct_vel">
+<span class="sig-name descname"><span class="pre">calculate_conduct_vel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.calculate_conduct_vel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.emgGUI.calculate_conduct_vel" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id32">
+<span class="sig-name descname"><span class="pre">display_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#emgGUI.display_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id32" title="Permalink to this definition"></a></dt>
+<dd><p>Instance method that displays all analysis results in the
+output terminal using Pandastable. Input must be a Pandas dataframe.</p>
+<p>Executed trough functions with calculated anylsis results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input_df</strong> (<em>pd.DataFrame</em>) – Dataftame containing the analysis results.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="openhdemg.openhdemg_gui.run_main">
+<span class="sig-prename descclassname"><span class="pre">openhdemg.openhdemg_gui.</span></span><span class="sig-name descname"><span class="pre">run_main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/openhdemg/openhdemg_gui.html#run_main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openhdemg.openhdemg_gui.run_main" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="openhdemg-prove-module">
+<h2>openhdemg.prove module<a class="headerlink" href="#openhdemg-prove-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-openhdemg.prove_storage">
+<span id="openhdemg-prove-storage-module"></span><h2>openhdemg.prove_storage module<a class="headerlink" href="#module-openhdemg.prove_storage" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-openhdemg">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-openhdemg" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="modules.html" class="btn btn-neutral float-left" title="openhdemg" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="openhdemg.library.html" class="btn btn-neutral float-right" title="openhdemg.library package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Giacomo Valli.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

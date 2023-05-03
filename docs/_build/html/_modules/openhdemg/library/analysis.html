@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>openhdemg.library.analysis &mdash; openhdemg 0.1.0-beta documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            openhdemg
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">openhdemg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../openhdemg.html">openhdemg package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../openhdemg.library.html">openhdemg.library package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">openhdemg</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">openhdemg.library.analysis</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for openhdemg.library.analysis</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module contains all the functions used to analyse the MUs properties if</span>
+<span class="sd">not involving the MUs action potential shape.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">openhdemg.library.tools</span> <span class="kn">import</span> <span class="n">showselect</span><span class="p">,</span> <span class="n">compute_idr</span><span class="p">,</span> <span class="n">compute_covsteady</span>
+<span class="kn">from</span> <span class="nn">openhdemg.library.mathtools</span> <span class="kn">import</span> <span class="n">compute_pnr</span><span class="p">,</span> <span class="n">compute_sil</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">math</span>
+
+
+<div class="viewcode-block" id="compute_thresholds"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.analysis.compute_thresholds">[docs]</a><span class="k">def</span> <span class="nf">compute_thresholds</span><span class="p">(</span><span class="n">emgfile</span><span class="p">,</span> <span class="n">event_</span><span class="o">=</span><span class="s2">&quot;rt_dert&quot;</span><span class="p">,</span> <span class="n">type_</span><span class="o">=</span><span class="s2">&quot;abs_rel&quot;</span><span class="p">,</span> <span class="n">mvc</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates recruitment/derecruitment thresholds.</span>
+
+<span class="sd">    Values are calculated both in absolute and relative therms.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile.</span>
+<span class="sd">    event_ : str {&quot;rt_dert&quot;, &quot;rt&quot;, &quot;dert&quot;}, default &quot;rt_dert&quot;</span>
+<span class="sd">        When to calculate the thresholds.</span>
+
+<span class="sd">        ``rt_dert``</span>
+<span class="sd">            Both recruitment and derecruitment tresholds will be calculated.</span>
+<span class="sd">        ``rt``</span>
+<span class="sd">            Only recruitment tresholds will be calculated.</span>
+<span class="sd">        ``dert``</span>
+<span class="sd">            Only derecruitment tresholds will be calculated.</span>
+<span class="sd">    type_ : str {&quot;abs_rel&quot;, &quot;rel&quot;, &quot;abs&quot;}, default &quot;abs_rel&quot;</span>
+<span class="sd">        The tipe of value to calculate.</span>
+
+<span class="sd">        ``abs_rel``</span>
+<span class="sd">            Both absolute and relative tresholds will be calculated.</span>
+<span class="sd">        ``rel``</span>
+<span class="sd">            Only relative tresholds will be calculated.</span>
+<span class="sd">        ``abs``</span>
+<span class="sd">            Only absolute tresholds will be calculated.</span>
+<span class="sd">    mvc : float, default 0</span>
+<span class="sd">        The maximum voluntary contraction (MVC).</span>
+<span class="sd">        if mvc is 0, the user is asked to input MVC; otherwise, the value</span>
+<span class="sd">        passed is used.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    mus_thresholds : pd.DataFrame</span>
+<span class="sd">        A DataFrame containing the requested thresholds.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    compute_dr : calculate the discharge rate.</span>
+<span class="sd">    basic_mus_properties : calculate basic MUs properties on a trapezoidal</span>
+<span class="sd">        contraction.</span>
+<span class="sd">    compute_covisi : calculate the coefficient of variation of interspike</span>
+<span class="sd">        interval.</span>
+<span class="sd">    compute_drvariability : claculate the DR variability.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Load the EMG file and compute the thresholds.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; mus_thresholds = emg.compute_thresholds(</span>
+<span class="sd">    ...     emgfile=emgfile,</span>
+<span class="sd">    ...     event_=&quot;rt_dert&quot;,</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; mus_thresholds</span>
+<span class="sd">           abs_RT    abs_DERT     rel_RT   rel_DERT</span>
+<span class="sd">    0  160.148294  137.682351  18.665302  16.046894</span>
+<span class="sd">    1   39.138554   49.860936   4.561603   5.811298</span>
+<span class="sd">    2   88.155160   95.133218  10.274494  11.087788</span>
+<span class="sd">    3   37.776982   41.010716   4.402912   4.779804</span>
+
+<span class="sd">    Type of output can be adjusted, e.g., to have only absolute values at</span>
+<span class="sd">    recruitment.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; mus_thresholds = emg.compute_thresholds(</span>
+<span class="sd">    ...     emgfile=emgfile,</span>
+<span class="sd">    ...     event_=&quot;rt&quot;,</span>
+<span class="sd">    ...     type_=&quot;abs&quot;,</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; mus_thresholds</span>
+<span class="sd">           abs_RT</span>
+<span class="sd">    0  160.148294</span>
+<span class="sd">    1   39.138554</span>
+<span class="sd">    2   88.155160</span>
+<span class="sd">    3   37.776982</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Extract the variables of interest from the EMG file</span>
+    <span class="n">NUMBER_OF_MUS</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]</span>
+    <span class="n">MUPULSES</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">]</span>
+    <span class="n">REF_SIGNAL</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">]</span>
+
+    <span class="c1"># Check that all the inputs are correct</span>
+    <span class="k">if</span> <span class="n">event_</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;rt_dert&quot;</span><span class="p">,</span> <span class="s2">&quot;rt&quot;</span><span class="p">,</span> <span class="s2">&quot;dert&quot;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;event_ must be one of : &#39;rt_dert&#39;, &#39;rt&#39;, &#39;dert&#39;. </span><span class="si">{</span><span class="n">event_</span><span class="si">}</span><span class="s2"> was passed instead.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">type_</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;abs_rel&quot;</span><span class="p">,</span> <span class="s2">&quot;rel&quot;</span><span class="p">,</span> <span class="s2">&quot;abs&quot;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;event_ must be one of : &#39;abs_rel&#39;, &#39;rel&#39;, &#39;abs&#39;. </span><span class="si">{</span><span class="n">event_</span><span class="si">}</span><span class="s2"> was passed instead.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mvc</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;mvc must be one of the following types: float, int. </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">mvc</span><span class="p">)</span><span class="si">}</span><span class="s2"> was passed instead.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">type_</span> <span class="o">!=</span> <span class="s2">&quot;rel&quot;</span> <span class="ow">and</span> <span class="n">mvc</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># Ask the user to input MVC</span>
+        <span class="n">mvc</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+            <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;--------------------------------</span><span class="se">\n</span><span class="s2">Enter MVC value in newton: &quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Create an object to append the results</span>
+    <span class="n">toappend</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># Loop all the MUs</span>
+    <span class="k">for</span> <span class="n">mu</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUMBER_OF_MUS</span><span class="p">):</span>
+        <span class="c1"># Manage the exception of empty MUs</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">MUPULSES</span><span class="p">[</span><span class="n">mu</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Detect the first and last firing of the MU and</span>
+            <span class="n">mup_rec</span> <span class="o">=</span> <span class="n">MUPULSES</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">mup_derec</span> <span class="o">=</span> <span class="n">MUPULSES</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="c1"># Calculate absolute and relative RT and DERT if requested</span>
+            <span class="n">abs_RT</span> <span class="o">=</span> <span class="p">((</span><span class="nb">float</span><span class="p">(</span><span class="n">REF_SIGNAL</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mup_rec</span><span class="p">])</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">mvc</span><span class="p">))</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span>
+            <span class="n">abs_DERT</span> <span class="o">=</span> <span class="p">((</span><span class="nb">float</span><span class="p">(</span><span class="n">REF_SIGNAL</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mup_derec</span><span class="p">])</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">mvc</span><span class="p">))</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span>
+            <span class="n">rel_RT</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">REF_SIGNAL</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mup_rec</span><span class="p">])</span>
+            <span class="n">rel_DERT</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">REF_SIGNAL</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mup_derec</span><span class="p">])</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">abs_RT</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="n">abs_DERT</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="n">rel_RT</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="n">rel_DERT</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="k">if</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rt_dert&quot;</span> <span class="ow">and</span> <span class="n">type_</span> <span class="o">==</span> <span class="s2">&quot;abs_rel&quot;</span><span class="p">:</span>
+            <span class="n">toappend</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;abs_RT&quot;</span><span class="p">:</span> <span class="n">abs_RT</span><span class="p">,</span>
+                    <span class="s2">&quot;abs_DERT&quot;</span><span class="p">:</span> <span class="n">abs_DERT</span><span class="p">,</span>
+                    <span class="s2">&quot;rel_RT&quot;</span><span class="p">:</span> <span class="n">rel_RT</span><span class="p">,</span>
+                    <span class="s2">&quot;rel_DERT&quot;</span><span class="p">:</span> <span class="n">rel_DERT</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rt&quot;</span> <span class="ow">and</span> <span class="n">type_</span> <span class="o">==</span> <span class="s2">&quot;abs_rel&quot;</span><span class="p">:</span>
+            <span class="n">toappend</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;abs_RT&quot;</span><span class="p">:</span> <span class="n">abs_RT</span><span class="p">,</span> <span class="s2">&quot;rel_RT&quot;</span><span class="p">:</span> <span class="n">rel_RT</span><span class="p">})</span>
+        <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;dert&quot;</span> <span class="ow">and</span> <span class="n">type_</span> <span class="o">==</span> <span class="s2">&quot;abs_rel&quot;</span><span class="p">:</span>
+            <span class="n">toappend</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;abs_DERT&quot;</span><span class="p">:</span> <span class="n">abs_DERT</span><span class="p">,</span> <span class="s2">&quot;rel_DERT&quot;</span><span class="p">:</span> <span class="n">rel_DERT</span><span class="p">})</span>
+        <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rt_dert&quot;</span> <span class="ow">and</span> <span class="n">type_</span> <span class="o">==</span> <span class="s2">&quot;abs&quot;</span><span class="p">:</span>
+            <span class="n">toappend</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;abs_RT&quot;</span><span class="p">:</span> <span class="n">abs_RT</span><span class="p">,</span> <span class="s2">&quot;abs_DERT&quot;</span><span class="p">:</span> <span class="n">abs_DERT</span><span class="p">})</span>
+        <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rt&quot;</span> <span class="ow">and</span> <span class="n">type_</span> <span class="o">==</span> <span class="s2">&quot;abs&quot;</span><span class="p">:</span>
+            <span class="n">toappend</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;abs_RT&quot;</span><span class="p">:</span> <span class="n">abs_RT</span><span class="p">})</span>
+        <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;dert&quot;</span> <span class="ow">and</span> <span class="n">type_</span> <span class="o">==</span> <span class="s2">&quot;abs&quot;</span><span class="p">:</span>
+            <span class="n">toappend</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;abs_DERT&quot;</span><span class="p">:</span> <span class="n">abs_DERT</span><span class="p">})</span>
+        <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rt_dert&quot;</span> <span class="ow">and</span> <span class="n">type_</span> <span class="o">==</span> <span class="s2">&quot;rel&quot;</span><span class="p">:</span>
+            <span class="n">toappend</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;rel_RT&quot;</span><span class="p">:</span> <span class="n">rel_RT</span><span class="p">,</span> <span class="s2">&quot;rel_DERT&quot;</span><span class="p">:</span> <span class="n">rel_DERT</span><span class="p">})</span>
+        <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rt&quot;</span> <span class="ow">and</span> <span class="n">type_</span> <span class="o">==</span> <span class="s2">&quot;rel&quot;</span><span class="p">:</span>
+            <span class="n">toappend</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;rel_RT&quot;</span><span class="p">:</span> <span class="n">rel_RT</span><span class="p">})</span>
+        <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;dert&quot;</span> <span class="ow">and</span> <span class="n">type_</span> <span class="o">==</span> <span class="s2">&quot;rel&quot;</span><span class="p">:</span>
+            <span class="n">toappend</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;rel_DERT&quot;</span><span class="p">:</span> <span class="n">rel_DERT</span><span class="p">})</span>
+
+    <span class="n">mus_thresholds</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">toappend</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">mus_thresholds</span></div>
+
+
+<div class="viewcode-block" id="compute_dr"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.analysis.compute_dr">[docs]</a><span class="k">def</span> <span class="nf">compute_dr</span><span class="p">(</span>
+    <span class="n">emgfile</span><span class="p">,</span>
+    <span class="n">n_firings_RecDerec</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">n_firings_steady</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">start_steady</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">end_steady</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">event_</span><span class="o">=</span><span class="s2">&quot;rec_derec_steady&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the discharge rate (DR).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile.</span>
+<span class="sd">    n_firings_RecDerec : int, default 4</span>
+<span class="sd">        The number of firings at recruitment and derecruitment to consider for</span>
+<span class="sd">        the calculation of the DR.</span>
+<span class="sd">    n_firings_steady : int, default 10</span>
+<span class="sd">        The number of firings to consider for the calculation of the DR at the</span>
+<span class="sd">        start and at the end</span>
+<span class="sd">        of the steady-state phase.</span>
+<span class="sd">    start_steady, end_steady : int, default -1</span>
+<span class="sd">        The start and end point (in samples) of the steady-state phase.</span>
+<span class="sd">        If &lt; 0 (default), the user will need to manually select the start and</span>
+<span class="sd">        end of the steady-state phase.</span>
+<span class="sd">    event_ : str {&quot;rec_derec_steady&quot;, &quot;rec&quot;, &quot;derec&quot;, &quot;rec_derec&quot;, &quot;steady&quot;}, default &quot;rec_derec_steady&quot;</span>
+<span class="sd">        When to calculate the DR.</span>
+
+<span class="sd">            ``rec_derec_steady``</span>
+<span class="sd">                DR is calculated at recruitment, derecruitment and during the</span>
+<span class="sd">                steady-state phase.</span>
+<span class="sd">            ``rec``</span>
+<span class="sd">                DR is calculated at recruitment.</span>
+<span class="sd">            ``derec``</span>
+<span class="sd">                DR is calculated at derecruitment.</span>
+<span class="sd">            ``rec_derec``</span>
+<span class="sd">                DR is calculated at recruitment and derecruitment.</span>
+<span class="sd">            ``steady``</span>
+<span class="sd">                DR is calculated during the steady-state phase.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    mus_dr : pd.DataFrame</span>
+<span class="sd">        A pd.DataFrame containing the requested DR.</span>
+
+<span class="sd">    Warns</span>
+<span class="sd">    -----</span>
+<span class="sd">    warning</span>
+<span class="sd">        When calculation of DR at rec/derec fails due to not enough firings.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    compute_thresholds : calculates recruitment/derecruitment thresholds.</span>
+<span class="sd">    basic_mus_properties : calculate basic MUs properties on a trapezoidal</span>
+<span class="sd">        contraction.</span>
+<span class="sd">    compute_covisi : calculate the coefficient of variation of interspike</span>
+<span class="sd">        interval.</span>
+<span class="sd">    compute_drvariability : claculate the DR variability.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    DR for all the contraction is automatically calculated and returned.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Load the EMG file and compute the DR.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; mus_dr = emg.compute_dr(emgfile=emgfile)</span>
+<span class="sd">    &gt;&gt;&gt; mus_dr</span>
+<span class="sd">         DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady     DR_all</span>
+<span class="sd">    0  5.701081  4.662196         7.321255       6.420720       6.907559   6.814342</span>
+<span class="sd">    1  7.051127  6.752467        14.919066      10.245462      11.938671  11.683134</span>
+<span class="sd">    2  6.101529  4.789000         7.948740       6.133345       7.695189   8.055731</span>
+<span class="sd">    3  6.345692  5.333535        11.121785       9.265212      11.544140  11.109796</span>
+
+<span class="sd">    Type of output can be adjusted, e.g., to have only the DR at recruitment.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; mus_dr = emg.compute_dr(emgfile=emgfile, event_=&quot;rec&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; mus_dr</span>
+<span class="sd">         DR_rec     DR_all</span>
+<span class="sd">    0  5.701081   6.814342</span>
+<span class="sd">    1  7.051127  11.683134</span>
+<span class="sd">    2  6.101529   8.055731</span>
+<span class="sd">    3  6.345692  11.109796</span>
+
+<span class="sd">    The manual selection of the steady state phase can be bypassed</span>
+<span class="sd">    if previously calculated with an automated method.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; mus_dr = emg.compute_dr(</span>
+<span class="sd">    ...     emgfile=emgfile,</span>
+<span class="sd">    ...     start_steady=20000,</span>
+<span class="sd">    ...     end_steady=50000,</span>
+<span class="sd">    ...     event_=&quot;steady&quot;,</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; mus_dr</span>
+<span class="sd">       DR_start_steady  DR_end_steady  DR_all_steady     DR_all</span>
+<span class="sd">    0         7.476697       6.271750       6.794170   6.814342</span>
+<span class="sd">    1        14.440561      10.019572      11.822081  11.683134</span>
+<span class="sd">    2         7.293547       5.846093       7.589531   8.055731</span>
+<span class="sd">    3        13.289651       9.694317      11.613640  11.109796</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Check that all the inputs are correct</span>
+    <span class="n">errormessage</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;event_ must be one of the following strings: rec, derec, rec_derec, steady, rec_derec_steady. </span><span class="si">{</span><span class="n">event_</span><span class="si">}</span><span class="s2"> was passed instead.&quot;</span>
+    <span class="k">if</span> <span class="n">event_</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="s2">&quot;rec&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;derec&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;rec_derec&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;steady&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;rec_derec_steady&quot;</span><span class="p">,</span>
+    <span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">errormessage</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n_firings_RecDerec</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;n_firings_RecDerec must be an integer. </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">n_firings_RecDerec</span><span class="p">)</span><span class="si">}</span><span class="s2"> was passed instead.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n_firings_steady</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;n_firings_steady must be an integer. </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">n_firings_steady</span><span class="p">)</span><span class="si">}</span><span class="s2"> was passed instead.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">idr</span> <span class="o">=</span> <span class="n">compute_idr</span><span class="p">(</span><span class="n">emgfile</span><span class="o">=</span><span class="n">emgfile</span><span class="p">)</span>
+
+    <span class="c1"># Check if we need to manually select the area for the steady-state phase</span>
+    <span class="k">if</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rec_derec_steady&quot;</span> <span class="ow">or</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;steady&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">start_steady</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">end_steady</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">start_steady</span><span class="p">,</span> <span class="n">end_steady</span> <span class="o">=</span> <span class="n">showselect</span><span class="p">(</span>
+                <span class="n">emgfile</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select the start/end of the steady-state then press enter&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">start_steady</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">end_steady</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">start_steady</span><span class="p">,</span> <span class="n">end_steady</span> <span class="o">=</span> <span class="n">showselect</span><span class="p">(</span>
+                <span class="n">emgfile</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select the start/end of the steady-state then press enter&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="c1"># Create an object to append the results</span>
+    <span class="n">toappend_dr</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">mu</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]):</span>  <span class="c1"># Loop all the MUs</span>
+        <span class="c1"># DR rec/derec</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="s2">&quot;idr&quot;</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="n">n_firings_RecDerec</span><span class="p">:</span>
+            <span class="n">selected_idr</span> <span class="o">=</span> <span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="s2">&quot;idr&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">n_firings_RecDerec</span><span class="p">]</span>
+            <span class="n">drrec</span> <span class="o">=</span> <span class="n">selected_idr</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+            <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="s2">&quot;idr&quot;</span><span class="p">])</span>
+            <span class="n">selected_idr</span> <span class="o">=</span> <span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="s2">&quot;idr&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span>
+                <span class="n">length</span> <span class="o">-</span> <span class="n">n_firings_RecDerec</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span> <span class="n">length</span>
+            <span class="p">]</span>
+            <span class="c1"># +1 because len() counts position 0</span>
+            <span class="n">drderec</span> <span class="o">=</span> <span class="n">selected_idr</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">drrec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="n">drderec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">&quot;Calculation of DR at rec/derec failed, not enough firings&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Set indexes for the steady-state firings</span>
+        <span class="n">index_startsteady</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">index_endsteady</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="c1"># Find nex indexes of start and end steady if possible</span>
+        <span class="k">for</span> <span class="n">pos</span><span class="p">,</span> <span class="n">pulse</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="s2">&quot;mupulses&quot;</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="n">pulse</span> <span class="o">&gt;=</span> <span class="n">start_steady</span> <span class="ow">and</span> <span class="n">pulse</span> <span class="o">&lt;=</span> <span class="n">end_steady</span><span class="p">:</span>
+                <span class="n">index_startsteady</span> <span class="o">=</span> <span class="n">pos</span>
+                <span class="k">break</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">index_startsteady</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">pos</span><span class="p">,</span> <span class="n">pulse</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="s2">&quot;mupulses&quot;</span><span class="p">]):</span>
+                <span class="k">if</span> <span class="n">pulse</span> <span class="o">&gt;=</span> <span class="n">end_steady</span><span class="p">:</span>
+                    <span class="n">index_endsteady</span> <span class="o">=</span> <span class="n">pos</span>
+                    <span class="k">break</span>
+
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Account for MUs that stop firing before the end of the</span>
+                    <span class="c1"># steady-state phase</span>
+                    <span class="n">index_endsteady</span> <span class="o">=</span> <span class="n">pos</span>
+
+        <span class="c1"># Calculate DR at the steady-state phase if there is a steady-state</span>
+        <span class="n">c1</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">index_startsteady</span><span class="p">)</span>
+        <span class="n">c2</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">index_endsteady</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">c1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">c2</span><span class="p">:</span>
+            <span class="c1"># # DR drstartsteady</span>
+            <span class="c1"># Use +1 because to work only on the steady state (here and after)</span>
+            <span class="c1"># because the idr is calculated on the previous firing (on the</span>
+            <span class="c1"># ramp).</span>
+            <span class="n">selected_idr</span> <span class="o">=</span> <span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="s2">&quot;idr&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                <span class="n">index_startsteady</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span> <span class="n">index_startsteady</span> <span class="o">+</span> <span class="n">n_firings_steady</span>
+            <span class="p">]</span>
+            <span class="n">drstartsteady</span> <span class="o">=</span> <span class="n">selected_idr</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+            <span class="c1"># DR endsteady</span>
+            <span class="n">selected_idr</span> <span class="o">=</span> <span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="s2">&quot;idr&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                <span class="n">index_endsteady</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">n_firings_steady</span><span class="p">:</span> <span class="n">index_endsteady</span>
+            <span class="p">]</span>
+            <span class="n">drendsteady</span> <span class="o">=</span> <span class="n">selected_idr</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+            <span class="c1"># DR steady</span>
+            <span class="n">selected_idr</span> <span class="o">=</span> <span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="s2">&quot;idr&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                <span class="n">index_startsteady</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span> <span class="n">index_endsteady</span>
+            <span class="p">]</span>
+            <span class="n">drsteady</span> <span class="o">=</span> <span class="n">selected_idr</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">drstartsteady</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="n">drendsteady</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="n">drsteady</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="c1"># DR all contraction</span>
+        <span class="n">selected_idr</span> <span class="o">=</span> <span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="s2">&quot;idr&quot;</span><span class="p">]</span>
+        <span class="n">drall</span> <span class="o">=</span> <span class="n">selected_idr</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rec&quot;</span><span class="p">:</span>
+            <span class="n">toappend_dr</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;DR_rec&quot;</span><span class="p">:</span> <span class="n">drrec</span><span class="p">,</span> <span class="s2">&quot;DR_all&quot;</span><span class="p">:</span> <span class="n">drall</span><span class="p">})</span>
+        <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;derec&quot;</span><span class="p">:</span>
+            <span class="n">toappend_dr</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;DR_derec&quot;</span><span class="p">:</span> <span class="n">drderec</span><span class="p">,</span> <span class="s2">&quot;DR_all&quot;</span><span class="p">:</span> <span class="n">drall</span><span class="p">})</span>
+        <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rec_derec&quot;</span><span class="p">:</span>
+            <span class="n">toappend_dr</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;DR_rec&quot;</span><span class="p">:</span> <span class="n">drrec</span><span class="p">,</span> <span class="s2">&quot;DR_derec&quot;</span><span class="p">:</span> <span class="n">drderec</span><span class="p">,</span> <span class="s2">&quot;DR_all&quot;</span><span class="p">:</span> <span class="n">drall</span><span class="p">})</span>
+        <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;steady&quot;</span><span class="p">:</span>
+            <span class="n">toappend_dr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;DR_start_steady&quot;</span><span class="p">:</span> <span class="n">drstartsteady</span><span class="p">,</span>
+                    <span class="s2">&quot;DR_end_steady&quot;</span><span class="p">:</span> <span class="n">drendsteady</span><span class="p">,</span>
+                    <span class="s2">&quot;DR_all_steady&quot;</span><span class="p">:</span> <span class="n">drsteady</span><span class="p">,</span>
+                    <span class="s2">&quot;DR_all&quot;</span><span class="p">:</span> <span class="n">drall</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rec_derec_steady&quot;</span><span class="p">:</span>
+            <span class="n">toappend_dr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;DR_rec&quot;</span><span class="p">:</span> <span class="n">drrec</span><span class="p">,</span>
+                    <span class="s2">&quot;DR_derec&quot;</span><span class="p">:</span> <span class="n">drderec</span><span class="p">,</span>
+                    <span class="s2">&quot;DR_start_steady&quot;</span><span class="p">:</span> <span class="n">drstartsteady</span><span class="p">,</span>
+                    <span class="s2">&quot;DR_end_steady&quot;</span><span class="p">:</span> <span class="n">drendsteady</span><span class="p">,</span>
+                    <span class="s2">&quot;DR_all_steady&quot;</span><span class="p">:</span> <span class="n">drsteady</span><span class="p">,</span>
+                    <span class="s2">&quot;DR_all&quot;</span><span class="p">:</span> <span class="n">drall</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Convert the dictionary in a DataFrame</span>
+    <span class="n">mus_dr</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">toappend_dr</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">mus_dr</span></div>
+
+
+<div class="viewcode-block" id="basic_mus_properties"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.analysis.basic_mus_properties">[docs]</a><span class="k">def</span> <span class="nf">basic_mus_properties</span><span class="p">(</span>
+    <span class="n">emgfile</span><span class="p">,</span>
+    <span class="n">n_firings_RecDerec</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">n_firings_steady</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">start_steady</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">end_steady</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">mvc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate basic MUs properties on a trapezoidal contraction.</span>
+
+<span class="sd">    The function is meant to be used on trapezoidal contractions and</span>
+<span class="sd">    calculates:</span>
+<span class="sd">    the absolute/relative recruitment/derecruitment thresholds,</span>
+<span class="sd">    the discharge rate at recruitment, derecruitment, during the steady-state</span>
+<span class="sd">    phase and during the entire contraction,</span>
+<span class="sd">    the coefficient of variation of interspike interval,</span>
+<span class="sd">    the coefficient of variation of force signal.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile.</span>
+<span class="sd">    n_firings_RecDerec : int, default 4</span>
+<span class="sd">        The number of firings at recruitment and derecruitment to consider for</span>
+<span class="sd">        the calculation of the DR.</span>
+<span class="sd">    n_firings_steady : int, default 10</span>
+<span class="sd">        The number of firings to consider for the calculation of the DR at the</span>
+<span class="sd">        start and at the end of the steady-state phase.</span>
+<span class="sd">    start_steady, end_steady : int, default -1</span>
+<span class="sd">        The start and end point (in samples) of the steady-state phase.</span>
+<span class="sd">        If &lt; 0 (default), the user will need to manually select the start and</span>
+<span class="sd">        end of the steady-state phase.</span>
+<span class="sd">    mvc : float, default 0</span>
+<span class="sd">        The maximum voluntary contraction (MVC). It is suggest to report</span>
+<span class="sd">        MVC in Newton (N). If 0 (default), the user will be asked to imput it</span>
+<span class="sd">        manually. Otherwise, the passed value will be used.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    exportable_df : pd.DataFrame</span>
+<span class="sd">        A pd.DataFrame containing the results of the analysis.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    compute_thresholds : calculates recruitment/derecruitment thresholds.</span>
+<span class="sd">    compute_dr : calculate the discharge rate.</span>
+<span class="sd">    compute_covisi : calculate the coefficient of variation of interspike</span>
+<span class="sd">        interval.</span>
+<span class="sd">    compute_drvariability : claculate the DR variability.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Get full summary of all the MUs properties.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; df = emg.basic_mus_properties(emgfile=emgfile)</span>
+<span class="sd">    &gt;&gt;&gt; df</span>
+<span class="sd">         MVC  MU_number      abs_RT    abs_DERT     rel_RT   rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady     DR_all  COVisi_steady  COVisi_all  COV_steady</span>
+<span class="sd">    0  786.0          1  146.709276  126.128587  18.665302  16.046894  5.701081  4.662196         7.467810       6.242360       6.902616   6.814342      11.296316   16.309681    1.423286</span>
+<span class="sd">    1    NaN          2   35.854200   45.676801   4.561603   5.811298  7.051127  6.752467        11.798908       9.977337      11.784061  11.683134      15.871254   21.233615         NaN</span>
+<span class="sd">    2    NaN          3   80.757524   87.150011  10.274494  11.087788  6.101529  4.789000         7.940926       5.846093       7.671361   8.055731      35.755090   35.308650         NaN</span>
+<span class="sd">    3    NaN          4   34.606886   37.569257   4.402912   4.779804  6.345692  5.333535        11.484875       9.636914      11.594712  11.109796      24.611246   29.372524         NaN</span>
+
+<span class="sd">    We can bypass manual prompting the MVC by pre-specifying it and/or</span>
+<span class="sd">    bypass the manual selection of the steady state phase if previously</span>
+<span class="sd">    calculated with an automated method.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; df = emg.basic_mus_properties(</span>
+<span class="sd">    ...     emgfile=emgfile,</span>
+<span class="sd">    ...     start_steady=20000,</span>
+<span class="sd">    ...     end_steady=50000,</span>
+<span class="sd">    ...     mvc=786,</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; df</span>
+<span class="sd">         MVC  MU_number      abs_RT    abs_DERT     rel_RT   rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  DR_all_steady     DR_all  COVisi_steady  COVisi_all  COV_steady</span>
+<span class="sd">    0  786.0          1  146.709276  126.128587  18.665302  16.046894  5.701081  4.662196         7.476697       6.271750       6.794170   6.814342      11.066966   16.309681    1.431752</span>
+<span class="sd">    1    NaN          2   35.854200   45.676801   4.561603   5.811298  7.051127  6.752467        14.440561      10.019572      11.822081  11.683134      15.076819   21.233615         NaN</span>
+<span class="sd">    2    NaN          3   80.757524   87.150011  10.274494  11.087788  6.101529  4.789000         7.293547       5.846093       7.589531   8.055731      36.996894   35.308650         NaN</span>
+<span class="sd">    3    NaN          4   34.606886   37.569257   4.402912   4.779804  6.345692  5.333535        13.289651       9.694317      11.613640  11.109796      26.028689   29.372524         NaN</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Check if we need to select the steady-state phase</span>
+    <span class="k">if</span> <span class="n">start_steady</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">end_steady</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">start_steady</span><span class="p">,</span> <span class="n">end_steady</span> <span class="o">=</span> <span class="n">showselect</span><span class="p">(</span>
+            <span class="n">emgfile</span><span class="o">=</span><span class="n">emgfile</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select start/end area of the steady-state then press enter&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Collect the information to export</span>
+    <span class="c1"># First: create a dataframe that contains all the output</span>
+    <span class="n">exportable_df</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Second: add basic information (MVC, MU number, PNR/SIL, Average PNR/SIL)</span>
+    <span class="k">if</span> <span class="n">mvc</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># Ask the user to input MVC</span>
+        <span class="n">mvc</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+            <span class="nb">input</span><span class="p">(</span>
+                <span class="s2">&quot;--------------------------------</span><span class="se">\n</span><span class="s2">Enter MVC value in newton: &quot;</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">exportable_df</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;MVC&quot;</span><span class="p">:</span> <span class="n">mvc</span><span class="p">})</span>
+    <span class="n">exportable_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">exportable_df</span><span class="p">)</span>
+
+    <span class="c1"># Basically, we create an empty list, append values, convert the</span>
+    <span class="c1"># list in a pd.DataFrame and then concatenate to the exportable_df</span>
+    <span class="n">toappend</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]):</span>
+        <span class="n">toappend</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;MU_number&quot;</span><span class="p">:</span> <span class="n">i</span><span class="p">})</span>
+    <span class="n">toappend</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">toappend</span><span class="p">)</span>
+    <span class="n">exportable_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">exportable_df</span><span class="p">,</span> <span class="n">toappend</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Calculate PNR</span>
+    <span class="c1"># Repeat the task for every new column to fill and concatenate</span>
+    <span class="n">toappend</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">mu</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]):</span>
+        <span class="n">pnr</span> <span class="o">=</span> <span class="n">compute_pnr</span><span class="p">(</span>
+            <span class="n">ipts</span><span class="o">=</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;IPTS&quot;</span><span class="p">][</span><span class="n">mu</span><span class="p">],</span>
+            <span class="n">mupulses</span><span class="o">=</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">][</span><span class="n">mu</span><span class="p">],</span>
+            <span class="n">fsamp</span><span class="o">=</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;FSAMP&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">toappend</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;PNR&quot;</span><span class="p">:</span> <span class="n">pnr</span><span class="p">})</span>
+    <span class="n">toappend</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">toappend</span><span class="p">)</span>
+    <span class="n">exportable_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">exportable_df</span><span class="p">,</span> <span class="n">toappend</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Calculate avrage PNR</span>
+    <span class="c1"># dropna to avoid nan average.</span>
+    <span class="n">avg_pnr</span> <span class="o">=</span> <span class="n">exportable_df</span><span class="p">[</span><span class="s2">&quot;PNR&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">toappend</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([{</span><span class="s2">&quot;avg_PNR&quot;</span><span class="p">:</span> <span class="n">avg_pnr</span><span class="p">}])</span>
+    <span class="n">exportable_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">exportable_df</span><span class="p">,</span> <span class="n">toappend</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Calculate SIL</span>
+    <span class="n">toappend</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">mu</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]):</span>
+        <span class="n">sil</span> <span class="o">=</span> <span class="n">compute_sil</span><span class="p">(</span>
+            <span class="n">ipts</span><span class="o">=</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;IPTS&quot;</span><span class="p">][</span><span class="n">mu</span><span class="p">],</span>
+            <span class="n">mupulses</span><span class="o">=</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">][</span><span class="n">mu</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">toappend</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;SIL&quot;</span><span class="p">:</span> <span class="n">sil</span><span class="p">})</span>
+    <span class="n">toappend</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">toappend</span><span class="p">)</span>
+    <span class="n">exportable_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">exportable_df</span><span class="p">,</span> <span class="n">toappend</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Calculate avrage SIL</span>
+    <span class="n">avg_sil</span> <span class="o">=</span> <span class="n">exportable_df</span><span class="p">[</span><span class="s2">&quot;SIL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">toappend</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([{</span><span class="s2">&quot;avg_SIL&quot;</span><span class="p">:</span> <span class="n">avg_sil</span><span class="p">}])</span>
+    <span class="n">exportable_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">exportable_df</span><span class="p">,</span> <span class="n">toappend</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Calculate RT and DERT</span>
+    <span class="n">mus_thresholds</span> <span class="o">=</span> <span class="n">compute_thresholds</span><span class="p">(</span><span class="n">emgfile</span><span class="o">=</span><span class="n">emgfile</span><span class="p">,</span> <span class="n">mvc</span><span class="o">=</span><span class="n">mvc</span><span class="p">)</span>
+    <span class="n">exportable_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">exportable_df</span><span class="p">,</span> <span class="n">mus_thresholds</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Calculate DR at recruitment, derecruitment, all, start, end of the</span>
+    <span class="c1"># steady-state and on all the contraction.</span>
+    <span class="n">mus_dr</span> <span class="o">=</span> <span class="n">compute_dr</span><span class="p">(</span>
+        <span class="n">emgfile</span><span class="o">=</span><span class="n">emgfile</span><span class="p">,</span>
+        <span class="n">n_firings_RecDerec</span><span class="o">=</span><span class="n">n_firings_RecDerec</span><span class="p">,</span>
+        <span class="n">n_firings_steady</span><span class="o">=</span><span class="n">n_firings_steady</span><span class="p">,</span>
+        <span class="n">start_steady</span><span class="o">=</span><span class="n">start_steady</span><span class="p">,</span>
+        <span class="n">end_steady</span><span class="o">=</span><span class="n">end_steady</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">exportable_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">exportable_df</span><span class="p">,</span> <span class="n">mus_dr</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Calculate COVisi</span>
+    <span class="n">covisi</span> <span class="o">=</span> <span class="n">compute_covisi</span><span class="p">(</span>
+        <span class="n">emgfile</span><span class="o">=</span><span class="n">emgfile</span><span class="p">,</span>
+        <span class="n">n_firings_RecDerec</span><span class="o">=</span><span class="n">n_firings_RecDerec</span><span class="p">,</span>
+        <span class="n">start_steady</span><span class="o">=</span><span class="n">start_steady</span><span class="p">,</span>
+        <span class="n">end_steady</span><span class="o">=</span><span class="n">end_steady</span><span class="p">,</span>
+        <span class="n">event_</span><span class="o">=</span><span class="s2">&quot;steady&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">exportable_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">exportable_df</span><span class="p">,</span> <span class="n">covisi</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Calculate COVsteady</span>
+    <span class="n">covsteady</span> <span class="o">=</span> <span class="n">compute_covsteady</span><span class="p">(</span>
+        <span class="n">emgfile</span><span class="o">=</span><span class="n">emgfile</span><span class="p">,</span>
+        <span class="n">start_steady</span><span class="o">=</span><span class="n">start_steady</span><span class="p">,</span>
+        <span class="n">end_steady</span><span class="o">=</span><span class="n">end_steady</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">covsteady</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([{</span><span class="s2">&quot;COV_steady&quot;</span><span class="p">:</span> <span class="n">covsteady</span><span class="p">}])</span>
+    <span class="n">exportable_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">exportable_df</span><span class="p">,</span> <span class="n">covsteady</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">exportable_df</span></div>
+
+
+<div class="viewcode-block" id="compute_covisi"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.analysis.compute_covisi">[docs]</a><span class="k">def</span> <span class="nf">compute_covisi</span><span class="p">(</span>
+    <span class="n">emgfile</span><span class="p">,</span>
+    <span class="n">n_firings_RecDerec</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">start_steady</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">end_steady</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">event_</span><span class="o">=</span><span class="s2">&quot;rec_derec_steady&quot;</span><span class="p">,</span>
+    <span class="n">single_mu_number</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate theCOVisi.</span>
+
+<span class="sd">    This function calculates the coefficient of variation of interspike</span>
+<span class="sd">    interval (COVisi).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile.</span>
+<span class="sd">    n_firings_RecDerec : int, default 4</span>
+<span class="sd">        The number of firings at recruitment and derecruitment to consider for</span>
+<span class="sd">        the calculation of the COVisi.</span>
+<span class="sd">    start_steady, end_steady : int, default -1</span>
+<span class="sd">        The start and end point (in samples) of the steady-state phase.</span>
+<span class="sd">        If &lt; 0 (default), the user will need to manually select the start and</span>
+<span class="sd">        end of the steady-state phase.</span>
+<span class="sd">    event_ : str {&quot;rec_derec_steady&quot;, &quot;rec&quot;, &quot;derec&quot;, &quot;rec_derec&quot;, &quot;steady&quot;}, default &quot;rec_derec_steady&quot;</span>
+<span class="sd">        When to calculate the COVisi.</span>
+
+<span class="sd">            ``rec_derec_steady``</span>
+<span class="sd">                covisi is calculated at recruitment, derecruitment and during</span>
+<span class="sd">                the steady-state phase.</span>
+<span class="sd">            ``rec``</span>
+<span class="sd">                covisi is calculated at recruitment.</span>
+<span class="sd">            ``derec``</span>
+<span class="sd">                covisi is calculated at derecruitment.</span>
+<span class="sd">            ``rec_derec``</span>
+<span class="sd">                covisi is calculated at recruitment and derecruitment.</span>
+<span class="sd">            ``steady``</span>
+<span class="sd">                covisi is calculated during the steady-state phase.</span>
+<span class="sd">    single_mu_number : int, default -1</span>
+<span class="sd">        Number of the specific MU to compute the COVisi.</span>
+<span class="sd">        If single_mu_number &gt;= 0, only the COVisi of the entire contraction</span>
+<span class="sd">        will be returned. If -1 (default), COVisi will be calculated for all</span>
+<span class="sd">        the MUs.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    covisi : pd.DataFrame</span>
+<span class="sd">        A pd.DataFrame containing the requested COVisi.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    compute_thresholds : calculates recruitment/derecruitment thresholds.</span>
+<span class="sd">    compute_dr : calculate the discharge rate.</span>
+<span class="sd">    basic_mus_properties : calculate basic MUs properties on a trapezoidal</span>
+<span class="sd">        contraction.</span>
+<span class="sd">    compute_drvariability : claculate the DR variability.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    COVisi for all the contraction is automatically calculated and returned.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Compute covisi during the various parts of the trapezoidal contraction.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; df = emg.compute_covisi(emgfile=emgfile)</span>
+<span class="sd">    &gt;&gt;&gt; df</span>
+<span class="sd">       COVisi_rec  COVisi_derec  COVisi_steady  COVisi_all</span>
+<span class="sd">    0    8.600651     24.007405      11.230602   16.309681</span>
+<span class="sd">    1   46.874208     19.243432      16.657603   21.233615</span>
+<span class="sd">    2   32.212757     18.642514      35.421124   35.308650</span>
+<span class="sd">    3   62.995864     13.080768      24.966372   29.372524</span>
+
+<span class="sd">    If the steady-state phase has been pre-identified, the manual selection</span>
+<span class="sd">    of the area can be bypassed.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; df = emg.compute_covisi(</span>
+<span class="sd">    ...     emgfile=emgfile,</span>
+<span class="sd">    ...     event_=&quot;rec_derec&quot;,</span>
+<span class="sd">    ...     start_steady=20000,</span>
+<span class="sd">    ...     end_steady=50000,</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; df</span>
+<span class="sd">       COVisi_rec  COVisi_derec  COVisi_all</span>
+<span class="sd">    0    8.600651     24.007405   16.309681</span>
+<span class="sd">    1   46.874208     19.243432   21.233615</span>
+<span class="sd">    2   32.212757     18.642514   35.308650</span>
+<span class="sd">    3   62.995864     13.080768   29.372524</span>
+
+<span class="sd">    To access the covisi of the entire contraction of a single MU.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; df = emg.compute_covisi(emgfile=emgfile, single_mu_number=2)</span>
+<span class="sd">    &gt;&gt;&gt; df</span>
+<span class="sd">       COVisi_all</span>
+<span class="sd">    0    35.30865</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Check that all the inputs are correct</span>
+    <span class="n">errormessage</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;event_ must be one of the following strings: rec, derec, rec_derec, steady, rec_derec_steady. </span><span class="si">{</span><span class="n">event_</span><span class="si">}</span><span class="s2"> was passed instead.&quot;</span>
+    <span class="k">if</span> <span class="n">event_</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="s2">&quot;rec&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;derec&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;rec_derec&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;steady&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;rec_derec_steady&quot;</span><span class="p">,</span>
+    <span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">errormessage</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n_firings_RecDerec</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;n_firings_RecDerec must be an integer. </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">n_firings_RecDerec</span><span class="p">)</span><span class="si">}</span><span class="s2"> was passed instead.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># We use the idr pd.DataFrame to calculate the COVisi</span>
+    <span class="n">idr</span> <span class="o">=</span> <span class="n">compute_idr</span><span class="p">(</span><span class="n">emgfile</span><span class="o">=</span><span class="n">emgfile</span><span class="p">)</span>
+
+    <span class="c1"># Check if we need to analyse all the MUs or a single MU</span>
+    <span class="k">if</span> <span class="n">single_mu_number</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># Check if we need to manually select the area for the steady-state</span>
+        <span class="c1"># phase.</span>
+        <span class="k">if</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rec_derec_steady&quot;</span> <span class="ow">or</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;steady&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">start_steady</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">end_steady</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">start_steady</span><span class="p">,</span> <span class="n">end_steady</span> <span class="o">=</span> <span class="n">showselect</span><span class="p">(</span>
+                    <span class="n">emgfile</span><span class="o">=</span><span class="n">emgfile</span><span class="p">,</span>
+                    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select the start/end area to consider then press enter&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Create an object to append the results</span>
+        <span class="n">toappend_covisi</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">mu</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]):</span>  <span class="c1"># Loop all the MUs</span>
+
+            <span class="c1"># COVisi rec</span>
+            <span class="n">selected_idr</span> <span class="o">=</span> <span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="s2">&quot;diff_mupulses&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span> <span class="n">n_firings_RecDerec</span><span class="p">]</span>
+            <span class="n">covisirec</span> <span class="o">=</span> <span class="p">(</span><span class="n">selected_idr</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">/</span> <span class="n">selected_idr</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">*</span> <span class="mi">100</span>
+
+            <span class="c1"># COVisi derec</span>
+            <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="s2">&quot;diff_mupulses&quot;</span><span class="p">])</span>
+            <span class="n">selected_idr</span> <span class="o">=</span> <span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="s2">&quot;diff_mupulses&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span>
+                <span class="n">length</span> <span class="o">-</span> <span class="n">n_firings_RecDerec</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span> <span class="n">length</span>
+            <span class="p">]</span>  <span class="c1"># +1 because len() counts position 0</span>
+            <span class="n">covisiderec</span> <span class="o">=</span> <span class="p">(</span><span class="n">selected_idr</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">/</span> <span class="n">selected_idr</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">*</span> <span class="mi">100</span>
+
+            <span class="c1"># COVisi all steady</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rec_derec_steady&quot;</span> <span class="ow">or</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;steady&quot;</span><span class="p">):</span>
+                <span class="n">idr_indexed</span> <span class="o">=</span> <span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">]</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;mupulses&quot;</span><span class="p">)</span>
+                <span class="n">selected_idr</span> <span class="o">=</span> <span class="n">idr_indexed</span><span class="p">[</span><span class="s2">&quot;diff_mupulses&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                    <span class="n">start_steady</span><span class="p">:</span> <span class="n">end_steady</span>
+                <span class="p">]</span>
+                <span class="n">covisisteady</span> <span class="o">=</span> <span class="p">(</span><span class="n">selected_idr</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">/</span> <span class="n">selected_idr</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">*</span> <span class="mi">100</span>
+
+            <span class="c1"># COVisi all contraction</span>
+            <span class="n">selected_idr</span> <span class="o">=</span> <span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="s2">&quot;diff_mupulses&quot;</span><span class="p">]</span>
+            <span class="n">covisiall</span> <span class="o">=</span> <span class="p">(</span><span class="n">selected_idr</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">/</span> <span class="n">selected_idr</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">*</span> <span class="mi">100</span>
+
+            <span class="k">if</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rec&quot;</span><span class="p">:</span>
+                <span class="n">toappend_covisi</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span><span class="s2">&quot;COVisi_rec&quot;</span><span class="p">:</span> <span class="n">covisirec</span><span class="p">,</span> <span class="s2">&quot;COVisi_all&quot;</span><span class="p">:</span> <span class="n">covisiall</span><span class="p">}</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;derec&quot;</span><span class="p">:</span>
+                <span class="n">toappend_covisi</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span><span class="s2">&quot;COVisi_derec&quot;</span><span class="p">:</span> <span class="n">covisiderec</span><span class="p">,</span> <span class="s2">&quot;COVisi_all&quot;</span><span class="p">:</span> <span class="n">covisiall</span><span class="p">}</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rec_derec&quot;</span><span class="p">:</span>
+                <span class="n">toappend_covisi</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;COVisi_rec&quot;</span><span class="p">:</span> <span class="n">covisirec</span><span class="p">,</span>
+                        <span class="s2">&quot;COVisi_derec&quot;</span><span class="p">:</span> <span class="n">covisiderec</span><span class="p">,</span>
+                        <span class="s2">&quot;COVisi_all&quot;</span><span class="p">:</span> <span class="n">covisiall</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;steady&quot;</span><span class="p">:</span>
+                <span class="n">toappend_covisi</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span><span class="s2">&quot;COVisi_steady&quot;</span><span class="p">:</span> <span class="n">covisisteady</span><span class="p">,</span> <span class="s2">&quot;COVisi_all&quot;</span><span class="p">:</span> <span class="n">covisiall</span><span class="p">}</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rec_derec_steady&quot;</span><span class="p">:</span>
+                <span class="n">toappend_covisi</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;COVisi_rec&quot;</span><span class="p">:</span> <span class="n">covisirec</span><span class="p">,</span>
+                        <span class="s2">&quot;COVisi_derec&quot;</span><span class="p">:</span> <span class="n">covisiderec</span><span class="p">,</span>
+                        <span class="s2">&quot;COVisi_steady&quot;</span><span class="p">:</span> <span class="n">covisisteady</span><span class="p">,</span>
+                        <span class="s2">&quot;COVisi_all&quot;</span><span class="p">:</span> <span class="n">covisiall</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Convert the dictionary in a DataFrame</span>
+        <span class="n">covisi</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">toappend_covisi</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># COVisi all contraction</span>
+        <span class="n">selected_idr</span> <span class="o">=</span> <span class="n">idr</span><span class="p">[</span><span class="n">single_mu_number</span><span class="p">][</span><span class="s2">&quot;diff_mupulses&quot;</span><span class="p">]</span>
+        <span class="n">covisiall</span> <span class="o">=</span> <span class="p">(</span><span class="n">selected_idr</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">/</span> <span class="n">selected_idr</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">*</span> <span class="mi">100</span>
+        <span class="c1"># Create an object to append the results</span>
+        <span class="n">toappend_covisi</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">toappend_covisi</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;COVisi_all&quot;</span><span class="p">:</span> <span class="n">covisiall</span><span class="p">})</span>
+        <span class="c1"># Convert the dictionary in a DataFrame</span>
+        <span class="n">covisi</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">toappend_covisi</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">covisi</span></div>
+
+
+<div class="viewcode-block" id="compute_drvariability"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.analysis.compute_drvariability">[docs]</a><span class="k">def</span> <span class="nf">compute_drvariability</span><span class="p">(</span>
+    <span class="n">emgfile</span><span class="p">,</span>
+    <span class="n">n_firings_RecDerec</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">start_steady</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">end_steady</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">event_</span><span class="o">=</span><span class="s2">&quot;rec_derec_steady&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Claculate the DR variability.</span>
+
+<span class="sd">    This function calculates the variability (as the coefficient of variation)</span>
+<span class="sd">    of the instantaneous discharge rate (DR) at recruitment, derecruitment,</span>
+<span class="sd">    during the steady-state phase and during all the contraction.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile.</span>
+<span class="sd">    n_firings_RecDerec : int, default 4</span>
+<span class="sd">        The number of firings at recruitment and derecruitment to consider for</span>
+<span class="sd">        the calculation of the DR variability.</span>
+<span class="sd">    start_steady, end_steady : int, default -1</span>
+<span class="sd">        The start and end point (in samples) of the steady-state phase.</span>
+<span class="sd">        If &lt; 0 (default), the user will need to manually select the start and</span>
+<span class="sd">        end of the steady-state phase.</span>
+<span class="sd">    event_ : str {&quot;rec_derec_steady&quot;, &quot;rec&quot;, &quot;derec&quot;, &quot;rec_derec&quot;, &quot;steady&quot;}, default &quot;rec_derec_steady&quot;</span>
+<span class="sd">        When to calculate the DR variability.</span>
+
+<span class="sd">            ``rec_derec_steady``</span>
+<span class="sd">                DR variability is calculated at recruitment, derecruitment and</span>
+<span class="sd">                during the steady-state phase.</span>
+<span class="sd">            ``rec``</span>
+<span class="sd">                DR variability is calculated at recruitment.</span>
+<span class="sd">            ``derec``</span>
+<span class="sd">                DR variability is calculated at derecruitment.</span>
+<span class="sd">            ``rec_derec``</span>
+<span class="sd">                DR variability is calculated at recruitment and derecruitment.</span>
+<span class="sd">            ``steady``</span>
+<span class="sd">                DR variability is calculated during the steady-state phase.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    drvariability : pd.DataFrame</span>
+<span class="sd">        A pd.DataFrame containing the requested DR variability.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    compute_thresholds : calculates recruitment/derecruitment thresholds.</span>
+<span class="sd">    compute_dr : calculate the discharge rate.</span>
+<span class="sd">    basic_mus_properties : calculate basic MUs properties on a trapezoidal</span>
+<span class="sd">        contraction.</span>
+<span class="sd">    compute_covisi : calculate the coefficient of variation of interspike</span>
+<span class="sd">        interval.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    DR variability for all the contraction is automatically calculated and</span>
+<span class="sd">    returned.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Compute covisi during the various parts of the trapezoidal contraction.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; df = emg.compute_covisi(emgfile=emgfile)</span>
+<span class="sd">    &gt;&gt;&gt; df</span>
+<span class="sd">       DRvar_rec  DRvar_derec  DRvar_steady  DRvar_all</span>
+<span class="sd">    0   8.560971    21.662783     11.051780  13.937779</span>
+<span class="sd">    1  36.934213    17.714761     55.968609  52.726356</span>
+<span class="sd">    2  28.943139    17.263000     49.375100  54.420703</span>
+<span class="sd">    3  48.322396    12.873456     54.718482  48.019809</span>
+
+<span class="sd">    If the steady-state phase has been pre-identified, the manual selection</span>
+<span class="sd">    of the area can be bypassed.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; df = emg.compute_covisi(</span>
+<span class="sd">    ...     emgfile=emgfile,</span>
+<span class="sd">    ...     event_=&quot;rec_derec&quot;,</span>
+<span class="sd">    ...     start_steady=20000,</span>
+<span class="sd">    ...     end_steady=50000,</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; df</span>
+<span class="sd">       DRvar_rec  DRvar_derec  DRvar_all</span>
+<span class="sd">    0   8.560971    21.662783  13.937779</span>
+<span class="sd">    1  36.934213    17.714761  52.726356</span>
+<span class="sd">    2  28.943139    17.263000  54.420703</span>
+<span class="sd">    3  48.322396    12.873456  48.019809</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Check that all the inputs are correct</span>
+    <span class="n">errormessage</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;event_ must be one of the following strings: rec, derec, rec_derec, steady, rec_derec_steady. </span><span class="si">{</span><span class="n">event_</span><span class="si">}</span><span class="s2"> was passed instead.&quot;</span>
+    <span class="k">if</span> <span class="n">event_</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="s2">&quot;rec&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;derec&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;rec_derec&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;steady&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;rec_derec_steady&quot;</span><span class="p">,</span>
+    <span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">errormessage</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n_firings_RecDerec</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="nb">type</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;n_firings_RecDerec must be an integer. </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">n_firings_RecDerec</span><span class="p">)</span><span class="si">}</span><span class="s2"> was passed instead.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># We use the idr pd.DataFrame to calculate the COVisi</span>
+    <span class="n">idr</span> <span class="o">=</span> <span class="n">compute_idr</span><span class="p">(</span><span class="n">emgfile</span><span class="o">=</span><span class="n">emgfile</span><span class="p">)</span>
+
+    <span class="c1"># Check if we need to manually select the area for the steady-state phase</span>
+    <span class="k">if</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rec_derec_steady&quot;</span> <span class="ow">or</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;steady&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">start_steady</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">end_steady</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">start_steady</span><span class="p">,</span> <span class="n">end_steady</span> <span class="o">=</span> <span class="n">showselect</span><span class="p">(</span>
+                <span class="n">emgfile</span><span class="o">=</span><span class="n">emgfile</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select the start/end area to consider then press enter&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Create an object to append the results</span>
+    <span class="n">toappend_drvariability</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">mu</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]):</span>  <span class="c1"># Loop all the MUs</span>
+
+        <span class="c1"># COVisi rec</span>
+        <span class="n">selected_idr</span> <span class="o">=</span> <span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="s2">&quot;idr&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">n_firings_RecDerec</span><span class="p">]</span>
+        <span class="n">drvariabilityrec</span> <span class="o">=</span> <span class="p">(</span><span class="n">selected_idr</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">/</span> <span class="n">selected_idr</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">*</span> <span class="mi">100</span>
+
+        <span class="c1"># COVisi derec</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="s2">&quot;idr&quot;</span><span class="p">])</span>
+        <span class="n">selected_idr</span> <span class="o">=</span> <span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="s2">&quot;idr&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span>
+            <span class="n">length</span> <span class="o">-</span> <span class="n">n_firings_RecDerec</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span> <span class="n">length</span>
+        <span class="p">]</span>  <span class="c1"># +1 because len() counts position 0</span>
+        <span class="n">drvariabilityderec</span> <span class="o">=</span> <span class="p">(</span><span class="n">selected_idr</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">/</span> <span class="n">selected_idr</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">*</span> <span class="mi">100</span>
+
+        <span class="c1"># COVisi all steady</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rec_derec_steady&quot;</span> <span class="ow">or</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;steady&quot;</span><span class="p">):</span>
+            <span class="n">idr_indexed</span> <span class="o">=</span> <span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">]</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;mupulses&quot;</span><span class="p">)</span>
+            <span class="n">selected_idr</span> <span class="o">=</span> <span class="n">idr_indexed</span><span class="p">[</span><span class="s2">&quot;idr&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">start_steady</span><span class="p">:</span> <span class="n">end_steady</span><span class="p">]</span>
+            <span class="n">drvariabilitysteady</span> <span class="o">=</span> <span class="p">(</span><span class="n">selected_idr</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">/</span> <span class="n">selected_idr</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">*</span> <span class="mi">100</span>
+
+        <span class="c1"># COVisi all contraction</span>
+        <span class="n">selected_idr</span> <span class="o">=</span> <span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">][</span><span class="s2">&quot;idr&quot;</span><span class="p">]</span>
+        <span class="n">drvariabilityall</span> <span class="o">=</span> <span class="p">(</span><span class="n">selected_idr</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">/</span> <span class="n">selected_idr</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">*</span> <span class="mi">100</span>
+
+        <span class="k">if</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rec&quot;</span><span class="p">:</span>
+            <span class="n">toappend_drvariability</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span><span class="s2">&quot;DRvar_rec&quot;</span><span class="p">:</span> <span class="n">drvariabilityrec</span><span class="p">,</span> <span class="s2">&quot;DRvar_all&quot;</span><span class="p">:</span> <span class="n">drvariabilityall</span><span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;derec&quot;</span><span class="p">:</span>
+            <span class="n">toappend_drvariability</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;DRvar_derec&quot;</span><span class="p">:</span> <span class="n">drvariabilityderec</span><span class="p">,</span>
+                    <span class="s2">&quot;DRvar_all&quot;</span><span class="p">:</span> <span class="n">drvariabilityall</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rec_derec&quot;</span><span class="p">:</span>
+            <span class="n">toappend_drvariability</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;DRvar_rec&quot;</span><span class="p">:</span> <span class="n">drvariabilityrec</span><span class="p">,</span>
+                    <span class="s2">&quot;DRvar_derec&quot;</span><span class="p">:</span> <span class="n">drvariabilityderec</span><span class="p">,</span>
+                    <span class="s2">&quot;DRvar_all&quot;</span><span class="p">:</span> <span class="n">drvariabilityall</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;steady&quot;</span><span class="p">:</span>
+            <span class="n">toappend_drvariability</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;DRvar_steady&quot;</span><span class="p">:</span> <span class="n">drvariabilitysteady</span><span class="p">,</span>
+                    <span class="s2">&quot;DRvar_all&quot;</span><span class="p">:</span> <span class="n">drvariabilityall</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">event_</span> <span class="o">==</span> <span class="s2">&quot;rec_derec_steady&quot;</span><span class="p">:</span>
+            <span class="n">toappend_drvariability</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;DRvar_rec&quot;</span><span class="p">:</span> <span class="n">drvariabilityrec</span><span class="p">,</span>
+                    <span class="s2">&quot;DRvar_derec&quot;</span><span class="p">:</span> <span class="n">drvariabilityderec</span><span class="p">,</span>
+                    <span class="s2">&quot;DRvar_steady&quot;</span><span class="p">:</span> <span class="n">drvariabilitysteady</span><span class="p">,</span>
+                    <span class="s2">&quot;DRvar_all&quot;</span><span class="p">:</span> <span class="n">drvariabilityall</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Convert the dictionary in a DataFrame</span>
+    <span class="n">drvariability</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">toappend_drvariability</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">drvariability</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Giacomo Valli.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

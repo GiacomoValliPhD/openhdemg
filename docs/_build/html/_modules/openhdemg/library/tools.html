@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>openhdemg.library.tools &mdash; openhdemg 0.1.0-beta documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            openhdemg
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">openhdemg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../openhdemg.html">openhdemg package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../openhdemg.library.html">openhdemg.library package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">openhdemg</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">openhdemg.library.tools</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for openhdemg.library.tools</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module contains the functions that don&#39;t properly apply to the plot</span>
+<span class="sd">or analysis category but that are necessary for the usability of the library.</span>
+<span class="sd">The functions contained in this module can be considered as &quot;tools&quot; or</span>
+<span class="sd">shortcuts necessary to operate with the HD-EMG recordings.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">signal</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">openhdemg.library.mathtools</span> <span class="kn">import</span> <span class="n">compute_pnr</span><span class="p">,</span> <span class="n">compute_sil</span>
+<span class="c1"># TODO check how to import this to avoid circular inputs</span>
+
+
+<div class="viewcode-block" id="showselect"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.tools.showselect">[docs]</a><span class="k">def</span> <span class="nf">showselect</span><span class="p">(</span><span class="n">emgfile</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">nclic</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Select a part of the recording.</span>
+
+<span class="sd">    The area can be selected (based on the REF_SIGNAL) with any letter or</span>
+<span class="sd">    number in the keyboard, wrong points can be removed by pressing the</span>
+<span class="sd">    right mouse button. Once finished, press enter to continue.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile and in particular the REF_SIGNAL</span>
+<span class="sd">        (which is used for the selection).</span>
+<span class="sd">    title : str</span>
+<span class="sd">        The title of the plot. It is optional but strongly recommended.</span>
+<span class="sd">        It should describe the task to do.</span>
+<span class="sd">    nclic: int {1, 2, 4}, default 2</span>
+<span class="sd">        The number of clics to be collected.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    points : int</span>
+<span class="sd">        The selected points (sorted in ascending order) based on nclic.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        When the user clicked a wrong number of inputs in the GUI.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Load the EMG file and select the points.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB_refsig&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; start_point, end_point = emg.showselect(</span>
+<span class="sd">    ...     emgfile,</span>
+<span class="sd">    ...     title=&quot;Select 2 points&quot;,</span>
+<span class="sd">    ...     nclic=2,</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; start_point, end_point</span>
+<span class="sd">    16115 40473</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Show the signal for the selection</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">num</span><span class="o">=</span><span class="s2">&quot;Fig_ginput&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Samples&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;MVC&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span><span class="p">)</span>
+    <span class="n">ginput_res</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">ginput</span><span class="p">(</span><span class="n">n</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">mouse_add</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="c1"># Check if the user entered the correct number of clics</span>
+    <span class="k">if</span> <span class="n">nclic</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ginput_res</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Wrong number of inputs, read the title&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Act according to the number of clics</span>
+    <span class="k">if</span> <span class="n">nclic</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">start_point</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">ginput_res</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">start_point</span>
+
+    <span class="k">elif</span> <span class="n">nclic</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="c1"># Sort the input range. Used to resize the signal,</span>
+        <span class="c1"># select the steady-state, calculate MVC</span>
+        <span class="k">if</span> <span class="n">ginput_res</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">ginput_res</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">start_point</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">ginput_res</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">end_point</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">ginput_res</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">start_point</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">ginput_res</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">end_point</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">ginput_res</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">start_point</span><span class="p">,</span> <span class="n">end_point</span>
+
+    <span class="k">elif</span> <span class="n">nclic</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>  <span class="c1"># Used for activation capacity</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">ginput_res</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">ginput_res</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">ginput_res</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">ginput_res</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+        <span class="p">]</span>
+        <span class="c1"># Sort the input range</span>
+        <span class="n">points</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+        <span class="n">start_point_tw</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">end_point_tw</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">start_point_rest</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">end_point_rest</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">start_point_tw</span><span class="p">,</span> <span class="n">end_point_tw</span><span class="p">,</span> <span class="n">start_point_rest</span><span class="p">,</span> <span class="n">end_point_rest</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;nclic can be only one of 1, 2, 4. </span><span class="si">{</span><span class="n">nclic</span><span class="si">}</span><span class="s2"> was passed instead&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="create_binary_firings"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.tools.create_binary_firings">[docs]</a><span class="k">def</span> <span class="nf">create_binary_firings</span><span class="p">(</span><span class="n">emg_length</span><span class="p">,</span> <span class="n">number_of_mus</span><span class="p">,</span> <span class="n">mupulses</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a binary representation of the MU firing.</span>
+
+<span class="sd">    Create a binary representation of the MU firing over time</span>
+<span class="sd">    based on the times of firing of each MU.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emg_length : int</span>
+<span class="sd">        Number of samples (length) in the emg file.</span>
+<span class="sd">    number_of_mus : int</span>
+<span class="sd">        Number of MUs in the emg file.</span>
+<span class="sd">    mupulses : list of ndarrays</span>
+<span class="sd">        Each ndarray should contain the times of firing of each MU.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    binary_MUs_firing : pd.DataFrame</span>
+<span class="sd">        A pd.DataFrame containing the binary representation of MUs firing or</span>
+<span class="sd">        np.nan if the variable was not found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># skip the step if I don&#39;t have the mupulses (is nan)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mupulses</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="c1"># create an empty pd.DataFrame containing zeros</span>
+        <span class="n">binary_MUs_firing</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">emg_length</span><span class="p">,</span> <span class="n">number_of_mus</span><span class="p">)))</span>
+        <span class="c1"># Loop through the columns (MUs) and isolate the data of interest</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_of_mus</span><span class="p">):</span>
+            <span class="n">this_mu_binary_firing</span> <span class="o">=</span> <span class="n">binary_MUs_firing</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">this_mu_pulses</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">mupulses</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+            <span class="c1"># Loop through the rows (time) and assign 1 if the MU is firing</span>
+            <span class="k">for</span> <span class="n">position</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">this_mu_pulses</span><span class="p">)):</span>
+                <span class="n">firing_point</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">this_mu_pulses</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">position</span><span class="p">])</span>
+                <span class="n">this_mu_binary_firing</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">firing_point</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+            <span class="c1"># Merge the work done with the original pd.DataFrame of zeros</span>
+            <span class="n">binary_MUs_firing</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">this_mu_binary_firing</span>
+
+        <span class="k">return</span> <span class="n">binary_MUs_firing</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span></div>
+
+
+<div class="viewcode-block" id="resize_emgfile"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.tools.resize_emgfile">[docs]</a><span class="k">def</span> <span class="nf">resize_emgfile</span><span class="p">(</span><span class="n">emgfile</span><span class="p">,</span> <span class="n">area</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Resize all the emgfile.</span>
+
+<span class="sd">    This function can be useful to compute the various parameters only in the</span>
+<span class="sd">    area of interest.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile to resize.</span>
+<span class="sd">    area : None or list, default None</span>
+<span class="sd">        The resizing area. If already known, it can be passed in samples, as a</span>
+<span class="sd">        list (e.g., [120,2560]).</span>
+<span class="sd">        If None, the user can select the area of interest manually.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    rs_emgfile : dict</span>
+<span class="sd">        the new (resized) emgfile.</span>
+<span class="sd">    start_, end_ : int</span>
+<span class="sd">        the start and end of the selection (can be used for code automation).</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Suggested names for the returned objects: rs_emgfile, start_, end_.</span>
+
+<span class="sd">    PNR and SIL are computed again in the new resized area.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Identify the area of interest</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">area</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">area</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">start_</span> <span class="o">=</span> <span class="n">area</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">end_</span> <span class="o">=</span> <span class="n">area</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Visualise and select the area to resize</span>
+        <span class="n">start_</span><span class="p">,</span> <span class="n">end_</span> <span class="o">=</span> <span class="n">showselect</span><span class="p">(</span>
+            <span class="n">emgfile</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select the start/end area to resize, then press enter&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Create the object to store the resized emgfile.</span>
+    <span class="n">rs_emgfile</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">emgfile</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    PNR and SIL should be re-computed on the new portion of the file.</span>
+<span class="sd">    Need to be resized: ==&gt;</span>
+<span class="sd">    emgfile =   {</span>
+<span class="sd">                &quot;SOURCE&quot;: SOURCE,</span>
+<span class="sd">                ==&gt; &quot;RAW_SIGNAL&quot;: RAW_SIGNAL,</span>
+<span class="sd">                ==&gt; &quot;REF_SIGNAL&quot;: REF_SIGNAL,</span>
+<span class="sd">                ==&gt; &quot;PNR&quot;: PNR,</span>
+<span class="sd">                ==&gt; &quot;SIL&quot;: SIL,</span>
+<span class="sd">                ==&gt; &quot;IPTS&quot;: IPTS,</span>
+<span class="sd">                ==&gt; &quot;MUPULSES&quot;: MUPULSES,</span>
+<span class="sd">                &quot;FSAMP&quot;: FSAMP,</span>
+<span class="sd">                &quot;IED&quot;: IED,</span>
+<span class="sd">                ==&gt; &quot;EMG_LENGTH&quot;: EMG_LENGTH,</span>
+<span class="sd">                &quot;NUMBER_OF_MUS&quot;: NUMBER_OF_MUS,</span>
+<span class="sd">                ==&gt; &quot;BINARY_MUS_FIRING&quot;: BINARY_MUS_FIRING,</span>
+<span class="sd">                }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Resize the reference signal and identify the first value of the index to</span>
+    <span class="c1"># resize the mupulses. Then, reset the index.</span>
+    <span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">start_</span><span class="p">:</span><span class="n">end_</span><span class="p">]</span>
+    <span class="n">first_idx</span> <span class="o">=</span> <span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rs_emgfile</span><span class="p">[</span>
+        <span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;RAW_SIGNAL&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;RAW_SIGNAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+        <span class="n">start_</span><span class="p">:</span><span class="n">end_</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;IPTS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;IPTS&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+        <span class="n">start_</span><span class="p">:</span><span class="n">end_</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;EMG_LENGTH&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;IPTS&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+    <span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;BINARY_MUS_FIRING&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;BINARY_MUS_FIRING&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+        <span class="n">start_</span><span class="p">:</span><span class="n">end_</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">mu</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]):</span>
+        <span class="c1"># Mask the array based on a filter and return the values in an array</span>
+        <span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">][</span><span class="n">mu</span><span class="p">]</span> <span class="o">=</span> <span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">][</span><span class="n">mu</span><span class="p">][</span>
+            <span class="p">(</span><span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">][</span><span class="n">mu</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">start_</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">][</span><span class="n">mu</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">end_</span><span class="p">)</span>
+        <span class="p">]</span> <span class="o">-</span> <span class="n">first_idx</span>
+
+    <span class="c1"># Compute PNR and SIL</span>
+    <span class="k">if</span> <span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># Calculate PNR</span>
+        <span class="n">to_append</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">mu</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]):</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">compute_pnr</span><span class="p">(</span>
+                <span class="n">ipts</span><span class="o">=</span><span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;IPTS&quot;</span><span class="p">][</span><span class="n">mu</span><span class="p">],</span>
+                <span class="n">mupulses</span><span class="o">=</span><span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">][</span><span class="n">mu</span><span class="p">],</span>
+                <span class="n">fsamp</span><span class="o">=</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;FSAMP&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">to_append</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+        <span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;PNR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">to_append</span><span class="p">)</span>
+
+        <span class="c1"># Calculate SIL</span>
+        <span class="n">to_append</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">mu</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]):</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">compute_sil</span><span class="p">(</span>
+                <span class="n">ipts</span><span class="o">=</span><span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;IPTS&quot;</span><span class="p">][</span><span class="n">mu</span><span class="p">],</span>
+                <span class="n">mupulses</span><span class="o">=</span><span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">][</span><span class="n">mu</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">to_append</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+        <span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;SIL&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">to_append</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;PNR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">rs_emgfile</span><span class="p">[</span><span class="s2">&quot;SIL&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="k">return</span> <span class="n">rs_emgfile</span><span class="p">,</span> <span class="n">start_</span><span class="p">,</span> <span class="n">end_</span></div>
+
+
+<div class="viewcode-block" id="compute_idr"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.tools.compute_idr">[docs]</a><span class="k">def</span> <span class="nf">compute_idr</span><span class="p">(</span><span class="n">emgfile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the IDR.</span>
+
+<span class="sd">    This function computes the instantaneous discharge rate (IDR) from the</span>
+<span class="sd">    MUPULSES.</span>
+<span class="sd">    The IDR is very useful for plotting and visualisation of the MUs behaviour.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    idr : dict</span>
+<span class="sd">        A dict containing a pd.DataFrame for each MU (keys are integers).</span>
+<span class="sd">        Accessing the key, we have a pd.DataFrame containing:</span>
+<span class="sd">            mupulses: firing sample.</span>
+<span class="sd">            diff_mupulses: delta between consecutive firing samples.</span>
+<span class="sd">            timesec: delta between consecutive firing samples in seconds.</span>
+<span class="sd">            idr: instantaneous discharge rate.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Load the EMG file, compute IDR and access the results for the first MU.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; idr = emg.compute_idr(emgfile=emgfile)</span>
+<span class="sd">    &gt;&gt;&gt; munumber = 0</span>
+<span class="sd">    &gt;&gt;&gt; idr[munumber]</span>
+<span class="sd">        mupulses  diff_mupulses    timesec       idr</span>
+<span class="sd">    0        9221            NaN   4.502441       NaN</span>
+<span class="sd">    1        9580          359.0   4.677734  5.704735</span>
+<span class="sd">    2        9973          393.0   4.869629  5.211196</span>
+<span class="sd">    3       10304          331.0   5.031250  6.187311</span>
+<span class="sd">    4       10617          313.0   5.184082  6.543131</span>
+<span class="sd">    ..        ...            ...        ...       ...</span>
+<span class="sd">    149     54521          395.0  26.621582  5.184810</span>
+<span class="sd">    150     54838          317.0  26.776367  6.460568</span>
+<span class="sd">    151     55417          579.0  27.059082  3.537133</span>
+<span class="sd">    152     55830          413.0  27.260742  4.958838</span>
+<span class="sd">    153     56203          373.0  27.442871  5.490617</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Compute the instantaneous discharge rate (IDR) from the MUPULSES</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="c1"># Empty dict to fill with dataframes containing the MUPULSES</span>
+        <span class="c1"># information</span>
+        <span class="n">idr</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="o">**</span><span class="mi">2</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">])}</span>
+
+        <span class="k">for</span> <span class="n">mu</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]):</span>
+            <span class="c1"># Manage the exception of a single MU and add MUPULSES in column 0</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">][</span><span class="n">mu</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span>
+                <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">]))</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Calculate difference in MUPULSES and add it in column 1</span>
+            <span class="n">df</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span>
+            <span class="c1"># Calculate time in seconds and add it in column 2</span>
+            <span class="n">df</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;FSAMP&quot;</span><span class="p">]</span>
+            <span class="c1"># Calculate the idr and add it in column 3</span>
+            <span class="n">df</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;FSAMP&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">df</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+                <span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+                    <span class="mi">0</span><span class="p">:</span> <span class="s2">&quot;mupulses&quot;</span><span class="p">,</span>
+                    <span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;diff_mupulses&quot;</span><span class="p">,</span>
+                    <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;timesec&quot;</span><span class="p">,</span>
+                    <span class="mi">3</span><span class="p">:</span> <span class="s2">&quot;idr&quot;</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Add the idr to the idr dict</span>
+            <span class="n">idr</span><span class="p">[</span><span class="n">mu</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span>
+
+        <span class="k">return</span> <span class="n">idr</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+            <span class="s2">&quot;MUPULSES is probably absent or it is not contained in a list&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="delete_mus"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.tools.delete_mus">[docs]</a><span class="k">def</span> <span class="nf">delete_mus</span><span class="p">(</span><span class="n">emgfile</span><span class="p">,</span> <span class="n">munumber</span><span class="p">,</span> <span class="n">if_single_mu</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Delete unwanted MUs.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile.</span>
+<span class="sd">    munumber : int, list of int</span>
+<span class="sd">        The MUs to remove. If a single MU has to be removed, this should be an</span>
+<span class="sd">        int (number of the MU).</span>
+<span class="sd">        If multiple MUs have to be removed, a list of int should be passed.</span>
+<span class="sd">        An unpacked (*) range can also be passed as munumber=[*range(0, 5)].</span>
+<span class="sd">        munumber is expected to be with base 0 (i.e., the first MU in the file</span>
+<span class="sd">        is the number 0).</span>
+<span class="sd">    if_single_mu : str {&quot;ignore&quot;, &quot;remove&quot;}, default &quot;ignore&quot;</span>
+<span class="sd">        A string indicating how to behave in case of a file with a single MU.</span>
+
+<span class="sd">            ``ignore``</span>
+<span class="sd">            Ignore the process and return the original emgfile. (Default)</span>
+<span class="sd">            ``remove``</span>
+<span class="sd">            Remove the MU and return the emgfile without the MU. (Default)</span>
+<span class="sd">            This should allow full compatibility with the use of this file</span>
+<span class="sd">            in following processing (i.e., save/load and analyse).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile without the unwanted MUs.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Delete MUs 1,4,5 from the emgfile.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.delete_mus(emgfile=emgfile, munumber=[1,4,5])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Check how to behave in case of a single MU</span>
+    <span class="k">if</span> <span class="n">if_single_mu</span> <span class="o">==</span> <span class="s2">&quot;ignore&quot;</span><span class="p">:</span>
+        <span class="c1"># Check how many MUs we have, if we only have 1 MU, the entire file</span>
+        <span class="c1"># should be deleted instead.</span>
+        <span class="k">if</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">&quot;There is only 1 MU in the file, and it has not been removed. You can change this behaviour with if_single_mu=&#39;remove&#39;&quot;</span>
+            <span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">emgfile</span>
+
+    <span class="k">elif</span> <span class="n">if_single_mu</span> <span class="o">==</span> <span class="s2">&quot;remove&quot;</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;if_single_mu must be one of &#39;ignore&#39; or &#39;remove&#39;, </span><span class="si">{}</span><span class="s2"> was passed instead&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">if_single_mu</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Create the object to store the new emgfile without the specified MUs.</span>
+    <span class="n">del_emgfile</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">emgfile</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Need to be changed: ==&gt;</span>
+<span class="sd">    emgfile =   {</span>
+<span class="sd">                &quot;SOURCE&quot; : SOURCE,</span>
+<span class="sd">                &quot;RAW_SIGNAL&quot; : RAW_SIGNAL,</span>
+<span class="sd">                &quot;REF_SIGNAL&quot; : REF_SIGNAL,</span>
+<span class="sd">                ==&gt; &quot;PNR&quot; : PNR,</span>
+<span class="sd">                ==&gt; &quot;SIL&quot; : SIL</span>
+<span class="sd">                ==&gt; &quot;IPTS&quot; : IPTS,</span>
+<span class="sd">                ==&gt; &quot;MUPULSES&quot; : MUPULSES,</span>
+<span class="sd">                &quot;FSAMP&quot; : FSAMP,</span>
+<span class="sd">                &quot;IED&quot; : IED,</span>
+<span class="sd">                &quot;EMG_LENGTH&quot; : EMG_LENGTH,</span>
+<span class="sd">                ==&gt; &quot;NUMBER_OF_MUS&quot; : NUMBER_OF_MUS,</span>
+<span class="sd">                ==&gt; &quot;BINARY_MUS_FIRING&quot; : BINARY_MUS_FIRING,</span>
+<span class="sd">                }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Common part working for all the possible inputs to munumber</span>
+    <span class="c1"># Drop PNR values and reset the index</span>
+    <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;PNR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;PNR&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">munumber</span><span class="p">)</span>
+    <span class="c1"># .drop() Works with lists and integers</span>
+    <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;PNR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;PNR&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Drop SIL values and reset the index</span>
+    <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;SIL&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;SIL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">munumber</span><span class="p">)</span>
+    <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;SIL&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;SIL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Drop IPTS by columns and rename the columns</span>
+    <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;IPTS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;IPTS&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">munumber</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;IPTS&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;IPTS&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># Drop BINARY_MUS_FIRING by columns and rename the columns</span>
+    <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;BINARY_MUS_FIRING&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;BINARY_MUS_FIRING&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span>
+        <span class="n">munumber</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;BINARY_MUS_FIRING&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span>
+        <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;BINARY_MUS_FIRING&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">munumber</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="c1"># Delete MUPULSES by position in the list.</span>
+        <span class="k">del</span> <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">][</span><span class="n">munumber</span><span class="p">]</span>
+
+        <span class="c1"># Subrtact one MU to the total number</span>
+        <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">munumber</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="c1"># Delete all the content in the del_emgfile[&quot;MUPULSES&quot;] and append</span>
+        <span class="c1"># only the MUs that we want to retain (exclude deleted MUs).</span>
+        <span class="c1"># This is a workaround to directly deleting, for safer implementation.</span>
+        <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">mu</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="n">mu</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">munumber</span><span class="p">:</span>
+                <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">][</span><span class="n">mu</span><span class="p">])</span>
+
+        <span class="c1"># Subrtact the number of deleted MUs to the total number</span>
+        <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">del_emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">munumber</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+            <span class="s2">&quot;While calling the delete_mus function, you should pass an integer or a list to munumber= &quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">del_emgfile</span></div>
+
+
+<div class="viewcode-block" id="sort_mus"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.tools.sort_mus">[docs]</a><span class="k">def</span> <span class="nf">sort_mus</span><span class="p">(</span><span class="n">emgfile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sort the MUs in order of recruitment.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    sorted_emgfile : dict</span>
+<span class="sd">        The dictionary containing the sorted emgfile.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># If we only have 1 MU, there is no necessity to sort it.</span>
+    <span class="k">if</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">emgfile</span>
+
+    <span class="c1"># Create the object to store the sorted emgfile.</span>
+    <span class="c1"># Create a deepcopy to avoid changing the original emgfile</span>
+    <span class="n">sorted_emgfile</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">emgfile</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Need to be changed: ==&gt;</span>
+<span class="sd">    emgfile =   {</span>
+<span class="sd">                &quot;SOURCE&quot; : SOURCE,</span>
+<span class="sd">                &quot;RAW_SIGNAL&quot; : RAW_SIGNAL,</span>
+<span class="sd">                &quot;REF_SIGNAL&quot; : REF_SIGNAL,</span>
+<span class="sd">                ==&gt; &quot;PNR&quot; : PNR,</span>
+<span class="sd">                ==&gt; &quot;SIL&quot;: SIL,</span>
+<span class="sd">                ==&gt; &quot;IPTS&quot; : IPTS,</span>
+<span class="sd">                ==&gt; &quot;MUPULSES&quot; : MUPULSES,</span>
+<span class="sd">                &quot;FSAMP&quot; : FSAMP,</span>
+<span class="sd">                &quot;IED&quot; : IED,</span>
+<span class="sd">                &quot;EMG_LENGTH&quot; : EMG_LENGTH,</span>
+<span class="sd">                &quot;NUMBER_OF_MUS&quot; : NUMBER_OF_MUS,</span>
+<span class="sd">                ==&gt; &quot;BINARY_MUS_FIRING&quot; : BINARY_MUS_FIRING,</span>
+<span class="sd">                }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Identify the sorting_order by the firsr MUpulse of every MUs</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+    <span class="n">df</span><span class="p">[</span><span class="s2">&quot;firstpulses&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">])</span>
+    <span class="p">]</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s2">&quot;firstpulses&quot;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sorting_order</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">sorting_order</span><span class="p">)</span>
+
+    <span class="c1"># Sort PNR (single column)</span>
+    <span class="k">for</span> <span class="n">origpos</span><span class="p">,</span> <span class="n">newpos</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sorting_order</span><span class="p">):</span>
+        <span class="n">sorted_emgfile</span><span class="p">[</span><span class="s2">&quot;PNR&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">origpos</span><span class="p">]</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;PNR&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">newpos</span><span class="p">]</span>
+
+    <span class="c1"># Sort SIL (single column)</span>
+    <span class="k">for</span> <span class="n">origpos</span><span class="p">,</span> <span class="n">newpos</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sorting_order</span><span class="p">):</span>
+        <span class="n">sorted_emgfile</span><span class="p">[</span><span class="s2">&quot;SIL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">origpos</span><span class="p">]</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;SIL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">newpos</span><span class="p">]</span>
+
+    <span class="c1"># Sort IPTS (multiple columns, sort by columns, then reset columns&#39; name)</span>
+    <span class="n">sorted_emgfile</span><span class="p">[</span><span class="s2">&quot;IPTS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sorted_emgfile</span><span class="p">[</span><span class="s2">&quot;IPTS&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span>
+        <span class="n">columns</span><span class="o">=</span><span class="n">sorting_order</span>
+    <span class="p">)</span>
+    <span class="n">sorted_emgfile</span><span class="p">[</span><span class="s2">&quot;IPTS&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">])</span>
+
+    <span class="c1"># Sort BINARY_MUS_FIRING (multiple columns, sort by columns,</span>
+    <span class="c1"># then reset columns&#39; name)</span>
+    <span class="n">sorted_emgfile</span><span class="p">[</span><span class="s2">&quot;BINARY_MUS_FIRING&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sorted_emgfile</span><span class="p">[</span>
+        <span class="s2">&quot;BINARY_MUS_FIRING&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">sorting_order</span><span class="p">)</span>
+    <span class="n">sorted_emgfile</span><span class="p">[</span><span class="s2">&quot;BINARY_MUS_FIRING&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+        <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Sort MUPULSES.</span>
+    <span class="c1"># Preferable to use the sorting_order as a double-check in alternative to:</span>
+    <span class="c1"># sorted_emgfile[&quot;MUPULSES&quot;] = sorted(</span>
+    <span class="c1">#   sorted_emgfile[&quot;MUPULSES&quot;], key=min, reverse=False)</span>
+    <span class="c1"># )</span>
+    <span class="k">for</span> <span class="n">origpos</span><span class="p">,</span> <span class="n">newpos</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sorting_order</span><span class="p">):</span>
+        <span class="n">sorted_emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">][</span><span class="n">origpos</span><span class="p">]</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">][</span><span class="n">newpos</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">sorted_emgfile</span></div>
+
+
+<div class="viewcode-block" id="compute_covsteady"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.tools.compute_covsteady">[docs]</a><span class="k">def</span> <span class="nf">compute_covsteady</span><span class="p">(</span><span class="n">emgfile</span><span class="p">,</span> <span class="n">start_steady</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">end_steady</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the covsteady.</span>
+
+<span class="sd">    This function calculates the coefficient of variation of the steady-state</span>
+<span class="sd">    phase (covsteady of the REF_SIGNAL).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile.</span>
+<span class="sd">    start_steady, end_steady : int, default -1</span>
+<span class="sd">        The start and end point (in samples) of the steady-state phase.</span>
+<span class="sd">        If &lt; 0 (default), the user will need to manually select the start and</span>
+<span class="sd">        end of the steady-state phase.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    covsteady : float</span>
+<span class="sd">        The coefficient of variation of the steady-state phase in %.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    compute_idr : computes the instantaneous discharge rate.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Load the EMG file, compute covsteady and access the result from GUI.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; covsteady = emg.compute_covsteady(emgfile=emgfile)</span>
+<span class="sd">    &gt;&gt;&gt; covsteady</span>
+<span class="sd">    1.452806</span>
+
+<span class="sd">    The process can be automated by bypassing the GUI.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile(filesource=&quot;OTB&quot;, otb_ext_factor=8)</span>
+<span class="sd">    &gt;&gt;&gt; covsteady = emg.compute_covsteady(</span>
+<span class="sd">    ...     emgfile=emgfile,</span>
+<span class="sd">    ...     start_steady=3580,</span>
+<span class="sd">    ...     end_steady=15820,</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; covsteady</span>
+<span class="sd">    35.611263</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">start_steady</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">end_steady</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">start_steady</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">end_steady</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">start_steady</span><span class="p">,</span> <span class="n">end_steady</span> <span class="o">=</span> <span class="n">showselect</span><span class="p">(</span>
+            <span class="n">emgfile</span><span class="o">=</span><span class="n">emgfile</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select the start/end of the steady-state then press enter&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">ref</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">start_steady</span><span class="p">:</span><span class="n">end_steady</span><span class="p">]</span>
+    <span class="n">covsteady</span> <span class="o">=</span> <span class="p">(</span><span class="n">ref</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">/</span> <span class="n">ref</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">*</span> <span class="mi">100</span>
+
+    <span class="k">return</span> <span class="n">covsteady</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="filter_rawemg"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.tools.filter_rawemg">[docs]</a><span class="k">def</span> <span class="nf">filter_rawemg</span><span class="p">(</span><span class="n">emgfile</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">lowcut</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">highcut</span><span class="o">=</span><span class="mi">500</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Band-pass filter the RAW_SIGNAL.</span>
+
+<span class="sd">    The filter is a Zero-lag band-pass Butterworth.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile.</span>
+<span class="sd">    order : int, default 2</span>
+<span class="sd">        The filter order.</span>
+<span class="sd">    lowcut : int, default 20</span>
+<span class="sd">        The lower cut-off frequency in Hz.</span>
+<span class="sd">    highcut : int, default 500</span>
+<span class="sd">        The higher cut-off frequency in Hz.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    filteredrawsig : dict</span>
+<span class="sd">        The dictionary containing the emgfile with a filtered RAW_SIGNAL.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    filter_refsig : low-pass filter the REF_SIGNAL.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">filteredrawsig</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">emgfile</span><span class="p">)</span>
+
+    <span class="c1"># Calculate the components of the filter and apply them with filtfilt to</span>
+    <span class="c1"># obtain Zero-lag filtering. sos should be preferred over filtfilt as</span>
+    <span class="c1"># second-order sections have fewer numerical problems.</span>
+    <span class="n">sos</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span>
+        <span class="n">N</span><span class="o">=</span><span class="n">order</span><span class="p">,</span>
+        <span class="n">Wn</span><span class="o">=</span><span class="p">[</span><span class="n">lowcut</span><span class="p">,</span> <span class="n">highcut</span><span class="p">],</span>
+        <span class="n">btype</span><span class="o">=</span><span class="s2">&quot;bandpass&quot;</span><span class="p">,</span>
+        <span class="n">output</span><span class="o">=</span><span class="s2">&quot;sos&quot;</span><span class="p">,</span>
+        <span class="n">fs</span><span class="o">=</span><span class="n">filteredrawsig</span><span class="p">[</span><span class="s2">&quot;FSAMP&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">filteredrawsig</span><span class="p">[</span><span class="s2">&quot;RAW_SIGNAL&quot;</span><span class="p">]:</span>
+        <span class="n">filteredrawsig</span><span class="p">[</span><span class="s2">&quot;RAW_SIGNAL&quot;</span><span class="p">][</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">sosfiltfilt</span><span class="p">(</span>
+            <span class="n">sos</span><span class="p">,</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">filteredrawsig</span><span class="p">[</span><span class="s2">&quot;RAW_SIGNAL&quot;</span><span class="p">][</span><span class="n">col</span><span class="p">],</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">filteredrawsig</span></div>
+
+
+<div class="viewcode-block" id="filter_refsig"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.tools.filter_refsig">[docs]</a><span class="k">def</span> <span class="nf">filter_refsig</span><span class="p">(</span><span class="n">emgfile</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="mi">15</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Low-pass filter the REF_SIGNAL.</span>
+
+<span class="sd">    This function is used to low-pass filter the REF_SIGNAL and remove noise.</span>
+<span class="sd">    The filter is a Zero-lag low-pass Butterworth.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile.</span>
+<span class="sd">    order : int, default 4</span>
+<span class="sd">        The filter order.</span>
+<span class="sd">    cutoff : int, default 15</span>
+<span class="sd">        The cut-off frequency in Hz.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    filteredrefsig : dict</span>
+<span class="sd">        The dictionary containing the emgfile with a filtered REF_SIGNAL.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    remove_offset : remove the offset from the REF_SIGNAL.</span>
+<span class="sd">    filter_rawemg : band-pass filter the RAW_SIGNAL.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">filteredrefsig</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">emgfile</span><span class="p">)</span>
+
+    <span class="c1"># Calculate the components of the filter and apply them with filtfilt to</span>
+    <span class="c1"># obtain Zero-lag filtering. sos should be preferred over filtfilt as</span>
+    <span class="c1"># second-order sections have fewer numerical problems.</span>
+    <span class="n">sos</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span>
+        <span class="n">N</span><span class="o">=</span><span class="n">order</span><span class="p">,</span>
+        <span class="n">Wn</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span>
+        <span class="n">btype</span><span class="o">=</span><span class="s2">&quot;lowpass&quot;</span><span class="p">,</span>
+        <span class="n">output</span><span class="o">=</span><span class="s2">&quot;sos&quot;</span><span class="p">,</span>
+        <span class="n">fs</span><span class="o">=</span><span class="n">filteredrefsig</span><span class="p">[</span><span class="s2">&quot;FSAMP&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">filteredrefsig</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">sosfiltfilt</span><span class="p">(</span>
+        <span class="n">sos</span><span class="p">,</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">filteredrefsig</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">filteredrefsig</span></div>
+
+
+<div class="viewcode-block" id="remove_offset"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.tools.remove_offset">[docs]</a><span class="k">def</span> <span class="nf">remove_offset</span><span class="p">(</span><span class="n">emgfile</span><span class="p">,</span> <span class="n">offsetval</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">auto</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Remove the offset from the REF_SIGNAL.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile.</span>
+<span class="sd">    offsetval : float, default 0</span>
+<span class="sd">        Value of the offset. If offsetval is 0 (default), the user will be</span>
+<span class="sd">        asked to manually select an aerea to compute the offset value.</span>
+<span class="sd">        Otherwise, the value passed to offsetval will be used.</span>
+<span class="sd">        Negative offsetval can be passed.</span>
+<span class="sd">    auto : int, default 0</span>
+<span class="sd">        If auto &gt; 0, the script automatically removes the offset based on the</span>
+<span class="sd">        number of samples passed in input.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    offs_emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile with a corrected offset of the</span>
+<span class="sd">        REF_SIGNAL.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    filter_refsig : low-pass filter REF_SIGNAL.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Check that all the inputs are correct</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">offsetval</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;offsetval must be one of the following types: float, int. </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">offsetval</span><span class="p">)</span><span class="si">}</span><span class="s2"> was passed instead.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">auto</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;auto must be one of the following types: float, int. </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">auto</span><span class="p">)</span><span class="si">}</span><span class="s2"> was passed instead.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Create the object to store the filtered refsig.</span>
+    <span class="c1"># Create a deepcopy to avoid changing the original refsig</span>
+    <span class="n">offs_emgfile</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">emgfile</span><span class="p">)</span>
+
+    <span class="c1"># Act differently if automatic removal of the offset is active (&gt;0) or not</span>
+    <span class="k">if</span> <span class="n">auto</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">offsetval</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Directly subtract the offset value.</span>
+            <span class="n">offs_emgfile</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">offs_emgfile</span><span class="p">[</span>
+                <span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">offsetval</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Select the area to calculate the offset</span>
+            <span class="c1"># (average value of the selected area)</span>
+            <span class="n">start_</span><span class="p">,</span> <span class="n">end_</span> <span class="o">=</span> <span class="n">showselect</span><span class="p">(</span>
+                <span class="n">emgfile</span><span class="o">=</span><span class="n">offs_emgfile</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select the start/end of a resting area to calculate the offset, then press enter&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">offsetval</span> <span class="o">=</span> <span class="n">offs_emgfile</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">start_</span><span class="p">:</span><span class="n">end_</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="c1"># We need to convert the series offsetval into float</span>
+            <span class="n">offs_emgfile</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">offs_emgfile</span><span class="p">[</span>
+                <span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">offsetval</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Compute and subtract the offset value.</span>
+        <span class="n">offsetval</span> <span class="o">=</span> <span class="n">offs_emgfile</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">auto</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="c1"># We need to convert the series offsetval into float</span>
+        <span class="n">offs_emgfile</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">offs_emgfile</span><span class="p">[</span>
+            <span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">offsetval</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">offs_emgfile</span></div>
+
+
+<div class="viewcode-block" id="get_mvc"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.tools.get_mvc">[docs]</a><span class="k">def</span> <span class="nf">get_mvc</span><span class="p">(</span><span class="n">emgfile</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;showselect&quot;</span><span class="p">,</span> <span class="n">conversion_val</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Measure the maximum voluntary contraction (MVC).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile with the reference signal.</span>
+<span class="sd">    how : str {&quot;showselect&quot;, &quot;all&quot;}, default &quot;showselect&quot;</span>
+
+<span class="sd">        ``showselect``</span>
+<span class="sd">            Ask the user to select the area where to calculate the MVC</span>
+<span class="sd">            with a GUI.</span>
+<span class="sd">        ``all``</span>
+<span class="sd">            Calculate the MVC on the entire file.</span>
+<span class="sd">    conversion_val : float or int, default 0</span>
+<span class="sd">        The conversion value to multiply the original reference signal.</span>
+<span class="sd">        I.e., if the original reference signal is in kilogram (kg) and</span>
+<span class="sd">        conversion_val=9.81, the output will be in Newton/Sec (N/Sec).</span>
+<span class="sd">        If conversion_val=0 (default), the results will simply be Original</span>
+<span class="sd">        measure unit. conversion_val can be any custom int or float.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    mvc : float</span>
+<span class="sd">        The MVC value in the original (or converted) unit of measurement.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    compute_rfd : calculate the RFD.</span>
+<span class="sd">    remove_offset : remove the offset from the REF_SIGNAL.</span>
+<span class="sd">    filter_refsig : low-pass filter REF_SIGNAL.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Load the EMG file, remove reference signal offset and get MVC value.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emg_refsig = emg.askopenfile(filesource=&quot;OTB_refsig&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; offs_refsig = emg.remove_offset(emgfile=emg_refsig)</span>
+<span class="sd">    &gt;&gt;&gt; mvc = emg.get_mvc(emgfile=offs_refsig )</span>
+<span class="sd">    &gt;&gt;&gt; mvc</span>
+<span class="sd">    50.72</span>
+
+<span class="sd">    The process can be automated by bypassing the GUI and</span>
+<span class="sd">    calculating the MVC of the entire file.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emg_refsig = emg.askopenfile(filesource=&quot;OTB_refsig&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; mvc = emg.get_mvc(emgfile=emg_refsig, how=&quot;all&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; print(mvc)</span>
+<span class="sd">    50.86</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">how</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+        <span class="n">mvc</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+    <span class="k">elif</span> <span class="n">how</span> <span class="o">==</span> <span class="s2">&quot;showselect&quot;</span><span class="p">:</span>
+        <span class="c1"># Select the area to measure the MVC (maximum value)</span>
+        <span class="n">start_</span><span class="p">,</span> <span class="n">end_</span> <span class="o">=</span> <span class="n">showselect</span><span class="p">(</span>
+            <span class="n">emgfile</span><span class="o">=</span><span class="n">emgfile</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select the start/end area to measure the MVC, then press enter&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">mvc</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">start_</span><span class="p">:</span> <span class="n">end_</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;how must be one of &#39;showselect&#39; or &#39;all&#39;, </span><span class="si">{</span><span class="n">how</span><span class="si">}</span><span class="s2"> was passed instead&quot;</span><span class="p">)</span>
+
+    <span class="n">mvc</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mvc</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">conversion_val</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">mvc</span> <span class="o">=</span> <span class="n">mvc</span> <span class="o">*</span> <span class="n">conversion_val</span>
+
+    <span class="k">return</span> <span class="n">mvc</span></div>
+
+
+<div class="viewcode-block" id="compute_rfd"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.tools.compute_rfd">[docs]</a><span class="k">def</span> <span class="nf">compute_rfd</span><span class="p">(</span>
+    <span class="n">emgfile</span><span class="p">,</span>
+    <span class="n">ms</span><span class="o">=</span><span class="p">[</span><span class="mi">50</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">200</span><span class="p">],</span>
+    <span class="n">startpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">conversion_val</span><span class="o">=</span><span class="mi">0</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the RFD.</span>
+
+<span class="sd">    Rate of force development (RFD) is reported as X/Sec</span>
+<span class="sd">    where &quot;X&quot; is the unit of measurement based on conversion_val.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile with the reference signal.</span>
+<span class="sd">    ms : list, default [50, 100, 150, 200]</span>
+<span class="sd">        Milliseconds (ms). A list containing the ranges in ms to calculate the</span>
+<span class="sd">        RFD.</span>
+<span class="sd">    startpoint : None or int, default None</span>
+<span class="sd">        The starting point to calculate the RFD in samples,</span>
+<span class="sd">        If None, the user will be requested to manually select the starting</span>
+<span class="sd">        point.</span>
+<span class="sd">    conversion_val : float or int, default 0</span>
+<span class="sd">        The conversion value to multiply the original reference signal.</span>
+<span class="sd">        I.e., if the original reference signal is in kilogram (kg) and</span>
+<span class="sd">        conversion_val=9.81, the output will be in Newton/Sec (N/Sec).</span>
+<span class="sd">        If conversion_val=0 (default), the results will simply be Original</span>
+<span class="sd">        measure unit/Sec. conversion_val can be any custom int or float.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    rfd : pd.DataFrame</span>
+<span class="sd">        A pd.DataFrame containing the RFD at the different times.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    get_mvif : measure the MViF.</span>
+<span class="sd">    remove_offset : remove the offset from the REF_SIGNAL.</span>
+<span class="sd">    filter_refsig : low-pass filter REF_SIGNAL.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Load the EMG file, low-pass filter the reference signal and compute RFD.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emg_refsig = emg.askopenfile(filesource=&quot;OTB_refsig&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; filteredrefsig  = emg.filter_refsig(</span>
+<span class="sd">    ...     emgfile=emg_refsig,</span>
+<span class="sd">    ...     order=4,</span>
+<span class="sd">    ...     cutoff=15,</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; rfd = emg.compute_rfd(</span>
+<span class="sd">    ...     emgfile=filteredrefsig,</span>
+<span class="sd">    ...     ms=[50, 100, 200],</span>
+<span class="sd">    ...     conversion_val=9.81,</span>
+<span class="sd">    ...     )</span>
+<span class="sd">    &gt;&gt;&gt; rfd</span>
+<span class="sd">            50         100        200</span>
+<span class="sd">    0  68.34342  79.296188  41.308215</span>
+
+<span class="sd">    The process can be automated by bypassing the GUI.</span>
+
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emg_refsig = emg.askopenfile(filesource=&quot;OTB_refsig&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; filteredrefsig  = emg.filter_refsig(</span>
+<span class="sd">    ...     emgfile=emg_refsig,</span>
+<span class="sd">    ...     order=4,</span>
+<span class="sd">    ...     cutoff=15,</span>
+<span class="sd">    ...     )</span>
+<span class="sd">    &gt;&gt;&gt; rfd = emg.compute_rfd(</span>
+<span class="sd">    ...     emgfile=filteredrefsig,</span>
+<span class="sd">    ...     ms=[50, 100, 200],</span>
+<span class="sd">    ...     startpoint=3568,</span>
+<span class="sd">    ...     )</span>
+<span class="sd">    &gt;&gt;&gt; rfd</span>
+<span class="sd">            50         100        200</span>
+<span class="sd">    0  68.34342  79.296188  41.308215</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Check if the startpoint was passed</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">startpoint</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">start_</span> <span class="o">=</span> <span class="n">startpoint</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Otherwise select the starting point for the RFD</span>
+        <span class="n">start_</span> <span class="o">=</span> <span class="n">showselect</span><span class="p">(</span>
+            <span class="n">emgfile</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select the starting point for RFD, then press enter&quot;</span><span class="p">,</span>
+            <span class="n">nclic</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Create a dict to add the RFD</span>
+    <span class="n">rfd_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">ms</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="c1"># Loop through the ms list and calculate the respective rfd.</span>
+    <span class="k">for</span> <span class="n">thisms</span> <span class="ow">in</span> <span class="n">ms</span><span class="p">:</span>
+        <span class="n">ms_insamples</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="n">thisms</span><span class="p">)</span> <span class="o">*</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;FSAMP&quot;</span><span class="p">])</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
+
+        <span class="n">n_0</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">start_</span><span class="p">]</span>
+        <span class="n">n_next</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">start_</span> <span class="o">+</span> <span class="n">ms_insamples</span><span class="p">]</span>
+
+        <span class="n">rfdval</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_next</span> <span class="o">-</span> <span class="n">n_0</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">thisms</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
+        <span class="c1"># (ms/1000 to convert mSec in Sec)</span>
+
+        <span class="n">rfd_dict</span><span class="p">[</span><span class="n">thisms</span><span class="p">]</span> <span class="o">=</span> <span class="n">rfdval</span>
+
+    <span class="n">rfd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rfd_dict</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">conversion_val</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">rfd</span> <span class="o">=</span> <span class="n">rfd</span> <span class="o">*</span> <span class="n">conversion_val</span>
+
+    <span class="k">return</span> <span class="n">rfd</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Giacomo Valli.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

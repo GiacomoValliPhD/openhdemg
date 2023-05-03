@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>openhdemg.library.openfiles &mdash; openhdemg 0.1.0-beta documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            openhdemg
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">openhdemg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../openhdemg.html">openhdemg package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../openhdemg.library.html">openhdemg.library package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">openhdemg</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">openhdemg.library.openfiles</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for openhdemg.library.openfiles</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Description</span>
+<span class="sd">-----------</span>
+<span class="sd">    This module contains all the functions that are necessary to open or save</span>
+<span class="sd">    MATLAB (.mat), JSON (.json) or custom (.csv) files.</span>
+<span class="sd">    MATLAB files are used to store data from the DEMUSE and the OTBiolab+</span>
+<span class="sd">    software while JSON files are used to save and load files from this</span>
+<span class="sd">    library.</span>
+<span class="sd">    The choice of saving files in the open standard JSON file format was</span>
+<span class="sd">    preferred over the MATLAB file format since it has a better integration</span>
+<span class="sd">    with Python and has a very high cross-platform compatibility.</span>
+
+<span class="sd">    Some functions contained in this file are called internally and</span>
+<span class="sd">    should not be exposed to the final user.</span>
+<span class="sd">    Functions should be exposed in the __init__ file as:</span>
+<span class="sd">        from openhdemg.openfiles import (</span>
+<span class="sd">            emg_from_otb,</span>
+<span class="sd">            emg_from_demuse,</span>
+<span class="sd">            refsig_from_otb,</span>
+<span class="sd">            emg_from_customcsv,</span>
+<span class="sd">            save_json_emgfile,</span>
+<span class="sd">            emg_from_json,</span>
+<span class="sd">            askopenfile,</span>
+<span class="sd">            asksavefile,</span>
+<span class="sd">        )</span>
+
+<span class="sd">Function&#39;s scope</span>
+<span class="sd">----------------</span>
+<span class="sd">    emg_from_otb and emg_from_demuse :</span>
+<span class="sd">        Used to load .mat files coming from the DEMUSE or the OTBiolab+</span>
+<span class="sd">        software. Demuse has a fixed file structure while the OTB file, in</span>
+<span class="sd">        order to be compatible with this library should be exported with a</span>
+<span class="sd">        strict structure as described in the function emg_from_otb.</span>
+<span class="sd">        In both cases, the input file is a .mat file.</span>
+<span class="sd">    refsig_from_otb :</span>
+<span class="sd">        Used to load files from the OTBiolab+ software that contain only</span>
+<span class="sd">        the REF_SIGNAL.</span>
+<span class="sd">    emg_from_customcsv :</span>
+<span class="sd">        Used to load custom file formats contained in .csv files.</span>
+<span class="sd">    save_json_emgfile, emg_from_json :</span>
+<span class="sd">        Used to save the working file to a .json file or to load the .json</span>
+<span class="sd">        file.</span>
+<span class="sd">    askopenfile, asksavefile :</span>
+<span class="sd">        A quick GUI implementation that allows users to select the file to</span>
+<span class="sd">        open or save.</span>
+
+<span class="sd">Notes</span>
+<span class="sd">-----</span>
+<span class="sd">Once opened, the file is returned as a dict with keys:</span>
+<span class="sd">    &quot;SOURCE&quot; : source of the file (i.e., &quot;DEMUSE&quot;, &quot;OTB&quot;, &quot;custom&quot;)</span>
+<span class="sd">    &quot;RAW_SIGNAL&quot; : the raw EMG signal.</span>
+<span class="sd">    &quot;REF_SIGNAL&quot; : the reference signal</span>
+<span class="sd">    &quot;PNR&quot; : pulse to noise ratio</span>
+<span class="sd">    &quot;SIL&quot; : silouette score</span>
+<span class="sd">    &quot;IPTS&quot; : pulse train</span>
+<span class="sd">    &quot;MUPULSES&quot; : instant of firing</span>
+<span class="sd">    &quot;FSAMP&quot; : sampling frequency</span>
+<span class="sd">    &quot;IED&quot; : interelectrode distance</span>
+<span class="sd">    &quot;EMG_LENGTH&quot; : length of the emg file (in samples)</span>
+<span class="sd">    &quot;NUMBER_OF_MUS&quot; : total number of MUs</span>
+<span class="sd">    &quot;BINARY_MUS_FIRING&quot; : binary representation of MUs firings</span>
+
+<span class="sd">The only exception when OTB files are loaded with just the reference signal:</span>
+<span class="sd">    &quot;SOURCE&quot;: source of the file (i.e., &quot;OTB_refsig&quot;)</span>
+<span class="sd">    &quot;FSAMP&quot;: sampling frequency</span>
+<span class="sd">    &quot;REF_SIGNAL&quot;: the reference signal</span>
+
+<span class="sd">Additional informations can be found in the info module (emg.info()) and in</span>
+<span class="sd">the function&#39;s description.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">from</span> <span class="nn">scipy.io</span> <span class="kn">import</span> <span class="n">loadmat</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">openhdemg.library.otbelectrodes</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">openhdemg.library.mathtools</span> <span class="kn">import</span> <span class="n">compute_pnr</span><span class="p">,</span> <span class="n">compute_sil</span>
+<span class="kn">from</span> <span class="nn">openhdemg.library.tools</span> <span class="kn">import</span> <span class="n">create_binary_firings</span>
+<span class="kn">from</span> <span class="nn">tkinter</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">tkinter</span> <span class="kn">import</span> <span class="n">filedialog</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">gzip</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------</span>
+<span class="c1"># Main function to open decomposed files coming from DEMUSE.</span>
+
+<div class="viewcode-block" id="emg_from_demuse"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.openfiles.emg_from_demuse">[docs]</a><span class="k">def</span> <span class="nf">emg_from_demuse</span><span class="p">(</span><span class="n">filepath</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Import the .mat file used in DEMUSE.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filepath : str or Path</span>
+<span class="sd">        The directory and the name of the file to load</span>
+<span class="sd">        (including file extension .mat).</span>
+<span class="sd">        This can be a simple string, the use of Path is not necessary.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        A dictionary containing all the useful variables.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    emg_from_otb : import the .mat file exportable by OTBiolab+.</span>
+<span class="sd">    refsig_from_otb : import REF_SIGNAL in the .mat file exportable by</span>
+<span class="sd">        OTBiolab+.</span>
+<span class="sd">    emg_from_customcsv : Import custom data from a .csv file.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The returned file is called ``emgfile`` for convention.</span>
+
+<span class="sd">    The demuse file contains 65 raw EMG channels (1 empty) instead of 64</span>
+<span class="sd">    (as for OTB matrix standards) in the case of a 64 electrodes matrix.</span>
+
+<span class="sd">    Structure of the emgfile:</span>
+<span class="sd">        emgfile = {</span>
+<span class="sd">            &quot;SOURCE&quot;: SOURCE,</span>
+<span class="sd">            &quot;FILENAME&quot;: FILENAME,</span>
+<span class="sd">            &quot;RAW_SIGNAL&quot;: RAW_SIGNAL,</span>
+<span class="sd">            &quot;REF_SIGNAL&quot;: REF_SIGNAL,</span>
+<span class="sd">            &quot;PNR&quot;: PNR,</span>
+<span class="sd">            &quot;SIL&quot;: SIL</span>
+<span class="sd">            &quot;IPTS&quot;: IPTS,</span>
+<span class="sd">            &quot;MUPULSES&quot;: MUPULSES,</span>
+<span class="sd">            &quot;FSAMP&quot;: FSAMP,</span>
+<span class="sd">            &quot;IED&quot;: IED,</span>
+<span class="sd">            &quot;EMG_LENGTH&quot;: EMG_LENGTH,</span>
+<span class="sd">            &quot;NUMBER_OF_MUS&quot;: NUMBER_OF_MUS,</span>
+<span class="sd">            &quot;BINARY_MUS_FIRING&quot;: BINARY_MUS_FIRING,</span>
+<span class="sd">        }</span>
+
+<span class="sd">    For an extended explanation of the imported emgfile:</span>
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.emg_from_demuse(filepath=&quot;path/filename.mat&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; info = emg.info()</span>
+<span class="sd">    &gt;&gt;&gt; info.data(emgfile)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">mat_file</span> <span class="o">=</span> <span class="n">loadmat</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">simplify_cells</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Parse .mat obtained from DEMUSE to see the available variables</span>
+    <span class="c1"># First: see the variables name</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    print(</span>
+<span class="sd">        &quot;\n--------------------------------\nAvailable dict keys are:\n\n{}\n&quot;.format(</span>
+<span class="sd">            mat_file.keys()</span>
+<span class="sd">        )</span>
+<span class="sd">    )</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Second: collect the necessary variables in a pd.DataFrame (df)</span>
+    <span class="c1"># or list (for matlab cell arrays)</span>
+
+    <span class="c1"># Collect the REF_SIGNAL</span>
+    <span class="k">if</span> <span class="s2">&quot;ref_signal&quot;</span> <span class="ow">in</span> <span class="n">mat_file</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+
+        <span class="c1"># Catch the case for float values that cannot be directly added to a</span>
+        <span class="c1"># dataframe</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mat_file</span><span class="p">[</span><span class="s2">&quot;ref_signal&quot;</span><span class="p">],</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="n">mat_file</span><span class="p">[</span><span class="s2">&quot;ref_signal&quot;</span><span class="p">]}</span>
+            <span class="n">REF_SIGNAL</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">REF_SIGNAL</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">mat_file</span><span class="p">[</span><span class="s2">&quot;ref_signal&quot;</span><span class="p">])</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Variable ref_signal was not found in the mat file, check the spelling against the dict_keys</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+        <span class="n">REF_SIGNAL</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="c1"># Collect the IPTS</span>
+    <span class="k">if</span> <span class="s2">&quot;IPTs&quot;</span> <span class="ow">in</span> <span class="n">mat_file</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="c1"># Catch the exception of a single MU that would create an alrerady</span>
+        <span class="c1"># transposed pd.DataFrame</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mat_file</span><span class="p">[</span><span class="s2">&quot;IPTs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">IPTS</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">mat_file</span><span class="p">[</span><span class="s2">&quot;IPTs&quot;</span><span class="p">])</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">IPTS</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">mat_file</span><span class="p">[</span><span class="s2">&quot;IPTs&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Variable IPTs was not found in the mat file, check the spelling against the dict_keys</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+        <span class="n">IPTS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="c1"># Collect Sampling frequency, Interelectrode distance,</span>
+    <span class="c1"># File length and number of MUs</span>
+    <span class="n">FSAMP</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mat_file</span><span class="p">[</span><span class="s2">&quot;fsamp&quot;</span><span class="p">])</span>
+    <span class="n">IED</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mat_file</span><span class="p">[</span><span class="s2">&quot;IED&quot;</span><span class="p">])</span>
+    <span class="n">EMG_LENGTH</span><span class="p">,</span> <span class="n">NUMBER_OF_MUS</span> <span class="o">=</span> <span class="n">IPTS</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="c1"># Collect the MUPULSES, subtract 1 to MUPULSES because these are values in</span>
+    <span class="c1"># base 1 (MATLAB) and manage exception of single MU.</span>
+    <span class="k">if</span> <span class="s2">&quot;MUPulses&quot;</span> <span class="ow">in</span> <span class="n">mat_file</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">MUPULSES</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">mat_file</span><span class="p">[</span><span class="s2">&quot;MUPulses&quot;</span><span class="p">])</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Variable MUPulses was not found in the mat file, check the spelling against the dict_keys</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+        <span class="n">MUPULSES</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="k">for</span> <span class="n">pos</span><span class="p">,</span> <span class="n">pulses</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">MUPULSES</span><span class="p">):</span>
+        <span class="n">MUPULSES</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">=</span> <span class="n">pulses</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">NUMBER_OF_MUS</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">MUPULSES</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">MUPULSES</span><span class="p">)]</span>
+
+    <span class="c1"># Collect firing times</span>
+    <span class="n">BINARY_MUS_FIRING</span> <span class="o">=</span> <span class="n">create_binary_firings</span><span class="p">(</span>
+        <span class="n">emg_length</span><span class="o">=</span><span class="n">EMG_LENGTH</span><span class="p">,</span>
+        <span class="n">number_of_mus</span><span class="o">=</span><span class="n">NUMBER_OF_MUS</span><span class="p">,</span>
+        <span class="n">mupulses</span><span class="o">=</span><span class="n">MUPULSES</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Collect the raw EMG signal</span>
+    <span class="k">if</span> <span class="s2">&quot;SIG&quot;</span> <span class="ow">in</span> <span class="n">mat_file</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">mat</span> <span class="o">=</span> <span class="n">mat_file</span><span class="p">[</span><span class="s2">&quot;SIG&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="p">)</span>
+        <span class="c1"># &quot;F&quot; means to index the elements in column-major</span>
+        <span class="n">RAW_SIGNAL</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">,</span> <span class="n">mat</span><span class="p">)))</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Variable SIG was not found in the mat file, check the spelling against the dict_keys</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+        <span class="n">RAW_SIGNAL</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="c1"># Use this to know the data source and name of the file</span>
+    <span class="n">SOURCE</span> <span class="o">=</span> <span class="s2">&quot;DEMUSE&quot;</span>
+    <span class="n">FILENAME</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">NUMBER_OF_MUS</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># Calculate the PNR</span>
+        <span class="n">to_append</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">mu</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUMBER_OF_MUS</span><span class="p">):</span>
+            <span class="n">pnr</span> <span class="o">=</span> <span class="n">compute_pnr</span><span class="p">(</span>
+                <span class="n">ipts</span><span class="o">=</span><span class="n">IPTS</span><span class="p">[</span><span class="n">mu</span><span class="p">],</span>
+                <span class="n">mupulses</span><span class="o">=</span><span class="n">MUPULSES</span><span class="p">[</span><span class="n">mu</span><span class="p">],</span>
+                <span class="n">fsamp</span><span class="o">=</span><span class="n">FSAMP</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">to_append</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pnr</span><span class="p">)</span>
+        <span class="n">PNR</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">to_append</span><span class="p">)</span>
+
+        <span class="c1"># Calculate the SIL</span>
+        <span class="n">to_append</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">mu</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUMBER_OF_MUS</span><span class="p">):</span>
+            <span class="n">sil</span> <span class="o">=</span> <span class="n">compute_sil</span><span class="p">(</span><span class="n">ipts</span><span class="o">=</span><span class="n">IPTS</span><span class="p">[</span><span class="n">mu</span><span class="p">],</span> <span class="n">mupulses</span><span class="o">=</span><span class="n">MUPULSES</span><span class="p">[</span><span class="n">mu</span><span class="p">])</span>
+            <span class="n">to_append</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sil</span><span class="p">)</span>
+        <span class="n">SIL</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">to_append</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">PNR</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">SIL</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="n">emgfile</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;SOURCE&quot;</span><span class="p">:</span> <span class="n">SOURCE</span><span class="p">,</span>
+        <span class="s2">&quot;FILENAME&quot;</span><span class="p">:</span> <span class="n">FILENAME</span><span class="p">,</span>
+        <span class="s2">&quot;RAW_SIGNAL&quot;</span><span class="p">:</span> <span class="n">RAW_SIGNAL</span><span class="p">,</span>
+        <span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">:</span> <span class="n">REF_SIGNAL</span><span class="p">,</span>
+        <span class="s2">&quot;PNR&quot;</span><span class="p">:</span> <span class="n">PNR</span><span class="p">,</span>
+        <span class="s2">&quot;SIL&quot;</span><span class="p">:</span> <span class="n">SIL</span><span class="p">,</span>
+        <span class="s2">&quot;IPTS&quot;</span><span class="p">:</span> <span class="n">IPTS</span><span class="p">,</span>
+        <span class="s2">&quot;MUPULSES&quot;</span><span class="p">:</span> <span class="n">MUPULSES</span><span class="p">,</span>
+        <span class="s2">&quot;FSAMP&quot;</span><span class="p">:</span> <span class="n">FSAMP</span><span class="p">,</span>
+        <span class="s2">&quot;IED&quot;</span><span class="p">:</span> <span class="n">IED</span><span class="p">,</span>
+        <span class="s2">&quot;EMG_LENGTH&quot;</span><span class="p">:</span> <span class="n">EMG_LENGTH</span><span class="p">,</span>
+        <span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">:</span> <span class="n">NUMBER_OF_MUS</span><span class="p">,</span>
+        <span class="s2">&quot;BINARY_MUS_FIRING&quot;</span><span class="p">:</span> <span class="n">BINARY_MUS_FIRING</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">emgfile</span></div>
+
+
+<span class="c1"># ---------------------------------------------------------------------</span>
+<span class="c1"># Define functions used in the OTB openfile function.</span>
+<span class="c1"># These functions are not exposed to the final user.</span>
+
+<div class="viewcode-block" id="get_otb_refsignal"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.openfiles.get_otb_refsignal">[docs]</a><span class="k">def</span> <span class="nf">get_otb_refsignal</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">refsig</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract the REF_SIGNAL from the OTB .mat file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        A pd.DataFrame containing all the informations extracted</span>
+<span class="sd">        from the OTB .mat file.</span>
+<span class="sd">    refsig : list</span>
+<span class="sd">        Whether to seacrh also for the REF_SIGNAL and whether to load the full</span>
+<span class="sd">        or sub-sampled one. The list is composed as [bool, str]. str can be</span>
+<span class="sd">        &quot;fullsampled&quot; or &quot;subsampled&quot;.</span>
+<span class="sd">        Please read the documentation of emg_from_otb.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    REF_SIGNAL : pd.DataFrame or np.nan</span>
+<span class="sd">        A pd.DataFrame containing the requested variable</span>
+<span class="sd">        or np.nan if the variable was not found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">assert</span> <span class="n">refsig</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="kc">True</span><span class="p">,</span>
+        <span class="kc">False</span><span class="p">,</span>
+    <span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;refsig[0] must be true or false. </span><span class="si">{</span><span class="n">refsig</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> was passed instead.&quot;</span>
+    <span class="k">assert</span> <span class="n">refsig</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="s2">&quot;fullsampled&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;subsampled&quot;</span><span class="p">,</span>
+    <span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;refsig[1] must be fullsampled or subsampled. </span><span class="si">{</span><span class="n">refsig</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> was passed instead.&quot;</span>
+
+    <span class="k">if</span> <span class="n">refsig</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">refsig</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;subsampled&quot;</span><span class="p">:</span>
+            <span class="c1"># Extract the performed path (subsampled data)</span>
+            <span class="n">REF_SIGNAL_SUBSAMPLED</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">&quot;performed path&quot;</span><span class="p">)</span>
+            <span class="c1"># Check if the REF_SIGNAL is available</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">REF_SIGNAL_SUBSAMPLED</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+                <span class="n">REF_SIGNAL_SUBSAMPLED</span> <span class="o">=</span> <span class="n">REF_SIGNAL_SUBSAMPLED</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+                    <span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">REF_SIGNAL_SUBSAMPLED</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mi">0</span><span class="p">}</span>
+                <span class="p">)</span>
+                <span class="c1"># Verify that there is no value above 100% since the</span>
+                <span class="c1"># REF_SIGNAL is expected to be expressed as % of the MVC</span>
+                <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">REF_SIGNAL_SUBSAMPLED</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
+                    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                        <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ALERT! Ref signal grater than 100, did you use values normalised to the MVC?</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+
+                <span class="k">return</span> <span class="n">REF_SIGNAL_SUBSAMPLED</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Reference signal not found, it might be necessary for some analysis</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+                <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="k">elif</span> <span class="n">refsig</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;fullsampled&quot;</span><span class="p">:</span>
+            <span class="c1"># Extract the acquired path (raw data)</span>
+            <span class="n">REF_SIGNAL_FULLSAMPLED</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">&quot;acquired data&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">REF_SIGNAL_FULLSAMPLED</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+                <span class="n">REF_SIGNAL_FULLSAMPLED</span> <span class="o">=</span> <span class="n">REF_SIGNAL_FULLSAMPLED</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+                    <span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">REF_SIGNAL_FULLSAMPLED</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mi">0</span><span class="p">}</span>
+                <span class="p">)</span>
+                <span class="c1"># Verify that there is no value above 100% since the</span>
+                <span class="c1"># REF_SIGNAL is expected to be expressed as % of the MVC</span>
+                <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">REF_SIGNAL_FULLSAMPLED</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
+                    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                        <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ALERT! Ref signal grater than 100, did you use values normalised to the MVC?</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+
+                <span class="k">return</span> <span class="n">REF_SIGNAL_FULLSAMPLED</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Reference signal not found, it might be necessary for some analysis</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+                <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Not searched for reference signal, it might be necessary for some analysis</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span></div>
+
+
+<div class="viewcode-block" id="get_otb_decomposition"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.openfiles.get_otb_decomposition">[docs]</a><span class="k">def</span> <span class="nf">get_otb_decomposition</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract the IPTS and BINARY_MUS_FIRING from the OTB .mat file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        A pd.DataFrame containing all the informations extracted</span>
+<span class="sd">        from the OTB .mat file.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    IPTS, BINARY_MUS_FIRING : pd.DataFrame or np.nan</span>
+<span class="sd">        pd.DataFrames containing the requested variables</span>
+<span class="sd">        or np.nan if the variables were not found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Extract the IPTS and rename columns progressively</span>
+    <span class="n">IPTS</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">&quot;Source for decomposition&quot;</span><span class="p">)</span>
+    <span class="n">IPTS</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">IPTS</span><span class="o">.</span><span class="n">columns</span><span class="p">))</span>
+    <span class="c1"># Verify to have the IPTS</span>
+    <span class="k">if</span> <span class="n">IPTS</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="n">IPTS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="c1"># Extract the BINARY_MUS_FIRING and rename columns progressively</span>
+    <span class="n">BINARY_MUS_FIRING</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">&quot;Decomposition of&quot;</span><span class="p">)</span>
+    <span class="n">BINARY_MUS_FIRING</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">BINARY_MUS_FIRING</span><span class="o">.</span><span class="n">columns</span><span class="p">))</span>
+    <span class="c1"># Verify to have the BINARY_MUS_FIRING</span>
+    <span class="k">if</span> <span class="n">BINARY_MUS_FIRING</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="n">BINARY_MUS_FIRING</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="k">return</span> <span class="n">IPTS</span><span class="p">,</span> <span class="n">BINARY_MUS_FIRING</span></div>
+
+
+<div class="viewcode-block" id="get_otb_mupulses"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.openfiles.get_otb_mupulses">[docs]</a><span class="k">def</span> <span class="nf">get_otb_mupulses</span><span class="p">(</span><span class="n">binarymusfiring</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract the MUPULSES from the OTB .mat file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    binarymusfiring : pd.DataFrame</span>
+<span class="sd">        A pd.DataFrame containing the binary representation of MUs firings.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    MUPULSES : list</span>
+<span class="sd">        A list of ndarrays containing the firing time of each MU.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Create empty list of lists to fill with ndarrays containing the MUPULSES</span>
+    <span class="c1"># (point of firing)</span>
+    <span class="n">numberofMUs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">binarymusfiring</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+    <span class="n">MUPULSES</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numberofMUs</span><span class="p">)]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">binarymusfiring</span><span class="p">:</span>  <span class="c1"># Loop all the MUs</span>
+        <span class="n">my_ndarray</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">binarymusfiring</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>  <span class="c1"># Loop the MU firing times</span>
+            <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">my_ndarray</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>  <span class="c1"># Take the firing time and add it to the ndarray</span>
+
+        <span class="n">my_ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">my_ndarray</span><span class="p">)</span>
+        <span class="n">MUPULSES</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">my_ndarray</span>
+
+    <span class="k">return</span> <span class="n">MUPULSES</span></div>
+
+
+<div class="viewcode-block" id="get_otb_ied"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.openfiles.get_otb_ied">[docs]</a><span class="k">def</span> <span class="nf">get_otb_ied</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract the IED from the OTB .mat file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        A pd.DataFrame containing all the informations extracted</span>
+<span class="sd">        from the OTB .mat file.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    IED : int</span>
+<span class="sd">        The interelectrode distance in millimeters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">matrix</span> <span class="ow">in</span> <span class="n">OTBelectrodes_ied</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="c1"># Check the matrix used in the columns name</span>
+        <span class="c1"># (in the df obtained from OTBiolab+)</span>
+        <span class="k">if</span> <span class="n">matrix</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
+            <span class="n">IED</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">OTBelectrodes_ied</span><span class="p">[</span><span class="n">matrix</span><span class="p">])</span>
+
+            <span class="k">return</span> <span class="n">IED</span></div>
+
+
+<div class="viewcode-block" id="get_otb_rawsignal"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.openfiles.get_otb_rawsignal">[docs]</a><span class="k">def</span> <span class="nf">get_otb_rawsignal</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract the IED from the OTB .mat file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        A pd.DataFrame containing all the informations extracted</span>
+<span class="sd">        from the OTB .mat file.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    RAW_SIGNAL : pd.DataFrame</span>
+<span class="sd">        A pd.DataFrame containing the RAW_SIGNAL.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Drop all the known columns different from the raw EMG signal.</span>
+    <span class="c1"># This is a workaround since the OTBiolab+ software does not export a</span>
+    <span class="c1"># unique name for the raw EMG signal.</span>
+    <span class="c1"># FIXME more extensive pattern could prevent errors if the user exports unexpected elements</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="s2">&quot;Source for decomposition|Decomposition of|acquired data|performed path&quot;</span>
+    <span class="n">emg_df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="n">pattern</span><span class="p">)))]</span>
+
+    <span class="c1"># Check if the number of remaining columns matches the expected number of</span>
+    <span class="c1"># matrix channels.</span>
+    <span class="k">for</span> <span class="n">matrix</span> <span class="ow">in</span> <span class="n">OTBelectrodes_Nelectrodes</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="c1"># Check the matrix used in the columns name (in the emg_df) to know</span>
+        <span class="c1"># the number of expected channels.</span>
+        <span class="k">if</span> <span class="n">matrix</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">emg_df</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
+            <span class="n">expectedchannels</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">OTBelectrodes_Nelectrodes</span><span class="p">[</span><span class="n">matrix</span><span class="p">])</span>
+            <span class="k">break</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">emg_df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">==</span> <span class="n">expectedchannels</span><span class="p">:</span>
+        <span class="n">emg_df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">emg_df</span><span class="o">.</span><span class="n">columns</span><span class="p">))</span>
+        <span class="n">RAW_SIGNAL</span> <span class="o">=</span> <span class="n">emg_df</span>
+
+        <span class="k">return</span> <span class="n">RAW_SIGNAL</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># This check here is usefull to control that only the appropriate</span>
+        <span class="c1"># elements have been included in the .mat file exported from OTBiolab+.</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+            <span class="s2">&quot;Failure in searching the raw signal, please check that it is present in the .mat file and that only the accepted parameters have been included&quot;</span>
+        <span class="p">)</span></div>
+
+
+<span class="c1"># ---------------------------------------------------------------------</span>
+<span class="c1"># Main function to open decomposed files coming from OTBiolab+.</span>
+<span class="c1"># This function calls the functions defined above</span>
+
+<div class="viewcode-block" id="emg_from_otb"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.openfiles.emg_from_otb">[docs]</a><span class="k">def</span> <span class="nf">emg_from_otb</span><span class="p">(</span>
+    <span class="n">filepath</span><span class="p">,</span> <span class="n">ext_factor</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">refsig</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fullsampled&quot;</span><span class="p">],</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.5.8.0&quot;</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Import the .mat file exportable by OTBiolab+.</span>
+
+<span class="sd">    This function is used to import the .mat file exportable by the OTBiolab+</span>
+<span class="sd">    software as a dictionary of Python objects (mainly pandas dataframes).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filepath : str or Path</span>
+<span class="sd">        The directory and the name of the file to load</span>
+<span class="sd">        (including file extension .mat).</span>
+<span class="sd">        This can be a simple string, the use of Path is not necessary.</span>
+<span class="sd">    ext_factor : int, default 8</span>
+<span class="sd">        The extension factor used for the decomposition in OTbiolab+.</span>
+<span class="sd">    refsig : list, default [True, &quot;fullsampled&quot;]</span>
+<span class="sd">        Whether to seacrh also for the REF_SIGNAL and whether to load the full</span>
+<span class="sd">        or sub-sampled one. The list is composed as [bool, str]. str can be</span>
+<span class="sd">        &quot;fullsampled&quot; or &quot;subsampled&quot;. Please read notes section.</span>
+<span class="sd">    version : str, default &quot;1.5.8.0&quot;</span>
+<span class="sd">        Version of the OTBiolab+ software used (4 points).</span>
+<span class="sd">        Tested versions are:</span>
+<span class="sd">            &quot;1.5.3.0&quot;,</span>
+<span class="sd">            &quot;1.5.4.0&quot;,</span>
+<span class="sd">            &quot;1.5.5.0&quot;,</span>
+<span class="sd">            &quot;1.5.6.0&quot;,</span>
+<span class="sd">            &quot;1.5.7.2&quot;,</span>
+<span class="sd">            &quot;1.5.7.3&quot;,</span>
+<span class="sd">            &quot;1.5.8.0&quot;,</span>
+<span class="sd">        If your specific version is not available in the tested versions,</span>
+<span class="sd">        trying with the closer one usually works, but please double check the</span>
+<span class="sd">        results.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        A dictionary containing all the useful variables.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    refsig_from_otb : import REF_SIGNAL in the .mat file exportable from</span>
+<span class="sd">        OTBiolab+.</span>
+<span class="sd">    emg_from_demuse : import the .mat file used in DEMUSE.</span>
+<span class="sd">    emg_from_customcsv : Import custom data from a .csv file.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        When a wrong value is passed to version=.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    ---------</span>
+<span class="sd">    The returned file is called ``emgfile`` for convention.</span>
+
+<span class="sd">    The input .mat file exported from the OTBiolab+ software should have a</span>
+<span class="sd">    specific content:</span>
+<span class="sd">    - refsig signal is optional but, if present, there should be the</span>
+<span class="sd">        fullsampled or the subsampled version (in OTBioLab+ the &quot;performed</span>
+<span class="sd">        path&quot; refers to the subsampled signal, the &quot;acquired data&quot; to the</span>
+<span class="sd">        fullsampled signal), REF_SIGNAL is expected to be expressed as % of</span>
+<span class="sd">        the MVC (but not compulsory).</span>
+<span class="sd">    - Both the IPTS (&#39;Source for decomposition...&#39; in OTBioLab+) and the</span>
+<span class="sd">        BINARY_MUS_FIRING (&#39;Decomposition of...&#39; in OTBioLab+) should be</span>
+<span class="sd">        present.</span>
+<span class="sd">    - The raw EMG signal should be present (it has no specific name in</span>
+<span class="sd">        OTBioLab+) with all the channels. Don&#39;t exclude unwanted channels</span>
+<span class="sd">        before exporting the .mat file.</span>
+<span class="sd">    - NO OTHER ELEMENTS SHOULD BE PRESENT!</span>
+
+<span class="sd">    Structure of the returned emgfile:</span>
+<span class="sd">        emgfile = {</span>
+<span class="sd">            &quot;SOURCE&quot;: SOURCE,</span>
+<span class="sd">            &quot;FILENAME&quot;: FILENAME,</span>
+<span class="sd">            &quot;RAW_SIGNAL&quot;: RAW_SIGNAL,</span>
+<span class="sd">            &quot;REF_SIGNAL&quot;: REF_SIGNAL,</span>
+<span class="sd">            &quot;PNR&quot;: PNR,</span>
+<span class="sd">            &quot;SIL&quot;: SIL,</span>
+<span class="sd">            &quot;IPTS&quot;: IPTS,</span>
+<span class="sd">            &quot;MUPULSES&quot;: MUPULSES,</span>
+<span class="sd">            &quot;FSAMP&quot;: FSAMP,</span>
+<span class="sd">            &quot;IED&quot;: IED,</span>
+<span class="sd">            &quot;EMG_LENGTH&quot;: EMG_LENGTH,</span>
+<span class="sd">            &quot;NUMBER_OF_MUS&quot;: NUMBER_OF_MUS,</span>
+<span class="sd">            &quot;BINARY_MUS_FIRING&quot;: BINARY_MUS_FIRING,</span>
+<span class="sd">        }</span>
+
+<span class="sd">    For an extended explanation of the imported emgfile use:</span>
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.emg_from_otb(filepath=&quot;path/filename.mat&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; info = emg.info()</span>
+<span class="sd">    &gt;&gt;&gt; info.data(emgfile)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">mat_file</span> <span class="o">=</span> <span class="n">loadmat</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">simplify_cells</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Parse .mat obtained from DEMUSE to see the available variables</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; print(</span>
+<span class="sd">        &quot;\n--------------------------------\nAvailable dict keys are:\n\n{}\n&quot;.format(</span>
+<span class="sd">            mat_file.keys()</span>
+<span class="sd">        )</span>
+<span class="sd">    ) &quot;&quot;&quot;</span>
+
+    <span class="c1"># Check if a valid version has been specified</span>
+    <span class="n">valid_versions</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;1.5.3.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.4.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.5.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.6.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.7.2&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.7.3&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.8.0&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">version</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_versions</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Specified version is not valid. Use one of:</span><span class="se">\n</span><span class="si">{</span><span class="n">valid_versions</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">version</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="s2">&quot;1.5.3.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.4.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.5.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.6.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.7.2&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.7.3&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.8.0&quot;</span><span class="p">,</span>
+    <span class="p">]:</span>
+        <span class="c1"># Simplify (rename) columns description and extract all the parameters</span>
+        <span class="c1"># in a pd.DataFrame</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">mat_file</span><span class="p">[</span><span class="s2">&quot;Data&quot;</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">mat_file</span><span class="p">[</span><span class="s2">&quot;Description&quot;</span><span class="p">])</span>
+
+        <span class="c1"># Collect the REF_SIGNAL</span>
+        <span class="n">REF_SIGNAL</span> <span class="o">=</span> <span class="n">get_otb_refsignal</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="p">,</span> <span class="n">refsig</span><span class="o">=</span><span class="n">refsig</span><span class="p">)</span>
+
+        <span class="c1"># Collect the IPTS and the firing times</span>
+        <span class="n">IPTS</span><span class="p">,</span> <span class="n">BINARY_MUS_FIRING</span> <span class="o">=</span> <span class="n">get_otb_decomposition</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="p">)</span>
+        <span class="c1"># Align BINARY_MUS_FIRING to IPTS</span>
+        <span class="n">BINARY_MUS_FIRING</span> <span class="o">=</span> <span class="n">BINARY_MUS_FIRING</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">ext_factor</span><span class="p">))</span>
+        <span class="n">BINARY_MUS_FIRING</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Collect additional parameters</span>
+        <span class="n">EMG_LENGTH</span><span class="p">,</span> <span class="n">NUMBER_OF_MUS</span> <span class="o">=</span> <span class="n">IPTS</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">MUPULSES</span> <span class="o">=</span> <span class="n">get_otb_mupulses</span><span class="p">(</span><span class="n">binarymusfiring</span><span class="o">=</span><span class="n">BINARY_MUS_FIRING</span><span class="p">)</span>
+        <span class="n">FSAMP</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mat_file</span><span class="p">[</span><span class="s2">&quot;SamplingFrequency&quot;</span><span class="p">])</span>
+        <span class="n">IED</span> <span class="o">=</span> <span class="n">get_otb_ied</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="p">)</span>
+        <span class="n">RAW_SIGNAL</span> <span class="o">=</span> <span class="n">get_otb_rawsignal</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+        <span class="c1"># Use this to know the data source and name of the file</span>
+        <span class="n">SOURCE</span> <span class="o">=</span> <span class="s2">&quot;OTB&quot;</span>
+        <span class="n">FILENAME</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">NUMBER_OF_MUS</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Calculate the PNR</span>
+            <span class="n">to_append</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">mu</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUMBER_OF_MUS</span><span class="p">):</span>
+                <span class="n">pnr</span> <span class="o">=</span> <span class="n">compute_pnr</span><span class="p">(</span><span class="n">ipts</span><span class="o">=</span><span class="n">IPTS</span><span class="p">[</span><span class="n">mu</span><span class="p">],</span> <span class="n">mupulses</span><span class="o">=</span><span class="n">MUPULSES</span><span class="p">[</span><span class="n">mu</span><span class="p">],</span> <span class="n">fsamp</span><span class="o">=</span><span class="n">FSAMP</span><span class="p">)</span>
+                <span class="n">to_append</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pnr</span><span class="p">)</span>
+            <span class="n">PNR</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">to_append</span><span class="p">)</span>
+
+            <span class="c1"># Calculate the SIL</span>
+            <span class="n">to_append</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">mu</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUMBER_OF_MUS</span><span class="p">):</span>
+                <span class="n">sil</span> <span class="o">=</span> <span class="n">compute_sil</span><span class="p">(</span><span class="n">ipts</span><span class="o">=</span><span class="n">IPTS</span><span class="p">[</span><span class="n">mu</span><span class="p">],</span> <span class="n">mupulses</span><span class="o">=</span><span class="n">MUPULSES</span><span class="p">[</span><span class="n">mu</span><span class="p">])</span>
+                <span class="n">to_append</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sil</span><span class="p">)</span>
+            <span class="n">SIL</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">to_append</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">PNR</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="n">SIL</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="n">emgfile</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;SOURCE&quot;</span><span class="p">:</span> <span class="n">SOURCE</span><span class="p">,</span>
+            <span class="s2">&quot;FILENAME&quot;</span><span class="p">:</span> <span class="n">FILENAME</span><span class="p">,</span>
+            <span class="s2">&quot;RAW_SIGNAL&quot;</span><span class="p">:</span> <span class="n">RAW_SIGNAL</span><span class="p">,</span>
+            <span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">:</span> <span class="n">REF_SIGNAL</span><span class="p">,</span>
+            <span class="s2">&quot;PNR&quot;</span><span class="p">:</span> <span class="n">PNR</span><span class="p">,</span>
+            <span class="s2">&quot;SIL&quot;</span><span class="p">:</span> <span class="n">SIL</span><span class="p">,</span>
+            <span class="s2">&quot;IPTS&quot;</span><span class="p">:</span> <span class="n">IPTS</span><span class="p">,</span>
+            <span class="s2">&quot;MUPULSES&quot;</span><span class="p">:</span> <span class="n">MUPULSES</span><span class="p">,</span>
+            <span class="s2">&quot;FSAMP&quot;</span><span class="p">:</span> <span class="n">FSAMP</span><span class="p">,</span>
+            <span class="s2">&quot;IED&quot;</span><span class="p">:</span> <span class="n">IED</span><span class="p">,</span>
+            <span class="s2">&quot;EMG_LENGTH&quot;</span><span class="p">:</span> <span class="n">EMG_LENGTH</span><span class="p">,</span>
+            <span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">:</span> <span class="n">NUMBER_OF_MUS</span><span class="p">,</span>
+            <span class="s2">&quot;BINARY_MUS_FIRING&quot;</span><span class="p">:</span> <span class="n">BINARY_MUS_FIRING</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">emgfile</span></div>
+
+
+<div class="viewcode-block" id="refsig_from_otb"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.openfiles.refsig_from_otb">[docs]</a><span class="k">def</span> <span class="nf">refsig_from_otb</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">refsig</span><span class="o">=</span><span class="s2">&quot;fullsampled&quot;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.5.8.0&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Import REF_SIGNAL in the .mat file exportable by OTBiolab+.</span>
+
+<span class="sd">    This function is used to import the .mat file exportable by the OTBiolab+</span>
+<span class="sd">    software as a dictionary of Python objects (mainly pandas dataframes).</span>
+<span class="sd">    Compared to the function emg_from_otb, this function only imports the</span>
+<span class="sd">    REF_SIGNAL and, therefore, it can be used for special cases where only the</span>
+<span class="sd">    REF_SIGNAL is necessary. This will allow a faster execution of the script</span>
+<span class="sd">    and to avoid exceptions for missing data.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filepath : str or Path</span>
+<span class="sd">        The directory and the name of the file to load (including file</span>
+<span class="sd">        extension .mat). This can be a simple string, the use of Path is not</span>
+<span class="sd">        necessary.</span>
+<span class="sd">    refsig : str {&quot;fullsampled&quot;, &quot;subsampled&quot;}, default &quot;fullsampled&quot;</span>
+<span class="sd">        Whether to load the full or sub-sampled one.</span>
+<span class="sd">        Please read notes section.</span>
+<span class="sd">    version : str, default &quot;1.5.8.0&quot;</span>
+<span class="sd">        Version of the OTBiolab+ software used (4 points).</span>
+<span class="sd">        Tested versions are:</span>
+<span class="sd">            &quot;1.5.3.0&quot;,</span>
+<span class="sd">            &quot;1.5.4.0&quot;,</span>
+<span class="sd">            &quot;1.5.5.0&quot;,</span>
+<span class="sd">            &quot;1.5.6.0&quot;,</span>
+<span class="sd">            &quot;1.5.7.2&quot;,</span>
+<span class="sd">            &quot;1.5.7.3&quot;,</span>
+<span class="sd">            &quot;1.5.8.0&quot;,</span>
+<span class="sd">        If your specific version is not available in the tested versions,</span>
+<span class="sd">        trying with the closer one usually works, but please double check the</span>
+<span class="sd">        results.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    emg_refsig : dict</span>
+<span class="sd">        A dictionary containing all the useful variables.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    emg_from_otb : import the .mat file exportable by OTBiolab+.</span>
+<span class="sd">    emg_from_demuse : import the .mat file used in DEMUSE.</span>
+<span class="sd">    emg_from_customcsv : Import custom data from a .csv file.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    ---------</span>
+<span class="sd">    The returned file is called ``emg_refsig`` for convention.</span>
+
+<span class="sd">    The input .mat file exported from the OTBiolab+ software should contain:</span>
+<span class="sd">    - refsig signal: there should be the fullsampled or the subsampled</span>
+<span class="sd">        version (in OTBioLab+ the &quot;performed path&quot; refers to the subsampled</span>
+<span class="sd">        signal, the &quot;acquired data&quot; to the fullsampled signal), REF_SIGNAL is</span>
+<span class="sd">        expected to be expressed as % of the MVC (but not compulsory).</span>
+
+<span class="sd">    Structure of the returned emg_refsig:</span>
+<span class="sd">        emg_refsig = {</span>
+<span class="sd">            &quot;SOURCE&quot;: SOURCE,</span>
+<span class="sd">            &quot;FILENAME&quot;: FILENAME,</span>
+<span class="sd">            &quot;FSAMP&quot;: FSAMP,</span>
+<span class="sd">            &quot;REF_SIGNAL&quot;: REF_SIGNAL,</span>
+<span class="sd">        }</span>
+
+<span class="sd">    For an extended explanation of the imported emgfile use:</span>
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.refsig_from_otb(filepath=&quot;path/filename.mat&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; info = emg.info()</span>
+<span class="sd">    &gt;&gt;&gt; info.data(emgfile)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">mat_file</span> <span class="o">=</span> <span class="n">loadmat</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">simplify_cells</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Parse .mat obtained from DEMUSE to see the available variables</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; print(</span>
+<span class="sd">        &quot;\n--------------------------------\nAvailable dict keys are:\n\n{}\n&quot;.format(</span>
+<span class="sd">            mat_file.keys()</span>
+<span class="sd">        )</span>
+<span class="sd">    ) &quot;&quot;&quot;</span>
+
+    <span class="c1"># Check if a valid version has been specified</span>
+    <span class="n">valid_versions</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;1.5.3.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.4.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.5.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.6.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.7.2&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.7.3&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.8.0&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">version</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_versions</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Specified version is not valid. Use one of:</span><span class="se">\n</span><span class="si">{</span><span class="n">valid_versions</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">version</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="s2">&quot;1.5.3.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.4.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.5.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.6.0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.7.2&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.7.3&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1.5.8.0&quot;</span><span class="p">,</span>
+    <span class="p">]:</span>
+        <span class="c1"># Simplify (rename) columns description and extract all the parameters</span>
+        <span class="c1"># in a pd.DataFrame</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">mat_file</span><span class="p">[</span><span class="s2">&quot;Data&quot;</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">mat_file</span><span class="p">[</span><span class="s2">&quot;Description&quot;</span><span class="p">])</span>
+
+        <span class="c1"># Convert the input passed to refsig in a list compatible with the</span>
+        <span class="c1"># function get_otb_refsignal</span>
+        <span class="n">refsig_</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="n">refsig</span><span class="p">]</span>
+        <span class="n">REF_SIGNAL</span> <span class="o">=</span> <span class="n">get_otb_refsignal</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="p">,</span> <span class="n">refsig</span><span class="o">=</span><span class="n">refsig_</span><span class="p">)</span>
+
+        <span class="c1"># Use this to know the data source and name of the file</span>
+        <span class="n">SOURCE</span> <span class="o">=</span> <span class="s2">&quot;OTB_refsig&quot;</span>
+        <span class="n">FILENAME</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+        <span class="n">FSAMP</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mat_file</span><span class="p">[</span><span class="s2">&quot;SamplingFrequency&quot;</span><span class="p">])</span>
+
+        <span class="n">emg_refsig</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;SOURCE&quot;</span><span class="p">:</span> <span class="n">SOURCE</span><span class="p">,</span>
+            <span class="s2">&quot;FILENAME&quot;</span><span class="p">:</span> <span class="n">FILENAME</span><span class="p">,</span>
+            <span class="s2">&quot;FSAMP&quot;</span><span class="p">:</span> <span class="n">FSAMP</span><span class="p">,</span>
+            <span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">:</span> <span class="n">REF_SIGNAL</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">emg_refsig</span></div>
+
+
+<span class="c1"># ---------------------------------------------------------------------</span>
+<span class="c1"># Functions to open custom CSV documents.</span>
+<div class="viewcode-block" id="emg_from_customcsv"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.openfiles.emg_from_customcsv">[docs]</a><span class="k">def</span> <span class="nf">emg_from_customcsv</span><span class="p">(</span>
+    <span class="n">filepath</span><span class="p">,</span>
+    <span class="n">ref_signal</span><span class="o">=</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">,</span>
+    <span class="n">raw_signal</span><span class="o">=</span><span class="s2">&quot;RAW_SIGNAL&quot;</span><span class="p">,</span>
+    <span class="n">ipts</span><span class="o">=</span><span class="s2">&quot;IPTS&quot;</span><span class="p">,</span>
+    <span class="n">mupulses</span><span class="o">=</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">,</span>
+    <span class="n">binary_mus_firing</span><span class="o">=</span><span class="s2">&quot;BINARY_MUS_FIRING&quot;</span><span class="p">,</span>
+    <span class="n">fsamp</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span>
+    <span class="n">ied</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Import custom data from a .csv file.</span>
+
+<span class="sd">    The variables of interest should be contained in columns. The name of the</span>
+<span class="sd">    columns containing each variable can be specified by the user if different</span>
+<span class="sd">    from the default values.</span>
+
+<span class="sd">    This function detects the content of the .csv by parsing the .csv columns.</span>
+<span class="sd">    For parsing, column labels should be provided. A label is a term common</span>
+<span class="sd">    to all the columns containing the same information.</span>
+<span class="sd">    For example, if the raw signal is contained in the columns &#39;RAW_SIGNAL_1&#39;,</span>
+<span class="sd">    &#39;RAW_SIGNAL_2&#39;, ... , &#39;RAW_SIGNAL_n&#39;, the label of the columns should be</span>
+<span class="sd">    &#39;RAW_SIGNAL&#39;.</span>
+<span class="sd">    If the parameters in input are not present in the .csv file, the user</span>
+<span class="sd">    can simply leave the original inputs.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filepath : str or Path</span>
+<span class="sd">        The directory and the name of the file to load</span>
+<span class="sd">        (including file extension .mat).</span>
+<span class="sd">        This can be a simple string, the use of Path is not necessary.</span>
+<span class="sd">    ref_signal : str, default &#39;REF_SIGNAL&#39;</span>
+<span class="sd">        Label of the column(s) containing the reference signal.</span>
+<span class="sd">    raw_signal : str, default &#39;RAW_SIGNAL&#39;</span>
+<span class="sd">        Label of the column(s) containing the raw emg signal.</span>
+<span class="sd">    ipts : str, default &#39;IPTS&#39;</span>
+<span class="sd">        Label of the column(s) containing the pulse train.</span>
+<span class="sd">    mupulses : str, default &#39;MUPULSES&#39;</span>
+<span class="sd">        Label of the column(s) containing the times of firing.</span>
+<span class="sd">    binary_mus_firing : str, default &#39;BINARY_MUS_FIRING&#39;</span>
+<span class="sd">        Label of the column(s) containing the binary representation</span>
+<span class="sd">        of the MUs firings.</span>
+<span class="sd">    fsamp : int, default 2048</span>
+<span class="sd">        Tha sampling frequency.</span>
+<span class="sd">    ied : int, default 8</span>
+<span class="sd">        The inter-electrode distance in mm.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        A dictionary containing all the useful variables.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    emg_from_demuse : import the .mat file used in DEMUSE.</span>
+<span class="sd">    emg_from_otb : import the .mat file exportable by OTBiolab+.</span>
+<span class="sd">    refsig_from_otb : import REF_SIGNAL in the .mat file exportable by</span>
+<span class="sd">        OTBiolab+.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The returned file is called ``emgfile`` for convention.</span>
+
+<span class="sd">    Structure of the emgfile:</span>
+<span class="sd">        emgfile = {</span>
+<span class="sd">            &quot;SOURCE&quot;: SOURCE,</span>
+<span class="sd">            &quot;FILENAME&quot;: FILENAME,</span>
+<span class="sd">            &quot;RAW_SIGNAL&quot;: RAW_SIGNAL,</span>
+<span class="sd">            &quot;REF_SIGNAL&quot;: REF_SIGNAL,</span>
+<span class="sd">            &quot;PNR&quot;: PNR,</span>
+<span class="sd">            &quot;SIL&quot;: SIL</span>
+<span class="sd">            &quot;IPTS&quot;: IPTS,</span>
+<span class="sd">            &quot;MUPULSES&quot;: MUPULSES,</span>
+<span class="sd">            &quot;FSAMP&quot;: FSAMP,</span>
+<span class="sd">            &quot;IED&quot;: IED,</span>
+<span class="sd">            &quot;EMG_LENGTH&quot;: EMG_LENGTH,</span>
+<span class="sd">            &quot;NUMBER_OF_MUS&quot;: NUMBER_OF_MUS,</span>
+<span class="sd">            &quot;BINARY_MUS_FIRING&quot;: BINARY_MUS_FIRING,</span>
+<span class="sd">        }</span>
+
+<span class="sd">    For an extended explanation of the imported emgfile use:</span>
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg_from_customcsv(filepath = &quot;mypath/file.csv&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; info = emg.info()</span>
+<span class="sd">    &gt;&gt;&gt; info.data(emgfile)</span>
+
+<span class="sd">    An example of the .csv file to load:</span>
+<span class="sd">        REF_SIGNAL  RAW_SIGNAL (1)  RAW_SIGNAL (2)  RAW_SIGNAL (3) ...  IPTS (1)  IPTS (2)  MUPULSES (1)  MUPULSES (2)  BINARY_MUS_FIRING (1)  BINARY_MUS_FIRING (2)</span>
+<span class="sd">    0            1        0.100000        0.100000        0.100000 ...  0.010000  0.010000           2.0           1.0                      0                      0</span>
+<span class="sd">    1            2        2.000000        2.000000        2.000000 ...  0.001000  0.001000           5.0           2.0                      0                      0</span>
+<span class="sd">    2            3        0.500000        0.500000        0.500000 ...  0.020000  0.020000           8.0           9.0                      0                      0</span>
+<span class="sd">    3            4        0.150000        0.150000        0.150000 ...  0.002000  0.002000           9.0          15.0                      0                      1</span>
+<span class="sd">    4            5        0.350000        0.350000        0.350000 ... -0.100000 -0.100000          15.0          18.0                      1                      1</span>
+<span class="sd">    5            6        0.215000        0.215000        0.215000 ...  0.200000  0.200000          16.0           NaN                      1                      0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Load the csv</span>
+    <span class="n">csv</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+
+    <span class="c1"># Get REF_SIGNAL</span>
+    <span class="n">REF_SIGNAL</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="n">ref_signal</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">REF_SIGNAL</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="n">REF_SIGNAL</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">REF_SIGNAL</span><span class="o">.</span><span class="n">columns</span><span class="p">))]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ref_signal not found, it might be necessary for some analysis</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="n">REF_SIGNAL</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="c1"># Get RAW_SIGNAL</span>
+    <span class="n">RAW_SIGNAL</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="n">raw_signal</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">RAW_SIGNAL</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="n">RAW_SIGNAL</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">RAW_SIGNAL</span><span class="o">.</span><span class="n">columns</span><span class="p">))]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">raw_signal not found, it might be necessary for some analysis</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="n">RAW_SIGNAL</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="c1"># Get IPTS</span>
+    <span class="n">IPTS</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="n">ipts</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">IPTS</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="n">IPTS</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">IPTS</span><span class="o">.</span><span class="n">columns</span><span class="p">))]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ipts not found, it might be necessary for some analysis</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="n">IPTS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="c1"># Get MUPULSES</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="n">mupulses</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="n">MUPULSES</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">toappend</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+            <span class="n">MUPULSES</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">toappend</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">MUPULSES</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="c1"># Get BINARY_MUS_FIRING</span>
+    <span class="n">BINARY_MUS_FIRING</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="n">binary_mus_firing</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">BINARY_MUS_FIRING</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="n">BINARY_MUS_FIRING</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">BINARY_MUS_FIRING</span><span class="o">.</span><span class="n">columns</span><span class="p">))</span>
+        <span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">BINARY_MUS_FIRING</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="c1"># Get EMG_LENGTH and NUMBER_OF_MUS</span>
+    <span class="n">EMG_LENGTH</span><span class="p">,</span> <span class="n">NUMBER_OF_MUS</span> <span class="o">=</span> <span class="n">IPTS</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="c1"># Use this to know the data source and name of the file</span>
+    <span class="n">SOURCE</span> <span class="o">=</span> <span class="s2">&quot;custom&quot;</span>
+    <span class="n">FILENAME</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">NUMBER_OF_MUS</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># Calculate the PNR</span>
+        <span class="n">to_append</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">mu</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUMBER_OF_MUS</span><span class="p">):</span>
+            <span class="n">pnr</span> <span class="o">=</span> <span class="n">compute_pnr</span><span class="p">(</span>
+                <span class="n">ipts</span><span class="o">=</span><span class="n">IPTS</span><span class="p">[</span><span class="n">mu</span><span class="p">],</span>
+                <span class="n">mupulses</span><span class="o">=</span><span class="n">MUPULSES</span><span class="p">[</span><span class="n">mu</span><span class="p">],</span>
+                <span class="n">fsamp</span><span class="o">=</span><span class="n">fsamp</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">to_append</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pnr</span><span class="p">)</span>
+        <span class="n">PNR</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">to_append</span><span class="p">)</span>
+
+        <span class="c1"># Calculate the SIL</span>
+        <span class="n">to_append</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">mu</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUMBER_OF_MUS</span><span class="p">):</span>
+            <span class="n">sil</span> <span class="o">=</span> <span class="n">compute_sil</span><span class="p">(</span><span class="n">ipts</span><span class="o">=</span><span class="n">IPTS</span><span class="p">[</span><span class="n">mu</span><span class="p">],</span> <span class="n">mupulses</span><span class="o">=</span><span class="n">MUPULSES</span><span class="p">[</span><span class="n">mu</span><span class="p">])</span>
+            <span class="n">to_append</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sil</span><span class="p">)</span>
+        <span class="n">SIL</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">to_append</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">PNR</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">SIL</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="n">emgfile</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;SOURCE&quot;</span><span class="p">:</span> <span class="n">SOURCE</span><span class="p">,</span>
+        <span class="s2">&quot;FILENAME&quot;</span><span class="p">:</span> <span class="n">FILENAME</span><span class="p">,</span>
+        <span class="s2">&quot;RAW_SIGNAL&quot;</span><span class="p">:</span> <span class="n">RAW_SIGNAL</span><span class="p">,</span>
+        <span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">:</span> <span class="n">REF_SIGNAL</span><span class="p">,</span>
+        <span class="s2">&quot;PNR&quot;</span><span class="p">:</span> <span class="n">PNR</span><span class="p">,</span>
+        <span class="s2">&quot;SIL&quot;</span><span class="p">:</span> <span class="n">SIL</span><span class="p">,</span>
+        <span class="s2">&quot;IPTS&quot;</span><span class="p">:</span> <span class="n">IPTS</span><span class="p">,</span>
+        <span class="s2">&quot;MUPULSES&quot;</span><span class="p">:</span> <span class="n">MUPULSES</span><span class="p">,</span>
+        <span class="s2">&quot;FSAMP&quot;</span><span class="p">:</span> <span class="n">fsamp</span><span class="p">,</span>
+        <span class="s2">&quot;IED&quot;</span><span class="p">:</span> <span class="n">ied</span><span class="p">,</span>
+        <span class="s2">&quot;EMG_LENGTH&quot;</span><span class="p">:</span> <span class="n">EMG_LENGTH</span><span class="p">,</span>
+        <span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">:</span> <span class="n">NUMBER_OF_MUS</span><span class="p">,</span>
+        <span class="s2">&quot;BINARY_MUS_FIRING&quot;</span><span class="p">:</span> <span class="n">BINARY_MUS_FIRING</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">emgfile</span></div>
+
+
+<span class="c1"># ---------------------------------------------------------------------</span>
+<span class="c1"># Functions to convert and save the emgfile to JSON.</span>
+
+<div class="viewcode-block" id="save_json_emgfile"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.openfiles.save_json_emgfile">[docs]</a><span class="k">def</span> <span class="nf">save_json_emgfile</span><span class="p">(</span><span class="n">emgfile</span><span class="p">,</span> <span class="n">filepath</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Save the emgfile or emg_refsig as a JSON file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile.</span>
+<span class="sd">    filepath : str or Path</span>
+<span class="sd">        The directory and the name of the file to save (including file</span>
+<span class="sd">        extension .json).</span>
+<span class="sd">        This can be a simple string; The use of Path is not necessary.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;SOURCE&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;DEMUSE&quot;</span><span class="p">,</span> <span class="s2">&quot;OTB&quot;</span><span class="p">,</span> <span class="s2">&quot;custom&quot;</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        We need to convert all the components of emgfile to a dictionary and</span>
+<span class="sd">        then to json object.</span>
+<span class="sd">        pd.DataFrame cannot be converted with json.dumps.</span>
+<span class="sd">        Once all the elements are converted to json objects, we create a list</span>
+<span class="sd">        of json objects and dump/save it into a single json file.</span>
+<span class="sd">        emgfile = {</span>
+<span class="sd">            &quot;SOURCE&quot;: SOURCE,</span>
+<span class="sd">            &quot;FILENAME&quot;: FILENAME,</span>
+<span class="sd">            &quot;RAW_SIGNAL&quot;: RAW_SIGNAL,</span>
+<span class="sd">            &quot;REF_SIGNAL&quot;: REF_SIGNAL,</span>
+<span class="sd">            &quot;PNR&quot;: PNR,</span>
+<span class="sd">            &quot;SIL&quot;: SIL</span>
+<span class="sd">            &quot;IPTS&quot;: IPTS,</span>
+<span class="sd">            &quot;MUPULSES&quot;: MUPULSES,</span>
+<span class="sd">            &quot;FSAMP&quot;: FSAMP,</span>
+<span class="sd">            &quot;IED&quot;: IED,</span>
+<span class="sd">            &quot;EMG_LENGTH&quot;: EMG_LENGTH,</span>
+<span class="sd">            &quot;NUMBER_OF_MUS&quot;: NUMBER_OF_MUS,</span>
+<span class="sd">            &quot;BINARY_MUS_FIRING&quot;: BINARY_MUS_FIRING,</span>
+<span class="sd">        }</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># str or int</span>
+        <span class="c1"># Directly convert the ditionary to a json format</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;SOURCE&quot;</span><span class="p">:</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;SOURCE&quot;</span><span class="p">]}</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;FILENAME&quot;</span><span class="p">:</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;FILENAME&quot;</span><span class="p">]}</span>
+        <span class="n">fsamp</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;FSAMP&quot;</span><span class="p">:</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;FSAMP&quot;</span><span class="p">]}</span>
+        <span class="n">ied</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;IED&quot;</span><span class="p">:</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;IED&quot;</span><span class="p">]}</span>
+        <span class="n">emg_length</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;EMG_LENGTH&quot;</span><span class="p">:</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;EMG_LENGTH&quot;</span><span class="p">]}</span>
+        <span class="n">number_of_mus</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">:</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">]}</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">fsamp</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">fsamp</span><span class="p">)</span>
+        <span class="n">ied</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">ied</span><span class="p">)</span>
+        <span class="n">emg_length</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">emg_length</span><span class="p">)</span>
+        <span class="n">number_of_mus</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">number_of_mus</span><span class="p">)</span>
+
+        <span class="c1"># Extract the df from the dict, convert the dict to a json, put the</span>
+        <span class="c1"># json in a dict, convert the dict to a json.</span>
+        <span class="c1"># We use dict converted to json to locate better the objects while</span>
+        <span class="c1"># re-importing them in python.</span>
+        <span class="n">raw_signal</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;RAW_SIGNAL&quot;</span><span class="p">]</span>
+        <span class="n">ref_signal</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">]</span>
+        <span class="n">pnr</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;PNR&quot;</span><span class="p">]</span>
+        <span class="n">sil</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;SIL&quot;</span><span class="p">]</span>
+        <span class="n">ipts</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;IPTS&quot;</span><span class="p">]</span>
+        <span class="n">binary_mus_firing</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;BINARY_MUS_FIRING&quot;</span><span class="p">]</span>
+
+        <span class="n">raw_signal</span> <span class="o">=</span> <span class="n">raw_signal</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
+        <span class="n">ref_signal</span> <span class="o">=</span> <span class="n">ref_signal</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
+        <span class="n">pnr</span> <span class="o">=</span> <span class="n">pnr</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
+        <span class="n">sil</span> <span class="o">=</span> <span class="n">sil</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
+        <span class="n">ipts</span> <span class="o">=</span> <span class="n">ipts</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
+        <span class="n">binary_mus_firing</span> <span class="o">=</span> <span class="n">binary_mus_firing</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
+
+        <span class="n">raw_signal</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;RAW_SIGNAL&quot;</span><span class="p">:</span> <span class="n">raw_signal</span><span class="p">}</span>
+        <span class="n">ref_signal</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">:</span> <span class="n">ref_signal</span><span class="p">}</span>
+        <span class="n">pnr</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;PNR&quot;</span><span class="p">:</span> <span class="n">pnr</span><span class="p">}</span>
+        <span class="n">sil</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;SIL&quot;</span><span class="p">:</span> <span class="n">sil</span><span class="p">}</span>
+        <span class="n">ipts</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;IPTS&quot;</span><span class="p">:</span> <span class="n">ipts</span><span class="p">}</span>
+        <span class="n">binary_mus_firing</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;BINARY_MUS_FIRING&quot;</span><span class="p">:</span> <span class="n">binary_mus_firing</span><span class="p">}</span>
+
+        <span class="n">raw_signal</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">raw_signal</span><span class="p">)</span>
+        <span class="n">ref_signal</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">ref_signal</span><span class="p">)</span>
+        <span class="n">pnr</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pnr</span><span class="p">)</span>
+        <span class="n">sil</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">sil</span><span class="p">)</span>
+        <span class="n">ipts</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">ipts</span><span class="p">)</span>
+        <span class="n">binary_mus_firing</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">binary_mus_firing</span><span class="p">)</span>
+
+        <span class="c1"># list of ndarray.</span>
+        <span class="c1"># Every array has to be converted in a list; then, the list of lists</span>
+        <span class="c1"># can be converted to json.</span>
+        <span class="n">mupulses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">array</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;MUPULSES&quot;</span><span class="p">]):</span>
+            <span class="n">mupulses</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">ind</span><span class="p">,</span> <span class="n">array</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="n">mupulses</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">mupulses</span><span class="p">)</span>
+
+        <span class="c1"># Convert a list of json objects to json. The result of the conversion</span>
+        <span class="c1"># will be saved as the final json file.</span>
+        <span class="c1"># Don&#39;t alter this order unless you modify also the emg_from_json</span>
+        <span class="c1"># function.</span>
+        <span class="n">list_to_save</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">source</span><span class="p">,</span>
+            <span class="n">filename</span><span class="p">,</span>
+            <span class="n">raw_signal</span><span class="p">,</span>
+            <span class="n">ref_signal</span><span class="p">,</span>
+            <span class="n">pnr</span><span class="p">,</span>
+            <span class="n">sil</span><span class="p">,</span>
+            <span class="n">ipts</span><span class="p">,</span>
+            <span class="n">mupulses</span><span class="p">,</span>
+            <span class="n">fsamp</span><span class="p">,</span>
+            <span class="n">ied</span><span class="p">,</span>
+            <span class="n">emg_length</span><span class="p">,</span>
+            <span class="n">number_of_mus</span><span class="p">,</span>
+            <span class="n">binary_mus_firing</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="n">json_to_save</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">list_to_save</span><span class="p">)</span>
+
+        <span class="c1"># Compress and write the json file</span>
+        <span class="c1"># From: https://stackoverflow.com/questions/39450065/python-3-read-write-compressed-json-objects-from-to-gzip-file</span>
+        <span class="k">with</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="c1"># Encode json</span>
+            <span class="n">json_bytes</span> <span class="o">=</span> <span class="n">json_to_save</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+            <span class="c1"># Write to a file</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json_bytes</span><span class="p">)</span>
+            <span class="c1"># TODO_NEXT_ try to improve writing time. f.write is the bottleneck</span>
+            <span class="c1"># but it is hard to improve.</span>
+
+    <span class="k">elif</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;SOURCE&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;OTB_refsig&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        refsig =   {</span>
+<span class="sd">                &quot;SOURCE&quot; : SOURCE,</span>
+<span class="sd">                &quot;FILENAME&quot;: FILENAME,</span>
+<span class="sd">                &quot;FSAMP&quot; : FSAMP,</span>
+<span class="sd">                &quot;REF_SIGNAL&quot; : REF_SIGNAL,</span>
+<span class="sd">                }</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># str or int</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;SOURCE&quot;</span><span class="p">:</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;SOURCE&quot;</span><span class="p">]}</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;FILENAME&quot;</span><span class="p">:</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;FILENAME&quot;</span><span class="p">]}</span>
+        <span class="n">fsamp</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;FSAMP&quot;</span><span class="p">:</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;FSAMP&quot;</span><span class="p">]}</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">fsamp</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">fsamp</span><span class="p">)</span>
+        <span class="c1"># df</span>
+        <span class="n">ref_signal</span> <span class="o">=</span> <span class="n">emgfile</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">]</span>
+        <span class="n">ref_signal</span> <span class="o">=</span> <span class="n">ref_signal</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
+        <span class="n">ref_signal</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">:</span> <span class="n">ref_signal</span><span class="p">}</span>
+        <span class="n">ref_signal</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">ref_signal</span><span class="p">)</span>
+        <span class="c1"># Merge all the objects in one</span>
+        <span class="n">list_to_save</span> <span class="o">=</span> <span class="p">[</span><span class="n">source</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">fsamp</span><span class="p">,</span> <span class="n">ref_signal</span><span class="p">]</span>
+        <span class="n">json_to_save</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">list_to_save</span><span class="p">)</span>
+        <span class="c1"># Compress and save</span>
+        <span class="k">with</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json_bytes</span> <span class="o">=</span> <span class="n">json_to_save</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json_bytes</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;File source not recognised&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="emg_from_json"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.openfiles.emg_from_json">[docs]</a><span class="k">def</span> <span class="nf">emg_from_json</span><span class="p">(</span><span class="n">filepath</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load the emgfile or emg_refsig stored in json format.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filepath : str or Path</span>
+<span class="sd">        The directory and the name of the file to load (including file</span>
+<span class="sd">        extension .json).</span>
+<span class="sd">        This can be a simple string, the use of Path is not necessary.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The returned file is called ``emgfile`` for convention</span>
+<span class="sd">    (or ``emg_refsig`` if SOURCE = &quot;OTB_refsig&quot;).</span>
+
+<span class="sd">    For an extended explanation of the imported emgfile use:</span>
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile()</span>
+<span class="sd">    &gt;&gt;&gt; info = emg.info()</span>
+<span class="sd">    &gt;&gt;&gt; info.data(emgfile)</span>
+
+<span class="sd">    Or refer to the documentation of the following functions:</span>
+<span class="sd">        emg_from_otb</span>
+<span class="sd">        emg_from_demuse</span>
+<span class="sd">        refsig_from_otb</span>
+<span class="sd">        emg_from_customcsv</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Read and decompress json file</span>
+    <span class="k">with</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fin</span><span class="p">:</span>
+        <span class="n">json_bytes</span> <span class="o">=</span> <span class="n">fin</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="c1"># Decode json file</span>
+        <span class="n">json_str</span> <span class="o">=</span> <span class="n">json_bytes</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="n">jsonemgfile</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json_str</span><span class="p">)</span>
+
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    print(type(jsonemgfile))</span>
+<span class="sd">    &lt;class &#39;list&#39;&gt;</span>
+<span class="sd">    print(len(jsonemgfile))</span>
+<span class="sd">    11</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Access the dictionaries and extract the data</span>
+    <span class="c1"># jsonemgfile[0] contains the SOURCE in a dictionary</span>
+    <span class="n">source_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonemgfile</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">source_dict</span><span class="p">[</span><span class="s2">&quot;SOURCE&quot;</span><span class="p">]</span>
+    <span class="c1"># jsonemgfile[1] contains the FILENAME in all the sources</span>
+    <span class="n">filename_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonemgfile</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">filename_dict</span><span class="p">[</span><span class="s2">&quot;FILENAME&quot;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">source</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;DEMUSE&quot;</span><span class="p">,</span> <span class="s2">&quot;OTB&quot;</span><span class="p">,</span> <span class="s2">&quot;custom&quot;</span><span class="p">]:</span>
+        <span class="c1"># jsonemgfile[2] contains the RAW_SIGNAL in a dictionary, it can be</span>
+        <span class="c1"># extracted in a new dictionary and converted into a pd.DataFrame.</span>
+        <span class="c1"># index and columns are imported as str, we need to convert it to int.</span>
+        <span class="n">raw_signal_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonemgfile</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">raw_signal_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw_signal_dict</span><span class="p">[</span><span class="s2">&quot;RAW_SIGNAL&quot;</span><span class="p">])</span>
+        <span class="n">raw_signal</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">raw_signal_dict</span><span class="p">)</span>
+        <span class="n">raw_signal</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">raw_signal</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">raw_signal</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">raw_signal</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">raw_signal</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># jsonemgfile[3] contains the REF_SIGNAL to be treated as jsonemgfile[2]</span>
+        <span class="n">ref_signal_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonemgfile</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+        <span class="n">ref_signal_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">ref_signal_dict</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">])</span>
+        <span class="n">ref_signal</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">ref_signal_dict</span><span class="p">)</span>
+        <span class="n">ref_signal</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">ref_signal</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">ref_signal</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">ref_signal</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">ref_signal</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># jsonemgfile[4] contains the PNR to be treated as jsonemgfile[2]</span>
+        <span class="n">pnr_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonemgfile</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+        <span class="n">pnr_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pnr_dict</span><span class="p">[</span><span class="s2">&quot;PNR&quot;</span><span class="p">])</span>
+        <span class="n">pnr</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">pnr_dict</span><span class="p">)</span>
+        <span class="n">pnr</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">pnr</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">pnr</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">pnr</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">pnr</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># jsonemgfile[5] contains the SIL to be treated as jsonemgfile[2]</span>
+        <span class="n">sil_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonemgfile</span><span class="p">[</span><span class="mi">5</span><span class="p">])</span>
+        <span class="n">sil_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">sil_dict</span><span class="p">[</span><span class="s2">&quot;SIL&quot;</span><span class="p">])</span>
+        <span class="n">sil</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">sil_dict</span><span class="p">)</span>
+        <span class="n">sil</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">sil</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">sil</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">sil</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">sil</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># jsonemgfile[6] contains the IPTS to be treated as jsonemgfile[2]</span>
+        <span class="n">ipts_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonemgfile</span><span class="p">[</span><span class="mi">6</span><span class="p">])</span>
+        <span class="n">ipts_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">ipts_dict</span><span class="p">[</span><span class="s2">&quot;IPTS&quot;</span><span class="p">])</span>
+        <span class="n">ipts</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">ipts_dict</span><span class="p">)</span>
+        <span class="n">ipts</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">ipts</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">ipts</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">ipts</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">ipts</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># jsonemgfile[7] contains the MUPULSES which is a list of lists but</span>
+        <span class="c1"># has to be converted in a list of ndarrays.</span>
+        <span class="n">mupulses</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonemgfile</span><span class="p">[</span><span class="mi">7</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">num</span><span class="p">,</span> <span class="n">element</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mupulses</span><span class="p">):</span>
+            <span class="n">mupulses</span><span class="p">[</span><span class="n">num</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+        <span class="c1"># jsonemgfile[8] contains the FSAMP to be treated as jsonemgfile[0]</span>
+        <span class="n">fsamp_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonemgfile</span><span class="p">[</span><span class="mi">8</span><span class="p">])</span>
+        <span class="n">fsamp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fsamp_dict</span><span class="p">[</span><span class="s2">&quot;FSAMP&quot;</span><span class="p">])</span>
+        <span class="c1"># jsonemgfile[9] contains the IED to be treated as jsonemgfile[0]</span>
+        <span class="n">ied_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonemgfile</span><span class="p">[</span><span class="mi">9</span><span class="p">])</span>
+        <span class="n">ied</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ied_dict</span><span class="p">[</span><span class="s2">&quot;IED&quot;</span><span class="p">])</span>
+        <span class="c1"># jsonemgfile[10] contains the EMG_LENGTH to be treated as jsonemgfile[0]</span>
+        <span class="n">emg_length_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonemgfile</span><span class="p">[</span><span class="mi">10</span><span class="p">])</span>
+        <span class="n">emg_length</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">emg_length_dict</span><span class="p">[</span><span class="s2">&quot;EMG_LENGTH&quot;</span><span class="p">])</span>
+        <span class="c1"># jsonemgfile[11] contains the NUMBER_OF_MUS to be treated as</span>
+        <span class="c1"># jsonemgfile[0]</span>
+        <span class="n">number_of_mus_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonemgfile</span><span class="p">[</span><span class="mi">11</span><span class="p">])</span>
+        <span class="n">number_of_mus</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">number_of_mus_dict</span><span class="p">[</span><span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">])</span>
+        <span class="c1"># jsonemgfile[12] contains the BINARY_MUS_FIRING to be treated as</span>
+        <span class="c1"># jsonemgfile[2]</span>
+        <span class="n">binary_mus_firing_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonemgfile</span><span class="p">[</span><span class="mi">12</span><span class="p">])</span>
+        <span class="n">binary_mus_firing_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">binary_mus_firing_dict</span><span class="p">[</span><span class="s2">&quot;BINARY_MUS_FIRING&quot;</span><span class="p">])</span>
+        <span class="n">binary_mus_firing</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">binary_mus_firing_dict</span><span class="p">)</span>
+        <span class="n">binary_mus_firing</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">binary_mus_firing</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">binary_mus_firing</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">binary_mus_firing</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+        <span class="n">emgfile</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;SOURCE&quot;</span><span class="p">:</span> <span class="n">source</span><span class="p">,</span>
+            <span class="s2">&quot;FILENAME&quot;</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>
+            <span class="s2">&quot;RAW_SIGNAL&quot;</span><span class="p">:</span> <span class="n">raw_signal</span><span class="p">,</span>
+            <span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">:</span> <span class="n">ref_signal</span><span class="p">,</span>
+            <span class="s2">&quot;PNR&quot;</span><span class="p">:</span> <span class="n">pnr</span><span class="p">,</span>
+            <span class="s2">&quot;SIL&quot;</span><span class="p">:</span> <span class="n">sil</span><span class="p">,</span>
+            <span class="s2">&quot;IPTS&quot;</span><span class="p">:</span> <span class="n">ipts</span><span class="p">,</span>
+            <span class="s2">&quot;MUPULSES&quot;</span><span class="p">:</span> <span class="n">mupulses</span><span class="p">,</span>
+            <span class="s2">&quot;FSAMP&quot;</span><span class="p">:</span> <span class="n">fsamp</span><span class="p">,</span>
+            <span class="s2">&quot;IED&quot;</span><span class="p">:</span> <span class="n">ied</span><span class="p">,</span>
+            <span class="s2">&quot;EMG_LENGTH&quot;</span><span class="p">:</span> <span class="n">emg_length</span><span class="p">,</span>
+            <span class="s2">&quot;NUMBER_OF_MUS&quot;</span><span class="p">:</span> <span class="n">number_of_mus</span><span class="p">,</span>
+            <span class="s2">&quot;BINARY_MUS_FIRING&quot;</span><span class="p">:</span> <span class="n">binary_mus_firing</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="k">elif</span> <span class="n">source</span> <span class="o">==</span> <span class="s2">&quot;OTB_refsig&quot;</span><span class="p">:</span>
+        <span class="c1"># jsonemgfile[2] contains the fsamp</span>
+        <span class="n">fsamp_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonemgfile</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">fsamp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fsamp_dict</span><span class="p">[</span><span class="s2">&quot;FSAMP&quot;</span><span class="p">])</span>
+        <span class="c1"># jsonemgfile[3] contains the REF_SIGNAL</span>
+        <span class="n">ref_signal_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonemgfile</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+        <span class="n">ref_signal_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">ref_signal_dict</span><span class="p">[</span><span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">])</span>
+        <span class="n">ref_signal</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">ref_signal_dict</span><span class="p">)</span>
+        <span class="n">ref_signal</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">ref_signal</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">ref_signal</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">ref_signal</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">ref_signal</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">emgfile</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;SOURCE&quot;</span><span class="p">:</span> <span class="n">source</span><span class="p">,</span>
+            <span class="s2">&quot;FILENAME&quot;</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>
+            <span class="s2">&quot;FSAMP&quot;</span><span class="p">:</span> <span class="n">fsamp</span><span class="p">,</span>
+            <span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">:</span> <span class="n">ref_signal</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;File source not recognised&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">emgfile</span></div>
+
+
+<span class="c1"># ---------------------------------------------------------------------</span>
+<span class="c1"># Function to open files from a GUI in a single line of code.</span>
+
+<div class="viewcode-block" id="askopenfile"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.openfiles.askopenfile">[docs]</a><span class="k">def</span> <span class="nf">askopenfile</span><span class="p">(</span><span class="n">initialdir</span><span class="o">=</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">filesource</span><span class="o">=</span><span class="s2">&quot;DEMUSE&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Select and open files with a GUI.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    initialdir : str or Path, default &quot;/&quot;</span>
+<span class="sd">        The directory of the file to load (excluding file name).</span>
+<span class="sd">        This can be a simple string, the use of Path is not necessary.</span>
+<span class="sd">    filesource : str {&quot;DEMUSE&quot;, &quot;OTB&quot;, &quot;OTB_refsig&quot;, &quot;custom&quot;, &quot;Open_HD-EMG&quot;}, default &quot;DEMUSE&quot;</span>
+<span class="sd">        See notes for how files should be exported from OTB.</span>
+
+<span class="sd">        ``DEMUSE``</span>
+<span class="sd">            File saved from DEMUSE (.mat).</span>
+<span class="sd">        ``OTB``</span>
+<span class="sd">            File exported from OTB with decomposition and reference signal (.mat).</span>
+<span class="sd">        ``OTB_refsig``</span>
+<span class="sd">            File exported from OTB with only the reference signal (.mat).</span>
+<span class="sd">        ``custom``</span>
+<span class="sd">            Custom file format (.csv).</span>
+<span class="sd">        ``Open_HD-EMG``</span>
+<span class="sd">            File saved from openhdemg (.json).</span>
+<span class="sd">    otb_ext_factor : int, default 8</span>
+<span class="sd">        The extension factor used for the decomposition in the OTbiolab+</span>
+<span class="sd">        software.</span>
+<span class="sd">        Ignore if loading other files.</span>
+<span class="sd">    otb_refsig_type : list, default [True, &quot;fullsampled&quot;]</span>
+<span class="sd">        Whether to seacrh also for the REF_SIGNAL and whether to load the full</span>
+<span class="sd">        or sub-sampled one. The list is composed as [bool, str]. str can be </span>
+<span class="sd">        &quot;fullsampled&quot; or &quot;subsampled&quot;.</span>
+<span class="sd">        Ignore if loading other files.</span>
+<span class="sd">    otb_version : str, default &quot;1.5.8.0&quot;</span>
+<span class="sd">        Version of the OTBiolab+ software used (4 points).</span>
+<span class="sd">        Tested versions are:</span>
+<span class="sd">            &quot;1.5.3.0&quot;,</span>
+<span class="sd">            &quot;1.5.4.0&quot;,</span>
+<span class="sd">            &quot;1.5.5.0&quot;,</span>
+<span class="sd">            &quot;1.5.6.0&quot;,</span>
+<span class="sd">            &quot;1.5.7.2&quot;,</span>
+<span class="sd">            &quot;1.5.7.3&quot;,</span>
+<span class="sd">            &quot;1.5.8.0&quot;,</span>
+<span class="sd">        If your specific version is not available in the tested versions,</span>
+<span class="sd">        trying with the closer one usually works, but please double check the</span>
+<span class="sd">        results. Ignore if loading other files.</span>
+<span class="sd">    custom_ref_signal : str, default &#39;REF_SIGNAL&#39;</span>
+<span class="sd">        Label of the column(s) containing the reference signal of the custom</span>
+<span class="sd">        file.</span>
+<span class="sd">        This and the following arguments are needed only for custom files.</span>
+<span class="sd">        Ignore if loading other files.</span>
+<span class="sd">    custom_raw_signal : str, default &#39;RAW_SIGNAL&#39;</span>
+<span class="sd">        Label of the column(s) containing the raw emg signal of the custom</span>
+<span class="sd">        file. Ignore if loading other files.</span>
+<span class="sd">    custom_ipts : str, default &#39;IPTS&#39;</span>
+<span class="sd">        Label of the column(s) containing the pulse train of the custom file.</span>
+<span class="sd">        Ignore if loading other files.</span>
+<span class="sd">    custom_mupulses : str, default &#39;MUPULSES&#39;</span>
+<span class="sd">        Label of the column(s) containing the times of firing of the custom</span>
+<span class="sd">        file. Ignore if loading other files.</span>
+<span class="sd">    custom_binary_mus_firing : str, default &#39;BINARY_MUS_FIRING&#39;</span>
+<span class="sd">        Label of the column(s) containing the binary representation</span>
+<span class="sd">        of the MUs firings of the custom file.</span>
+<span class="sd">        Ignore if loading other files.</span>
+<span class="sd">    custom_fsamp : int, default 2048</span>
+<span class="sd">        Tha sampling frequency of the custom file.</span>
+<span class="sd">        Ignore if loading other files.</span>
+<span class="sd">    custom_ied : int, default 8</span>
+<span class="sd">        The inter-electrode distance in mm of the custom file.</span>
+<span class="sd">        Ignore if loading other files.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    asksavefile : select where to save files with a GUI.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The returned file is called ``emgfile`` for convention (or ``emg_refsig``</span>
+<span class="sd">    if SOURCE = &quot;OTB_refsig&quot;).</span>
+
+<span class="sd">    The input .mat file exported from the OTBiolab+ software should have a</span>
+<span class="sd">    specific content:</span>
+<span class="sd">    - refsig signal is optional but, if present, there should be both the</span>
+<span class="sd">        fullsampled and the subsampled version (in OTBioLab+ the &quot;performed</span>
+<span class="sd">        path&quot; refers to the subsampled signal, the &quot;acquired data&quot; to the</span>
+<span class="sd">        fullsampled signal), REF_SIGNAL is expected to be expressed as % of</span>
+<span class="sd">        the MViF (but not compulsory).</span>
+<span class="sd">    - Both the IPTS (&#39;Source for decomposition...&#39; in OTBioLab+) and the</span>
+<span class="sd">        BINARY_MUS_FIRING (&#39;Decomposition of...&#39; in OTBioLab+) should be</span>
+<span class="sd">        present.</span>
+<span class="sd">    - The raw EMG signal should be present (it has no specific name in</span>
+<span class="sd">        OTBioLab+) with all the channels. Don&#39;t exclude unwanted channels</span>
+<span class="sd">        before exporting the .mat file.</span>
+<span class="sd">    - NO OTHER ELEMENTS SHOULD BE PRESENT!</span>
+
+<span class="sd">    For custom .csv files:</span>
+<span class="sd">    The variables of interest should be contained in columns. The name of the</span>
+<span class="sd">    columns containing each variable can be specified by the user if different</span>
+<span class="sd">    from the default values.</span>
+<span class="sd">    This function detects the content of the .csv by parsing the .csv columns.</span>
+<span class="sd">    For parsing, column labels should be provided. A label is a term common</span>
+<span class="sd">    to all the columns containing the same information.</span>
+<span class="sd">    For example, if the raw signal is contained in the columns &#39;RAW_SIGNAL_1&#39;,</span>
+<span class="sd">    &#39;RAW_SIGNAL_2&#39;, ... , &#39;RAW_SIGNAL_n&#39;, the label of the columns should be</span>
+<span class="sd">    &#39;RAW_SIGNAL&#39;.</span>
+<span class="sd">    If the parameters in input are not present in the .csv file, the user</span>
+<span class="sd">    can simply leave the original inputs.</span>
+<span class="sd">    Please see the documentation of the function emg_from_customcsv for</span>
+<span class="sd">    additional informations.</span>
+
+<span class="sd">    Structure of the returned emgfile:</span>
+<span class="sd">        emgfile = {</span>
+<span class="sd">            &quot;SOURCE&quot;: SOURCE,</span>
+<span class="sd">            &quot;FILENAME&quot;: FILENAME,</span>
+<span class="sd">            &quot;RAW_SIGNAL&quot;: RAW_SIGNAL,</span>
+<span class="sd">            &quot;REF_SIGNAL&quot;: REF_SIGNAL,</span>
+<span class="sd">            &quot;PNR&quot;: PNR,</span>
+<span class="sd">            &quot;SIL&quot;: SIL,</span>
+<span class="sd">            &quot;IPTS&quot;: IPTS,</span>
+<span class="sd">            &quot;MUPULSES&quot;: MUPULSES,</span>
+<span class="sd">            &quot;FSAMP&quot;: FSAMP,</span>
+<span class="sd">            &quot;IED&quot;: IED,</span>
+<span class="sd">            &quot;EMG_LENGTH&quot;: EMG_LENGTH,</span>
+<span class="sd">            &quot;NUMBER_OF_MUS&quot;: NUMBER_OF_MUS,</span>
+<span class="sd">            &quot;BINARY_MUS_FIRING&quot;: BINARY_MUS_FIRING,</span>
+<span class="sd">        }</span>
+
+<span class="sd">    Structure of the returned emg_refsig:</span>
+<span class="sd">        emg_refsig = {</span>
+<span class="sd">            &quot;SOURCE&quot;: SOURCE,</span>
+<span class="sd">            &quot;FILENAME&quot;: FILENAME,</span>
+<span class="sd">            &quot;FSAMP&quot;: FSAMP,</span>
+<span class="sd">            &quot;REF_SIGNAL&quot;: REF_SIGNAL,</span>
+<span class="sd">        }</span>
+
+<span class="sd">    For an extended explanation of the imported emgfile use:</span>
+<span class="sd">    &gt;&gt;&gt; import openhdemg as emg</span>
+<span class="sd">    &gt;&gt;&gt; emgfile = emg.askopenfile()</span>
+<span class="sd">    &gt;&gt;&gt; info = emg.info()</span>
+<span class="sd">    &gt;&gt;&gt; info.data(emgfile)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Set initialdir (actually not working on Windows)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">initialdir</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">initialdir</span> <span class="o">==</span> <span class="s2">&quot;/&quot;</span><span class="p">:</span>
+            <span class="n">initialdir</span> <span class="o">=</span> <span class="s2">&quot;/Decomposed Test files/&quot;</span>
+
+    <span class="c1"># Create and hide the tkinter root window necessary for the GUI based</span>
+    <span class="c1"># open-file function</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">Tk</span><span class="p">()</span>
+    <span class="n">root</span><span class="o">.</span><span class="n">withdraw</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">filesource</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;DEMUSE&quot;</span><span class="p">,</span> <span class="s2">&quot;OTB&quot;</span><span class="p">,</span> <span class="s2">&quot;OTB_refsig&quot;</span><span class="p">]:</span>
+        <span class="n">file_toOpen</span> <span class="o">=</span> <span class="n">filedialog</span><span class="o">.</span><span class="n">askopenfilename</span><span class="p">(</span>
+            <span class="n">initialdir</span><span class="o">=</span><span class="n">initialdir</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Select a </span><span class="si">{</span><span class="n">filesource</span><span class="si">}</span><span class="s2"> file to load&quot;</span><span class="p">,</span>
+            <span class="n">filetypes</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;MATLAB files&quot;</span><span class="p">,</span> <span class="s2">&quot;.mat&quot;</span><span class="p">)],</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">filesource</span> <span class="o">==</span> <span class="s2">&quot;Open_HD-EMG&quot;</span><span class="p">:</span>
+        <span class="n">file_toOpen</span> <span class="o">=</span> <span class="n">filedialog</span><span class="o">.</span><span class="n">askopenfilename</span><span class="p">(</span>
+            <span class="n">initialdir</span><span class="o">=</span><span class="n">initialdir</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select an Open_HD-EMG file to load&quot;</span><span class="p">,</span>
+            <span class="n">filetypes</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;JSON files&quot;</span><span class="p">,</span> <span class="s2">&quot;.json&quot;</span><span class="p">)],</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">filesource</span> <span class="o">==</span> <span class="s2">&quot;custom&quot;</span><span class="p">:</span>
+        <span class="n">file_toOpen</span> <span class="o">=</span> <span class="n">filedialog</span><span class="o">.</span><span class="n">askopenfilename</span><span class="p">(</span>
+            <span class="n">initialdir</span><span class="o">=</span><span class="n">initialdir</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select a custom file to load&quot;</span><span class="p">,</span>
+            <span class="n">filetypes</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;CSV files&quot;</span><span class="p">,</span> <span class="s2">&quot;.csv&quot;</span><span class="p">)],</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+            <span class="s2">&quot;filesource not valid, it must be one of &#39;DEMUSE&#39;, &#39;OTB&#39;, &#39;OTB_refsig&#39; or &#39;Open_HD-EMG&#39;&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Destroy the root since it is no longer necessary</span>
+    <span class="n">root</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+
+    <span class="c1"># Open file depending on file origin</span>
+    <span class="k">if</span> <span class="n">filesource</span> <span class="o">==</span> <span class="s2">&quot;DEMUSE&quot;</span><span class="p">:</span>
+        <span class="n">emgfile</span> <span class="o">=</span> <span class="n">emg_from_demuse</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="n">file_toOpen</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">filesource</span> <span class="o">==</span> <span class="s2">&quot;OTB&quot;</span><span class="p">:</span>
+        <span class="n">emgfile</span> <span class="o">=</span> <span class="n">emg_from_otb</span><span class="p">(</span>
+            <span class="n">filepath</span><span class="o">=</span><span class="n">file_toOpen</span><span class="p">,</span>
+            <span class="n">ext_factor</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;otb_ext_factor&quot;</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span>
+            <span class="n">refsig</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;otb_refsig_type&quot;</span><span class="p">,</span> <span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fullsampled&quot;</span><span class="p">]),</span>
+            <span class="n">version</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;otb_version&quot;</span><span class="p">,</span> <span class="s2">&quot;1.5.8.0&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">filesource</span> <span class="o">==</span> <span class="s2">&quot;OTB_refsig&quot;</span><span class="p">:</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;otb_refsig_type&quot;</span><span class="p">,</span> <span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fullsampled&quot;</span><span class="p">])</span>
+        <span class="n">emgfile</span> <span class="o">=</span> <span class="n">refsig_from_otb</span><span class="p">(</span>
+            <span class="n">filepath</span><span class="o">=</span><span class="n">file_toOpen</span><span class="p">,</span>
+            <span class="n">refsig</span><span class="o">=</span><span class="n">ref</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">version</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;otb_version&quot;</span><span class="p">,</span> <span class="s2">&quot;1.5.8.0&quot;</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">filesource</span> <span class="o">==</span> <span class="s2">&quot;Open_HD-EMG&quot;</span><span class="p">:</span>
+        <span class="n">emgfile</span> <span class="o">=</span> <span class="n">emg_from_json</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="n">file_toOpen</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># custom</span>
+        <span class="n">emgfile</span> <span class="o">=</span> <span class="n">emg_from_customcsv</span><span class="p">(</span>
+            <span class="n">filepath</span><span class="o">=</span><span class="n">file_toOpen</span><span class="p">,</span>
+            <span class="n">ref_signal</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;custom_ref_signal&quot;</span><span class="p">,</span> <span class="s2">&quot;REF_SIGNAL&quot;</span><span class="p">),</span>
+            <span class="n">raw_signal</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;custom_raw_signal&quot;</span><span class="p">,</span> <span class="s2">&quot;RAW_SIGNAL&quot;</span><span class="p">),</span>
+            <span class="n">ipts</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;custom_ipts&quot;</span><span class="p">,</span> <span class="s2">&quot;IPTS&quot;</span><span class="p">),</span>
+            <span class="n">mupulses</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;custom_mupulses&quot;</span><span class="p">,</span> <span class="s2">&quot;MUPULSES&quot;</span><span class="p">),</span>
+            <span class="n">binary_mus_firing</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="s2">&quot;custom_binary_mus_firing&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;BINARY_MUS_FIRING&quot;</span>
+            <span class="p">),</span>
+            <span class="n">fsamp</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;custom_fsamp&quot;</span><span class="p">,</span> <span class="mi">2048</span><span class="p">),</span>
+            <span class="n">ied</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;custom_ied&quot;</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">-----------</span><span class="se">\n</span><span class="s2">File loaded</span><span class="se">\n</span><span class="s2">-----------</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">emgfile</span></div>
+
+
+<div class="viewcode-block" id="asksavefile"><a class="viewcode-back" href="../../../openhdemg.library.html#openhdemg.library.openfiles.asksavefile">[docs]</a><span class="k">def</span> <span class="nf">asksavefile</span><span class="p">(</span><span class="n">emgfile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Select where to save files with a GUI.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    emgfile : dict</span>
+<span class="sd">        The dictionary containing the emgfile to save.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    askopenfile : select and open files with a GUI.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Create and hide the tkinter root window necessary for the GUI based</span>
+    <span class="c1"># open-file function</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">Tk</span><span class="p">()</span>
+    <span class="n">root</span><span class="o">.</span><span class="n">withdraw</span><span class="p">()</span>
+
+    <span class="n">filepath</span> <span class="o">=</span> <span class="n">filedialog</span><span class="o">.</span><span class="n">asksaveasfilename</span><span class="p">(</span>
+        <span class="n">defaultextension</span><span class="o">=</span><span class="s2">&quot;.json&quot;</span><span class="p">,</span>
+        <span class="n">filetypes</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;json files&quot;</span><span class="p">,</span> <span class="s2">&quot;*.json&quot;</span><span class="p">)],</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Save JSON file&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Destroy the root since it is no longer necessary</span>
+    <span class="n">root</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">-----------</span><span class="se">\n</span><span class="s2">Saving file</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">save_json_emgfile</span><span class="p">(</span><span class="n">emgfile</span><span class="p">,</span> <span class="n">filepath</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;File saved</span><span class="se">\n</span><span class="s2">-----------</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Giacomo Valli.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
