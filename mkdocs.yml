@@ -1,0 +1,28 @@
+site_name: openhdemg
+
+theme:
+  name: "material"
+
+# Plugin to get the docs from docstrings.
+# Setup the numpy stile as the default style.
+plugins:
+- mkdocstrings:
+    handlers:
+      python:
+        options:
+          docstring_style: 'numpy'
+      
+
+
+
+
+# Specify custom pages-menu order.
+# If you don’t like a page’s title, you can optionally add another element in
+# front of the filename whose title you want to change.
+nav:
+  - Calculation Docs: index.md
+  - tutorials.md
+  - How-To Guides: how-to-guides.md
+  - reference.md
+  - explanation.md
+
