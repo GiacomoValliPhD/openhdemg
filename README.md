@@ -1,7 +1,9 @@
 # Welcome to openhdemg
 <br/>
 
-![banner logo](docs/md_graphics/Index/Banner_Logo.png)
+<p align="center">
+  <img src="docs/md_graphics/Index/Banner_Logo.png" />
+</p>
 
 <br/>
 
@@ -13,7 +15,8 @@
 functionalities specifically designed for the analysis of High-Density
 Electromyography (HD-EMG) recordings.
 Some of its main features are listed below, but there is much more to
-discover! For a full list of available functions, please refer to the **API reference** section.
+discover! For a full list of available functions, please refer to the
+**API reference** section.
 
 1. **Load** decomposed HD-EMG files from various sources, such as .mat and
 .csv files. This allows to interface *openhdemg* with the commonly used
@@ -31,9 +34,8 @@ session and analyse them together to increase the number of motor units'.
 
 ## Start immediately
 If you already know how to use Python, that's the way to go!
-Otherwise, visit the section [Tutorials](Tutorials.md) and navigate to the
-tutorial
-[Setup your Python environment](Tutorials.md#setup-your-python-environment).
+Otherwise, visit the section *Tutorials* and navigate to the
+tutorial **Setup your Python environment**.
 
 *openhdemg* can be easily installed using pip:
 
@@ -48,12 +50,12 @@ conda install -c conda-forge openhdemg
 ```
 
 If you want an overview of what you can do with the *openhdemg* library, have
-a look at the [Quick Start](Quick-Start.md) section and then explore all the
-functions in the [API documentation](API-Reference.md).
+a look at the **Quick Start** section and then explore all the
+functions in the **API documentation**.
 
 ## Good to know
 In addition to the rich set of modules and functions presented in the
-[API documentation](API-Reference.md), *openhdemg* offers also a practical
+**API documentation**, *openhdemg* offers also a practical
 graphical user interface (GUI) from which many tasks can be performed without
 writing a single line of code!
 

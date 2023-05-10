@@ -13,7 +13,8 @@
 functionalities specifically designed for the analysis of High-Density
 Electromyography (HD-EMG) recordings.
 Some of its main features are listed below, but there is much more to
-discover! For a full list of available functions, please refer to the **API reference** section.
+discover! For a full list of available functions, please refer to the
+**API reference** section.
 
 1. **Load** decomposed HD-EMG files from various sources, such as .mat and
 .csv files. This allows to interface *openhdemg* with the commonly used
@@ -49,13 +50,13 @@ conda install -c conda-forge openhdemg
 
 If you want an overview of what you can do with the *openhdemg* library, have
 a look at the [Quick Start](Quick-Start.md) section and then explore all the
-functions in the [API documentation](API-Reference.md).
+functions in the **API reference**.
 
 ## Good to know
 In addition to the rich set of modules and functions presented in the
-[API documentation](API-Reference.md), *openhdemg* offers also a practical
-graphical user interface (GUI) from which many tasks can be performed without
-writing a single line of code!
+**API reference**, *openhdemg* offers also a practical graphical user interface
+(GUI) from which many tasks can be performed without writing a single line of
+code!
 
 After installing the *openhdemg* package, the GUI can be simply accessed from
 the command line (check to be into the virtual environment) with:
