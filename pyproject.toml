@@ -11,9 +11,9 @@ authors = [
 ]
 description = "Open-source analysis of High-Density EMG data"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3"
 classifiers = [
-    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent"
 ]
