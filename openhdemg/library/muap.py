@@ -1,7 +1,7 @@
 """
 This module contains functions to produce and analyse MUs anction potentials
 (MUAPs).
-"""
+"""  # TODO replace all the examples with the otb_testfile
 
 import pandas as pd
 from openhdemg.library.tools import delete_mus
@@ -11,7 +11,7 @@ from openhdemg.library.mathtools import (
     find_teta,
     mle_cv_est,
 )
-from openhdemg.library.otbelectrodes import sort_rawemg
+from openhdemg.library.electrodes import sort_rawemg
 from openhdemg.library.plotemg import plot_muaps, plot_muaps_for_cv
 from scipy import signal
 import matplotlib.pyplot as plt
@@ -53,7 +53,7 @@ def diff(sorted_rawemg):
 
     See also
     --------
-    double_diff : calculate double differential of RAW_SIGNAL on matrix rows.
+    - double_diff : calculate double differential of RAW_SIGNAL on matrix rows.
 
     Notes
     -----
@@ -137,7 +137,7 @@ def double_diff(sorted_rawemg):
 
     See also
     --------
-    diff : Calculate single differential of RAW_SIGNAL on matrix rows.
+    - diff : Calculate single differential of RAW_SIGNAL on matrix rows.
 
     Notes
     -----
@@ -231,10 +231,10 @@ def sta(
 
     See also
     --------
-    unpack_sta : build a common pd.DataFrame from the sta dict containing
+    - unpack_sta : build a common pd.DataFrame from the sta dict containing
         all the channels.
-    pack_sta : pack the pd.DataFrame containing STA to a dict.
-    st_muap : generate spike triggered MUs action potentials
+    - pack_sta : pack the pd.DataFrame containing STA to a dict.
+    - st_muap : generate spike triggered MUs action potentials
         over the entire spike train of every MUs.
 
     Notes
@@ -408,7 +408,7 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
 
     See also
     --------
-    sta : computes the STA of every MUs.
+    - sta : computes the STA of every MUs.
 
     Notes
     -----
@@ -508,13 +508,13 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
     return stmuap
 
 
-def unpack_sta(sta_mu1):
+def unpack_sta(sta_mu):
     """
     Build a common pd.DataFrame from the sta_dict containing all the channels.
 
     Parameters
     ----------
-    sta_mu1 : dict
+    sta_mu : dict
         A dict containing the STA of the MU.
 
     Returns
@@ -525,16 +525,16 @@ def unpack_sta(sta_mu1):
 
     See also
     --------
-    sta : computes the STA of every MUs.
-    pack_sta : pack the pd.DataFrame containing STA to a dict.
+    - sta : computes the STA of every MUs.
+    - pack_sta : pack the pd.DataFrame containing STA to a dict.
     """
 
     dfs = [
-        sta_mu1["col0"],
-        sta_mu1["col1"],
-        sta_mu1["col2"],
-        sta_mu1["col3"],
-        sta_mu1["col4"],
+        sta_mu["col0"],
+        sta_mu["col1"],
+        sta_mu["col2"],
+        sta_mu["col3"],
+        sta_mu["col4"],
     ]
     df1 = reduce(
         lambda left,
@@ -545,8 +545,8 @@ def unpack_sta(sta_mu1):
     return df1
 
 
-# FIXME it actually works only with matrices of 5 columns
-def pack_sta(df_sta1):
+# FIXME both pack and unpack work only with matrices of 5 columns
+def pack_sta(df_sta):
     """
     Pack the pd.DataFrame containing STA to a dict.
 
@@ -563,19 +563,19 @@ def pack_sta(df_sta1):
 
     See also
     --------
-    sta : computes the STA of every MUs.
-    unpack_sta : build a common pd.DataFrame from the sta dict containing
+    - sta : computes the STA of every MUs.
+    - unpack_sta : build a common pd.DataFrame from the sta dict containing
         all the channels.
     """
 
-    slice = int(np.ceil(len(df_sta1.columns) / 5))
+    slice = int(np.ceil(len(df_sta.columns) / 5))
 
     packed_sta = {
-        "col0": df_sta1.iloc[:, 0:slice],
-        "col1": df_sta1.iloc[:, slice:slice * 2],
-        "col2": df_sta1.iloc[:, slice * 2: slice * 3],
-        "col3": df_sta1.iloc[:, slice * 3: slice * 4],
-        "col4": df_sta1.iloc[:, slice * 4: slice * 5],
+        "col0": df_sta.iloc[:, 0:slice],
+        "col1": df_sta.iloc[:, slice:slice * 2],
+        "col2": df_sta.iloc[:, slice * 2: slice * 3],
+        "col3": df_sta.iloc[:, slice * 3: slice * 4],
+        "col4": df_sta.iloc[:, slice * 4: slice * 5],
     }
 
     return packed_sta
@@ -614,8 +614,8 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
 
     See also
     --------
-    sta : computes the STA of every MUs.
-    norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
+    - sta : computes the STA of every MUs.
+    - norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
         two MUS.
 
     Notes
@@ -780,10 +780,10 @@ def tracking(
 
     See also
     --------
-    sta : computes the STA of every MUs.
-    norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
+    - sta : computes the STA of every MUs.
+    - norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
         two MUS.
-    remove_duplicates_between : remove duplicated MUs across two different
+    - remove_duplicates_between : remove duplicated MUs across two different
         files based on STA.
 
     Notes
@@ -849,12 +849,12 @@ def tracking(
         # Compare mu_file1 against all the MUs in file2
         for mu_file2 in range(emgfile2["NUMBER_OF_MUS"]):
             # Firs, align the STAs
-            """ aligned_sta1, aligned_sta2 = align_by_xcorr(
+            aligned_sta1, aligned_sta2 = align_by_xcorr(
                 sta_emgfile1[mu_file1],
                 sta_emgfile2[mu_file2],
                 finalduration=0.5
-            ) """
-            aligned_sta1, aligned_sta2 = sta_emgfile1[mu_file1], sta_emgfile2[mu_file2]
+            )
+            aligned_sta1, aligned_sta2 = sta_emgfile1[mu_file1], sta_emgfile2[mu_file2] # TODO
 
             # Second, compute 2d cross-correlation
             df1 = unpack_sta(aligned_sta1)
@@ -1032,10 +1032,10 @@ def remove_duplicates_between(
 
     See also
     --------
-    sta : computes the STA of every MUs.
-    norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
+    - sta : computes the STA of every MUs.
+    - norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
         two MUS.
-    tracking : track MUs across two different files.
+    - tracking : track MUs across two different files.
 
     Examples
     --------
@@ -1429,10 +1429,10 @@ class MUcv_gui:
         self.root.mainloop()
 
     # Define functions necessary for the GUI
+    # Use empty docstrings to hide the functions from the documentation.
     def gui_plot(self):
         """
-        Plot the MUAPs used to estimate CV.
-        """
+        """  # Plot the MUAPs used to estimate CV.
 
         # Get MU number
         mu = int(self.selectmu_cb.get())
@@ -1452,15 +1452,14 @@ class MUcv_gui:
 
     def copy_to_clipboard(self):
         """
-        Copy the dataframe to clipboard in csv format.
-        """
+        """  # Copy the dataframe to clipboard in csv format.
+
         pyperclip.copy(self.res_df.to_csv(index=False, sep='\t'))
 
     # Define functions for cv estimation
     def compute_cv(self):
         """
-        Compute conduction velocity.
-        """
+        """  # Compute conduction velocity.
 
         # Get the muaps of the selected columns and represent them in
         # different rows (as requested by the functions find_teta and

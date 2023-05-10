@@ -1,15 +1,16 @@
 """
-This module contains all the informations regarding:
-    - Data
-        - Structures of data
-        - How to access data
+This module contains all the information regarding:
 
-    - Abbreviations
+- Data
+    - Structures of data
+    - How to access data
 
-    - AboutUs
-    - Contacts
-    - Links
-    - CiteUs
+- Abbreviations
+
+- AboutUs
+- Contacts
+- Links
+- CiteUs
 """
 
 import json
@@ -43,10 +44,29 @@ class info:
         """
         Print a description of the emgfile data structure.
 
+        Print a detailed description of the emgfile data structure and of how
+        to access the contained elements.
+
         Parameters
         ----------
         emgfile : dict
             The dictionary containing the emgfile.
+
+        Examples
+        --------
+        >>> import openhdemg.library as emg
+        >>> emgfile = emg.askopenfile(filesource="DEMUSE")
+        >>> emg.info().data(emgfile)
+        emgfile type is:
+        <class 'dict'>
+        emgfile keys are:
+        dict_keys(['SOURCE', 'FILENAME', 'RAW_SIGNAL', 'REF_SIGNAL', 'PNR', 'SIL', 'IPTS', 'MUPULSES', 'FSAMP', 'IED', 'EMG_LENGTH', 'NUMBER_OF_MUS', 'BINARY_MUS_FIRING'])
+        Any key can be acced as emgfile[key].
+        emgfile['SOURCE'] is a <class 'str'> of value:
+        DEMUSE
+        .
+        .
+        .
         """
 
         if emgfile["SOURCE"] in ["DEMUSE", "OTB", "custom"]:
@@ -90,6 +110,27 @@ class info:
     def abbreviations(self):
         """
         Print common abbreviations.
+
+        Examples
+        --------
+        >>> import openhdemg.library as emg
+        >>> emg.info().abbreviations()
+        "COV": "Coefficient of variation",
+        "DERT": "DERecruitment threshold",
+        "DD": "Double differential",
+        "DR": "Discharge rate",
+        "FSAMP": "Sampling frequency",
+        "IDR": "Instantaneous discharge rate",
+        "IED": "Inter electrode distance",
+        "IPTS": "Impulse train per second",
+        "MU": "Motor units",
+        "MUAP": "MUs action potential",
+        "PNR": "Pulse to noise ratio",
+        "RT": "Recruitment threshold",
+        "SD": "Single differential",
+        "SIL": "Silhouette score",
+        "STA": "Spike-triggered average",
+        "XCC": "Cross-correlation coefficient"
         """
 
         abbr = {
@@ -120,6 +161,14 @@ class info:
     def aboutus(self):
         """
         Print informations about the library and the authors.
+
+        Examples
+        --------
+        >>> import openhdemg.library as emg
+        >>> emg.info().aboutus()
+        The openhdemg project was born in 2022 with the aim to provide a
+        free and open-source framework to analyse HIGH-DENSITY EMG
+        recordings...
         """
 
         about = """
@@ -210,6 +259,14 @@ class info:
     def contacts(self):
         """
         Print the contacts.
+
+        Examples
+        --------
+        >>> import openhdemg.library as emg
+        >>> emg.info().contacts()
+        "Name": "Giacomo Valli",
+        "Email": "giacomo.valli@phd.unipd.it",
+        "Twitter": "@giacomo_valli"
         """
 
         contact = {

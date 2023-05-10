@@ -84,7 +84,7 @@ def norm_xcorr(sig1, sig2, out="both"):
 
     See also
     --------
-    norm_twod_xcorr : Normalised 2-dimensional cross-correlation of STAs of
+    - norm_twod_xcorr : Normalised 2-dimensional cross-correlation of STAs of
         two MUS.
     """
 
@@ -154,22 +154,23 @@ def norm_twod_xcorr(df1, df2, mode="full"):
 
     See also
     --------
-    align_by_xcorr : to align the two STAs before calling norm_twod_xcorr.
-    unpack_sta : for unpacking the sta dict in a pd.DataFrame
+    - align_by_xcorr : to align the two STAs before calling norm_twod_xcorr.
+    - unpack_sta : for unpacking the sta dict in a pd.DataFrame
         before passing it to norm_twod_xcorr.
-    pack_sta : for packing the sta pd.DataFrame in a dict where
+    - pack_sta : for packing the sta pd.DataFrame in a dict where
         each matrix column corresponds to a dict key.
 
     Examples
     --------
     Full steps to pass two dataframes to norm_twod_xcorr from the same EMG
     file.
-    1 Load the EMG file and band-pass filter the raw EMG signal
-    2 Sort the matrix channels and compute the spike-triggered average
-    3 Extract the STA of the MUs of interest from all the STAs
-    4 Unpack the STAs of single MUs and remove np.nan to pas them to
+
+    1. Load the EMG file and band-pass filter the raw EMG signal
+    2. Sort the matrix channels and compute the spike-triggered average
+    3. Extract the STA of the MUs of interest from all the STAs
+    4. Unpack the STAs of single MUs and remove np.nan to pas them to
         norm_twod_xcorr
-    5 Compute 2dxcorr to identify a common lag/delay
+    5. Compute 2dxcorr to identify a common lag/delay
 
     >>> import openhdemg as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
@@ -185,9 +186,9 @@ def norm_twod_xcorr(df1, df2, mode="full"):
     >>> sta_mu1 = sta[mu0]
     >>> sta_mu2 = sta[mu1]
     >>> df1 = emg.unpack_sta(sta_mu1)
-    >>> no_nan_sta1 = df1.dropna(axis=1, inplace=False)
+    >>> no_nan_sta1 = df1.dropna(axis=1)
     >>> df2 = emg.unpack_sta(sta_mu2)
-    >>> no_nan_sta2 = df2.dropna(axis=1, inplace=False)
+    >>> no_nan_sta2 = df2.dropna(axis=1)
     >>> normxcorr_df, normxcorr_max = emg.norm_twod_xcorr(
     ...     no_nan_sta1,
     ...     no_nan_sta2,
@@ -255,7 +256,7 @@ def compute_sil(ipts, mupulses):  # TODO _NEXT_ add refs in docs when necessary
 
     See also
     --------
-    compute_pnr : to calculate the Pulse to Noise ratio of a single MU.
+    - compute_pnr : to calculate the Pulse to Noise ratio of a single MU.
     """
 
     # Extract source and peaks and align source and peaks based on IPTS
@@ -317,7 +318,7 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
 
     See also
     --------
-    compute_sil : to calculate the Silhouette score for a single MU.
+    - compute_sil : to calculate the Silhouette score for a single MU.
     """
 
     # According to Holobar 2014, the PNR is calculated as:
@@ -334,7 +335,7 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
     # χ[3,50](D) stands for an indicator function that penalizes motor units
     # with filtered discharge rate D below 3 pulses per second (pps) or above
     # 50 pps:
-    # χ[3,50](D) = 0 if D is between 3 and 50 or 1 if D is not between 3 and 50
+    # χ[3,50](D) = 0 if D is between 3 and 50 or D if D is not between 3 and 50.
     # Two separate coefficients of variation for inter-discharge interval (IDI)
     # calculated as standard deviation (SD) of IDI divided by the mean IDI,
     # are used. CoVIDI is the coefficient of variation for IDI of non-paired
@@ -345,10 +346,11 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
     # Paired discharges are typical in pathological tremor and the use of both
     # CoVIDI and CoVpIDI accounts for this condition.
     #
-    # However, this heuristic penalty function does not work in particular
-    # types of contractions like explosive contractions (MUs discharge up to
-    # 200 pps). Therefore, in this implementation of the PNR estimation we did
-    # not use a penality based on MUs discharge.
+    # However, this heuristic penalty function unfairly penalizes MUs firing
+    # during specific types of contractions like explosive contractions
+    # (MUs discharge up to 200 pps).
+    # Therefore, in this implementation of the PNR estimation we did not use a
+    # penality based on MUs discharge.
     # Additionally, the user can decide whether to adopt the two coefficients
     # of variations to estimate Pi or not.
     # If both are used, Pi would be calculated as:
@@ -361,7 +363,10 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
     idi = np.diff(mupulses)
 
     # In order to increase robustness to outlier values, remove values outside
-    # mean +- 3 * STD in the idi array.
+    # mean +- 3 * STD in the idi array and the firings happening with more
+    # than 500ms of difference between each others.
+    idi = idi[idi <= (fsamp * 0.5)]
+
     mean, std = np.mean(idi), np.std(idi)
     upper_bound = mean + 3*std
     lower_bound = mean - 3*std
@@ -590,13 +595,15 @@ def mle_cv_est(sig, initial_teta, ied, fsamp):
 
     See also
     --------
-    find_teta : Find the starting value for teta.
-    MUcv_gui : Graphical user interface for the estimation of MUs conduction
+    - find_teta : Find the starting value for teta.
+    - MUcv_gui : Graphical user interface for the estimation of MUs conduction
         velocity.
 
     Examples
     --------
     Refer to the examples of find_teta to obtain sig and initial_teta.
+
+    # TODO We need an example here.
     """
 
     # Set index to 0
@@ -668,9 +675,9 @@ def find_teta(sig1, sig2, ied, fsamp):
 
     See also
     --------
-    mle_cv_est : Estimate conduction velocity (CV) via maximum likelihood
+    - mle_cv_est : Estimate conduction velocity (CV) via maximum likelihood
         estimation.
-    MUcv_gui : Graphical user interface for the estimation of MUs conduction
+    - MUcv_gui : Graphical user interface for the estimation of MUs conduction
         velocity.
 
     Examples
@@ -756,8 +763,8 @@ def find_teta(sig1, sig2, ied, fsamp):
     # +1 is necessary to overcome base 0 and prevent teta from beeing 0
 
     if pos > 1 and pos < len(delay):
-        x = delay[pos-2 : pos+1]
-        y = corrpos[pos-2 : pos+1]
+        x = delay[pos-2: pos+1]
+        y = corrpos[pos-2: pos+1]
 
         coefs = poly.polyfit(x=x, y=y, deg=2)
         # The polyfit function originally returns flipped coefficients

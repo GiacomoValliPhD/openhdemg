@@ -1,5 +1,5 @@
 """
-This module contains all the functions used to analyse the MUs properties if
+This module contains all the functions used to analyse the MUs properties when
 not involving the MUs action potential shape.
 """
 
@@ -51,12 +51,12 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvc=0):
 
     See also
     --------
-    compute_dr : calculate the discharge rate.
-    basic_mus_properties : calculate basic MUs properties on a trapezoidal
+    - compute_dr : calculate the discharge rate.
+    - basic_mus_properties : calculate basic MUs properties on a trapezoidal
         contraction.
-    compute_covisi : calculate the coefficient of variation of interspike
+    - compute_covisi : calculate the coefficient of variation of interspike
         interval.
-    compute_drvariability : claculate the DR variability.
+    - compute_drvariability : claculate the DR variability.
 
     Examples
     --------
@@ -225,12 +225,12 @@ def compute_dr(
 
     See also
     --------
-    compute_thresholds : calculates recruitment/derecruitment thresholds.
-    basic_mus_properties : calculate basic MUs properties on a trapezoidal
+    - compute_thresholds : calculates recruitment/derecruitment thresholds.
+    - basic_mus_properties : calculate basic MUs properties on a trapezoidal
         contraction.
-    compute_covisi : calculate the coefficient of variation of interspike
+    - compute_covisi : calculate the coefficient of variation of interspike
         interval.
-    compute_drvariability : claculate the DR variability.
+    - compute_drvariability : claculate the DR variability.
 
     Notes
     -----
@@ -475,11 +475,11 @@ def basic_mus_properties(
 
     See also
     --------
-    compute_thresholds : calculates recruitment/derecruitment thresholds.
-    compute_dr : calculate the discharge rate.
-    compute_covisi : calculate the coefficient of variation of interspike
+    - compute_thresholds : calculates recruitment/derecruitment thresholds.
+    - compute_dr : calculate the discharge rate.
+    - compute_covisi : calculate the coefficient of variation of interspike
         interval.
-    compute_drvariability : claculate the DR variability.
+    - compute_drvariability : claculate the DR variability.
 
     Examples
     --------
@@ -670,11 +670,11 @@ def compute_covisi(
 
     See also
     --------
-    compute_thresholds : calculates recruitment/derecruitment thresholds.
-    compute_dr : calculate the discharge rate.
-    basic_mus_properties : calculate basic MUs properties on a trapezoidal
+    - compute_thresholds : calculates recruitment/derecruitment thresholds.
+    - compute_dr : calculate the discharge rate.
+    - basic_mus_properties : calculate basic MUs properties on a trapezoidal
         contraction.
-    compute_drvariability : claculate the DR variability.
+    - compute_drvariability : claculate the DR variability.
 
     Notes
     -----
@@ -872,11 +872,11 @@ def compute_drvariability(
 
     See also
     --------
-    compute_thresholds : calculates recruitment/derecruitment thresholds.
-    compute_dr : calculate the discharge rate.
-    basic_mus_properties : calculate basic MUs properties on a trapezoidal
+    - compute_thresholds : calculates recruitment/derecruitment thresholds.
+    - compute_dr : calculate the discharge rate.
+    - basic_mus_properties : calculate basic MUs properties on a trapezoidal
         contraction.
-    compute_covisi : calculate the coefficient of variation of interspike
+    - compute_covisi : calculate the coefficient of variation of interspike
         interval.
 
     Notes

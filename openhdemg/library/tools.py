@@ -596,7 +596,7 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
 
     See also
     --------
-    compute_idr : computes the instantaneous discharge rate.
+    - compute_idr : computes the instantaneous discharge rate.
 
     Examples
     --------
@@ -657,7 +657,7 @@ def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
 
     See also
     --------
-    filter_refsig : low-pass filter the REF_SIGNAL.
+    - filter_refsig : low-pass filter the REF_SIGNAL.
     """
 
     filteredrawsig = copy.deepcopy(emgfile)
@@ -704,8 +704,8 @@ def filter_refsig(emgfile, order=4, cutoff=15):
 
     See also
     --------
-    remove_offset : remove the offset from the REF_SIGNAL.
-    filter_rawemg : band-pass filter the RAW_SIGNAL.
+    - remove_offset : remove the offset from the REF_SIGNAL.
+    - filter_rawemg : band-pass filter the RAW_SIGNAL.
     """
 
     filteredrefsig = copy.deepcopy(emgfile)
@@ -753,7 +753,7 @@ def remove_offset(emgfile, offsetval=0, auto=0):
 
     See also
     --------
-    filter_refsig : low-pass filter REF_SIGNAL.
+    - filter_refsig : low-pass filter REF_SIGNAL.
     """
 
     # Check that all the inputs are correct
@@ -828,9 +828,9 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
 
     See also
     --------
-    compute_rfd : calculate the RFD.
-    remove_offset : remove the offset from the REF_SIGNAL.
-    filter_refsig : low-pass filter REF_SIGNAL.
+    - compute_rfd : calculate the RFD.
+    - remove_offset : remove the offset from the REF_SIGNAL.
+    - filter_refsig : low-pass filter REF_SIGNAL.
 
     Examples
     --------
@@ -913,9 +913,9 @@ def compute_rfd(
 
     See also
     --------
-    get_mvif : measure the MViF.
-    remove_offset : remove the offset from the REF_SIGNAL.
-    filter_refsig : low-pass filter REF_SIGNAL.
+    - get_mvif : measure the MViF.
+    - remove_offset : remove the offset from the REF_SIGNAL.
+    - filter_refsig : low-pass filter REF_SIGNAL.
 
     Examples
     --------

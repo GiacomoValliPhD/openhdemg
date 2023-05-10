@@ -14,6 +14,10 @@ def showgoodlayout(tight_layout=True, despined=False):
     """
     Despine and show plots with a good layout.
 
+    This function is called by the various plot functions contained in the
+    library but can also be used by the user to quickly adjust the layout of
+    custom plots.
+
     Parameters
     ----------
     tight_layout : bool, default True
@@ -65,7 +69,7 @@ def plot_emgsig(
         The channel (int) or channels (list of int) to plot.
         The list can be passed as a manually-written list or with:
         channels=[*range(0, 12)].
-        We need the "*" operator to unpack the results of range into a list.
+        We need the " * " operator to unpack the results of range into a list.
         channels is expected to be with base 0 (i.e., the first channel
         in the file is the number 0).
     addrefsig : bool, default True
@@ -91,15 +95,12 @@ def plot_emgsig(
 
     See also
     --------
-    plot_differentials : plot the differential derivation of the RAW_SIGNAL by
-        matrix column.
+    - plot_differentials : plot the differential derivation of the RAW_SIGNAL
+        by matrix column.
 
     Examples
     --------
     Plot channels 0 to 12 and overlay the reference signal.
-
-    .. plot::
-
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(
     ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
@@ -236,15 +237,13 @@ def plot_differentials(
 
     See also
     --------
-    diff : calculate single differential of RAW_SIGNAL on matrix rows.
-    double_diff : calculate double differential of RAW_SIGNAL on matrix rows.
-    plot_emgsig : pot the RAW_SIGNAL. Single or multiple channels.
+    - diff : calculate single differential of RAW_SIGNAL on matrix rows.
+    - double_diff : calculate double differential of RAW_SIGNAL on matrix rows.
+    - plot_emgsig : pot the RAW_SIGNAL. Single or multiple channels.
 
     Examples
     --------
     Plot plot the differential derivation of the first matrix column (col0).
-
-    .. plot::
 
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(
@@ -369,8 +368,6 @@ def plot_refsig(
     --------
     Plot the reference signal.
 
-    .. plot::
-
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(
     ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
@@ -379,8 +376,6 @@ def plot_refsig(
     >>> emg.plot_refsig(emgfile=emgfile)
 
     Change Y axis label and show time in samples.
-
-    .. plot::
 
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(
@@ -448,7 +443,7 @@ def plot_mupulses(
         specified.
         The list can be passed as a manually-written list or with:
         munumber=[*range(0, 12)].
-        We need the "*" operator to unpack the results of range into a list.
+        We need the " * " operator to unpack the results of range into a list.
         munumber is expected to be with base 0 (i.e., the first MU in the file
         is the number 0).
     linewidths : float, default 0.5
@@ -476,15 +471,13 @@ def plot_mupulses(
 
     See also
     --------
-    plot_ipts : plot the MUs impulse train per second (IPTS).
-    plot_idr : plot the instantaneous discharge rate.
+    - plot_ipts : plot the MUs impulse train per second (IPTS).
+    - plot_idr : plot the instantaneous discharge rate.
 
     Examples
     --------
     Plot MUs pulses based on recruitment order and overlay the reference
     signal.
-
-    .. plot::
 
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(
@@ -615,7 +608,7 @@ def plot_ipts(
         specified.
         The list can be passed as a manually-written list or with:
         munumber=[*range(0, 12)].
-        We need the "*" operator to unpack the results of range into a list.
+        We need the " * " operator to unpack the results of range into a list.
         munumber is expected to be with base 0 (i.e., the first MU in the file
         is the number 0).
     timeinseconds : bool, default True
@@ -638,8 +631,8 @@ def plot_ipts(
 
     See also
     --------
-    plot_mupulses : plot the binary representation of the firings.
-    plot_idr : plot the instantaneous discharge rate.
+    - plot_mupulses : plot the binary representation of the firings.
+    - plot_idr : plot the instantaneous discharge rate.
 
     Notes
     -----
@@ -649,8 +642,6 @@ def plot_ipts(
     Examples
     --------
     Plot IPTS of all the MUs and overlay the reference signal.
-
-    .. plot::
 
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(
@@ -667,8 +658,6 @@ def plot_ipts(
     ... )
 
     Plot IPTS of two MUs.
-
-    .. plot::
 
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(
@@ -785,7 +774,7 @@ def plot_idr(
         specified.
         The list can be passed as a manually-written list or with:
         munumber=[*range(0, 12)].
-        We need the "*" operator to unpack the results of range into a list.
+        We need the " * " operator to unpack the results of range into a list.
         munumber is expected to be with base 0 (i.e., the first MU in the file
         is the number 0).
     addrefsig : bool, default True
@@ -811,8 +800,8 @@ def plot_idr(
 
     See also
     --------
-    plot_mupulses : plot the binary representation of the firings.
-    plot_ipts : plot the impulse train per second (IPTS).
+    - plot_mupulses : plot the binary representation of the firings.
+    - plot_ipts : plot the impulse train per second (IPTS).
 
     Notes
     -----
@@ -822,8 +811,6 @@ def plot_idr(
     Examples
     --------
     Plot IDR of all the MUs and overlay the reference signal.
-
-    .. plot::
 
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(
@@ -840,8 +827,6 @@ def plot_idr(
     ... )
 
     Plot IDR of two MUs.
-
-    .. plot::
 
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(
@@ -968,9 +953,9 @@ def plot_muaps(
 
     See also
     --------
-    sta : computes the spike-triggered average (STA) of every MUs.
-    plot_muap : for overplotting all the STAs and the average STA of a MU.
-    align_by_xcorr : for alignin the STAs of two different MUs.
+    - sta : computes the spike-triggered average (STA) of every MUs.
+    - plot_muap : for overplotting all the STAs and the average STA of a MU.
+    - align_by_xcorr : for alignin the STAs of two different MUs.
 
     Notes
     -----
@@ -983,8 +968,6 @@ def plot_muaps(
     Examples
     --------
     Plot MUAPs of a single MU.
-
-    .. plot::
 
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(
@@ -1007,8 +990,6 @@ def plot_muaps(
 
     Plot single differential derivation MUAPs of a single MU.
 
-    .. plot::
-
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(
     ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
@@ -1030,8 +1011,6 @@ def plot_muaps(
     >>> emg.plot_muaps(sta_dict=sta[1])
 
     Plot single differential derivation MUAPs of two MUs from the same file.
-
-    .. plot::
 
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(
@@ -1164,8 +1143,8 @@ def plot_muap(
 
     See also
     --------
-    plot_muaps : Plot MUAPs obtained from STA from one or multiple MUs.
-    st_muap : Generate spike triggered MUAPs of every MUs
+    - plot_muaps : Plot MUAPs obtained from STA from one or multiple MUs.
+    - st_muap : Generate spike triggered MUAPs of every MUs
         (as input to this function).
 
     Examples
@@ -1173,8 +1152,6 @@ def plot_muap(
     Plot all the consecutive MUAPs of a single MU.
     In this case we are plotting the matrix channel 45 which is placed in
     column 4 ("col3") as Python numbering is base 0.
-
-    .. plot::
 
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(
@@ -1209,8 +1186,6 @@ def plot_muap(
     which matrix column, we can set channelprog=True and locate the channel
     with a value ranging from 0 to the length of each column.
 
-    .. plot::
-
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(
     ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
@@ -1243,8 +1218,6 @@ def plot_muap(
     It is also possible to visualise the spike triggered average
     of the MU with average=True.
     In this example the single differential derivation is used.
-
-    .. plot::
 
     >>> import openhdemg as emg
     >>> emgfile = emg.emg_from_otb(
