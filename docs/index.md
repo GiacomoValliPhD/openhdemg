@@ -66,7 +66,7 @@ python -m openhdemg.openhdemg_gui
 
 Once opened, it will look like this. It is cool, isn't it?
 
-![title](md_graphics/Index/Gui_Preview.png)
+![gui_preview](md_graphics/Index/Gui_Preview.png)
 
 ## Why openhdemg
 The *openhdemg* project was born in 2022 with the aim to provide the HD-EMG
