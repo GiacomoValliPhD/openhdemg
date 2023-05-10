@@ -538,7 +538,6 @@ def sort_mus(emgfile):
     ]
     df.sort_values(by="firstpulses", inplace=True)
     sorting_order = list(df.index)
-    print(sorting_order)
 
     # Sort PNR (single column)
     for origpos, newpos in enumerate(sorting_order):
