@@ -1,7 +1,7 @@
 # Welcome to openhdemg
 <br/>
 
-![title](md_graphics/Index/Banner_Logo.png)
+![banner logo](md_graphics/Index/Banner_Logo.png)
 
 <br/>
 
@@ -13,8 +13,7 @@
 functionalities specifically designed for the analysis of High-Density
 Electromyography (HD-EMG) recordings.
 Some of its main features are listed below, but there is much more to
-discover! For a full list of available functions, please refer to the
-[API documentation](API-Reference.md).
+discover! For a full list of available functions, please refer to the **API reference** section.
 
 1. **Load** decomposed HD-EMG files from various sources, such as .mat and
 .csv files. This allows to interface *openhdemg* with the commonly used
