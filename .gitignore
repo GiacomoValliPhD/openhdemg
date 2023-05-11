@@ -1,7 +1,9 @@
 openhdemgenv
 __pycache__*
 .vscode/
+.DS_Store
+
+dist/
 
 prove.py
 prove_storage.py
-CV.ipynb
