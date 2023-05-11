@@ -62,7 +62,7 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvc=0):
     --------
     Load the EMG file and compute the thresholds.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> mus_thresholds = emg.compute_thresholds(
     ...     emgfile=emgfile,
@@ -78,7 +78,7 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvc=0):
     Type of output can be adjusted, e.g., to have only absolute values at
     recruitment.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> mus_thresholds = emg.compute_thresholds(
     ...     emgfile=emgfile,
@@ -240,7 +240,7 @@ def compute_dr(
     --------
     Load the EMG file and compute the DR.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> mus_dr = emg.compute_dr(emgfile=emgfile)
     >>> mus_dr
@@ -252,7 +252,7 @@ def compute_dr(
 
     Type of output can be adjusted, e.g., to have only the DR at recruitment.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> mus_dr = emg.compute_dr(emgfile=emgfile, event_="rec")
     >>> mus_dr
@@ -265,7 +265,7 @@ def compute_dr(
     The manual selection of the steady state phase can be bypassed
     if previously calculated with an automated method.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> mus_dr = emg.compute_dr(
     ...     emgfile=emgfile,
@@ -485,7 +485,7 @@ def basic_mus_properties(
     --------
     Get full summary of all the MUs properties.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> df = emg.basic_mus_properties(emgfile=emgfile)
     >>> df
@@ -499,7 +499,7 @@ def basic_mus_properties(
     bypass the manual selection of the steady state phase if previously
     calculated with an automated method.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> df = emg.basic_mus_properties(
     ...     emgfile=emgfile,
@@ -684,7 +684,7 @@ def compute_covisi(
     --------
     Compute covisi during the various parts of the trapezoidal contraction.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> df = emg.compute_covisi(emgfile=emgfile)
     >>> df
@@ -697,7 +697,7 @@ def compute_covisi(
     If the steady-state phase has been pre-identified, the manual selection
     of the area can be bypassed.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> df = emg.compute_covisi(
     ...     emgfile=emgfile,
@@ -714,7 +714,7 @@ def compute_covisi(
 
     To access the covisi of the entire contraction of a single MU.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> df = emg.compute_covisi(emgfile=emgfile, single_mu_number=2)
     >>> df
@@ -888,7 +888,7 @@ def compute_drvariability(
     --------
     Compute covisi during the various parts of the trapezoidal contraction.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> df = emg.compute_covisi(emgfile=emgfile)
     >>> df
@@ -901,7 +901,7 @@ def compute_drvariability(
     If the steady-state phase has been pre-identified, the manual selection
     of the area can be bypassed.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> df = emg.compute_covisi(
     ...     emgfile=emgfile,

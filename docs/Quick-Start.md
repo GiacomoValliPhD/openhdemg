@@ -287,6 +287,13 @@ In the past, this used to require many lines of code, but thanks to
 *openhdemg*, we can now do that with 1 line of code using the function
 [basic_mus_properties](API_analysis.md#openhdemg.library.analysis.basic_mus_properties).
 
+After calling the function 
+[basic_mus_properties](API_analysis.md#openhdemg.library.analysis.basic_mus_properties),
+the user will be asked to select the start and the end of the steady-state
+phase. This can be done positioning the mouse on the desired point and then
+pressing a keybord key (such as 'a'). To remove points, right click with your
+mouse.
+
 ```Python
 # Import the library with the short name 'emg'
 import openhdemg.library as emg

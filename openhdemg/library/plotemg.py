@@ -101,11 +101,8 @@ def plot_emgsig(
     Examples
     --------
     Plot channels 0 to 12 and overlay the reference signal.
-    >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(
-    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
-    ...     ext_factor=8,
-    ... )
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emg.plot_emgsig(
     ...     emgfile=emgfile,
     ...     channels=[*range(0,13)],
@@ -245,11 +242,8 @@ def plot_differentials(
     --------
     Plot plot the differential derivation of the first matrix column (col0).
 
-    >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(
-    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
-    ...     ext_factor=8,
-    ... )
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(
     >>>     emgfile=emgfile,
     >>>     code="GR08MM1305",
@@ -368,20 +362,14 @@ def plot_refsig(
     --------
     Plot the reference signal.
 
-    >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(
-    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
-    ...     ext_factor=8,
-    ... )
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emg.plot_refsig(emgfile=emgfile)
 
     Change Y axis label and show time in samples.
 
-    >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(
-    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
-    ...     ext_factor=8,
-    ... )
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emg.plot_refsig(
     >>>     emgfile=emgfile,
     >>>     ylabel="Custom unit e.g., N or kg",
@@ -479,11 +467,8 @@ def plot_mupulses(
     Plot MUs pulses based on recruitment order and overlay the reference
     signal.
 
-    >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(
-    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
-    ...     ext_factor=8,
-    ... )
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emg.plot_mupulses(
     ...     emgfile=emgfile,
     ...     linewidths=0.5,
@@ -643,11 +628,8 @@ def plot_ipts(
     --------
     Plot IPTS of all the MUs and overlay the reference signal.
 
-    >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(
-    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
-    ...     ext_factor=8,
-    ... )
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emg.plot_ipts(
     ...     emgfile=emgfile,
     ...     munumber="all",
@@ -659,11 +641,8 @@ def plot_ipts(
 
     Plot IPTS of two MUs.
 
-    >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(
-    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
-    ...     ext_factor=8,
-    ... )
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emg.plot_ipts(
     ...     emgfile=emgfile,
     ...     munumber=[1, 3],
@@ -812,11 +791,8 @@ def plot_idr(
     --------
     Plot IDR of all the MUs and overlay the reference signal.
 
-    >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(
-    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
-    ...     ext_factor=8,
-    ... )
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emg.plot_idr(
     ...     emgfile=emgfile,
     ...     munumber="all",
@@ -828,11 +804,8 @@ def plot_idr(
 
     Plot IDR of two MUs.
 
-    >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(
-    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat", # TODO change file and names
-    ...     ext_factor=8,
-    ... )
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emg.plot_idr(
     ...     emgfile=emgfile,
     ...     munumber=[1, 3],
@@ -969,11 +942,8 @@ def plot_muaps(
     --------
     Plot MUAPs of a single MU.
 
-    >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(
-    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
-    ...     ext_factor=8,
-    ... )
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile=emgfile,
     ...     code="GR08MM1305",
@@ -990,11 +960,8 @@ def plot_muaps(
 
     Plot single differential derivation MUAPs of a single MU.
 
-    >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(
-    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
-    ...     ext_factor=8,
-    ... )
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile=emgfile,
     ...     code="GR08MM1305",
@@ -1012,11 +979,8 @@ def plot_muaps(
 
     Plot single differential derivation MUAPs of two MUs from the same file.
 
-    >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(
-    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
-    ...     ext_factor=8,
-    ... )
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile=emgfile,
     ...     code="GR08MM1305",
@@ -1153,11 +1117,8 @@ def plot_muap(
     In this case we are plotting the matrix channel 45 which is placed in
     column 4 ("col3") as Python numbering is base 0.
 
-    >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(
-    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
-    ...     ext_factor=8
-    ... )
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile,
     ...     code="GR08MM1305",
@@ -1186,11 +1147,8 @@ def plot_muap(
     which matrix column, we can set channelprog=True and locate the channel
     with a value ranging from 0 to the length of each column.
 
-    >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(
-    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
-    ...     ext_factor=8
-    ... )
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile=emgfile,
     ...     code="GR08MM1305",
@@ -1219,11 +1177,8 @@ def plot_muap(
     of the MU with average=True.
     In this example the single differential derivation is used.
 
-    >>> import openhdemg as emg
-    >>> emgfile = emg.emg_from_otb(
-    ...     filepath="openhdemg/Decomposed Test files/OTB_25MViF_TRAPEZOIDAL_testfile.mat",
-    ...     ext_factor=8
-    ... )
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile=emgfile,
     ...     code="GR08MM1305",
@@ -1355,7 +1310,7 @@ def plot_muaps_for_cv(
     Plot the double differential derivation and the XCC of adjacent channels
     for the first MU (0).
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile,

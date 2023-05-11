@@ -102,9 +102,9 @@ def norm_xcorr(sig1, sig2, out="both"):
     b = sig2 / norm_b
     c = np.correlate(a, b, mode='full')
 
-    # TODO verify: `numpy.correlate` may perform slowly in large arrays
-    # (i.e. n = 1e5) because it does not use the FFT to compute the
-    # convolution; in that case, `scipy.signal.correlate` might be preferable.
+    # `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5)
+    # because it does not use the FFT to compute the convolution; in that case,
+    # `scipy.signal.correlate` might be preferable. No need in our use case.
 
     # Calculate xcc based on out
     if out == "max":
@@ -172,7 +172,7 @@ def norm_twod_xcorr(df1, df2, mode="full"):
         norm_twod_xcorr
     5. Compute 2dxcorr to identify a common lag/delay
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emgfile = emg.filter_rawemg(emgfile, order=2, lowcut=20, highcut=500)
     >>> sorted_rawemg = emg.sort_rawemg(
@@ -212,6 +212,7 @@ def norm_twod_xcorr(df1, df2, mode="full"):
 
     # Perform 2d xcorr
     correlate2d = signal.correlate2d(in1=df1, in2=df2, mode=mode)
+
     # There is no need to work with numpy.ndarrays as signal.correlate2d is
     # already converting the pd.DataFrame into numpy.ndarray, and the rest of
     # the code does not take much time to run.
@@ -602,8 +603,6 @@ def mle_cv_est(sig, initial_teta, ied, fsamp):
     Examples
     --------
     Refer to the examples of find_teta to obtain sig and initial_teta.
-
-    # TODO We need an example here.
     """
 
     # Set index to 0
@@ -689,7 +688,7 @@ def find_teta(sig1, sig2, ied, fsamp):
     First, obtain the spike-triggered average of the double differential
     derivation.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     ... sorted_rawemg = emg.sort_rawemg(
     ...     emgfile,

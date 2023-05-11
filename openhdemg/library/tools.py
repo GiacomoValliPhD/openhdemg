@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 from scipy import signal
 import warnings
 from openhdemg.library.mathtools import compute_pnr, compute_sil
-# TODO check how to import this to avoid circular inputs
 
 
 def showselect(emgfile, title="", nclic=2):
@@ -48,7 +47,7 @@ def showselect(emgfile, title="", nclic=2):
     --------
     Load the EMG file and select the points.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB_refsig")
     >>> start_point, end_point = emg.showselect(
     ...     emgfile,
@@ -302,7 +301,7 @@ def compute_idr(emgfile):
     --------
     Load the EMG file, compute IDR and access the results for the first MU.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> idr = emg.compute_idr(emgfile=emgfile)
     >>> munumber = 0
@@ -396,7 +395,7 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
     --------
     Delete MUs 1,4,5 from the emgfile.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emgfile = emg.delete_mus(emgfile=emgfile, munumber=[1,4,5])
     """
@@ -601,7 +600,7 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
     --------
     Load the EMG file, compute covsteady and access the result from GUI.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> covsteady = emg.compute_covsteady(emgfile=emgfile)
     >>> covsteady
@@ -609,7 +608,7 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
 
     The process can be automated by bypassing the GUI.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> covsteady = emg.compute_covsteady(
     ...     emgfile=emgfile,
@@ -835,7 +834,7 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
     --------
     Load the EMG file, remove reference signal offset and get MVC value.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
     >>> offs_refsig = emg.remove_offset(emgfile=emg_refsig)
     >>> mvc = emg.get_mvc(emgfile=offs_refsig )
@@ -845,7 +844,7 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
     The process can be automated by bypassing the GUI and
     calculating the MVC of the entire file.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
     >>> mvc = emg.get_mvc(emgfile=emg_refsig, how="all")
     >>> print(mvc)
@@ -920,7 +919,7 @@ def compute_rfd(
     --------
     Load the EMG file, low-pass filter the reference signal and compute RFD.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
     >>> filteredrefsig  = emg.filter_refsig(
     ...     emgfile=emg_refsig,
@@ -938,7 +937,7 @@ def compute_rfd(
 
     The process can be automated by bypassing the GUI.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
     >>> filteredrefsig  = emg.filter_refsig(
     ...     emgfile=emg_refsig,

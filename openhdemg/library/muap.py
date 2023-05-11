@@ -1,7 +1,7 @@
 """
 This module contains functions to produce and analyse MUs anction potentials
 (MUAPs).
-"""  # TODO replace all the examples with the otb_testfile
+"""
 
 import pandas as pd
 from openhdemg.library.tools import delete_mus
@@ -63,7 +63,7 @@ def diff(sorted_rawemg):
     --------
     Calculate single differential of a DEMUSE file.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="DEMUSE")
     >>> sorted_rawemg = emg.sort_rawemg(emgfile)
     >>> sd = emg.diff(sorted_rawemg)
@@ -84,7 +84,7 @@ def diff(sorted_rawemg):
     While alculating the single differential of an OTB file,
     matrix code and orientation should be also specified.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile,
@@ -147,7 +147,7 @@ def double_diff(sorted_rawemg):
     --------
     Calculate double differential.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="DEMUSE")
     >>> sorted_rawemg = emg.sort_rawemg(emgfile)
     >>> dd = emg.double_diff(sorted_rawemg)
@@ -168,7 +168,7 @@ def double_diff(sorted_rawemg):
     While alculating the double differential of an OTB file,
     matrix code and orientation should be also specified.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile=emgfile,
@@ -247,7 +247,7 @@ def sta(
     and in a 50 ms time-window.
     Access the STA of the column 0 of the first MU (number 0).
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile=emgfile,
@@ -276,7 +276,7 @@ def sta(
 
     Calculate STA of the differential signal on all the firings.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile=emgfile,
@@ -420,7 +420,7 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
     Access the MUAPs of the first MU (number 0), channel 15 that is contained
     in the second matrix column ("col1").
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile=emgfile,
@@ -515,13 +515,15 @@ def unpack_sta(sta_mu):
     Parameters
     ----------
     sta_mu : dict
-        A dict containing the STA of the MU.
+        A dict containing the STA of a single MU.
 
     Returns
     -------
     df1 : pd.DataFrame
         A pd.DataFrame containing the STA of the MU
         (including the empty channel).
+    keys : list
+        The matrix columns (dict keys) of the unpacked sta.
 
     See also
     --------
@@ -529,31 +531,32 @@ def unpack_sta(sta_mu):
     - pack_sta : pack the pd.DataFrame containing STA to a dict.
     """
 
-    dfs = [
-        sta_mu["col0"],
-        sta_mu["col1"],
-        sta_mu["col2"],
-        sta_mu["col3"],
-        sta_mu["col4"],
-    ]
+    # Identify the matrix columns
+    keys = sta_mu.keys()
+
+    # extract all the pd.DataFrames in a list
+    dfs = [sta_mu[key] for key in keys]
+
+    # Merge in a single pd.DataFrame
     df1 = reduce(
         lambda left,
         right: pd.merge(left, right, left_index=True, right_index=True),
         dfs,
     )
 
-    return df1
+    return df1, list(keys)
 
 
-# FIXME both pack and unpack work only with matrices of 5 columns
-def pack_sta(df_sta):
+def pack_sta(df_sta, keys):
     """
     Pack the pd.DataFrame containing STA to a dict.
 
     Parameters
     ----------
-    df_sta1 : A pd.DataFrame containing the STA of the MU
-    (including the empty channel).
+    df_sta : A pd.DataFrame containing the STA of a single MU
+        (including the empty channel).
+    keys : list
+        The matrix columns (dict keys) by which to pack the sta.
 
     Returns
     -------
@@ -568,15 +571,21 @@ def pack_sta(df_sta):
         all the channels.
     """
 
-    slice = int(np.ceil(len(df_sta.columns) / 5))
+    # Detect the number of columns per pd.DataFrame (matrix columns)
+    slice = int(np.ceil(len(df_sta.columns) / len(keys)))
 
+    # Pack the sta accordingly
     packed_sta = {
-        "col0": df_sta.iloc[:, 0:slice],
-        "col1": df_sta.iloc[:, slice:slice * 2],
-        "col2": df_sta.iloc[:, slice * 2: slice * 3],
-        "col3": df_sta.iloc[:, slice * 3: slice * 4],
-        "col4": df_sta.iloc[:, slice * 4: slice * 5],
+        k: df_sta.iloc[:, slice*p:slice*(p+1)] for p, k in enumerate(keys)
     }
+
+    # packed_sta = {
+    #     "col0": df_sta.iloc[:, 0:slice],
+    #     "col1": df_sta.iloc[:, slice:slice * 2],
+    #     "col2": df_sta.iloc[:, slice * 2: slice * 3],
+    #     "col3": df_sta.iloc[:, slice * 3: slice * 4],
+    #     "col4": df_sta.iloc[:, slice * 4: slice * 5],
+    # }
 
     return packed_sta
 
@@ -627,7 +636,7 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     --------
     Align two MUs with a final duration of 50% the original one.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile=emgfile,
@@ -660,9 +669,9 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     # Obtain a pd.DataFrame for the 2d xcorr without empty column
     # but mantain the original pd.DataFrame with empty column to return the
     # aligned STAs.
-    df1 = unpack_sta(sta_mu1)
+    df1, d_keys = unpack_sta(sta_mu1)
     no_nan_sta1 = df1.dropna(axis=1, inplace=False)
-    df2 = unpack_sta(sta_mu2)
+    df2, d_keys = unpack_sta(sta_mu2)
     no_nan_sta2 = df2.dropna(axis=1, inplace=False)
 
     # Compute 2dxcorr to identify a common lag/delay
@@ -708,8 +717,8 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     df2cut.reset_index(drop=True, inplace=True)
 
     # Convert the STA to the original dict structure
-    aligned_sta1 = pack_sta(df1cut)
-    aligned_sta2 = pack_sta(df2cut)
+    aligned_sta1 = pack_sta(df1cut, d_keys)
+    aligned_sta2 = pack_sta(df2cut, d_keys)
 
     return aligned_sta1, aligned_sta2
 
@@ -798,7 +807,7 @@ def tracking(
     Track MUs between two OTB files and show the filtered results.
     If loading a DEMUSE file, matrixcode and orientation can be ignored.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile1 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emgfile2 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> tracking_res = emg.tracking(
@@ -854,12 +863,12 @@ def tracking(
                 sta_emgfile2[mu_file2],
                 finalduration=0.5
             )
-            aligned_sta1, aligned_sta2 = sta_emgfile1[mu_file1], sta_emgfile2[mu_file2] # TODO
+            aligned_sta1, aligned_sta2 = sta_emgfile1[mu_file1], sta_emgfile2[mu_file2]
 
             # Second, compute 2d cross-correlation
-            df1 = unpack_sta(aligned_sta1)
+            df1, _ = unpack_sta(aligned_sta1)
             df1.dropna(axis=1, inplace=True)
-            df2 = unpack_sta(aligned_sta2)
+            df2, _ = unpack_sta(aligned_sta2)
             df2.dropna(axis=1, inplace=True)
             normxcorr_df, normxcorr_max = norm_twod_xcorr(
                 df1, df2, mode="full"
@@ -1158,7 +1167,8 @@ def remove_duplicates_between(
             f"which can be one of 'munumber', 'PNR', 'SIL'. {which} was passed instead"
         )
 
-# TODO_NEXT_ try if replacing at/iat with loc/iloc can improve performance or use np arrays.
+# TODO_NEXT_ processes in the muap module are often slow, a major performance
+# improvement is necessary.
 
 
 def xcc_sta(sta):
@@ -1186,7 +1196,7 @@ def xcc_sta(sta):
     Calculate the XCC of adjacent channels of the double differential
     derivation as done to calculate MUs conduction velocity.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile,

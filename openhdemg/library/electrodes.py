@@ -146,7 +146,7 @@ def sort_rawemg(
     --------
     Sort emgfile RAW_SIGNAL and divide it by columns.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile=emgfile,

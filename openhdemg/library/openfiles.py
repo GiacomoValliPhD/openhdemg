@@ -141,7 +141,7 @@ def emg_from_demuse(filepath):
     --------
     For an extended explanation of the imported emgfile:
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.emg_from_demuse(filepath="path/filename.mat")
     >>> info = emg.info()
     >>> info.data(emgfile)
@@ -610,7 +610,7 @@ def emg_from_otb(
     --------
     For an extended explanation of the imported emgfile use:
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.emg_from_otb(filepath="path/filename.mat")
     >>> info = emg.info()
     >>> info.data(emgfile)
@@ -776,7 +776,7 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
     --------
     For an extended explanation of the imported emgfile use:
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.refsig_from_otb(filepath="path/filename.mat")
     >>> info = emg.info()
     >>> info.data(emgfile)
@@ -936,7 +936,7 @@ def emg_from_customcsv(
 
     For an extended explanation of the imported emgfile use:
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg_from_customcsv(filepath = "mypath/file.csv")
     >>> info = emg.info()
     >>> info.data(emgfile)
@@ -1235,7 +1235,7 @@ def emg_from_json(filepath):
     --------
     For an extended explanation of the imported emgfile use:
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile()
     >>> info = emg.info()
     >>> info.data(emgfile)
@@ -1512,7 +1512,7 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
     --------
     For an extended explanation of the imported emgfile use:
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile()
     >>> info = emg.info()
     >>> info.data(emgfile)
