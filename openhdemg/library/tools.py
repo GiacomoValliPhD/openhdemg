@@ -64,7 +64,7 @@ def showselect(emgfile, title="", nclic=2):
     plt.xlabel("Samples")
     plt.ylabel("MVC")
     plt.title(title, fontweight="bold")
-    ginput_res = plt.ginput(n=-1, timeout=0, mouse_add=None)
+    ginput_res = plt.ginput(n=-1, timeout=0, show_clicks=True)
 
     # Check if the user entered the correct number of clics
     if nclic != len(ginput_res):
@@ -227,22 +227,25 @@ def resize_emgfile(emgfile, area=None):
     # resize the mupulses. Then, reset the index.
     rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
     first_idx = rs_emgfile["REF_SIGNAL"].index[0]
-    rs_emgfile["REF_SIGNAL"] = rs_emgfile[
-        "REF_SIGNAL"].reset_index(drop=True)
-    rs_emgfile["RAW_SIGNAL"] = rs_emgfile["RAW_SIGNAL"].loc[
-        start_:end_].reset_index(drop=True)
-    rs_emgfile["IPTS"] = rs_emgfile["IPTS"].loc[
-        start_:end_].reset_index(drop=True)
+    rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].reset_index(drop=True)
+    rs_emgfile["RAW_SIGNAL"] = (
+        rs_emgfile["RAW_SIGNAL"].loc[start_:end_].reset_index(drop=True)
+    )
+    rs_emgfile["IPTS"] = rs_emgfile["IPTS"].loc[start_:end_].reset_index(drop=True)
     rs_emgfile["EMG_LENGTH"] = int(len(rs_emgfile["IPTS"].index))
-    rs_emgfile["BINARY_MUS_FIRING"] = rs_emgfile["BINARY_MUS_FIRING"].loc[
-        start_:end_].reset_index(drop=True)
+    rs_emgfile["BINARY_MUS_FIRING"] = (
+        rs_emgfile["BINARY_MUS_FIRING"].loc[start_:end_].reset_index(drop=True)
+    )
 
     for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
         # Mask the array based on a filter and return the values in an array
-        rs_emgfile["MUPULSES"][mu] = rs_emgfile["MUPULSES"][mu][
-            (rs_emgfile["MUPULSES"][mu] >= start_)
-            & (rs_emgfile["MUPULSES"][mu] < end_)
-        ] - first_idx
+        rs_emgfile["MUPULSES"][mu] = (
+            rs_emgfile["MUPULSES"][mu][
+                (rs_emgfile["MUPULSES"][mu] >= start_)
+                & (rs_emgfile["MUPULSES"][mu] < end_)
+            ]
+            - first_idx
+        )
 
     # Compute PNR and SIL
     if rs_emgfile["NUMBER_OF_MUS"] > 0:
@@ -342,12 +345,7 @@ def compute_idr(emgfile):
             df[3] = emgfile["FSAMP"] / df[1]
 
             df = df.rename(
-                columns={
-                    0: "mupulses",
-                    1: "diff_mupulses",
-                    2: "timesec",
-                    3: "idr"
-                },
+                columns={0: "mupulses", 1: "diff_mupulses", 2: "timesec", 3: "idr"},
             )
 
             # Add the idr to the idr dict
@@ -356,9 +354,7 @@ def compute_idr(emgfile):
         return idr
 
     else:
-        raise Exception(
-            "MUPULSES is probably absent or it is not contained in a list"
-        )
+        raise Exception("MUPULSES is probably absent or it is not contained in a list")
 
 
 def delete_mus(emgfile, munumber, if_single_mu="ignore"):
@@ -547,18 +543,15 @@ def sort_mus(emgfile):
         sorted_emgfile["SIL"].loc[origpos] = emgfile["SIL"].loc[newpos]
 
     # Sort IPTS (multiple columns, sort by columns, then reset columns' name)
-    sorted_emgfile["IPTS"] = sorted_emgfile["IPTS"].reindex(
-        columns=sorting_order
-    )
+    sorted_emgfile["IPTS"] = sorted_emgfile["IPTS"].reindex(columns=sorting_order)
     sorted_emgfile["IPTS"].columns = np.arange(emgfile["NUMBER_OF_MUS"])
 
     # Sort BINARY_MUS_FIRING (multiple columns, sort by columns,
     # then reset columns' name)
-    sorted_emgfile["BINARY_MUS_FIRING"] = sorted_emgfile[
-        "BINARY_MUS_FIRING"].reindex(columns=sorting_order)
-    sorted_emgfile["BINARY_MUS_FIRING"].columns = np.arange(
-        emgfile["NUMBER_OF_MUS"]
+    sorted_emgfile["BINARY_MUS_FIRING"] = sorted_emgfile["BINARY_MUS_FIRING"].reindex(
+        columns=sorting_order
     )
+    sorted_emgfile["BINARY_MUS_FIRING"].columns = np.arange(emgfile["NUMBER_OF_MUS"])
 
     # Sort MUPULSES.
     # Preferable to use the sorting_order as a double-check in alternative to:
@@ -772,8 +765,7 @@ def remove_offset(emgfile, offsetval=0, auto=0):
     if auto <= 0:
         if offsetval != 0:
             # Directly subtract the offset value.
-            offs_emgfile["REF_SIGNAL"][0] = offs_emgfile[
-                "REF_SIGNAL"][0] - offsetval
+            offs_emgfile["REF_SIGNAL"][0] = offs_emgfile["REF_SIGNAL"][0] - offsetval
 
         else:
             # Select the area to calculate the offset
@@ -784,15 +776,15 @@ def remove_offset(emgfile, offsetval=0, auto=0):
             )
             offsetval = offs_emgfile["REF_SIGNAL"].loc[start_:end_].mean()
             # We need to convert the series offsetval into float
-            offs_emgfile["REF_SIGNAL"][0] = offs_emgfile[
-                "REF_SIGNAL"][0] - float(offsetval)
+            offs_emgfile["REF_SIGNAL"][0] = offs_emgfile["REF_SIGNAL"][0] - float(
+                offsetval
+            )
 
     else:
         # Compute and subtract the offset value.
         offsetval = offs_emgfile["REF_SIGNAL"].iloc[0:auto].mean()
         # We need to convert the series offsetval into float
-        offs_emgfile["REF_SIGNAL"][0] = offs_emgfile[
-            "REF_SIGNAL"][0] - float(offsetval)
+        offs_emgfile["REF_SIGNAL"][0] = offs_emgfile["REF_SIGNAL"][0] - float(offsetval)
 
     return offs_emgfile
 
@@ -861,10 +853,12 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
             title="Select the start/end area to measure the MVC, then press enter",
         )
 
-        mvc = emgfile["REF_SIGNAL"].loc[start_: end_].max()
+        mvc = emgfile["REF_SIGNAL"].loc[start_:end_].max()
 
     else:
-        raise ValueError(f"how must be one of 'showselect' or 'all', {how} was passed instead")
+        raise ValueError(
+            f"how must be one of 'showselect' or 'all', {how} was passed instead"
+        )
 
     mvc = float(mvc)
 
@@ -874,12 +868,7 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
     return mvc
 
 
-def compute_rfd(
-    emgfile,
-    ms=[50, 100, 150, 200],
-    startpoint=None,
-    conversion_val=0
-):
+def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None, conversion_val=0):
     """
     Calculate the RFD.
 
