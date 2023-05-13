@@ -1,66 +1,54 @@
 """
 Description
 -----------
-    This module contains all the functions that are necessary to open or save
-    MATLAB (.mat), JSON (.json) or custom (.csv) files.
-    MATLAB files are used to store data from the DEMUSE and the OTBiolab+
-    software while JSON files are used to save and load files from this
-    library.
-    The choice of saving files in the open standard JSON file format was
-    preferred over the MATLAB file format since it has a better integration
-    with Python and has a very high cross-platform compatibility.
-
-    Some functions contained in this file are called internally and
-    should not be exposed to the final user.
-    Functions should be exposed in the __init__ file as:
-        from openhdemg.openfiles import (
-            emg_from_otb,
-            emg_from_demuse,
-            refsig_from_otb,
-            emg_from_customcsv,
-            save_json_emgfile,
-            emg_from_json,
-            askopenfile,
-            asksavefile,
-        )
+This module contains all the functions that are necessary to open or save
+MATLAB (.mat), JSON (.json) or custom (.csv) files.
+MATLAB files are used to store data from the DEMUSE and the OTBiolab+
+software while JSON files are used to save and load files from this
+library.
+The choice of saving files in the open standard JSON file format was
+preferred over the MATLAB file format since it has a better integration
+with Python and has a very high cross-platform compatibility.
 
 Function's scope
 ----------------
-    emg_from_otb and emg_from_demuse :
-        Used to load .mat files coming from the DEMUSE or the OTBiolab+
-        software. Demuse has a fixed file structure while the OTB file, in
-        order to be compatible with this library should be exported with a
-        strict structure as described in the function emg_from_otb.
-        In both cases, the input file is a .mat file.
-    refsig_from_otb :
-        Used to load files from the OTBiolab+ software that contain only
-        the REF_SIGNAL.
-    emg_from_customcsv :
-        Used to load custom file formats contained in .csv files.
-    save_json_emgfile, emg_from_json :
-        Used to save the working file to a .json file or to load the .json
-        file.
-    askopenfile, asksavefile :
-        A quick GUI implementation that allows users to select the file to
-        open or save.
+emg_from_samplefile :
+    Used to load the sample file provided with the library.
+emg_from_otb and emg_from_demuse :
+    Used to load .mat files coming from the DEMUSE or the OTBiolab+
+    software. Demuse has a fixed file structure while the OTB file, in
+    order to be compatible with this library should be exported with a
+    strict structure as described in the function emg_from_otb.
+    In both cases, the input file is a .mat file.
+refsig_from_otb :
+    Used to load files from the OTBiolab+ software that contain only
+    the REF_SIGNAL.
+emg_from_customcsv :
+    Used to load custom file formats contained in .csv files.
+save_json_emgfile, emg_from_json :
+    Used to save the working file to a .json file or to load the .json
+    file.
+askopenfile, asksavefile :
+    A quick GUI implementation that allows users to select the file to
+    open or save.
 
 Notes
 -----
 Once opened, the file is returned as a dict with keys:
-    "SOURCE" : source of the file (i.e., "DEMUSE", "OTB")
-    "RAW_SIGNAL" : the raw EMG signal.
+    "SOURCE" : source of the file (i.e., "DEMUSE", "OTB", "custom")
+    "RAW_SIGNAL" : the raw EMG signal
     "REF_SIGNAL" : the reference signal
     "PNR" : pulse to noise ratio
     "SIL" : silouette score
     "IPTS" : pulse train
-    "MUPULSES" : instant of firing
+    "MUPULSES" : instants of firing
     "FSAMP" : sampling frequency
     "IED" : interelectrode distance
     "EMG_LENGTH" : length of the emg file (in samples)
     "NUMBER_OF_MUS" : total number of MUs
     "BINARY_MUS_FIRING" : binary representation of MUs firings
 
-The only exception when OTB files are loaded with just the reference signal:
+The only exception is when OTB files are loaded with just the reference signal:
     "SOURCE": source of the file (i.e., "OTB_refsig")
     "FSAMP": sampling frequency
     "REF_SIGNAL": the reference signal
@@ -69,13 +57,27 @@ Additional informations can be found in the info module (emg.info()) and in
 the function's description.
 """
 
+# Some functions contained in this file are called internally and should not
+# be exposed to the final user.
+# Functions should be exposed in the __init__ file as:
+#     from openhdemg.openfiles import (
+#         emg_from_otb,
+#         emg_from_demuse,
+#         refsig_from_otb,
+#         emg_from_customcsv,
+#         save_json_emgfile,
+#         emg_from_json,
+#         askopenfile,
+#         asksavefile,
+#         emg_from_samplefile,
+#     )
+
 
 from scipy.io import loadmat
 import pandas as pd
 import numpy as np
-from openhdemg.library.otbelectrodes import *
-from openhdemg.library.mathtools import compute_sil
-from openhdemg.library.mathtools import compute_pnr
+from openhdemg.library.electrodes import *
+from openhdemg.library.mathtools import compute_pnr, compute_sil
 from openhdemg.library.tools import create_binary_firings
 from tkinter import *
 from tkinter import filedialog
@@ -87,7 +89,6 @@ import os
 
 # ---------------------------------------------------------------------
 # Main function to open decomposed files coming from DEMUSE.
-
 
 def emg_from_demuse(filepath):
     """
@@ -107,17 +108,17 @@ def emg_from_demuse(filepath):
 
     See also
     --------
-    emg_from_otb : import the .mat file exportable by OTBiolab+.
-    refsig_from_otb : import REF_SIGNAL in the .mat file exportable by
+    - emg_from_otb : import the .mat file exportable by OTBiolab+.
+    - refsig_from_otb : import REF_SIGNAL in the .mat file exportable by
         OTBiolab+.
-    emg_from_customcsv : Import custom data from a .csv file.
+    - emg_from_customcsv : Import custom data from a .csv file.
 
     Notes
     -----
     The returned file is called ``emgfile`` for convention.
 
     The demuse file contains 65 raw EMG channels (1 empty) instead of 64
-    (as for OTB matrix standards).
+    (as for OTB matrix standards) in the case of a 64 electrodes matrix.
 
     Structure of the emgfile:
         emgfile = {
@@ -136,8 +137,11 @@ def emg_from_demuse(filepath):
             "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
         }
 
+    Examples
+    --------
     For an extended explanation of the imported emgfile:
-    >>> import openhdemg as emg
+
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.emg_from_demuse(filepath="path/filename.mat")
     >>> info = emg.info()
     >>> info.data(emgfile)
@@ -160,7 +164,9 @@ def emg_from_demuse(filepath):
 
     # Collect the REF_SIGNAL
     if "ref_signal" in mat_file.keys():
-        # Catch the case for float values that cannot be directly added to a dataframe
+
+        # Catch the case for float values that cannot be directly added to a
+        # dataframe
         if isinstance(mat_file["ref_signal"], float):
             res = {0: mat_file["ref_signal"]}
             REF_SIGNAL = pd.DataFrame(res, index=[0])
@@ -244,19 +250,19 @@ def emg_from_demuse(filepath):
         # Calculate the PNR
         to_append = []
         for mu in range(NUMBER_OF_MUS):
-            res = compute_pnr(
+            pnr = compute_pnr(
                 ipts=IPTS[mu],
                 mupulses=MUPULSES[mu],
                 fsamp=FSAMP,
             )
-            to_append.append(res)
+            to_append.append(pnr)
         PNR = pd.DataFrame(to_append)
 
         # Calculate the SIL
         to_append = []
         for mu in range(NUMBER_OF_MUS):
-            res = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
-            to_append.append(res)
+            sil = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
+            to_append.append(sil)
         SIL = pd.DataFrame(to_append)
 
     else:
@@ -285,7 +291,6 @@ def emg_from_demuse(filepath):
 # ---------------------------------------------------------------------
 # Define functions used in the OTB openfile function.
 # These functions are not exposed to the final user.
-
 
 def get_otb_refsignal(df, refsig):
     """
@@ -367,9 +372,7 @@ def get_otb_refsignal(df, refsig):
                 return np.nan
 
     else:
-        warnings.warn(
-            "\nNot searched for reference signal, it might be necessary for some analysis\n"
-        )
+        warnings.warn("\nNot searched for reference signal, it might be necessary for some analysis\n")
 
         return np.nan
 
@@ -484,6 +487,7 @@ def get_otb_rawsignal(df):
     # Drop all the known columns different from the raw EMG signal.
     # This is a workaround since the OTBiolab+ software does not export a
     # unique name for the raw EMG signal.
+    # FIXME more extensive pattern could prevent errors if the user exports unexpected elements
     pattern = "Source for decomposition|Decomposition of|acquired data|performed path"
     emg_df = df[df.columns.drop(list(df.filter(regex=pattern)))]
 
@@ -514,10 +518,9 @@ def get_otb_rawsignal(df):
 # Main function to open decomposed files coming from OTBiolab+.
 # This function calls the functions defined above
 
-
 def emg_from_otb(
     filepath, ext_factor=8, refsig=[True, "fullsampled"], version="1.5.8.0"
-):  # TODO test with a single MU
+):
     """
     Import the .mat file exportable by OTBiolab+.
 
@@ -557,10 +560,10 @@ def emg_from_otb(
 
     See also
     --------
-    refsig_from_otb : import REF_SIGNAL in the .mat file exportable from
+    - refsig_from_otb : import REF_SIGNAL in the .mat file exportable from
         OTBiolab+.
-    emg_from_demuse : import the .mat file used in DEMUSE.
-    emg_from_customcsv : Import custom data from a .csv file.
+    - emg_from_demuse : import the .mat file used in DEMUSE.
+    - emg_from_customcsv : Import custom data from a .csv file.
 
     Raises
     ------
@@ -573,8 +576,8 @@ def emg_from_otb(
 
     The input .mat file exported from the OTBiolab+ software should have a
     specific content:
-    - refsig signal is optional but, if present, there should be both the
-        fullsampled and the subsampled version (in OTBioLab+ the "performed
+    - refsig signal is optional but, if present, there should be the
+        fullsampled or the subsampled version (in OTBioLab+ the "performed
         path" refers to the subsampled signal, the "acquired data" to the
         fullsampled signal), REF_SIGNAL is expected to be expressed as % of
         the MVC (but not compulsory).
@@ -603,8 +606,11 @@ def emg_from_otb(
             "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
         }
 
+    Examples
+    --------
     For an extended explanation of the imported emgfile use:
-    >>> import openhdemg as emg
+
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.emg_from_otb(filepath="path/filename.mat")
     >>> info = emg.info()
     >>> info.data(emgfile)
@@ -630,9 +636,7 @@ def emg_from_otb(
         "1.5.8.0",
     ]
     if version not in valid_versions:
-        raise ValueError(
-            f"Specified version is not valid. Use one of:\n{valid_versions}"
-        )
+        raise ValueError(f"Specified version is not valid. Use one of:\n{valid_versions}")
 
     if version in [
         "1.5.3.0",
@@ -653,7 +657,7 @@ def emg_from_otb(
         # Collect the IPTS and the firing times
         IPTS, BINARY_MUS_FIRING = get_otb_decomposition(df=df)
         # Align BINARY_MUS_FIRING to IPTS
-        BINARY_MUS_FIRING = BINARY_MUS_FIRING.shift(-int(ext_factor))
+        BINARY_MUS_FIRING = BINARY_MUS_FIRING.shift(- int(ext_factor))
         BINARY_MUS_FIRING.fillna(value=0, inplace=True)
 
         # Collect additional parameters
@@ -671,15 +675,15 @@ def emg_from_otb(
             # Calculate the PNR
             to_append = []
             for mu in range(NUMBER_OF_MUS):
-                res = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu], fsamp=FSAMP)
-                to_append.append(res)
+                pnr = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu], fsamp=FSAMP)
+                to_append.append(pnr)
             PNR = pd.DataFrame(to_append)
 
             # Calculate the SIL
             to_append = []
             for mu in range(NUMBER_OF_MUS):
-                res = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
-                to_append.append(res)
+                sil = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
+                to_append.append(sil)
             SIL = pd.DataFrame(to_append)
 
         else:
@@ -746,16 +750,16 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
 
     See also
     --------
-    emg_from_otb : import the .mat file exportable by OTBiolab+.
-    emg_from_demuse : import the .mat file used in DEMUSE.
-    emg_from_customcsv : Import custom data from a .csv file.
+    - emg_from_otb : import the .mat file exportable by OTBiolab+.
+    - emg_from_demuse : import the .mat file used in DEMUSE.
+    - emg_from_customcsv : Import custom data from a .csv file.
 
     Notes
     ---------
     The returned file is called ``emg_refsig`` for convention.
 
     The input .mat file exported from the OTBiolab+ software should contain:
-    - refsig signal: there should be both the fullsampled and the subsampled
+    - refsig signal: there should be the fullsampled or the subsampled
         version (in OTBioLab+ the "performed path" refers to the subsampled
         signal, the "acquired data" to the fullsampled signal), REF_SIGNAL is
         expected to be expressed as % of the MVC (but not compulsory).
@@ -768,8 +772,11 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
             "REF_SIGNAL": REF_SIGNAL,
         }
 
+    Examples
+    --------
     For an extended explanation of the imported emgfile use:
-    >>> import openhdemg as emg
+
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.refsig_from_otb(filepath="path/filename.mat")
     >>> info = emg.info()
     >>> info.data(emgfile)
@@ -889,9 +896,9 @@ def emg_from_customcsv(
 
     See also
     --------
-    emg_from_demuse : import the .mat file used in DEMUSE.
-    emg_from_otb : import the .mat file exportable by OTBiolab+.
-    refsig_from_otb : import REF_SIGNAL in the .mat file exportable by
+    - emg_from_demuse : import the .mat file used in DEMUSE.
+    - emg_from_otb : import the .mat file exportable by OTBiolab+.
+    - refsig_from_otb : import REF_SIGNAL in the .mat file exportable by
         OTBiolab+.
 
     Notes
@@ -915,13 +922,10 @@ def emg_from_customcsv(
             "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
         }
 
-    For an extended explanation of the imported emgfile use:
-    >>> import openhdemg as emg
-    >>> emgfile = emg_from_customcsv(filepath = "mypath/file.csv")
-    >>> info = emg.info()
-    >>> info.data(emgfile)
-
+    Examples
+    --------
     An example of the .csv file to load:
+    >>>
         REF_SIGNAL  RAW_SIGNAL (1)  RAW_SIGNAL (2)  RAW_SIGNAL (3) ...  IPTS (1)  IPTS (2)  MUPULSES (1)  MUPULSES (2)  BINARY_MUS_FIRING (1)  BINARY_MUS_FIRING (2)
     0            1        0.100000        0.100000        0.100000 ...  0.010000  0.010000           2.0           1.0                      0                      0
     1            2        2.000000        2.000000        2.000000 ...  0.001000  0.001000           5.0           2.0                      0                      0
@@ -929,6 +933,13 @@ def emg_from_customcsv(
     3            4        0.150000        0.150000        0.150000 ...  0.002000  0.002000           9.0          15.0                      0                      1
     4            5        0.350000        0.350000        0.350000 ... -0.100000 -0.100000          15.0          18.0                      1                      1
     5            6        0.215000        0.215000        0.215000 ...  0.200000  0.200000          16.0           NaN                      1                      0
+
+    For an extended explanation of the imported emgfile use:
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg_from_customcsv(filepath = "mypath/file.csv")
+    >>> info = emg.info()
+    >>> info.data(emgfile)
     """
 
     # Load the csv
@@ -959,7 +970,9 @@ def emg_from_customcsv(
     if not IPTS.empty:
         IPTS.columns = [i for i in range(len(IPTS.columns))]
     else:
-        warnings.warn("\nipts not found, it might be necessary for some analysis\n")
+        warnings.warn(
+            "\nipts not found, it might be necessary for some analysis\n"
+        )
         IPTS = np.nan
 
     # Get MUPULSES
@@ -975,7 +988,9 @@ def emg_from_customcsv(
     # Get BINARY_MUS_FIRING
     BINARY_MUS_FIRING = csv.filter(regex=binary_mus_firing, axis=1)
     if not BINARY_MUS_FIRING.empty:
-        BINARY_MUS_FIRING.columns = [i for i in range(len(BINARY_MUS_FIRING.columns))]
+        BINARY_MUS_FIRING.columns = [
+            i for i in range(len(BINARY_MUS_FIRING.columns))
+        ]
     else:
         BINARY_MUS_FIRING = np.nan
 
@@ -990,15 +1005,19 @@ def emg_from_customcsv(
         # Calculate the PNR
         to_append = []
         for mu in range(NUMBER_OF_MUS):
-            res = compute_pnr(ipts=IPTS[mu], mupulses=MUPULSES[mu], fsamp=fsamp)
-            to_append.append(res)
+            pnr = compute_pnr(
+                ipts=IPTS[mu],
+                mupulses=MUPULSES[mu],
+                fsamp=fsamp,
+            )
+            to_append.append(pnr)
         PNR = pd.DataFrame(to_append)
 
         # Calculate the SIL
         to_append = []
         for mu in range(NUMBER_OF_MUS):
-            res = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
-            to_append.append(res)
+            sil = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
+            to_append.append(sil)
         SIL = pd.DataFrame(to_append)
 
     else:
@@ -1026,7 +1045,6 @@ def emg_from_customcsv(
 
 # ---------------------------------------------------------------------
 # Functions to convert and save the emgfile to JSON.
-
 
 def save_json_emgfile(emgfile, filepath):
     """
@@ -1200,21 +1218,27 @@ def emg_from_json(filepath):
     emgfile : dict
         The dictionary containing the emgfile.
 
+    See also
+    --------
+    - emg_from_demuse : import the .mat file used in DEMUSE.
+    - emg_from_otb : import the .mat file exportable by OTBiolab+.
+    - refsig_from_otb : import REF_SIGNAL in the .mat file exportable by
+        OTBiolab+.
+    - emg_from_customcsv : import custom data from a .csv file.
+
     Notes
     -----
-    The returned file is called ``emgfile`` for convention (or ``emg_refsig`` if SOURCE = "OTB_refsig").
+    The returned file is called ``emgfile`` for convention
+    (or ``emg_refsig`` if SOURCE = "OTB_refsig").
 
+    Examples
+    --------
     For an extended explanation of the imported emgfile use:
-    >>> import openhdemg as emg
+
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile()
     >>> info = emg.info()
     >>> info.data(emgfile)
-
-    Or refer to the documentation of the following functions:
-        emg_from_otb
-        emg_from_demuse
-        refsig_from_otb
-        emg_from_customcsv
     """
 
     # Read and decompress json file
@@ -1346,7 +1370,6 @@ def emg_from_json(filepath):
 # ---------------------------------------------------------------------
 # Function to open files from a GUI in a single line of code.
 
-
 def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
     """
     Select and open files with a GUI.
@@ -1375,7 +1398,7 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
         Ignore if loading other files.
     otb_refsig_type : list, default [True, "fullsampled"]
         Whether to seacrh also for the REF_SIGNAL and whether to load the full
-        or sub-sampled one. The list is composed as [bool, str]. str can be
+        or sub-sampled one. The list is composed as [bool, str]. str can be 
         "fullsampled" or "subsampled".
         Ignore if loading other files.
     otb_version : str, default "1.5.8.0"
@@ -1389,21 +1412,22 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
             "1.5.7.3",
             "1.5.8.0",
         If your specific version is not available in the tested versions,
-        trying with the closer one usually works, but please double check the results.
-        Ignore if loading other files.
+        trying with the closer one usually works, but please double check the
+        results. Ignore if loading other files.
     custom_ref_signal : str, default 'REF_SIGNAL'
-        Label of the column(s) containing the reference signal of the custom file.
+        Label of the column(s) containing the reference signal of the custom
+        file.
         This and the following arguments are needed only for custom files.
         Ignore if loading other files.
     custom_raw_signal : str, default 'RAW_SIGNAL'
-        Label of the column(s) containing the raw emg signal of the custom file.
-        Ignore if loading other files.
+        Label of the column(s) containing the raw emg signal of the custom
+        file. Ignore if loading other files.
     custom_ipts : str, default 'IPTS'
         Label of the column(s) containing the pulse train of the custom file.
         Ignore if loading other files.
     custom_mupulses : str, default 'MUPULSES'
-        Label of the column(s) containing the times of firing of the custom file.
-        Ignore if loading other files.
+        Label of the column(s) containing the times of firing of the custom
+        file. Ignore if loading other files.
     custom_binary_mus_firing : str, default 'BINARY_MUS_FIRING'
         Label of the column(s) containing the binary representation
         of the MUs firings of the custom file.
@@ -1422,7 +1446,7 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
 
     See also
     --------
-    asksavefile : select where to save files with a GUI.
+    - asksavefile : select where to save files with a GUI.
 
     Notes
     -----
@@ -1484,8 +1508,11 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
             "REF_SIGNAL": REF_SIGNAL,
         }
 
+    Examples
+    --------
     For an extended explanation of the imported emgfile use:
-    >>> import openhdemg as emg
+
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile()
     >>> info = emg.info()
     >>> info.data(emgfile)
@@ -1535,7 +1562,7 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
             filepath=file_toOpen,
             ext_factor=kwargs.get("otb_ext_factor", 8),
             refsig=kwargs.get("otb_refsig_type", [True, "fullsampled"]),
-            version=kwargs.get("otb_version", "1.5.8.0"),
+            version=kwargs.get("otb_version", "1.5.8.0")
         )
     elif filesource == "OTB_refsig":
         ref = kwargs.get("otb_refsig_type", [True, "fullsampled"])
@@ -1554,7 +1581,8 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
             ipts=kwargs.get("custom_ipts", "IPTS"),
             mupulses=kwargs.get("custom_mupulses", "MUPULSES"),
             binary_mus_firing=kwargs.get(
-                "custom_binary_mus_firing", "BINARY_MUS_FIRING"
+                "custom_binary_mus_firing",
+                "BINARY_MUS_FIRING"
             ),
             fsamp=kwargs.get("custom_fsamp", 2048),
             ied=kwargs.get("custom_ied", 8),
@@ -1576,7 +1604,7 @@ def asksavefile(emgfile):
 
     See also
     --------
-    askopenfile : select and open files with a GUI.
+    - askopenfile : select and open files with a GUI.
     """
 
     # Create and hide the tkinter root window necessary for the GUI based
@@ -1598,3 +1626,36 @@ def asksavefile(emgfile):
     save_json_emgfile(emgfile, filepath)
 
     print("File saved\n-----------\n")
+
+
+def emg_from_samplefile():
+    """
+    Load the sample file. This file has been decomposed with the OTBiolab+
+    software and contains some reference MUs together with the force/reference
+    signal.
+
+    Returns
+    -------
+    emgfile : dict
+        The dictionary containing the emgfile.
+    """
+
+    # Get the absolute path to the script's directory
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Construct the absolute path to the file in the data subfolder
+    file_path = os.path.join(
+        script_dir,
+        'Decomposed Test files',
+        'otb_testfile.mat',
+    )
+
+    # Load the file
+    emgfile = emg_from_otb(
+        filepath=file_path,
+        ext_factor=8,
+        refsig=[True, "fullsampled"],
+        version="1.5.8.0",
+    )
+
+    return emgfile

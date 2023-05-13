@@ -11,10 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 import warnings
-from openhdemg.library.mathtools import (
-    compute_pnr,
-    compute_sil,
-)  # TODO check how to import this
+from openhdemg.library.mathtools import compute_pnr, compute_sil
 
 
 def showselect(emgfile, title="", nclic=2):
@@ -50,7 +47,7 @@ def showselect(emgfile, title="", nclic=2):
     --------
     Load the EMG file and select the points.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB_refsig")
     >>> start_point, end_point = emg.showselect(
     ...     emgfile,
@@ -230,25 +227,22 @@ def resize_emgfile(emgfile, area=None):
     # resize the mupulses. Then, reset the index.
     rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
     first_idx = rs_emgfile["REF_SIGNAL"].index[0]
-    rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].reset_index(drop=True)
-    rs_emgfile["RAW_SIGNAL"] = (
-        rs_emgfile["RAW_SIGNAL"].loc[start_:end_].reset_index(drop=True)
-    )
-    rs_emgfile["IPTS"] = rs_emgfile["IPTS"].loc[start_:end_].reset_index(drop=True)
+    rs_emgfile["REF_SIGNAL"] = rs_emgfile[
+        "REF_SIGNAL"].reset_index(drop=True)
+    rs_emgfile["RAW_SIGNAL"] = rs_emgfile["RAW_SIGNAL"].loc[
+        start_:end_].reset_index(drop=True)
+    rs_emgfile["IPTS"] = rs_emgfile["IPTS"].loc[
+        start_:end_].reset_index(drop=True)
     rs_emgfile["EMG_LENGTH"] = int(len(rs_emgfile["IPTS"].index))
-    rs_emgfile["BINARY_MUS_FIRING"] = (
-        rs_emgfile["BINARY_MUS_FIRING"].loc[start_:end_].reset_index(drop=True)
-    )
+    rs_emgfile["BINARY_MUS_FIRING"] = rs_emgfile["BINARY_MUS_FIRING"].loc[
+        start_:end_].reset_index(drop=True)
 
     for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
         # Mask the array based on a filter and return the values in an array
-        rs_emgfile["MUPULSES"][mu] = (
-            rs_emgfile["MUPULSES"][mu][
-                (rs_emgfile["MUPULSES"][mu] >= start_)
-                & (rs_emgfile["MUPULSES"][mu] < end_)
-            ]
-            - first_idx
-        )
+        rs_emgfile["MUPULSES"][mu] = rs_emgfile["MUPULSES"][mu][
+            (rs_emgfile["MUPULSES"][mu] >= start_)
+            & (rs_emgfile["MUPULSES"][mu] < end_)
+        ] - first_idx
 
     # Compute PNR and SIL
     if rs_emgfile["NUMBER_OF_MUS"] > 0:
@@ -282,7 +276,7 @@ def resize_emgfile(emgfile, area=None):
 
 def compute_idr(emgfile):
     """
-    Compute the IDR. # TODO maybe it is not IDR
+    Compute the IDR.
 
     This function computes the instantaneous discharge rate (IDR) from the
     MUPULSES.
@@ -307,7 +301,7 @@ def compute_idr(emgfile):
     --------
     Load the EMG file, compute IDR and access the results for the first MU.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> idr = emg.compute_idr(emgfile=emgfile)
     >>> munumber = 0
@@ -345,10 +339,15 @@ def compute_idr(emgfile):
             # Calculate time in seconds and add it in column 2
             df[2] = df[0] / emgfile["FSAMP"]
             # Calculate the idr and add it in column 3
-            df[3] = emgfile["FSAMP"] / df[0].diff()
+            df[3] = emgfile["FSAMP"] / df[1]
 
             df = df.rename(
-                columns={0: "mupulses", 1: "diff_mupulses", 2: "timesec", 3: "idr"},
+                columns={
+                    0: "mupulses",
+                    1: "diff_mupulses",
+                    2: "timesec",
+                    3: "idr"
+                },
             )
 
             # Add the idr to the idr dict
@@ -357,7 +356,9 @@ def compute_idr(emgfile):
         return idr
 
     else:
-        raise Exception("MUPULSES is probably absent or it is not contained in a list")
+        raise Exception(
+            "MUPULSES is probably absent or it is not contained in a list"
+        )
 
 
 def delete_mus(emgfile, munumber, if_single_mu="ignore"):
@@ -394,7 +395,7 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
     --------
     Delete MUs 1,4,5 from the emgfile.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emgfile = emg.delete_mus(emgfile=emgfile, munumber=[1,4,5])
     """
@@ -546,15 +547,18 @@ def sort_mus(emgfile):
         sorted_emgfile["SIL"].loc[origpos] = emgfile["SIL"].loc[newpos]
 
     # Sort IPTS (multiple columns, sort by columns, then reset columns' name)
-    sorted_emgfile["IPTS"] = sorted_emgfile["IPTS"].reindex(columns=sorting_order)
+    sorted_emgfile["IPTS"] = sorted_emgfile["IPTS"].reindex(
+        columns=sorting_order
+    )
     sorted_emgfile["IPTS"].columns = np.arange(emgfile["NUMBER_OF_MUS"])
 
     # Sort BINARY_MUS_FIRING (multiple columns, sort by columns,
     # then reset columns' name)
-    sorted_emgfile["BINARY_MUS_FIRING"] = sorted_emgfile["BINARY_MUS_FIRING"].reindex(
-        columns=sorting_order
+    sorted_emgfile["BINARY_MUS_FIRING"] = sorted_emgfile[
+        "BINARY_MUS_FIRING"].reindex(columns=sorting_order)
+    sorted_emgfile["BINARY_MUS_FIRING"].columns = np.arange(
+        emgfile["NUMBER_OF_MUS"]
     )
-    sorted_emgfile["BINARY_MUS_FIRING"].columns = np.arange(emgfile["NUMBER_OF_MUS"])
 
     # Sort MUPULSES.
     # Preferable to use the sorting_order as a double-check in alternative to:
@@ -590,13 +594,13 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
 
     See also
     --------
-    compute_idr : computes the instantaneous discharge rate.
+    - compute_idr : computes the instantaneous discharge rate.
 
     Examples
     --------
     Load the EMG file, compute covsteady and access the result from GUI.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> covsteady = emg.compute_covsteady(emgfile=emgfile)
     >>> covsteady
@@ -604,7 +608,7 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
 
     The process can be automated by bypassing the GUI.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> covsteady = emg.compute_covsteady(
     ...     emgfile=emgfile,
@@ -651,7 +655,7 @@ def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
 
     See also
     --------
-    filter_refsig : low-pass filter the REF_SIGNAL.
+    - filter_refsig : low-pass filter the REF_SIGNAL.
     """
 
     filteredrawsig = copy.deepcopy(emgfile)
@@ -698,8 +702,8 @@ def filter_refsig(emgfile, order=4, cutoff=15):
 
     See also
     --------
-    remove_offset : remove the offset from the REF_SIGNAL.
-    filter_rawemg : band-pass filter the RAW_SIGNAL.
+    - remove_offset : remove the offset from the REF_SIGNAL.
+    - filter_rawemg : band-pass filter the RAW_SIGNAL.
     """
 
     filteredrefsig = copy.deepcopy(emgfile)
@@ -747,7 +751,7 @@ def remove_offset(emgfile, offsetval=0, auto=0):
 
     See also
     --------
-    filter_refsig : low-pass filter REF_SIGNAL.
+    - filter_refsig : low-pass filter REF_SIGNAL.
     """
 
     # Check that all the inputs are correct
@@ -768,7 +772,8 @@ def remove_offset(emgfile, offsetval=0, auto=0):
     if auto <= 0:
         if offsetval != 0:
             # Directly subtract the offset value.
-            offs_emgfile["REF_SIGNAL"][0] = offs_emgfile["REF_SIGNAL"][0] - offsetval
+            offs_emgfile["REF_SIGNAL"][0] = offs_emgfile[
+                "REF_SIGNAL"][0] - offsetval
 
         else:
             # Select the area to calculate the offset
@@ -779,15 +784,15 @@ def remove_offset(emgfile, offsetval=0, auto=0):
             )
             offsetval = offs_emgfile["REF_SIGNAL"].loc[start_:end_].mean()
             # We need to convert the series offsetval into float
-            offs_emgfile["REF_SIGNAL"][0] = offs_emgfile["REF_SIGNAL"][0] - float(
-                offsetval
-            )
+            offs_emgfile["REF_SIGNAL"][0] = offs_emgfile[
+                "REF_SIGNAL"][0] - float(offsetval)
 
     else:
         # Compute and subtract the offset value.
         offsetval = offs_emgfile["REF_SIGNAL"].iloc[0:auto].mean()
         # We need to convert the series offsetval into float
-        offs_emgfile["REF_SIGNAL"][0] = offs_emgfile["REF_SIGNAL"][0] - float(offsetval)
+        offs_emgfile["REF_SIGNAL"][0] = offs_emgfile[
+            "REF_SIGNAL"][0] - float(offsetval)
 
     return offs_emgfile
 
@@ -821,15 +826,15 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
 
     See also
     --------
-    compute_rfd : calculate the RFD.
-    remove_offset : remove the offset from the REF_SIGNAL.
-    filter_refsig : low-pass filter REF_SIGNAL.
+    - compute_rfd : calculate the RFD.
+    - remove_offset : remove the offset from the REF_SIGNAL.
+    - filter_refsig : low-pass filter REF_SIGNAL.
 
     Examples
     --------
     Load the EMG file, remove reference signal offset and get MVC value.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
     >>> offs_refsig = emg.remove_offset(emgfile=emg_refsig)
     >>> mvc = emg.get_mvc(emgfile=offs_refsig )
@@ -839,7 +844,7 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
     The process can be automated by bypassing the GUI and
     calculating the MVC of the entire file.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
     >>> mvc = emg.get_mvc(emgfile=emg_refsig, how="all")
     >>> print(mvc)
@@ -856,12 +861,10 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
             title="Select the start/end area to measure the MVC, then press enter",
         )
 
-        mvc = emgfile["REF_SIGNAL"].loc[start_:end_].max()
+        mvc = emgfile["REF_SIGNAL"].loc[start_: end_].max()
 
     else:
-        raise ValueError(
-            f"how must be one of 'showselect' or 'all', {how} was passed instead"
-        )
+        raise ValueError(f"how must be one of 'showselect' or 'all', {how} was passed instead")
 
     mvc = float(mvc)
 
@@ -871,7 +874,12 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
     return mvc
 
 
-def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None, conversion_val=0):
+def compute_rfd(
+    emgfile,
+    ms=[50, 100, 150, 200],
+    startpoint=None,
+    conversion_val=0
+):
     """
     Calculate the RFD.
 
@@ -903,15 +911,15 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None, conversion_val
 
     See also
     --------
-    get_mvif : measure the MViF.
-    remove_offset : remove the offset from the REF_SIGNAL.
-    filter_refsig : low-pass filter REF_SIGNAL.
+    - get_mvif : measure the MViF.
+    - remove_offset : remove the offset from the REF_SIGNAL.
+    - filter_refsig : low-pass filter REF_SIGNAL.
 
     Examples
     --------
     Load the EMG file, low-pass filter the reference signal and compute RFD.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
     >>> filteredrefsig  = emg.filter_refsig(
     ...     emgfile=emg_refsig,
@@ -929,7 +937,7 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None, conversion_val
 
     The process can be automated by bypassing the GUI.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
     >>> filteredrefsig  = emg.filter_refsig(
     ...     emgfile=emg_refsig,
@@ -977,9 +985,3 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None, conversion_val
         rfd = rfd * conversion_val
 
     return rfd
-
-
-# TODO function to calculate the amplification factor and convert the ref signal
-# TODO in the GUI, allow to convert the force for a conversion factor
-# TODO write extended documentation of how emgfile should be structured and why and how it
-# can be expanded to fit possible new necessities

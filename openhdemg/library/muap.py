@@ -11,7 +11,7 @@ from openhdemg.library.mathtools import (
     find_teta,
     mle_cv_est,
 )
-from openhdemg.library.otbelectrodes import sort_rawemg
+from openhdemg.library.electrodes import sort_rawemg
 from openhdemg.library.plotemg import plot_muaps, plot_muaps_for_cv
 from scipy import signal
 import matplotlib.pyplot as plt
@@ -25,7 +25,6 @@ import warnings
 import tkinter as tk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
 import pyperclip
 
 
@@ -54,7 +53,7 @@ def diff(sorted_rawemg):
 
     See also
     --------
-    double_diff : calculate double differential of RAW_SIGNAL on matrix rows.
+    - double_diff : calculate double differential of RAW_SIGNAL on matrix rows.
 
     Notes
     -----
@@ -64,7 +63,7 @@ def diff(sorted_rawemg):
     --------
     Calculate single differential of a DEMUSE file.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="DEMUSE")
     >>> sorted_rawemg = emg.sort_rawemg(emgfile)
     >>> sd = emg.diff(sorted_rawemg)
@@ -85,17 +84,19 @@ def diff(sorted_rawemg):
     While alculating the single differential of an OTB file,
     matrix code and orientation should be also specified.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ... )
     >>> sd = emg.diff(sorted_rawemg)
     """
 
     # Create a dict of pd.DataFrames for the single differential
-    sd = {col: {} for col in sorted_rawemg.keys()}
     # {"col0": {}, "col1": {}, "col2": {}, "col3": {}, "col4": {}}
-    # {'col0': {}, 'col1': {}, 'col2': {}, 'col3': {}, 'col4': {}, 'col5': {},
-    #   'col6': {}, 'col7': {}}
+    sd = {col: {} for col in sorted_rawemg.keys()}
 
     # Loop matrix columns
     for col in sorted_rawemg.keys():
@@ -136,7 +137,7 @@ def double_diff(sorted_rawemg):
 
     See also
     --------
-    diff : Calculate single differential of RAW_SIGNAL on matrix rows.
+    - diff : Calculate single differential of RAW_SIGNAL on matrix rows.
 
     Notes
     -----
@@ -146,7 +147,7 @@ def double_diff(sorted_rawemg):
     --------
     Calculate double differential.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="DEMUSE")
     >>> sorted_rawemg = emg.sort_rawemg(emgfile)
     >>> dd = emg.double_diff(sorted_rawemg)
@@ -167,13 +168,19 @@ def double_diff(sorted_rawemg):
     While alculating the double differential of an OTB file,
     matrix code and orientation should be also specified.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> sorted_rawemg = emg.sort_rawemg(emgfile=emgfile, code="GR08MM1305", orientation=180, dividebycolumn=True)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile=emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ...     dividebycolumn=True,
+    ... )
     >>> dd = emg.double_diff(sorted_rawemg)
     """
 
     # Create a dict of pd.DataFrames for the double differential
+    # {"col0": {}, "col1": {}, "col2": {}, "col3": {}, "col4": {}}
     dd = {col: {} for col in sorted_rawemg.keys()}
 
     # Loop matrix columns
@@ -194,7 +201,9 @@ def double_diff(sorted_rawemg):
 
 
 # This function exploits parallel processing to compute the STA
-def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
+def sta(
+    emgfile, sorted_rawemg, firings=[0, 50], timewindow=100
+):
     """
     Computes the spike-triggered average (STA) of every MUs.
 
@@ -222,10 +231,10 @@ def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
 
     See also
     --------
-    unpack_sta : build a common pd.DataFrame from the sta dict containing
+    - unpack_sta : build a common pd.DataFrame from the sta dict containing
         all the channels.
-    pack_sta : pack the pd.DataFrame containing STA to a dict.
-    st_muap : generate spike triggered MUs action potentials
+    - pack_sta : pack the pd.DataFrame containing STA to a dict.
+    - st_muap : generate spike triggered MUs action potentials
         over the entire spike train of every MUs.
 
     Notes
@@ -238,10 +247,19 @@ def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
     and in a 50 ms time-window.
     Access the STA of the column 0 of the first MU (number 0).
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
-    >>> sta = emg.sta(emgfile=emgfile, sorted_rawemg=sorted_rawemg, firings=[0,25], timewindow=50)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile=emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ... )
+    >>> sta = emg.sta(
+    ...     emgfile=emgfile,
+    ...     sorted_rawemg=sorted_rawemg,
+    ...     firings=[0,25],
+    ...     timewindow=50,
+    ... )
     >>> sta[0]["col0"]
          0          1          2  ...        10         11         12
     0   NaN  -7.527668  -7.141111 ... -1.464846 -21.606445 -14.180500
@@ -258,11 +276,20 @@ def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
 
     Calculate STA of the differential signal on all the firings.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile=emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ... )
     >>> sd = emg.diff(sorted_rawemg=sorted_rawemg)
-    >>> sta = emg.sta(emgfile=emgfile, sorted_rawemg=sd, firings="all", timewindow=50)
+    >>> sta = emg.sta(
+    ...     emgfile=emgfile,
+    ...     sorted_rawemg=sd,
+    ...     firings="all",
+    ...     timewindow=50,
+    ... )
     >>> sta[0]["col0"]
          1         2          3  ...         10         11         12
     0   NaN -0.769545  11.807394 ...   3.388641  14.423187   1.420190
@@ -283,13 +310,8 @@ def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
     halftime = round(timewindow_samples / 2)
 
     # Container of the STA for every MUs
-    sta_dict = {}
-    for mu in range(emgfile["NUMBER_OF_MUS"]):
-        sta_dict[mu] = {}
-        """
-        sta_dict
-        {0: {}, 1: {}, 2: {}, 3: {}}
-        """
+    # {0: {}, 1: {}, 2: {}, 3: {}}
+    sta_dict = {mu: {} for mu in range(emgfile["NUMBER_OF_MUS"])}
 
     # Calculate STA on sorted_rawemg for every mu and put it into sta_dict[mu]
     # Loop all the MUs to fill sta_dict
@@ -311,15 +333,16 @@ def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
             row_dict = {}
             # Loop the matrix rows
             for row in sorted_rawemg[col].columns:
+
                 # Find the mupulses
-                thismups = emgfile["MUPULSES"][mu][firings_[0] : firings_[1]]
+                thismups = emgfile["MUPULSES"][mu][firings_[0]: firings_[1]]
 
                 # Container of ST area for averaging
                 df = {}
                 for pos, pulse in enumerate(thismups):
                     df[pos] = (
                         sorted_rawemg[col][row]
-                        .iloc[pulse - halftime : pulse + halftime]
+                        .iloc[pulse - halftime: pulse + halftime]
                         .reset_index(drop=True)
                     )
 
@@ -355,77 +378,6 @@ def sta(emgfile, sorted_rawemg, firings=[0, 50], timewindow=100):
     return sta_dict
 
 
-def unpack_sta(sta_mu1):
-    """
-    Build a common pd.DataFrame from the sta_dict containing all the channels.
-
-    Parameters
-    ----------
-    sta_mu1 : dict
-        A dict containing the STA of the MU.
-
-    Returns
-    -------
-    df1 : pd.DataFrame
-        A pd.DataFrame containing the STA of the MU
-        (including the empty channel).
-
-    See also
-    --------
-    sta : computes the STA of every MUs.
-    pack_sta : pack the pd.DataFrame containing STA to a dict.
-    """
-
-    dfs = [
-        sta_mu1["col0"],
-        sta_mu1["col1"],
-        sta_mu1["col2"],
-        sta_mu1["col3"],
-        sta_mu1["col4"],
-    ]
-    df1 = reduce(
-        lambda left, right: pd.merge(left, right, left_index=True, right_index=True),
-        dfs,
-    )
-
-    return df1
-
-
-def pack_sta(df_sta1):
-    """
-    Pack the pd.DataFrame containing STA to a dict.
-
-    Parameters
-    ----------
-    df_sta1 : A pd.DataFrame containing the STA of the MU
-    (including the empty channel).
-
-    Returns
-    -------
-    packed_sta : dict
-        dict containing STA of the input pd.DataFrame divided by matrix column.
-        Dict columns are "col0", col1", "col2", "col3", "col4".
-
-    See also
-    --------
-    sta : computes the STA of every MUs.
-    unpack_sta : build a common pd.DataFrame from the sta dict containing
-        all the channels.
-    """
-
-    slice = int(np.ceil(len(df_sta1.columns) / 5))
-
-    packed_sta = {
-        "col0": df_sta1.iloc[:, 0:slice],
-        "col1": df_sta1.iloc[:, slice : slice * 2],
-        "col2": df_sta1.iloc[:, slice * 2 : slice * 3],
-        "col3": df_sta1.iloc[:, slice * 3 : slice * 4],
-        "col4": df_sta1.iloc[:, slice * 4 : slice * 5],
-    }
-
-    return packed_sta
-
-
 # This function exploits parallel processing to compute the MUAPs
 def st_muap(emgfile, sorted_rawemg, timewindow=50):
     """
@@ -440,8 +392,8 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
         The dictionary containing the emgfile.
     sorted_rawemg : dict
         A dict containing the sorted electrodes.
-        Every key of the dictionary represents a different column of the matrix.
-        Rows are stored in the dict as a pd.DataFrame.
+        Every key of the dictionary represents a different column of the
+        matrix. Rows are stored in the dict as a pd.DataFrame.
     timewindow : int, default 50
         Timewindow to compute ST MUAPs in milliseconds.
 
@@ -456,7 +408,7 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
 
     See also
     --------
-    sta : computes the STA of every MUs.
+    - sta : computes the STA of every MUs.
 
     Notes
     -----
@@ -465,12 +417,16 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
     Examples
     --------
     Calculate the MUAPs of the differential signal.
-    Access the MUAPs of the first MU (number 0), channel 15 that is contained in
-    the second matrix column ("col1").
+    Access the MUAPs of the first MU (number 0), channel 15 that is contained
+    in the second matrix column ("col1").
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile=emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ... )
     >>> sd = emg.diff(sorted_rawemg=sorted_rawemg)
     >>> stmuap = emg.st_muap(emgfile=emgfile, sorted_rawemg=sd, timewindow=50)
     >>> stmuap[0]["col1"][15]
@@ -493,13 +449,8 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
     halftime = round(timewindow_samples / 2)
 
     # Container of the STA for every MUs
-    stmuap = {}
-    for mu in range(emgfile["NUMBER_OF_MUS"]):
-        stmuap[mu] = {}
-        """
-        sta_dict
-        {0: {}, 1: {}, 2: {}, 3: {}}
-        """
+    # {0: {}, 1: {}, 2: {}, 3: {}}
+    stmuap = {mu: {} for mu in range(emgfile["NUMBER_OF_MUS"])}
 
     # Calculate ST MUAPs on sorted_rawemg for every mu and put it into
     # sta_dict[mu]. Loop all the MUs to fill sta_dict.
@@ -508,10 +459,12 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
         # Loop the matrix columns
         sorted_rawemg_st = {}
         for col in sorted_rawemg.keys():
+
             # Container of ST MUAPs for matrix rows
             row_dict = {}
             # Loop the matrix rows
             for row in sorted_rawemg[col].columns:
+
                 # Find the mupulses
                 thismups = emgfile["MUPULSES"][mu]
 
@@ -520,7 +473,7 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
                 for pos, pulse in enumerate(thismups):
                     df[pos] = (
                         sorted_rawemg[col][row]
-                        .iloc[pulse - halftime : pulse + halftime]
+                        .iloc[pulse - halftime: pulse + halftime]
                         .reset_index(drop=True)
                     )
 
@@ -544,7 +497,7 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
     res = Parallel(n_jobs=1)(delayed(parallel)(mu) for mu in stmuap.keys())
 
     t1 = time.time()
-    print(f"\nTime of st muaps parallel processing: {round(t1-t0, 2)} Sec\n")
+    print(f"\nTime of st_muap parallel processing: {round(t1-t0, 2)} Sec\n")
 
     # Sort output of the parallel processing according to MU number
     for i in res:
@@ -553,6 +506,88 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
         stmuap[mu] = i
 
     return stmuap
+
+
+def unpack_sta(sta_mu):
+    """
+    Build a common pd.DataFrame from the sta_dict containing all the channels.
+
+    Parameters
+    ----------
+    sta_mu : dict
+        A dict containing the STA of a single MU.
+
+    Returns
+    -------
+    df1 : pd.DataFrame
+        A pd.DataFrame containing the STA of the MU
+        (including the empty channel).
+    keys : list
+        The matrix columns (dict keys) of the unpacked sta.
+
+    See also
+    --------
+    - sta : computes the STA of every MUs.
+    - pack_sta : pack the pd.DataFrame containing STA to a dict.
+    """
+
+    # Identify the matrix columns
+    keys = sta_mu.keys()
+
+    # extract all the pd.DataFrames in a list
+    dfs = [sta_mu[key] for key in keys]
+
+    # Merge in a single pd.DataFrame
+    df1 = reduce(
+        lambda left,
+        right: pd.merge(left, right, left_index=True, right_index=True),
+        dfs,
+    )
+
+    return df1, list(keys)
+
+
+def pack_sta(df_sta, keys):
+    """
+    Pack the pd.DataFrame containing STA to a dict.
+
+    Parameters
+    ----------
+    df_sta : A pd.DataFrame containing the STA of a single MU
+        (including the empty channel).
+    keys : list
+        The matrix columns (dict keys) by which to pack the sta.
+
+    Returns
+    -------
+    packed_sta : dict
+        dict containing STA of the input pd.DataFrame divided by matrix column.
+        Dict columns are "col0", col1", "col2", "col3", "col4".
+
+    See also
+    --------
+    - sta : computes the STA of every MUs.
+    - unpack_sta : build a common pd.DataFrame from the sta dict containing
+        all the channels.
+    """
+
+    # Detect the number of columns per pd.DataFrame (matrix columns)
+    slice = int(np.ceil(len(df_sta.columns) / len(keys)))
+
+    # Pack the sta accordingly
+    packed_sta = {
+        k: df_sta.iloc[:, slice*p:slice*(p+1)] for p, k in enumerate(keys)
+    }
+
+    # packed_sta = {
+    #     "col0": df_sta.iloc[:, 0:slice],
+    #     "col1": df_sta.iloc[:, slice:slice * 2],
+    #     "col2": df_sta.iloc[:, slice * 2: slice * 3],
+    #     "col3": df_sta.iloc[:, slice * 3: slice * 4],
+    #     "col4": df_sta.iloc[:, slice * 4: slice * 5],
+    # }
+
+    return packed_sta
 
 
 def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
@@ -588,25 +623,33 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
 
     See also
     --------
-    sta : computes the STA of every MUs.
-    norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
+    - sta : computes the STA of every MUs.
+    - norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
         two MUS.
 
     Notes
     -----
-    STAs are aligned by a common lag/delay and not channel by channel because
-    this might lead to misleading results (and provides better performance).
+    STAs are aligned by a common lag/delay for the entire matrix and not
+    channel by channel because this might lead to misleading results.
 
     Examples
     --------
     Align two MUs with a final duration of 50% the original one.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="GR08MM1305", orientation=180)
-    >>> sta = emg.sta(emgfile=emgfile, sorted_rawemg=sorted_rawemg, timewindow=100)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile=emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ... )
+    >>> sta = emg.sta(
+    ...     emgfile=emgfile,
+    ...     sorted_rawemg=sorted_rawemg,
+    ...     timewindow=100,
+    ... )
     >>> aligned_sta1, aligned_sta2 = emg.align_by_xcorr(
-    ...     sta_mu1=sta[0], sta_mu2=sta[1], finalduration=0.5
+    ...     sta_mu1=sta[0], sta_mu2=sta[1], finalduration=0.5,
     ... )
     >>> aligned_sta1["col0"]
          0          1          2  ...        10         11         12
@@ -626,19 +669,21 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     # Obtain a pd.DataFrame for the 2d xcorr without empty column
     # but mantain the original pd.DataFrame with empty column to return the
     # aligned STAs.
-    df1 = unpack_sta(sta_mu1)
+    df1, d_keys = unpack_sta(sta_mu1)
     no_nan_sta1 = df1.dropna(axis=1, inplace=False)
-    df2 = unpack_sta(sta_mu2)
+    df2, d_keys = unpack_sta(sta_mu2)
     no_nan_sta2 = df2.dropna(axis=1, inplace=False)
 
     # Compute 2dxcorr to identify a common lag/delay
-    normxcorr_df, normxcorr_max = norm_twod_xcorr(no_nan_sta1, no_nan_sta2, mode="same")
+    normxcorr_df, normxcorr_max = norm_twod_xcorr(
+        no_nan_sta1, no_nan_sta2, mode="same"
+    )
 
     # Detect the time leads or lags from 2dxcorr
     corr_lags = signal.correlation_lags(
         len(no_nan_sta1.index), len(no_nan_sta2.index), mode="same"
     )
-    normxcorr_df.set_index(corr_lags, inplace=True)
+    normxcorr_df = normxcorr_df.set_index(corr_lags)
     lag = normxcorr_df.idxmax().median()  # First signal compared to second
 
     # Be sure that the lag/delay does not exceed values suitable for the final
@@ -672,14 +717,13 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     df2cut.reset_index(drop=True, inplace=True)
 
     # Convert the STA to the original dict structure
-    aligned_sta1 = pack_sta(df1cut)
-    aligned_sta2 = pack_sta(df2cut)
+    aligned_sta1 = pack_sta(df1cut, d_keys)
+    aligned_sta2 = pack_sta(df2cut, d_keys)
 
     return aligned_sta1, aligned_sta2
 
 
 # TODO_NEXT_ update matrixcode and orientation here and in otbelectrodes
-
 
 # This function exploits parallel processing:
 #   - sta: calls the emg.sta function which is executed in parallel
@@ -745,27 +789,25 @@ def tracking(
 
     See also
     --------
-    sta : computes the STA of every MUs.
-    norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
+    - sta : computes the STA of every MUs.
+    - norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
         two MUS.
-    remove_duplicates_between : remove duplicated MUs across two different
+    - remove_duplicates_between : remove duplicated MUs across two different
         files based on STA.
 
     Notes
     -----
     Parallel processing can improve performances by 5-10 times compared to
     serial processing. In this function, parallel processing has been
-    implemented for the tasks involving 2-dimensional cross-correlation but
-    not yet for sta and plotting that still constitute a bottlneck.
-    Parallel processing of these features will be implemented in the next
-    releases.
+    implemented for the tasks involving 2-dimensional cross-correlation, sta
+    and plotting.
 
     Examples
     --------
     Track MUs between two OTB files and show the filtered results.
     If loading a DEMUSE file, matrixcode and orientation can be ignored.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile1 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emgfile2 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> tracking_res = emg.tracking(
@@ -795,13 +837,17 @@ def tracking(
     """
 
     # Get the STAs
-    emgfile1_sorted = sort_rawemg(emgfile1, code=matrixcode, orientation=orientation)
-    sta_emgfile1 = sta(
-        emgfile1, emgfile1_sorted, firings=firings, timewindow=timewindow * 2
+    emgfile1_sorted = sort_rawemg(
+        emgfile1, code=matrixcode, orientation=orientation,
     )
-    emgfile2_sorted = sort_rawemg(emgfile2, code=matrixcode, orientation=orientation)
+    sta_emgfile1 = sta(
+        emgfile1, emgfile1_sorted, firings=firings, timewindow=timewindow * 2,
+    )
+    emgfile2_sorted = sort_rawemg(
+        emgfile2, code=matrixcode, orientation=orientation
+    )
     sta_emgfile2 = sta(
-        emgfile2, emgfile2_sorted, firings=firings, timewindow=timewindow * 2
+        emgfile2, emgfile2_sorted, firings=firings, timewindow=timewindow * 2,
     )
 
     # Tracking function to run in parallel
@@ -813,15 +859,20 @@ def tracking(
         for mu_file2 in range(emgfile2["NUMBER_OF_MUS"]):
             # Firs, align the STAs
             aligned_sta1, aligned_sta2 = align_by_xcorr(
-                sta_emgfile1[mu_file1], sta_emgfile2[mu_file2], finalduration=0.5
+                sta_emgfile1[mu_file1],
+                sta_emgfile2[mu_file2],
+                finalduration=0.5
             )
+            aligned_sta1, aligned_sta2 = sta_emgfile1[mu_file1], sta_emgfile2[mu_file2]
 
             # Second, compute 2d cross-correlation
-            df1 = unpack_sta(aligned_sta1)
+            df1, _ = unpack_sta(aligned_sta1)
             df1.dropna(axis=1, inplace=True)
-            df2 = unpack_sta(aligned_sta2)
+            df2, _ = unpack_sta(aligned_sta2)
             df2.dropna(axis=1, inplace=True)
-            normxcorr_df, normxcorr_max = norm_twod_xcorr(df1, df2, mode="full")
+            normxcorr_df, normxcorr_max = norm_twod_xcorr(
+                df1, df2, mode="full"
+            )
 
             # Third, fill the tracking_res
             if exclude_belowthreshold is False:
@@ -859,7 +910,9 @@ def tracking(
     # Filter the results
     if filter:
         # Sort file by MUs in file 1 and XCC to have first the highest XCC
-        sorted_res = tracking_res.sort_values(by=["MU_file1", "XCC"], ascending=False)
+        sorted_res = tracking_res.sort_values(
+            by=["MU_file1", "XCC"], ascending=False
+        )
         # Get unique MUs from file 1
         unique = sorted_res["MU_file1"].unique()
 
@@ -872,7 +925,9 @@ def tracking(
             res_unique.loc[pos, :] = this_res.iloc[0, :]
 
         # Now repeat the task with MUs from file 2
-        sorted_res = res_unique.sort_values(by=["MU_file2", "XCC"], ascending=False)
+        sorted_res = res_unique.sort_values(
+            by=["MU_file2", "XCC"], ascending=False
+        )
         unique = sorted_res["MU_file2"].unique()
         res_unique = pd.DataFrame(columns=sorted_res.columns)
         for pos, mu2 in enumerate(unique):
@@ -892,7 +947,6 @@ def tracking(
 
     # Plot the MUs pairs
     if show:
-
         def parallel(ind):  # Function for the parallel execution of plotting
             if tracking_res["XCC"].loc[ind] >= threshold:
                 # Align STA
@@ -909,7 +963,7 @@ def tracking(
                 plot_muaps(
                     sta_dict=[aligned_sta1, aligned_sta2],
                     title=title,
-                    showimmediately=False,
+                    showimmediately=False
                 )
 
             plt.show()
@@ -987,10 +1041,10 @@ def remove_duplicates_between(
 
     See also
     --------
-    sta : computes the STA of every MUs.
-    norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
+    - sta : computes the STA of every MUs.
+    - norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
         two MUS.
-    tracking : track MUs across two different files.
+    - tracking : track MUs across two different files.
 
     Examples
     --------
@@ -1017,7 +1071,7 @@ def remove_duplicates_between(
     >>> emg.asksavefile(emgfile2)
     """
 
-    # Work on deepcopies to prevent changing the original file
+    # Work on deepcopies
     emgfile1 = copy.deepcopy(emgfile1)
     emgfile2 = copy.deepcopy(emgfile2)
 
@@ -1087,7 +1141,7 @@ def remove_duplicates_between(
         # on SIL score.
         to_remove1 = []
         to_remove2 = []
-        for i, row in tracking_res.iterrows():
+        for _, row in tracking_res.iterrows():
             sil1 = emgfile1["SIL"].loc[int(row["MU_file1"])]
             sil2 = emgfile2["SIL"].loc[int(row["MU_file2"])]
 
@@ -1113,8 +1167,8 @@ def remove_duplicates_between(
             f"which can be one of 'munumber', 'PNR', 'SIL'. {which} was passed instead"
         )
 
-
-# TODO_NEXT_ try if replacing at/iat with loc/iloc can improve performance or use np arrays.
+# TODO_NEXT_ processes in the muap module are often slow, a major performance
+# improvement is necessary.
 
 
 def xcc_sta(sta):
@@ -1139,10 +1193,10 @@ def xcc_sta(sta):
 
     Examples
     --------
-    Calculate the XCC of adjacent channels of the double differential derivation
-    as done to calculate MUs conduction velocity.
+    Calculate the XCC of adjacent channels of the double differential
+    derivation as done to calculate MUs conduction velocity.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile,
@@ -1173,18 +1227,17 @@ def xcc_sta(sta):
             reversed_col.reverse()
 
             for pos, col in enumerate(reversed_col):
-                if pos != len(reversed_col) - 1:
-                    this_c = df.loc[:, reversed_col[pos]].to_numpy()  # For performance
-                    next_c = df.loc[:, reversed_col[pos + 1]].to_numpy()
-                    xcc = norm_xcorr(sig1=this_c, sig2=next_c)
+                if pos != len(reversed_col)-1:
+                    # Use np.ndarrays for performance
+                    this_c = df.loc[:, reversed_col[pos]].to_numpy()
+                    next_c = df.loc[:, reversed_col[pos+1]].to_numpy()
+                    xcc = norm_xcorr(sig1=this_c, sig2=next_c, out="max")
                 else:
                     xcc = np.nan
 
                 xcc_sta[mu_number][matrix_col][col] = xcc
 
-            xcc_sta[mu_number][matrix_col] = xcc_sta[mu_number][
-                matrix_col
-            ].drop_duplicates()
+            xcc_sta[mu_number][matrix_col] = xcc_sta[mu_number][matrix_col].drop_duplicates()
 
     return xcc_sta
 
@@ -1258,7 +1311,7 @@ class MUcv_gui:
 
         # After that, set up the GUI
         self.root = tk.Tk()
-        self.root.title("MUs cv estimation")
+        self.root.title('MUs cv estimation')
 
         # Create main frame, assign structure and minimum spacing
         self.frm = ttk.Frame(self.root, padding=15)
@@ -1276,7 +1329,7 @@ class MUcv_gui:
             self.frm,
             textvariable=tk.StringVar(),
             values=self.all_mus,
-            state="readonly",
+            state='readonly',
             width=15,
         )
         self.selectmu_cb.grid(row=1, column=0, columnspan=1, sticky=tk.W)
@@ -1285,7 +1338,7 @@ class MUcv_gui:
         # method is passing two arguments: the event object and the function
         # itself. Use lambda to avoid the error.
         self.selectmu_cb.bind(
-            "<<ComboboxSelected>>",
+            '<<ComboboxSelected>>',
             lambda event: self.gui_plot(),
         )
 
@@ -1306,7 +1359,7 @@ class MUcv_gui:
             self.frm,
             textvariable=tk.StringVar(),
             values=self.columns,
-            state="readonly",
+            state='readonly',
             width=15,
         )
         self.col_cb.grid(row=1, column=3, columnspan=1, sticky=tk.W)
@@ -1322,7 +1375,7 @@ class MUcv_gui:
             self.frm,
             textvariable=tk.StringVar(),
             values=self.rows,
-            state="readonly",
+            state='readonly',
             width=15,
         )
         self.start_cb.grid(row=1, column=4, columnspan=1, sticky=tk.W)
@@ -1335,7 +1388,7 @@ class MUcv_gui:
             self.frm,
             textvariable=tk.StringVar(),
             values=self.rows,
-            state="readonly",
+            state='readonly',
             width=15,
         )
         self.stop_cb.grid(row=1, column=5, columnspan=1, sticky=tk.W)
@@ -1364,7 +1417,7 @@ class MUcv_gui:
         )
         self.textbox = tk.Text(self.frm, width=20)
         self.textbox.grid(row=2, column=8, sticky="ns")
-        self.textbox.insert("1.0", self.res_df.loc[:, ["CV", "RMS"]].to_string())
+        self.textbox.insert('1.0', self.res_df.loc[:, ["CV", "RMS"]].to_string())
 
         # Create a button to copy the dataframe to clipboard
         copy_btn = ttk.Button(
@@ -1386,10 +1439,10 @@ class MUcv_gui:
         self.root.mainloop()
 
     # Define functions necessary for the GUI
+    # Use empty docstrings to hide the functions from the documentation.
     def gui_plot(self):
         """
-        Plot the MUAPs used to estimate CV.
-        """
+        """  # Plot the MUAPs used to estimate CV.
 
         # Get MU number
         mu = int(self.selectmu_cb.get())
@@ -1409,22 +1462,20 @@ class MUcv_gui:
 
     def copy_to_clipboard(self):
         """
-        Copy the dataframe to clipboard in csv format.
-        """
-        pass
-        pyperclip.copy(self.res_df.to_csv(index=False, sep="\t"))
+        """  # Copy the dataframe to clipboard in csv format.
+
+        pyperclip.copy(self.res_df.to_csv(index=False, sep='\t'))
 
     # Define functions for cv estimation
     def compute_cv(self):
         """
-        Compute conduction velocity.
-        """
+        """  # Compute conduction velocity.
 
         # Get the muaps of the selected columns and represent them in
         # different rows (as requested by the functions find_teta and
         # mle_cv_est).
         sig = self.st[int(self.selectmu_cb.get())][self.col_cb.get()].transpose()
-        col_list = list(range(int(self.start_cb.get()), int(self.stop_cb.get()) + 1))
+        col_list = list(range(int(self.start_cb.get()), int(self.stop_cb.get())+1))
 
         sig = sig.iloc[col_list, :]
         sig = sig.reset_index(drop=True)
@@ -1469,14 +1520,12 @@ class MUcv_gui:
         self.res_df.loc[mu, "CV"] = cv
         self.res_df.loc[mu, "RMS"] = rms
 
-        xcc_col_list = list(
-            range(int(self.start_cb.get()) + 1, int(self.stop_cb.get()) + 1)
-        )
+        xcc_col_list = list(range(int(self.start_cb.get())+1, int(self.stop_cb.get())+1))
         xcc = self.sta_xcc[mu][self.col_cb.get()].iloc[:, xcc_col_list].mean().mean()
         self.res_df.loc[mu, "XCC"] = xcc
 
         self.textbox.replace(
-            "1.0",
-            "end",
+            '1.0',
+            'end',
             self.res_df.loc[:, ["CV", "RMS"]].round(3).to_string(),
         )

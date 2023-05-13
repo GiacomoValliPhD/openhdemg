@@ -59,7 +59,7 @@ def min_max_scaling(series_or_df):
         )
 
 
-def norm_xcorr(sig1, sig2):
+def norm_xcorr(sig1, sig2, out="both"):
     """
     Normalized cross-correlation of 2 signals.
 
@@ -68,17 +68,29 @@ def norm_xcorr(sig1, sig2):
     sig1, sig2 : pd.Series or np.ndarray
         The two signals to correlate.
         These signals must be 1-dimensional and of same length.
+    out : str {"both", "max"}, default "both"
+        A string indicating the output value:
+
+        ``both``
+           The output is the greatest positive or negative cross-correlation
+           value.
+        ``max``
+           The output is the maximum cross-correlation value.
 
     Returns
     -------
     xcc : float
-        The maximum cross-correlation value.
+        The cross-correlation value depending on "out".
 
     See also
     --------
-    norm_twod_xcorr : Normalised 2-dimensional cross-correlation of STAs of
+    - norm_twod_xcorr : Normalised 2-dimensional cross-correlation of STAs of
         two MUS.
     """
+
+    # Convert input to ndarray
+    sig1 = np.asarray(sig1)
+    sig2 = np.asarray(sig2)
 
     # Implementation corresponding to:
     # MATLAB => xcorr(a, b, 'normalized')
@@ -90,7 +102,18 @@ def norm_xcorr(sig1, sig2):
     b = sig2 / norm_b
     c = np.correlate(a, b, mode='full')
 
-    return max(c)
+    # `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5)
+    # because it does not use the FFT to compute the convolution; in that case,
+    # `scipy.signal.correlate` might be preferable. No need in our use case.
+
+    # Calculate xcc based on out
+    if out == "max":
+        xcc = np.max(c)
+    else:
+        max_abs_index = np.abs(c).argmax()
+        xcc = np.abs(c[max_abs_index]) * np.sign(c[max_abs_index])
+
+    return xcc
 
 
 def norm_twod_xcorr(df1, df2, mode="full"):
@@ -131,24 +154,25 @@ def norm_twod_xcorr(df1, df2, mode="full"):
 
     See also
     --------
-    align_by_xcorr : to align the two STAs before calling norm_twod_xcorr.
-    unpack_sta : for unpacking the sta dict in a pd.DataFrame
+    - align_by_xcorr : to align the two STAs before calling norm_twod_xcorr.
+    - unpack_sta : for unpacking the sta dict in a pd.DataFrame
         before passing it to norm_twod_xcorr.
-    pack_sta : for packing the sta pd.DataFrame in a dict where
+    - pack_sta : for packing the sta pd.DataFrame in a dict where
         each matrix column corresponds to a dict key.
 
     Examples
     --------
     Full steps to pass two dataframes to norm_twod_xcorr from the same EMG
     file.
-    1 Load the EMG file and band-pass filter the raw EMG signal
-    2 Sort the matrix channels and compute the spike-triggered average
-    3 Extract the STA of the MUs of interest from all the STAs
-    4 Unpack the STAs of single MUs and remove np.nan to pas them to
-        norm_twod_xcorr
-    5 Compute 2dxcorr to identify a common lag/delay
 
-    >>> import openhdemg as emg
+    1. Load the EMG file and band-pass filter the raw EMG signal
+    2. Sort the matrix channels and compute the spike-triggered average
+    3. Extract the STA of the MUs of interest from all the STAs
+    4. Unpack the STAs of single MUs and remove np.nan to pas them to
+        norm_twod_xcorr
+    5. Compute 2dxcorr to identify a common lag/delay
+
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emgfile = emg.filter_rawemg(emgfile, order=2, lowcut=20, highcut=500)
     >>> sorted_rawemg = emg.sort_rawemg(
@@ -162,9 +186,9 @@ def norm_twod_xcorr(df1, df2, mode="full"):
     >>> sta_mu1 = sta[mu0]
     >>> sta_mu2 = sta[mu1]
     >>> df1 = emg.unpack_sta(sta_mu1)
-    >>> no_nan_sta1 = df1.dropna(axis=1, inplace=False)
+    >>> no_nan_sta1 = df1.dropna(axis=1)
     >>> df2 = emg.unpack_sta(sta_mu2)
-    >>> no_nan_sta2 = df2.dropna(axis=1, inplace=False)
+    >>> no_nan_sta2 = df2.dropna(axis=1)
     >>> normxcorr_df, normxcorr_max = emg.norm_twod_xcorr(
     ...     no_nan_sta1,
     ...     no_nan_sta2,
@@ -188,6 +212,7 @@ def norm_twod_xcorr(df1, df2, mode="full"):
 
     # Perform 2d xcorr
     correlate2d = signal.correlate2d(in1=df1, in2=df2, mode=mode)
+
     # There is no need to work with numpy.ndarrays as signal.correlate2d is
     # already converting the pd.DataFrame into numpy.ndarray, and the rest of
     # the code does not take much time to run.
@@ -232,7 +257,7 @@ def compute_sil(ipts, mupulses):  # TODO _NEXT_ add refs in docs when necessary
 
     See also
     --------
-    compute_pnr : to calculate the Pulse to Noise ratio of a single MU.
+    - compute_pnr : to calculate the Pulse to Noise ratio of a single MU.
     """
 
     # Extract source and peaks and align source and peaks based on IPTS
@@ -294,7 +319,7 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
 
     See also
     --------
-    compute_sil : to calculate the Silhouette score for a single MU.
+    - compute_sil : to calculate the Silhouette score for a single MU.
     """
 
     # According to Holobar 2014, the PNR is calculated as:
@@ -311,7 +336,7 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
     # χ[3,50](D) stands for an indicator function that penalizes motor units
     # with filtered discharge rate D below 3 pulses per second (pps) or above
     # 50 pps:
-    # χ[3,50](D) = 0 if D is between 3 and 50 or 1 if D is not between 3 and 50
+    # χ[3,50](D) = 0 if D is between 3 and 50 or D if D is not between 3 and 50.
     # Two separate coefficients of variation for inter-discharge interval (IDI)
     # calculated as standard deviation (SD) of IDI divided by the mean IDI,
     # are used. CoVIDI is the coefficient of variation for IDI of non-paired
@@ -322,10 +347,11 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
     # Paired discharges are typical in pathological tremor and the use of both
     # CoVIDI and CoVpIDI accounts for this condition.
     #
-    # However, this heuristic penalty function does not work in particular
-    # types of contractions like explosive contractions (MUs discharge up to
-    # 200 pps). Therefore, in this implementation of the PNR estimation we did
-    # not use a penality based on MUs discharge.
+    # However, this heuristic penalty function unfairly penalizes MUs firing
+    # during specific types of contractions like explosive contractions
+    # (MUs discharge up to 200 pps).
+    # Therefore, in this implementation of the PNR estimation we did not use a
+    # penality based on MUs discharge.
     # Additionally, the user can decide whether to adopt the two coefficients
     # of variations to estimate Pi or not.
     # If both are used, Pi would be calculated as:
@@ -338,7 +364,10 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
     idi = np.diff(mupulses)
 
     # In order to increase robustness to outlier values, remove values outside
-    # mean +- 3 * STD in the idi array.
+    # mean +- 3 * STD in the idi array and the firings happening with more
+    # than 500ms of difference between each others.
+    idi = idi[idi <= (fsamp * 0.5)]
+
     mean, std = np.mean(idi), np.std(idi)
     upper_bound = mean + 3*std
     lower_bound = mean - 3*std
@@ -349,7 +378,7 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
     # Calculate Pi
     if separate_paired_firings is False:
         # Calculate Pi on all IDI
-        CoV_all_IDI = np.std(idi) / np.average(idi)
+        CoV_all_IDI = np.std(idi) / np.mean(idi)
 
         if math.isnan(CoV_all_IDI):
             CoV_all_IDI = 0
@@ -361,11 +390,11 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
         idinonp = idi[idi >= (fsamp * 0.05)]
         idip = idi[idi < (fsamp * 0.05)]
 
-        CoVIDI = np.std(idinonp) / np.average(idinonp)
+        CoVIDI = np.std(idinonp) / np.mean(idinonp)
         if math.isnan(CoVIDI):
             CoVIDI = 0
 
-        CoVpIDI = np.std(idip) / np.average(idip)
+        CoVpIDI = np.std(idip) / np.mean(idip)
         if math.isnan(CoVpIDI):
             CoVpIDI = 0
 
@@ -421,8 +450,8 @@ def derivatives_beamforming(sig, row, teta):
         estimation.
     """
 
-    # TODO _NEXT_ implement with nympy arrays instead of pd.Series for
-    # performance.
+    # TODO implement with nympy arrays instead of pd.Series for performance.
+    # Check the use of pandas in row-major
 
     # Define some necessary variables
     total_rows = len(sig)
@@ -567,8 +596,8 @@ def mle_cv_est(sig, initial_teta, ied, fsamp):
 
     See also
     --------
-    find_teta : Find the starting value for teta.
-    MUcv_gui : Graphical user interface for the estimation of MUs conduction
+    - find_teta : Find the starting value for teta.
+    - MUcv_gui : Graphical user interface for the estimation of MUs conduction
         velocity.
 
     Examples
@@ -645,9 +674,9 @@ def find_teta(sig1, sig2, ied, fsamp):
 
     See also
     --------
-    mle_cv_est : Estimate conduction velocity (CV) via maximum likelihood
+    - mle_cv_est : Estimate conduction velocity (CV) via maximum likelihood
         estimation.
-    MUcv_gui : Graphical user interface for the estimation of MUs conduction
+    - MUcv_gui : Graphical user interface for the estimation of MUs conduction
         velocity.
 
     Examples
@@ -659,7 +688,7 @@ def find_teta(sig1, sig2, ied, fsamp):
     First, obtain the spike-triggered average of the double differential
     derivation.
 
-    >>> import openhdemg as emg
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     ... sorted_rawemg = emg.sort_rawemg(
     ...     emgfile,
@@ -733,8 +762,8 @@ def find_teta(sig1, sig2, ied, fsamp):
     # +1 is necessary to overcome base 0 and prevent teta from beeing 0
 
     if pos > 1 and pos < len(delay):
-        x = delay[pos-2 : pos+1]
-        y = corrpos[pos-2 : pos+1]
+        x = delay[pos-2: pos+1]
+        y = corrpos[pos-2: pos+1]
 
         coefs = poly.polyfit(x=x, y=y, deg=2)
         # The polyfit function originally returns flipped coefficients
