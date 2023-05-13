@@ -277,8 +277,6 @@ class emgGUI:
     plot_muaps()
         Method to plot motor unit action potenital obtained from STA
         from one or multiple MUs.
-    open_pdf()
-        Method to open a PDF file in a seperate window.
     advanced_analysis()
         Method to open top-level windows based on the selected advanced method.
     on_filetype_change()
@@ -498,7 +496,18 @@ class emgGUI:
             height=30,
             bg_color="LightBlue4",
             fg_color="LightBlue4",
-            command=self.open_pdf,
+            command=lambda: (
+                # Get file path
+                path := Path("./openhdemg/gui/gui_files/test.pdf").resolve(),
+                # Check user OS for pdf opening
+                (
+                    webbrowser.open_new(str(path))
+                    if platform in ("win32", "linux")
+                    else os.system(f"open {str(path)}")
+                    if platform == "darwin"
+                    else None
+                ),
+            ),
         )
         info_button.grid(row=0, column=1, sticky=E)
 
@@ -963,27 +972,6 @@ class emgGUI:
         # Add padding to widgets
         for child in self.a_window.winfo_children():
             child.grid_configure(padx=5, pady=5)
-
-    def open_pdf(self):
-        """
-        Instance method to open a PDF file in a seperate window.
-
-        The standard program for opening PDF files is used.
-        The file can be handled independantly from the GUI.
-        The specific usecase here is to open a tutorial for the
-        "Plot Window" offline.
-        """
-        # Get file path
-        path = Path("./gui_files/test.pdf").resolve()
-
-        # Check user OS for pdf opening
-        if platform in ("win32", "linux"):
-            # Windows/linux option
-            webbrowser.open_new(str(path))
-
-        elif platform == "darwin":
-            # Mac option
-            os.system(f"open {str(path)}")
 
     # -----------------------------------------------------------------------------------------------
     # Plotting inside of GUI
