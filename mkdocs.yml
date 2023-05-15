@@ -38,7 +38,10 @@ nav:
   - Welcome: index.md
   - Quick-Start.md
   - Tutorials.md
-  - Graphical-Interface.md
+  - Graphical-Interface.md:
+    - intro: GUI_intro.md
+    - basics: GUI_basics.md
+    - advanced: GUI_advanced.md
   - What's-New.md
   - Contacts.md
   - Cite-Us.md
