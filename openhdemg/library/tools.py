@@ -526,7 +526,7 @@ def sort_mus(emgfile):
                 }
     """
 
-    # Identify the sorting_order by the firsr MUpulse of every MUs
+    # Identify the sorting_order by the first MUpulse of every MUs
     df = pd.DataFrame()
     df["firstpulses"] = [
         emgfile["MUPULSES"][i][0] for i in range(emgfile["NUMBER_OF_MUS"])

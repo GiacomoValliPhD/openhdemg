@@ -21,7 +21,7 @@ This is your starting point for every analysis. On the left hand side you can fi
 
 1. It doesn't get any simpler than this! Load an analysis file as described in the prior section.
 
-2. Once a file is successfully loaded, i.e. you can see the file specification displayed in the GUI, you can click the ** View MUs** button to plot/view your file. In the middle section of the GUI, a plot containing your data should appear.
+2. Once a file is successfully loaded, i.e. you can see the file specification displayed in the GUI, you can click the **View MUs** button to plot/view your file. In the middle section of the GUI, a plot containing your data should appear.
 
 In the two sections above, we described the two most rudimental functions in the GUI. To learn more about basic and more advanced analysis features of the GUI, check out the "basic" and "advanced" chapters in dropdown menu on the right side of the webpage.
 

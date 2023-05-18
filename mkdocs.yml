@@ -37,8 +37,8 @@ plugins:
 nav:
   - Welcome: index.md
   - Quick-Start.md
-  - Tutorials.md
-  - Graphical-Interface.md:
+  - tutorials.md
+  - Graphical-Interface:
     - intro: GUI_intro.md
     - basics: GUI_basics.md
     - advanced: GUI_advanced.md

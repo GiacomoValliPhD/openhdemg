@@ -318,7 +318,6 @@ class emgGUI:
         master_path = os.path.dirname(os.path.abspath(__file__))
         iconpath = master_path + "/gui_files/Icon.ico"
         self.master.iconbitmap(iconpath)
-        print(master_path)
 
         # Create left side framing for functionalities
         self.left = ttk.Frame(self.master, padding="10 10 12 12")
