@@ -1197,7 +1197,7 @@ class emgGUI:
         """
         # Create new window
         self.head = tk.Toplevel(bg="LightBlue4")
-        self.head.title("Reference Signal Eiditing Window")
+        self.head.title("Reference Signal Editing Window")
         self.head.iconbitmap(
             os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
         )
@@ -1695,6 +1695,7 @@ class emgGUI:
         The plots are displayed in seperate windows.
         """
         try:
+    
             # Create new window
             self.head = tk.Toplevel(bg="LightBlue4")
             self.head.title("Plot Window")
@@ -1754,7 +1755,7 @@ class emgGUI:
 
             # Plot refsig
             plt_refsig = ttk.Button(
-                self.head, text="Plot REFsig", command=self.plt_refsignal
+                self.head, text="Plot RefSig", command=self.plt_refsignal
             )
             plt_refsig.grid(column=0, row=4, sticky=W)
 
@@ -1913,13 +1914,24 @@ class emgGUI:
                 height=30,
                 bg_color="LightBlue4",
                 fg_color="LightBlue4",
-                command=self.open_pdf,
+                command=lambda: (
+                    # Get file path
+                    path := Path("./openhdemg/gui/gui_files/test.pdf").resolve(),
+                    # Check user OS for pdf opening
+                    (
+                        webbrowser.open_new(str(path))
+                        if platform in ("win32", "linux")
+                        else os.system(f"open {str(path)}")
+                        if platform == "darwin"
+                        else None
+                    ),
+                ),
             )
             info_button.grid(row=0, column=6, sticky=E)
 
             for child in self.head.winfo_children():
                 child.grid_configure(padx=5, pady=5)
-
+        
         except AttributeError:
             tk.messagebox.showerror("Information", "Load file prior to computation.")
             self.head.destroy()

@@ -1,10 +1,10 @@
 # Define the skeleton of the website/documentation
 site_name: openhdemg
-site_author: Giacomo Valli
+site_author: Giacomo Valli & Paul Ritsche
 site_description: >-
-  All you need to knowm about openhdemg
+  All you need to know about openhdemg
 
-copyright: Copyright &copy; 2022 - 2023 Giacomo Valli
+copyright: Copyright &copy; 2022 - 2023 Giacomo Valli & Paul Ritsche
 
 theme:
   name: "material"
