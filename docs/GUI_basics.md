@@ -1,22 +1,22 @@
 # Graphical Interface
 
-This is the basic introduction to the *openhdemg* GUI. In the next few sections, we will go through the basic analysis functions embedded in the GUI. For the advanced stuff, take a look at the "advanced" chapter on the left side of the webpage. We will start with how to sort the motor units included in your analysis file, go over force and motor unit property analysis and take a look at how to save and reset your analysis.
+This is the basic introduction to the *openhdemg* GUI. In the next few sections, we will go through the basic analysis functions embedded in the GUI. For the advanced stuff, take a look at the "advanced" chapter on the left side of the webpage. We will start with how to sort the motor units (MUs) included in your analysis file, go over force and MU property analysis and take a look at how to save and reset your analysis.
 
 ## Motor Unit Sorting
-To sort the motor units included in your analysis file in order of their recruitement, we implemented a sorting algorithm. The motor units are sorted based on their recruitement order in an ascending manner. On the left hand side in the main window of the GUI, you can find the **Sort MUs** Button. It is located in row three, column two. Once you press the button, the motor units will be sorted. Pay attention to view to motor units first, using the **View MUs** button next to the **Sort MUs** button (we explained this button in the "intro" chapter). The motor units will be sorted anyways, but without viewing them you won't see what is happening. Moreover, sorting the motor units is only possible when a file is loaded, so don't forget to do that. 
+To sort the MUs included in your analysis file in order of their recruitement, we implemented a sorting algorithm. The MUs are sorted based on their recruitement order in an ascending manner. On the left hand side in the main window of the GUI, you can find the **Sort MUs** Button. It is located in row three, column two. Once you press the button, the MUs will be sorted. Pay attention to view to MUs first, using the **View MUs** button next to the **Sort MUs** button (we explained this button in the "intro" chapter). The MUs will be sorted anyways, but without viewing them you won't see what is happening. Moreover, sorting the MUs is only possible when a file is loaded, so don't forget to do that. 
 
 ## Remove Motor Units
-To remove motor units included in your analysis file, you can click the **Remove MUs** button. The button is located on the left hand side in the main window of the GUI in column one of row four. Once you click the **Remove MUs** button, and a file is loaded, a pop-up window will open. You can select the motor unit you want to delete from the analysis file or you can enter the number of several motor units in case you want to delete more than one. In example, selecting
+To remove MUs included in your analysis file, you can click the **Remove MUs** button. The button is located on the left hand side in the main window of the GUI in column one of row four. Once you click the **Remove MUs** button, and a file is loaded, a pop-up window will open. You can select the MU you want to delete from the analysis file or you can enter the number of several MUs in case you want to delete more than one. In example, selecting
 
 ```Python
 Select MU: 1
 ```
-will result in the first motor unit to be deleted. Selecting 
+will result in the first MU to be deleted. Selecting 
 
 ```Python
 Select MU: 1,2,5
 ```
-will result in the removal of the first, second and fifth motor unit. When you view the motor units using the **View MUs** button prior to motor unit removal, you can directly see what is happening.
+will result in the removal of the first, second and fifth MU. When you view the MUs using the **View MUs** button prior to MU removal, you can directly see what is happening.
 
 ## Reference Signal Editing
 The *openhdemg* GUI also allows you to edit and filter reference signals corresponding to your analysis file (however, you can also edit and filter seperate reference signals). By clicking the **RefSig Editing** button located in row five and column one, a new pop-up window opens. In the "Reference Signal Editing Window", you can low-pass filter the reference signal as well as remove any signal offset. 
@@ -46,10 +46,10 @@ will result in automatic offset removal. Moreover, specifying
 Offset Value : 0
 Automatic: 0
 ```
-will allow you to manually correct the offset in a new pop-up plot. You just need to follow the instructions on the plot. When you view the motor units using the **View MUs** button prior to reference signla editing, you can directly see what is happening.
+will allow you to manually correct the offset in a new pop-up plot. You just need to follow the instructions on the plot. When you view the MUs using the **View MUs** button prior to reference signla editing, you can directly see what is happening.
 
 ## Resize EMG File
-Sometime, resizing of you analysis file in unevitable. Luckily, *openhdemg* provides an easy solution. In row five and column 2 in the left side of the GUI, you can find the **Resize File** button. Clicking this butten will open a new pop-up plot of your analysis file. You can follow the instructions in the plot to resize the file. Simply click in the signal twice (once for start-point, once for end-point) to specify the resizing region and press enter to confirm your coice. When you view the motor units using the **View MUs** button prior to file resizing, you can directly see what is happening.
+Sometime, resizing of you analysis file in unevitable. Luckily, *openhdemg* provides an easy solution. In row five and column 2 in the left side of the GUI, you can find the **Resize File** button. Clicking this butten will open a new pop-up plot of your analysis file. You can follow the instructions in the plot to resize the file. Simply click in the signal twice (once for start-point, once for end-point) to specify the resizing region and press enter to confirm your coice. When you view the MUs using the **View MUs** button prior to file resizing, you can directly see what is happening.
 
 ## Analyse Force Signal
 In order to analyse the force signal in your analysis file, you can press the **Analyse Force** button located in row six and column one in the left side of the GUI. A new pop-up window will open where you can analyse the maximum voluntary contraction (MVC) value as well as the rate of force development (RFD). 
@@ -84,7 +84,7 @@ From the "Type" dropdown you can choose:
 "rel" : Only relative tresholds will be calculated.
 "abs" : Only absolute tresholds will be calculated.
 ```
-The recruitement threshold for each inluded motor unit in the analysis file will be displayed in the "Result Output" of the GUI.
+The recruitement threshold for each inluded MU in the analysis file will be displayed in the "Result Output" of the GUI.
 You can edit or copy any value in the "Result Output", however, you need to close the top-level "Motor Unit Properties Window" first.
 
 ### Compute Motor Unit Discharge Rate
@@ -111,7 +111,7 @@ From the "Event" dropdown list, you can choose:
 "steady" : Discharge rate is calculated during the steady-state phase.
 ```
 
-The discharge rate for each inluded motor unit in the analysis file at the stated event as well a for all the contraction will be displayed in the "Result Output" of the GUI. You can edit or copy any value in the "Result Output", however, you need to close the top-level "Motor Unit Properties Window" first.
+The discharge rate for each inluded MU in the analysis file at the stated event as well a for all the contraction will be displayed in the "Result Output" of the GUI. You can edit or copy any value in the "Result Output", however, you need to close the top-level "Motor Unit Properties Window" first.
 
 ### Basic Motor Unit Properties
 Subsequently to specifying the MVC, you can calculate a bunch of basic MUs properties with one click. These include
