@@ -63,7 +63,7 @@ After installing the *openhdemg* package, the GUI can be simply accessed from
 the command line (check to be into the virtual environment) with:
 
 ```shell
-python -m openhdemg.openhdemg_gui
+python -m openhdemg.gui.openhdemg_gui
 ```
 
 Once opened, it will look like this. It is cool, isn't it?
