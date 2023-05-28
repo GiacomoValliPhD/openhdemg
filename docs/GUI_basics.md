@@ -1,60 +1,85 @@
 # Graphical Interface
 
-This is the basic introduction to the *openhdemg* GUI. In the next few sections, we will go through the basic analysis functions embedded in the GUI. For the advanced stuff, take a look at the "advanced"(LINK) chapter on the left side of the webpage. We will start with how to sort the motor units (MUs) included in your analysis file, go over force and MU property analysis, take a detour on plotting, and take a look at how to save and reset your analysis. Have fun!
+This is the basic introduction to the *openhdemg* GUI. In the next few sections, we will go through the basic analysis functions embedded in the GUI. For the advanced stuff, take a look at the [advanced](GUI_advanced.md) chapter. We will start with how to sort the motor units (MUs) included in your analysis file, go over force and MU property analysis, take a detour on plotting, and take a look at how to save and reset your analysis. Have fun!
 
 --------------------------------------------
 
 ## Motor Unit Sorting
-To sort the MUs included in your analysis file in order of their recruitement, we implemented a sorting algorithm. The MUs are sorted based on their recruitement order in an ascending manner. On the left hand side in the main window of the GUI, you can find the **Sort MUs** Button. It is located in row three, column two. Once you press the button, the MUs will be sorted. Pay attention to view to MUs first, using the **View MUs** button next to the **Sort MUs** button (we explained this button in the "intro" chapter). The MUs will be sorted anyways, but without viewing them you won't see what is happening. Moreover, sorting the MUs is only possible when a file is loaded, so don't forget to do that. 
+To sort the MUs included in your analysis file in order of their recruitement, we implemented a sorting algorithm. The MUs are sorted based on their recruitement order in an ascending manner.
+
+1. Load a file. Take a look at the [intro](GUI_intro.md#specifying-an-analysis-file) section on how to do so.
+
+2. Pay attention to view to MUs first, using the `View MUs` button next to the `Sort MUs` button (we explained this button in the [intro](GUI_intro.md) chapter). The MUs will be sorted anyways, but without viewing them you won't see what is happening. 
+
+3. On the left hand side in the main window of the GUI, you can find the `Sort MUs` button. It is located in row three, column two. Once you press the button, the MUs will be sorted. 
 
 ## Remove Motor Units
-To remove MUs included in your analysis file, you can click the **Remove MUs** button. The button is located on the left hand side in the main window of the GUI in column one of row four. Once you click the **Remove MUs** button, and a file is loaded, a pop-up window will open. You can select the MU you want to delete from the analysis file from the `Select MU:`dropdown. Moreover, you can enter the number of several MUs in case you want to delete more than one. In example, selecting
+To remove MUs included in your analysis file, you can click the `Remove MUs` button. The button is located on the left hand side in the main window of the GUI in column one of row four.
 
-```Python
-Select MU: 1
-```
-will result in the first MU to be deleted. Selecting 
+1. View the MUs using the `View MUs` button prior to MU removal, you can directly see what is happening.
 
-```Python
-Select MU: 1,2,5
-```
-will result in the removal of the first, second and fifth MU. When you view the MUs using the **View MUs** button prior to MU removal, you can directly see what is happening.
+2. Click the `Remove MUs` button, and a file is loaded, a pop-up window will open. 
+
+3. Select the MU you want to delete from the analysis file from the `Select MU:`dropdown. Moreover, you can enter the number of several MUs in case you want to delete more than one. In example, selecting
+
+    ```Python
+    Select MU: 1
+    ```
+    will result in the first MU to be deleted. Selecting 
+
+    ```Python
+    Select MU: 1,2,5
+    ```
+    will result in the removal of the first, second and fifth MU.
+
+4. Click the `Remove MU` button to remove the MU(s). 
 
 ## Reference Signal Editing
-The *openhdemg* GUI also allows you to edit and filter reference signals corresponding to your analysis file (however, you can also edit and filter seperate reference signals). By clicking the **RefSig Editing** button located in row five and column one, a new pop-up window opens. In the `Reference Signal Editing Window`, you can low-pass filter the reference signal as well as remove any signal offset. 
-When you click the **Filter RefSig** button, the reference signal gets low-pass filtered according to values specified in the `Filter Order` and `Cutoff Freq` textboxes. In example, specifiying 
+The *openhdemg* GUI also allows you to edit and filter reference signals corresponding to your analysis file (however, you can also edit and filter seperate reference signals). 
 
-```Python
-Filter Order: 4
-Cutoff Freq: 15
-```
-will allow only frequencies below 15 Hz to pass trough. The filter order of 4 indicates a fourth degree polynomial transfer function.
+1. View the MUs using the `View MUs` button prior to reference signla editing, you can directly see what is happening.
 
-When you click the **Remove Offset** button, the reference signal's offset will be removed according to the values specified in the `Offset Value` and `Automatic Offset` textboxes. In example, specifying
+2. Click the `RefSig Editing` button located in row five and column one, a new pop-up window opens. In the `Reference Signal Editing Window`, you can low-pass filter the reference signal as well as remove any signal offset. 
 
-```Python
-Offset Value : 4
-Automatic: 0
-```
-will result in an offset correction by -4 in y-axis direction. Furthermore, specifying
+3. When you click the `Filter RefSig` button, the reference signal gets low-pass filtered according to values specified in the `Filter Order` and `Cutoff Freq` textboxes. In example, specifiying 
 
-```Python
-Offset Value : 0
-Automatic: != 0
-```
-will result in automatic offset removal. Moreover, specifying
+    ```Python
+    Filter Order: 4
+    Cutoff Freq: 15
+    ```
+    will allow only frequencies below 15 Hz to pass trough. The filter order of 4 indicates a fourth degree polynomial transfer function.
 
-```Python
-Offset Value : 0
-Automatic: 0
-```
-will allow you to manually correct the offset in a new pop-up plot. You just need to follow the instructions on the plot. When you view the MUs using the **View MUs** button prior to reference signla editing, you can directly see what is happening.
+4. When you click the `Remove Offset` button, the reference signal's offset will be removed according to the values specified in the `Offset Value` and `Automatic Offset` textboxes. In example, specifying
+
+    ```Python
+    Offset Value : 4
+    Automatic: 0
+    ```
+    will result in an offset correction by -4 in y-axis direction. Furthermore, specifying
+
+    ```Python
+    Offset Value : 0
+    Automatic: != 0
+    ```
+    will result in automatic offset removal. Moreover, specifying
+
+    ```Python
+    Offset Value : 0
+    Automatic: 0
+    ```
+    will allow you to manually correct the offset in a new pop-up plot. You just need to follow the instructions on the plot. 
 
 ## Resize EMG File
-Sometime, resizing of you analysis file in unevitable. Luckily, *openhdemg* provides an easy solution. In row five and column 2 in the left side of the GUI, you can find the **Resize File** button. Clicking this button will open a new pop-up plot of your analysis file. You can follow the instructions in the plot to resize the file. Simply click in the signal twice (once for start-point, once for end-point) to specify the resizing region and press enter to confirm your coice. When you view the MUs using the **View MUs** button prior to file resizing, you can directly see what is happening.
+Sometime, resizing of you analysis file in unevitable. Luckily, *openhdemg* provides an easy solution. In row five and column 2 in the left side of the GUI, you can find the `Resize File` button. 
+
+1. View the MUs using the `View MUs` button prior to file resizing, you can directly see what is happening.
+
+2. Clicking the `Resize File` button will open a new pop-up plot of your analysis file. 
+
+3. Follow the instructions in the plot to resize the file. Simply click in the signal twice (once for start-point, once for end-point) to specify the resizing region and press enter to confirm your coice.
 
 ## Analyse Force Signal
-In order to analyse the force signal in your analysis file, you can press the **Analyse Force** button located in row six and column one in the left side of the GUI. A new pop-up window will open where you can analyse the maximum voluntary contraction (MVC) value as well as the rate of force development (RFD). 
+In order to analyse the force signal in your analysis file, you can press the `Analyse Force` button located in row six and column one in the left side of the GUI. A new pop-up window will open where you can analyse the maximum voluntary contraction (MVC) value as well as the rate of force development (RFD). 
 
 ### Maximum voluntary contraction
 In order to get the MVC value, simply press the **Get MVC** button. A pop-up plot opens and you can select the area where you suspect the MVC to be. Click once to specify the start-point and once to specify the end-point. Press enter to confirm you choice. You will then see a `Result Output` appearing at the bottom of the main window of the GUI. There you can find the actual result of your MVC analysis. You can edit or copy any value in the `Result Output`, however, you need to close the top-level `Force Analysis Window` first.
@@ -158,11 +183,12 @@ Prior to plotting you can **optionally** select a few options on the left side o
 Figure in size in cm (h,w): 6,8
 ```
 
-These three setting options are universally used in all plotting options. There are two more specification options on the right side of the `Plot Window` only relevant when using the **Plot Derivation** or **Plot MUAP** buttons. The `Matrix Code` must be specified in row one and column four in the left side of the `Plot Window` according to the one you used during acquisition. So far, the codes 
+These three setting options are universally used in all plotting options. There are two more specification options on the right side of the `Plot Window` only relevant when using the **Plot Derivation** or **Plot MUAP** buttons. The `Matrix Code` must be specified in row one and column four in the right side of the `Plot Window` according to the one you used during acquisition. So far, the codes 
 - `GR08MM1305`
 - `GR04MM1305`
-are implemented. 
-Furthermore, you need to specify the `Orientation` in row tow and column four in the left side of the `Plot Window`. The `Orientaion` must match the one of your matrix during acquisition. You can find a reference image for the `Orientation` at the bottom in the left side of the `Plot Window`. 
+- `GR10MM0808`
+are implemented. You must choose one from the respective dropdown list.
+Furthermore, you need to specify the `Orientation` in row two and column four in the left side of the `Plot Window`. The `Orientaion` must match the one of your matrix during acquisition. You can find a reference image for the `Orientation` at the bottom in the right side of the `Plot Window`. 
 Keep in mind that these settings, `Matrix Code` and `Orientation`, are **ignored** when analysing `DEMUSE` files. 
 
 ### Plot Raw EMG Signal
@@ -208,5 +234,5 @@ We all make mistakes! But, most likely, we are also able to correct them. In cas
 
 --------------------------------------------
 
-We hope you had fun! We are now at the end of describing the basic function included in the *openhdemg* GUI. In case you need further clarification, don't hesitate to post a question in the Github discussion forum (LINK). Moreover, if you noticed an error that was not properly catched by the GUI, please file a bug report according to our guidelines (LINK).
-If you want to proceed to the advanced stuff now, take a look at the "advanced"(LINK) tab on the left side of the webpage. 
+We hope you had fun! We are now at the end of describing the basic functions included in the *openhdemg* GUI. In case you need further clarification, don't hesitate to post a question in the Github discussion forum (LINK). Moreover, if you noticed an error that was not properly catched by the GUI, please file a bug report according to our guidelines (LINK).
+If you want to proceed to the advanced stuff now, take a look at the [advanced](GUI_advanced.md) tab on the left side of the webpage. 

@@ -948,7 +948,7 @@ class emgGUI:
         matrix_code = ttk.Combobox(
             self.a_window, width=10, textvariable=self.mat_code_adv
         )
-        matrix_code["values"] = ("GR08MM1305", "GR04MM1305")
+        matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808")
         matrix_code["state"] = "readonly"
         matrix_code.grid(row=4, column=1, sticky=(W, E))
         self.mat_code_adv.set("GR08MM1305")
@@ -1806,7 +1806,7 @@ class emgGUI:
             ttk.Label(self.head, text="Matrix Code*").grid(row=0, column=3, sticky=(W))
             self.mat_code = StringVar()
             matrix_code = ttk.Combobox(self.head, width=15, textvariable=self.mat_code)
-            matrix_code["values"] = ("GR08MM1305", "GR04MM1305")
+            matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808")
             matrix_code["state"] = "readonly"
             matrix_code.grid(row=0, column=4, sticky=(W, E))
             self.mat_code.set("GR08MM1305")
@@ -2299,8 +2299,16 @@ class emgGUI:
         """
         Open top-level windows based on the selected advanced method.
         """
+
+        if self.advanced_method.get() == "Motor Unit Tracking":
+            head_title = "MUs Tracking Window"
+        elif self.advanced_method.get() == "Duplicate Removal":
+            head_title = "Duplicate Removal Window"
+        else:
+            head_title = "Conduction Velocity Window"
+        
         self.head = tk.Toplevel(bg="LightBlue4")
-        self.head.title("MUs tracking window")
+        self.head.title(head_title)
         self.head.iconbitmap(
             os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
         )
@@ -2404,6 +2412,9 @@ class emgGUI:
         # Add Which widget and update the track button
         # to match functionalities required for duplicate removal
         if self.advanced_method.get() == "Duplicate Removal":
+            
+            # Update title
+            
             # Add Which label
             ttk.Label(self.head, text="Which").grid(column=0, row=14)
             # Combobox for Which option
