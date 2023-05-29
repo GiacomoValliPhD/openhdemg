@@ -1335,7 +1335,7 @@ class emgGUI:
             # Open selection window for user
             start, end = openhdemg.showselect(
                 emgfile=self.resdict,
-                title="Select the start/end area to consider then press enter",
+                title="Select the start/end area to consider by hovering the mouse \n and pressing the 'o'-key, then press enter",
             )
             self.resdict, _, _ = openhdemg.resize_emgfile(
                 emgfile=self.resdict, area=[start, end]
