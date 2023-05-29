@@ -56,7 +56,9 @@ When you want to remove MU duplicates across in different files, you need to sel
 - PNR: The MU with the lowest PNR is removed.
 - SIL: The MU with the lowest SIL is removed.
 
-2. By clicking the `Remove Duplicates` button, you start the removal process. 
+2. By clicking the `Remove Duplicates` button, you start the removal process. A separate plot for each MU will appear.
+
+3. Specify a filename and location to save the file with duplicates removed in a .json format.
 
 ## Conduction Velocity
 Prior to calculation of the `Conduction Velocity` you need to load a file in the main window of the GUI. Take a look at the [intro](GUI_intro.md#specifying-an-analysis-file) section.  Once you have done this, open the `Advanced Tool Window` using the `Advanced Analaysis` button. 

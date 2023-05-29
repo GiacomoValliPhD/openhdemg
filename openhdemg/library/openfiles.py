@@ -433,7 +433,7 @@ def get_otb_mupulses(binarymusfiring):
 
     for i in binarymusfiring:  # Loop all the MUs
         my_ndarray = []
-        for idx, x in binarymusfiring[i].iteritems():  # Loop the MU firing times
+        for idx, x in binarymusfiring[i].items():  # Loop the MU firing times #This was iteritems() in older versions
             if x > 0:
                 my_ndarray.append(idx)  # Take the firing time and add it to the ndarray
 

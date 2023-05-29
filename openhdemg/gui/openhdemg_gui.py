@@ -1307,6 +1307,10 @@ class emgGUI:
         except TypeError:
             tk.messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
 
+        except ValueError:
+            tk.messagebox.showerror("Information", "Make sure to specify the start & end-point on the plot")
+
+
     # -----------------------------------------------------------------------------------------------
     # Resize EMG File
 
@@ -2477,21 +2481,28 @@ class emgGUI:
         --------
         open_emgfile1(), openhdemg.askopenfile()
         """
-        # Open OTB file
-        if self.filetype_adv.get() == "OTB":
-            self.emgfile1 = openhdemg.askopenfile(
-                filesource=self.filetype_adv.get(),
-                otb_ext_factor=int(self.extension_factor_adv.get()),
-            )
-        # Open all other filetypes
-        else:
-            self.emgfile1 = openhdemg.askopenfile(
-                filesource=self.filetype_adv.get(),
-            )
+        try:    
+            # Open OTB file
+            if self.filetype_adv.get() == "OTB":
+                self.emgfile1 = openhdemg.askopenfile(
+                    filesource=self.filetype_adv.get(),
+                    otb_ext_factor=int(self.extension_factor_adv.get()),
+                )
+            # Open all other filetypes
+            else:
+                self.emgfile1 = openhdemg.askopenfile(
+                    filesource=self.filetype_adv.get(),
+                )
 
-        # Add filename to GUI
-        ttk.Label(self.head, text="File 1 loaded").grid(column=1, row=2)
+            # Add filename to GUI
+            ttk.Label(self.head, text="File 1 loaded").grid(column=1, row=2)
 
+        except ValueError:
+            tk.messagebox.showerror(
+                "Information",
+                "Make sure to specify a valid extension factor.",
+            )
+            
     def open_emgfile2(self):
         """
         Open EMG file based on the selected file type and extension factor.

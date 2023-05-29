@@ -8,7 +8,7 @@ shortcuts necessary to operate with the HD-EMG recordings.
 import copy
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt 
 from scipy import signal
 import warnings
 from openhdemg.library.mathtools import compute_pnr, compute_sil
@@ -57,14 +57,13 @@ def showselect(emgfile, title="", nclic=2):
     >>> start_point, end_point
     16115 40473
     """
-
     # Show the signal for the selection
     plt.figure(num="Fig_ginput")
     plt.plot(emgfile["REF_SIGNAL"][0])
     plt.xlabel("Samples")
     plt.ylabel("MVC")
     plt.title(title, fontweight="bold")
-    ginput_res = plt.ginput(n=-1, timeout=0, show_clicks=True)
+    ginput_res = plt.ginput(n=-1, timeout=0, mouse_add=False, show_clicks=True)
 
     # Check if the user entered the correct number of clics
     if nclic != len(ginput_res):
@@ -199,7 +198,7 @@ def resize_emgfile(emgfile, area=None):
         # Visualise and select the area to resize
         start_, end_ = showselect(
             emgfile,
-            title="Select the start/end area to resize, then press enter",
+            title="Select the start/end area to resize by hovering the mouse \n and pressing the 'o'-key, then press enter",
         )
 
     # Create the object to store the resized emgfile.
@@ -615,7 +614,7 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
     if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
         start_steady, end_steady = showselect(
             emgfile=emgfile,
-            title="Select the start/end of the steady-state then press enter",
+            title="Select the start/end of the steady-state by hovering the mouse \n and pressing the 'o'-key, then press enter",
         )
 
     ref = emgfile["REF_SIGNAL"].loc[start_steady:end_steady]
@@ -772,7 +771,7 @@ def remove_offset(emgfile, offsetval=0, auto=0):
             # (average value of the selected area)
             start_, end_ = showselect(
                 emgfile=offs_emgfile,
-                title="Select the start/end of a resting area to calculate the offset, then press enter",
+                title="Select the start/end of a resting area to calculate the offset by hovering the mouse \n and pressing the 'o'-key, then press enter",
             )
             offsetval = offs_emgfile["REF_SIGNAL"].loc[start_:end_].mean()
             # We need to convert the series offsetval into float
@@ -850,7 +849,7 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
         # Select the area to measure the MVC (maximum value)
         start_, end_ = showselect(
             emgfile=emgfile,
-            title="Select the start/end area to measure the MVC, then press enter",
+            title="Select the start/end area by hovering the mouse \n and pressing the 'o'-key to measure the MVC, then press enter",
         )
 
         mvc = emgfile["REF_SIGNAL"].loc[start_:end_].max()
@@ -950,7 +949,7 @@ def compute_rfd(emgfile, ms=[50, 100, 150, 200], startpoint=None, conversion_val
         # Otherwise select the starting point for the RFD
         start_ = showselect(
             emgfile,
-            title="Select the starting point for RFD, then press enter",
+            title="Select the starting point for RFD by hovering the mouse \n and pressing the 'o'-key, then press enter",
             nclic=1,
         )
 
