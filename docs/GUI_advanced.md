@@ -2,7 +2,7 @@
 
 This is the toturial for the `Advanced Tools` in the *openhdemg* GUI. Great that you made it this far! In the next few sections we will take a look at the more advanced functions implemented in the GUI. But first of all, you need to click the `Advanced Tools`button in the main window of the GUI to get to the respective adavanced analysis. The `Advanced Tools Window` will open.
 
-**ADVANCED TOOLS WINDOW IMAGE HERE**
+![advanced_analysis](md_graphics/GUI/Advanced_analysis_window.png)
 
 So far, we have included three advanced analyses in the *openhdemg* GUI. 
 - `Motor Unit Tracking`
@@ -23,7 +23,7 @@ Once you specified these parameter, you can click the "Advaned Analysis" button 
 ## Motor Unit Tracking
 When you want to track MUs across two different files, you need to select the `Motor Unit Tracking` options and specify the `Matrix Code` and `Matrix Orentation` in the `Advanced Tools Window`. Once you clicked the `Advanced Analysis` button, the `MUs Tracking Window` will pop-up.
 
-**MOTOR UNIT TRACKING WINDOW IMAGE HERE**
+![mus_tracking](md_graphics/GUI/MU_Tracking_window.png)
 
 1. You need to specify the `Type of file` you want to track MUs across in the respective dropdown. The available filetypes are:
 - `OTB` (.mat file exportable by OTBiolab+)
@@ -49,7 +49,7 @@ Each filetype corresponds to a distinct datatype that shpuld match the file you 
 ## Duplicate Removal
 When you want to remove MU duplicates across in different files, you need to select the `Duplicate Removal` options and specify the `Matrix Code` and `Matrix Orentation` in the `Advanced Tools Window`. Once you clicked the `Advanced Analysis` button, the `Duplicate Removal Window` will pop-up. `Duplicate Removal` requires similar input as `Motor Unit Tracking`, so please take a look at the [`Motor Unit Tracking`](#motor-unit-tracking) section. However, you need to do two more things. 
 
-**DUPLICATE REMOVAL WINDOW IMAGE HERE**
+![duplicate_removal](md_graphics/GUI/Duplicate_Removal_window.png)
 
 1. You should specify How to remove the duplicated MUs in the `Which` dropdown. You can choose between 
 - munumber: Duplicated MUs are removed from the file with more MUs.
@@ -67,7 +67,7 @@ Prior to calculation of the `Conduction Velocity` you need to load a file in the
 
 2. Click the `Advanced Analysis` button to start the calculation of the `Conduction Velocity`. The `MUs cv estimation` window will pop up. 
 
-**MUS CV ESTIMATION WINDOW IMAGE HERE** 
+![cv_estimation](md_graphics/GUI/CV_Estimation_window.png)
 
 3. In the top left of the `MUs cv estimation` window select the MU for which you want to calculate the conduction velocity using the `MU Number` dropdown. 
 
@@ -75,10 +75,10 @@ Prior to calculation of the `Conduction Velocity` you need to load a file in the
 
 5. In the top right of the window select the rows for which you want to calculate the conduction velocity using the `From row` and `To row` dropdown. For example, if you want to calculate the conduction velocity from row 5 to 10, select 
 
-```Python
-From row: 5
-To row: 10
-```
+    ```Python
+    From row: 5
+    To row: 10
+    ```
 
 6. Click the `Estimate` button to start the calculation for the respective column and rows. The results will be displayed on the right side of the `MUs cv estimation` window. 
 

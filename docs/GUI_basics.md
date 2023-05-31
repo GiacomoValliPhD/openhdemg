@@ -16,7 +16,7 @@ To sort the MUs included in your analysis file in order of their recruitement, w
 ## Remove Motor Units
 To remove MUs included in your analysis file, you can click the `Remove MUs` button. The button is located on the left hand side in the main window of the GUI in column one of row four.
 
-**REMOVE MUS WINDOW IMAGE HERE**
+![remove_mus](md_graphics/GUI/Remove_MU_window.png)
 
 1. View the MUs using the `View MUs` button prior to MU removal, you can directly see what is happening.
 
@@ -39,7 +39,7 @@ To remove MUs included in your analysis file, you can click the `Remove MUs` but
 ## Reference Signal Editing
 The *openhdemg* GUI also allows you to edit and filter reference signals corresponding to your analysis file (however, you can also edit and filter seperate reference signals). 
 
-**REFERENCE SIGNAL WINDOW IMAGE HERE**
+![reference_sig](md_graphics/GUI/Refsig_Filter_window.png)
 
 1. View the MUs using the `View MUs` button prior to reference signla editing, SO you can see what is happening.
 
@@ -76,7 +76,7 @@ The *openhdemg* GUI also allows you to edit and filter reference signals corresp
 ## Resize EMG File
 Sometimes, resizing of your analysis file is unevitable. Luckily, *openhdemg* provides an easy solution. In row five and column 2 in the left side of the GUI, you can find the `Resize File` button. 
 
-**RESIZE EMG WINDOW IMAGE HERE**
+![resize_emg](md_graphics/GUI/Resize_window.png)
 
 1. View the MUs using the `View MUs` button prior to file resizing, you can directly see what is happening.
 
@@ -87,7 +87,7 @@ Sometimes, resizing of your analysis file is unevitable. Luckily, *openhdemg* pr
 ## Analyse Force Signal
 In order to analyse the force signal in your analysis file, you can press the `Analyse Force` button located in row six and column one in the left side of the GUI. A new pop-up window will open where you can analyse the maximum voluntary contraction (MVC) value as well as the rate of force development (RFD). 
 
-**FORCE ANALYSIS WINDOW HERE**
+![force_analysis](md_graphics/GUI/Force_Analysis_window.png)
 
 ### Maximum voluntary contraction
 1. In order to get the MVC value, simply press the `Get MVC` button. A pop-up plot opens and you can select the area where you suspect the MVC to be. 
@@ -108,7 +108,7 @@ In order to analyse the force signal in your analysis file, you can press the `A
 ## Motor Unit Properties
 When you press the `MU Properties` button in row six and column two, the `Motor Unit Properties` Window will pop up. In this window, you have the option to analyse several MUs propierties such as the MUs recruitement threshold or the MUs discharge rate. 
 
-**MUS PROPERTIES WINDOW IMAGE HERE**
+![mus_properties](md_graphics/GUI/MU_properties_window.png)
 
 1. Specify your priorly calculated MVC in the `Enter MVC [N]:` textbox, like
 
@@ -197,7 +197,7 @@ and are all displayed in the `Result Output` once the analysis in completed.
 In *openhdemg* we have implemented options to plot your analysis file ... a lot of options!
 Upon clicking the `Plot MUs` button, the `Plot Window` will pop up. In the top right corner of the window, you can find an information button forwarding you directly to some tutorials. 
 
-**PLOT MUS WINDOW IMAGE HERE**
+![plot_mus](md_graphics/GUI/Plot_window.png)
 
 You can choose between the follwing plotting options:
 
