@@ -499,7 +499,7 @@ def plot_mupulses(
         # Manage exception of single MU
         if emgfile["NUMBER_OF_MUS"] > 1:
             y_tick_lab = [*range(0, emgfile["NUMBER_OF_MUS"])]
-            ylab = "MUs"
+            ylab = "Motor units"
         else:
             y_tick_lab = []
             ylab = "MU n. 0"
@@ -511,7 +511,7 @@ def plot_mupulses(
     elif isinstance(munumber, list):
         mupulses = [mupulses[mu] for mu in munumber]
         y_tick_lab = munumber
-        ylab = "MUs"
+        ylab = "Motor units"
     else:
         raise TypeError(
             "While calling the plot_mupulses function, you should pass an integer, a list or 'all' to munumber"

@@ -201,6 +201,9 @@ class emgGUI:
         during MU tracking.
     self.which_adv : tk.Stringvar()
         Stringvariable determining how MU duplicates are removed.
+    self.time_window : tk.Stringvar()
+        Stringvariable determining the time window for duplicate removal
+        and tracking.
 
     Methods
     -------
@@ -239,10 +242,6 @@ class emgGUI:
     resize_file()
         Opens seperate window to resize emg file / reference signal.
         Executed when button "Resize File" in master GUI window pressed.
-    select_resize()
-        Method used to select start/end of resizing area manually on plot.
-    resize_emgfile()
-        Method used to resize the emg file according to specified start/end.
     analyze_force()
         Opens seperate window to analyze force signal/values.
         Executed when button "Analyze force" in master GUI window pressed.
@@ -278,8 +277,6 @@ class emgGUI:
     plot_muaps()
         Method to plot motor unit action potenital obtained from STA
         from one or multiple MUs.
-    open_pdf()
-        Method to open a PDF file in a seperate window.
     advanced_analysis()
         Method to open top-level windows based on the selected advanced method.
     on_filetype_change()
@@ -499,7 +496,18 @@ class emgGUI:
             height=30,
             bg_color="LightBlue4",
             fg_color="LightBlue4",
-            command=self.open_pdf,
+            command=lambda: (
+                # Get file path
+                path := Path("./openhdemg/gui/gui_files/test.pdf").resolve(),
+                # Check user OS for pdf opening
+                (
+                    webbrowser.open_new(str(path))
+                    if platform in ("win32", "linux")
+                    else os.system(f"open {str(path)}")
+                    if platform == "darwin"
+                    else None
+                ),
+            ),
         )
         info_button.grid(row=0, column=1, sticky=E)
 
@@ -940,7 +948,7 @@ class emgGUI:
         matrix_code = ttk.Combobox(
             self.a_window, width=10, textvariable=self.mat_code_adv
         )
-        matrix_code["values"] = ("GR08MM1305", "GR04MM1305")
+        matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808")
         matrix_code["state"] = "readonly"
         matrix_code.grid(row=4, column=1, sticky=(W, E))
         self.mat_code_adv.set("GR08MM1305")
@@ -964,27 +972,6 @@ class emgGUI:
         # Add padding to widgets
         for child in self.a_window.winfo_children():
             child.grid_configure(padx=5, pady=5)
-
-    def open_pdf(self):
-        """
-        Instance method to open a PDF file in a seperate window.
-
-        The standard program for opening PDF files is used.
-        The file can be handled independantly from the GUI.
-        The specific usecase here is to open a tutorial for the
-        "Plot Window" offline.
-        """
-        # Get file path
-        path = Path("./gui_files/test.pdf").resolve()
-
-        # Check user OS for pdf opening
-        if platform in ("win32", "linux"):
-            # Windows/linux option
-            webbrowser.open_new(str(path))
-
-        elif platform == "darwin":
-            # Mac option
-            os.system(f"open {str(path)}")
 
     # -----------------------------------------------------------------------------------------------
     # Plotting inside of GUI
@@ -1210,7 +1197,7 @@ class emgGUI:
         """
         # Create new window
         self.head = tk.Toplevel(bg="LightBlue4")
-        self.head.title("Reference Signal Eiditing Window")
+        self.head.title("Reference Signal Editing Window")
         self.head.iconbitmap(
             os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
         )
@@ -1320,56 +1307,14 @@ class emgGUI:
         except TypeError:
             tk.messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
 
+        except ValueError:
+            tk.messagebox.showerror("Information", "Make sure to specify the start & end-point on the plot")
+
+
     # -----------------------------------------------------------------------------------------------
     # Resize EMG File
 
     def resize_file(self):
-        """
-        Instance method to open "Resize EMG File Window". Options to resize
-        the emgfile by specified area are displayed.
-
-        Executed when button "Resize File" in master GUI window is pressed.
-        """
-        # Create new window
-        self.head = tk.Toplevel(bg="LightBlue4")
-        self.head.title("Resize EMG File Window")
-        self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
-        )
-        self.head.grab_set()
-
-        # Enter start point of resizing area
-        select_res = ttk.Button(
-            self.head, text="Select Resize", command=self.select_resize
-        )
-        select_res.grid(column=0, row=0)
-
-        ttk.Label(self.head, text="Enter Startpoint:").grid(
-            column=0, row=1, sticky=W, padx=5, pady=5
-        )
-
-        self.start_area = StringVar()
-        start = ttk.Entry(self.head, width=10, textvariable=self.start_area)
-        start.grid(column=1, row=1, padx=5, pady=5)
-        self.start_area.set(120)
-
-        # Enter end point of resizing area
-        ttk.Label(self.head, text="Enter Endpoint:").grid(
-            column=0, row=2, sticky=W, padx=5, pady=5
-        )
-
-        self.end_area = StringVar()
-        end = ttk.Entry(self.head, width=10, textvariable=self.end_area)
-        end.grid(column=1, row=2, padx=5, pady=5)
-        self.end_area.set(2560)
-
-        # Resize Button
-        resize = ttk.Button(self.head, text="Resize File", command=self.resize_emgfile)
-        resize.grid(column=1, row=3, sticky=(W, E), padx=5, pady=5)
-
-    ### Define function for resizing
-
-    def select_resize(self):
         """
         Instance method to get resize area from user specification on plot and
         resize emgfile.
@@ -1390,57 +1335,12 @@ class emgGUI:
             # Open selection window for user
             start, end = openhdemg.showselect(
                 emgfile=self.resdict,
-                title="Select the start/end area to consider then press enter",
+                title="Select the start/end area to consider by hovering the mouse \n and pressing the 'o'-key, then press enter",
             )
             self.resdict, _, _ = openhdemg.resize_emgfile(
                 emgfile=self.resdict, area=[start, end]
             )
             # Update Plot
-            self.in_gui_plotting()
-
-        except AttributeError:
-            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
-
-    def resize_emgfile(self):
-        """
-        Instance method to get resize are from user specification and
-        resize the emgfile.
-
-        Executed when button "Resize File" in Resize file window is pressed.
-        The emgfile and the GUI plot are updated.
-
-        Raises
-        ------
-        AttributeError
-            When no file is loaded prior to analysis.
-
-        See Also
-        --------
-        resize_emgfile in library.
-        """
-        try:
-            # Resize the file.
-            self.resdict, start_, end_ = openhdemg.resize_emgfile(
-                emgfile=self.resdict,
-                area=[int(self.start_area.get()), int(self.end_area.get())],
-            )
-            # Define dictionary for pandas
-            res_dic = {
-                "Length": [self.resdict["EMG_LENGTH"]],
-                "Start": [start_],
-                "End": [end_],
-            }
-            df = pd.DataFrame(data=res_dic)
-
-            # Display resizing specs
-            self.display_results(df)
-
-            # Update file length value
-            ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
-                column=2, row=4, sticky=(W, E)
-            )
-
-            # Update plot
             self.in_gui_plotting()
 
         except AttributeError:
@@ -1799,6 +1699,7 @@ class emgGUI:
         The plots are displayed in seperate windows.
         """
         try:
+    
             # Create new window
             self.head = tk.Toplevel(bg="LightBlue4")
             self.head.title("Plot Window")
@@ -1858,7 +1759,7 @@ class emgGUI:
 
             # Plot refsig
             plt_refsig = ttk.Button(
-                self.head, text="Plot REFsig", command=self.plt_refsignal
+                self.head, text="Plot RefSig", command=self.plt_refsignal
             )
             plt_refsig.grid(column=0, row=4, sticky=W)
 
@@ -1909,7 +1810,7 @@ class emgGUI:
             ttk.Label(self.head, text="Matrix Code*").grid(row=0, column=3, sticky=(W))
             self.mat_code = StringVar()
             matrix_code = ttk.Combobox(self.head, width=15, textvariable=self.mat_code)
-            matrix_code["values"] = ("GR08MM1305", "GR04MM1305")
+            matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808")
             matrix_code["state"] = "readonly"
             matrix_code.grid(row=0, column=4, sticky=(W, E))
             self.mat_code.set("GR08MM1305")
@@ -2017,13 +1918,24 @@ class emgGUI:
                 height=30,
                 bg_color="LightBlue4",
                 fg_color="LightBlue4",
-                command=self.open_pdf,
+                command=lambda: (
+                    # Get file path
+                    path := Path("./openhdemg/gui/gui_files/test.pdf").resolve(),
+                    # Check user OS for pdf opening
+                    (
+                        webbrowser.open_new(str(path))
+                        if platform in ("win32", "linux")
+                        else os.system(f"open {str(path)}")
+                        if platform == "darwin"
+                        else None
+                    ),
+                ),
             )
             info_button.grid(row=0, column=6, sticky=E)
 
             for child in self.head.winfo_children():
                 child.grid_configure(padx=5, pady=5)
-
+        
         except AttributeError:
             tk.messagebox.showerror("Information", "Load file prior to computation.")
             self.head.destroy()
@@ -2391,8 +2303,16 @@ class emgGUI:
         """
         Open top-level windows based on the selected advanced method.
         """
+
+        if self.advanced_method.get() == "Motor Unit Tracking":
+            head_title = "MUs Tracking Window"
+        elif self.advanced_method.get() == "Duplicate Removal":
+            head_title = "Duplicate Removal Window"
+        else:
+            head_title = "Conduction Velocity Window"
+        
         self.head = tk.Toplevel(bg="LightBlue4")
-        self.head.title("MUs tracking window")
+        self.head.title(head_title)
         self.head.iconbitmap(
             os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
         )
@@ -2434,44 +2354,60 @@ class emgGUI:
         threshold_combobox.grid(column=1, row=9)
         self.threshold_adv.set(0.8)
 
+        # Time Label
+        time_window_label = ttk.Label(self.head, text="Time window:")
+        time_window_label.grid(column=0, row=10)
+
+        # Time Combobox
+        self.time_window = StringVar()
+        time_combobox = ttk.Combobox(
+            self.head,
+            values=[25, 50],
+            textvariable=self.time_window,
+            state="readonly",
+            width=8,
+        )
+        time_combobox.grid(column=1, row=10)
+        self.time_window.set(25)
+
         # Exclude below threshold
         exclude_label = ttk.Label(self.head, text="Exclude below threshold")
-        exclude_label.grid(column=0, row=10)
+        exclude_label.grid(column=0, row=11)
 
         # Add exclude checkbox
         self.exclude_thres = tk.BooleanVar()
         exclude_checkbox = tk.Checkbutton(
             self.head, variable=self.exclude_thres, bg="LightBlue4"
         )
-        exclude_checkbox.grid(column=1, row=10)
+        exclude_checkbox.grid(column=1, row=11)
         self.exclude_thres.set(True)
 
         # Filter
         filter_label = ttk.Label(self.head, text="Filter")
-        filter_label.grid(column=0, row=11)
+        filter_label.grid(column=0, row=12)
 
         # Add filter checkbox
         self.filter_adv = tk.BooleanVar()
         filter_checkbox = tk.Checkbutton(
             self.head, variable=self.filter_adv, bg="LightBlue4"
         )
-        filter_checkbox.grid(column=1, row=11)
+        filter_checkbox.grid(column=1, row=12)
         self.filter_adv.set(True)
 
         # Exclude below threshold
         show_label = ttk.Label(self.head, text="Show")
-        show_label.grid(column=0, row=12)
+        show_label.grid(column=0, row=13)
 
         # Add exclude checkbox
         self.show_adv = tk.BooleanVar()
         show_checkbox = tk.Checkbutton(
             self.head, variable=self.show_adv, bg="LightBlue4"
         )
-        show_checkbox.grid(column=1, row=12)
+        show_checkbox.grid(column=1, row=13)
 
         # Add button to execute MU tracking
         track_button = ttk.Button(self.head, text="Track", command=self.track_mus)
-        track_button.grid(column=0, row=14, columnspan=2, sticky=(W, E))
+        track_button.grid(column=0, row=15, columnspan=2, sticky=(W, E))
 
         # Add padding
         for child in self.head.winfo_children():
@@ -2480,8 +2416,11 @@ class emgGUI:
         # Add Which widget and update the track button
         # to match functionalities required for duplicate removal
         if self.advanced_method.get() == "Duplicate Removal":
+            
+            # Update title
+            
             # Add Which label
-            ttk.Label(self.head, text="Which").grid(column=0, row=13)
+            ttk.Label(self.head, text="Which").grid(column=0, row=14)
             # Combobox for Which option
             self.which_adv = StringVar()
             which_combobox = ttk.Combobox(
@@ -2491,7 +2430,7 @@ class emgGUI:
                 state="readonly",
                 width=8,
             )
-            which_combobox.grid(row=13, column=1, padx=5, pady=5)
+            which_combobox.grid(row=14, column=1, padx=5, pady=5)
             self.which_adv.set("munumber")
 
             # Add button to execute MU tracking
@@ -2542,21 +2481,28 @@ class emgGUI:
         --------
         open_emgfile1(), openhdemg.askopenfile()
         """
-        # Open OTB file
-        if self.filetype_adv.get() == "OTB":
-            self.emgfile1 = openhdemg.askopenfile(
-                filesource=self.filetype_adv.get(),
-                otb_ext_factor=int(self.extension_factor_adv.get()),
-            )
-        # Open all other filetypes
-        else:
-            self.emgfile1 = openhdemg.askopenfile(
-                filesource=self.filetype_adv.get(),
-            )
+        try:    
+            # Open OTB file
+            if self.filetype_adv.get() == "OTB":
+                self.emgfile1 = openhdemg.askopenfile(
+                    filesource=self.filetype_adv.get(),
+                    otb_ext_factor=int(self.extension_factor_adv.get()),
+                )
+            # Open all other filetypes
+            else:
+                self.emgfile1 = openhdemg.askopenfile(
+                    filesource=self.filetype_adv.get(),
+                )
 
-        # Add filename to GUI
-        ttk.Label(self.head, text="File 1 loaded").grid(column=1, row=2)
+            # Add filename to GUI
+            ttk.Label(self.head, text="File 1 loaded").grid(column=1, row=2)
 
+        except ValueError:
+            tk.messagebox.showerror(
+                "Information",
+                "Make sure to specify a valid extension factor.",
+            )
+            
     def open_emgfile2(self):
         """
         Open EMG file based on the selected file type and extension factor.
@@ -2635,6 +2581,7 @@ class emgGUI:
                 emgfile1=self.emgfile1,
                 emgfile2=self.emgfile2,
                 threshold=float(self.threshold_adv.get()),
+                timewindow=int(self.time_window.get()),
                 matrixcode=self.mat_code_adv.get(),
                 orientation=int(self.mat_orientation_adv.get()),
                 exclude_belowthreshold=self.exclude_thres.get(),
@@ -2703,6 +2650,7 @@ class emgGUI:
                 emgfile1=self.emgfile1,
                 emgfile2=self.emgfile2,
                 threshold=float(self.threshold_adv.get()),
+                timewindow=int(self.time_window.get()),
                 matrixcode=self.mat_code_adv.get(),
                 orientation=int(self.mat_orientation_adv.get()),
                 filter=self.filter_adv.get(),

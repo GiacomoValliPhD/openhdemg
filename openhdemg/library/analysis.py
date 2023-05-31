@@ -308,12 +308,12 @@ def compute_dr(
         if start_steady < 0 and end_steady < 0:
             start_steady, end_steady = showselect(
                 emgfile,
-                title="Select the start/end of the steady-state then press enter",
+                title="Select the start/end of the steady-state by hovenring the mouse \n and pressing the 'o'-key, then press enter",
             )
         elif start_steady < 0 or end_steady < 0:
             start_steady, end_steady = showselect(
                 emgfile,
-                title="Select the start/end of the steady-state then press enter",
+                title="Select the start/end of the steady-state by hovering the mouse \n and pressing the 'o'-key, then press enter",
             )
         else:
             pass
@@ -519,7 +519,7 @@ def basic_mus_properties(
     if start_steady < 0 and end_steady < 0:
         start_steady, end_steady = showselect(
             emgfile=emgfile,
-            title="Select start/end area of the steady-state then press enter",
+            title="Select start/end area of the steady-state by hovering the mouse \n and pressing the 'o'-key, then press enter",
         )
 
     # Collect the information to export
@@ -749,7 +749,7 @@ def compute_covisi(
             if start_steady < 0 and end_steady < 0:
                 start_steady, end_steady = showselect(
                     emgfile=emgfile,
-                    title="Select the start/end area to consider then press enter",
+                    title="Select the start/end area to consider by hovering the mouse \n and pressing the 'o'-key, then press enter",
                 )
 
         # Create an object to append the results
@@ -941,7 +941,7 @@ def compute_drvariability(
         if start_steady < 0 and end_steady < 0:
             start_steady, end_steady = showselect(
                 emgfile=emgfile,
-                title="Select the start/end area to consider then press enter",
+                title="Select the start/end area to consider by hovering the mouse \n and pressing the 'o'-key, then press enter",
             )
 
     # Create an object to append the results

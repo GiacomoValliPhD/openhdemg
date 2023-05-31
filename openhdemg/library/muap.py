@@ -774,7 +774,7 @@ def tracking(
         If true, when the same MU has a match of XCC > threshold with
         multiple MUs, only the match with the highest XCC is returned.
     show : bool, default False
-        Whether to plot ste STA of pairs of MUs with XCC above threshold.
+        Whether to plot the STA of pairs of MUs with XCC above threshold.
 
     Returns
     -------

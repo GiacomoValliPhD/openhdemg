@@ -1,10 +1,10 @@
 # Define the skeleton of the website/documentation
 site_name: openhdemg
-site_author: Giacomo Valli
+site_author: Giacomo Valli & Paul Ritsche
 site_description: >-
-  All you need to knowm about openhdemg
+  All you need to know about openhdemg
 
-copyright: Copyright &copy; 2022 - 2023 Giacomo Valli
+copyright: Copyright &copy; 2022 - 2023 Giacomo Valli & Paul Ritsche
 
 theme:
   name: "material"
@@ -37,8 +37,11 @@ plugins:
 nav:
   - Welcome: index.md
   - Quick-Start.md
-  - Tutorials.md
-  - Graphical-Interface.md
+  - tutorials.md
+  - Graphical-Interface:
+    - intro: GUI_intro.md
+    - basics: GUI_basics.md
+    - advanced: GUI_advanced.md
   - What's-New.md
   - Contacts.md
   - Cite-Us.md
@@ -51,7 +54,7 @@ nav:
     - muap: API_muap.md
     - electrodes: API_electrodes.md
     - info: API_info.md
-
+    
 # Extensions
 markdown_extensions:
   - abbr
@@ -71,8 +74,8 @@ markdown_extensions:
   - pymdownx.caret
   - pymdownx.details
   - pymdownx.emoji:
-      emoji_generator: !!python/name:materialx.emoji.to_svg
-      emoji_index: !!python/name:materialx.emoji.twemoji
+      #emoji_generator: !!python/name:materialx.emoji.to_svg
+      #emoji_index: !!python/name:materialx.emoji.twemoji
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
