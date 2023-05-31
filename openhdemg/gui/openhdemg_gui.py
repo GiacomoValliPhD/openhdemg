@@ -282,7 +282,7 @@ class emgGUI:
     on_filetype_change()
         Method do display extension factor combobx when filetype loaded is
         OTB.
-    open_emgfil1()
+    open_emgfile1()
                 Method to open EMG file based on the selected file type and extension factor.
     open_emgfile2()
         Method to open EMG file based on the selected file type and extension factor.

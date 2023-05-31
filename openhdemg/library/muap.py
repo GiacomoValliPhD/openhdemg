@@ -1312,6 +1312,10 @@ class MUcv_gui:
         # After that, set up the GUI
         self.root = tk.Tk()
         self.root.title('MUs cv estimation')
+        root_path = os.path.dirname(os.path.abspath(__file__))
+        print(root_path)
+        iconpath = root_path + "/Icon.ico"
+        self.root.iconbitmap(iconpath)
 
         # Create main frame, assign structure and minimum spacing
         self.frm = ttk.Frame(self.root, padding=15)
