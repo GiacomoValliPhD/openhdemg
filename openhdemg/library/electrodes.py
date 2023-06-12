@@ -118,8 +118,9 @@ def sort_rawemg(
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    code : str {"GR08MM1305", "GR04MM1305", "GR10MM0808"}, default "GR08MM1305"
+    code : str {"GR08MM1305", "GR04MM1305", "GR10MM0808", "None"}, default "GR08MM1305"
         The code of the matrix used.
+        If "None", the electodes are not sorted. # TODO add "None" to GUI
     orientation : int {0, 180}, default 180
         Orientation in degree of the matrix (same as in OTBiolab).
         E.g. 180 corresponds to the matrix connection toward the researcher or
@@ -311,7 +312,10 @@ def sort_rawemg(
                 ]
 
         else:
-            pass  # TODO_NEXT_ add other electrodes, and orientations?
+            pass  # Always allow a way to avoid electrodes sorting
+        
+        
+        # TODO_NEXT_ add other electrodes, and orientations?
 
         # Once the order to sort channels has been retrieved,
         # Sort the channels based on pre-specified order and reset columns

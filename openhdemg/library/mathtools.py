@@ -220,6 +220,7 @@ def norm_twod_xcorr(df1, df2, mode="full"):
     # Normalise the result of 2d xcorr for the different energy levels
     # MATLAB equivalent:
     # acor_norm = xcorr(x,y)/sqrt(sum(abs(x).^2)*sum(abs(y).^2))
+    # http://gaidi.ca/weblog/normalizing-a-cross-correlation-in-matlab
     absx = df1.abs()
     absy = df2.abs()
     expx = absx**2
@@ -386,7 +387,8 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
         Pi = CoV_all_IDI
 
     else:
-        # Divide paired and non-paired IDIs before calculating specific CoV
+        # Divide paired and non-paired IDIs before calculating specific CoV.
+        # De Luca 1985 considered dublets < 10 ms, Holobar < 50 ms
         idinonp = idi[idi >= (fsamp * 0.05)]
         idip = idi[idi < (fsamp * 0.05)]
 

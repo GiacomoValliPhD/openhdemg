@@ -817,7 +817,12 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
     ]:
         # Simplify (rename) columns description and extract all the parameters
         # in a pd.DataFrame
-        df = pd.DataFrame(mat_file["Data"], columns=mat_file["Description"])
+        if isinstance(mat_file["Description"], str):
+            col = [mat_file["Description"]]
+        else:
+            col = mat_file["Description"]
+
+        df = pd.DataFrame(mat_file["Data"], columns=col)
 
         # Convert the input passed to refsig in a list compatible with the
         # function get_otb_refsignal
@@ -1379,7 +1384,7 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
     initialdir : str or Path, default "/"
         The directory of the file to load (excluding file name).
         This can be a simple string, the use of Path is not necessary.
-    filesource : str {"DEMUSE", "OTB", "OTB_refsig", "custom", "Open_HD-EMG"}, default "DEMUSE"
+    filesource : str {"DEMUSE", "OTB", "OTB_refsig", "custom", "Open_HD-EMG"}, default "DEMUSE" # TODO replace with openhdemg, add custom_refignal?
         See notes for how files should be exported from OTB.
 
         ``DEMUSE``
