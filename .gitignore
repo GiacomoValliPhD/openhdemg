@@ -1,9 +1,10 @@
 openhdemgenv
 __pycache__*
 .vscode/
+.vs/
 .DS_Store
+docs/.DS_Store
 
 dist/
-
 prove.py
 prove_storage.py

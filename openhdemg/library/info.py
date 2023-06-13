@@ -69,7 +69,7 @@ class info:
         .
         """
 
-        if emgfile["SOURCE"] in ["DEMUSE", "OTB", "custom"]:
+        if emgfile["SOURCE"] in ["DEMUSE", "OTB", "CUSTOM"]:
             print("\nData structure of the emgfile loaded with the function emg_from_otb.")
             print("--------------------------------------------------------------------\n")
             print(f"emgfile type is:\n{type(emgfile)}\n")
@@ -93,7 +93,7 @@ class info:
             print(f"emgfile['NUMBER_OF_MUS'] is a {type(emgfile['NUMBER_OF_MUS'])} of value:\n{emgfile['NUMBER_OF_MUS']}\n")
             print(f"emgfile['BINARY_MUS_FIRING'] is a {type(emgfile['BINARY_MUS_FIRING'])} of value:\n{emgfile['BINARY_MUS_FIRING']}\n")
 
-        elif emgfile["SOURCE"] == "OTB_refsig":
+        elif emgfile["SOURCE"] == "OTB_REFSIG":
             print("\nData structure of the emgfile loaded with the function refsig_from_otb.")
             print("-----------------------------------------------------------------------\n")
             print(f"emgfile type is:\n{type(emgfile)}\n")

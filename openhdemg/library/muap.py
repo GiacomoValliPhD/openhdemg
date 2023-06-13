@@ -202,7 +202,7 @@ def double_diff(sorted_rawemg):
 
 # This function exploits parallel processing to compute the STA
 def sta(
-    emgfile, sorted_rawemg, firings=[0, 50], timewindow=100
+    emgfile, sorted_rawemg, firings=[0, 50], timewindow=50
 ):
     """
     Computes the spike-triggered average (STA) of every MUs.
@@ -221,7 +221,7 @@ def sta(
         is adjusted accordingly.
         ``all``
             The STA is calculated over all the firings.
-    timewindow : int, default 100
+    timewindow : int, default 50
         Timewindow to compute STA in milliseconds.
 
     Returns
@@ -733,7 +733,8 @@ def tracking(
     emgfile1,
     emgfile2,
     firings="all",
-    timewindow=25,
+    derivation="mono",
+    timewindow=50,
     threshold=0.8,
     matrixcode="GR08MM1305",
     orientation=180,
@@ -758,7 +759,10 @@ def tracking(
             The STA is calculated over all the firings.
         A list can be passed as [start, stop] e.g., [0, 25]
         to compute the STA on the first 25 firings.
-    timewindow : int, default 25
+    derivation : str {mono, sd, dd}, default mono
+        Whether to compute the sta on the monopolar signal, or on the single or
+        double differential derivation.
+    timewindow : int, default 50
         Timewindow to compute STA in milliseconds.
     threshold : float, default 0.8
         The 2-dimensional cross-correlation minimum value
@@ -774,7 +778,7 @@ def tracking(
         If true, when the same MU has a match of XCC > threshold with
         multiple MUs, only the match with the highest XCC is returned.
     show : bool, default False
-        Whether to plot ste STA of pairs of MUs with XCC above threshold.
+        Whether to plot the STA of pairs of MUs with XCC above threshold.
 
     Returns
     -------
@@ -814,7 +818,8 @@ def tracking(
     ...     emgfile1=emgfile1,
     ...     emgfile2=emgfile2,
     ...     firings="all",
-    ...     timewindow=25,
+    ...     derivation="mono",
+    ...     timewindow=50,
     ...     threshold=0.8,
     ...     matrixcode="GR08MM1305",
     ...     orientation=180,
@@ -835,16 +840,33 @@ def tracking(
     9         21        14  0.896419
     10        22        16  0.836356
     """
+    # TODO replace sample files
 
-    # Get the STAs
+    # Sort the rawemg for the STAs
     emgfile1_sorted = sort_rawemg(
         emgfile1, code=matrixcode, orientation=orientation,
     )
-    sta_emgfile1 = sta(
-        emgfile1, emgfile1_sorted, firings=firings, timewindow=timewindow * 2,
-    )
     emgfile2_sorted = sort_rawemg(
         emgfile2, code=matrixcode, orientation=orientation
+    )
+
+    # Calculate the derivation if needed
+    if derivation == "mono":
+        pass
+    elif derivation == "sd":
+        emgfile1_sorted = diff(sorted_rawemg=emgfile1_sorted)
+        emgfile2_sorted = diff(sorted_rawemg=emgfile2_sorted)
+    elif derivation == "dd":
+        emgfile1_sorted = double_diff(sorted_rawemg=emgfile1_sorted)
+        emgfile2_sorted = double_diff(sorted_rawemg=emgfile2_sorted)
+    else:
+        raise ValueError(
+            f"derivation can be one of 'mono', 'sd', dd. {derivation} was passed instead"
+            )
+
+    # Get the STAs
+    sta_emgfile1 = sta(
+        emgfile1, emgfile1_sorted, firings=firings, timewindow=timewindow * 2,
     )
     sta_emgfile2 = sta(
         emgfile2, emgfile2_sorted, firings=firings, timewindow=timewindow * 2,
@@ -984,7 +1006,8 @@ def remove_duplicates_between(
     emgfile1,
     emgfile2,
     firings="all",
-    timewindow=25,
+    derivation="mono",
+    timewindow=50,
     threshold=0.9,
     matrixcode="GR08MM1305",
     orientation=180,
@@ -1009,7 +1032,10 @@ def remove_duplicates_between(
             The STA is calculated over all the firings.
         A list can be passed as [start, stop] e.g., [0, 25]
         to compute the STA on the first 25 firings.
-    timewindow : int, default 25
+    derivation : str {mono, sd, dd}, default mono
+        Whether to compute the sta on the monopolar signal, or on the single or
+        double differential derivation.
+    timewindow : int, default 50
         Timewindow to compute STA in milliseconds.
     threshold : float, default 0.9
         The 2-dimensional cross-correlation minimum value
@@ -1059,7 +1085,8 @@ def remove_duplicates_between(
     ...     emgfile1,
     ...     emgfile2,
     ...     firings="all",
-    ...     timewindow=25,
+    ...     derivation="mono",
+    ...     timewindow=50,
     ...     threshold=0.9,
     ...     matrixcode="GR08MM1305",
     ...     orientation=180,
@@ -1080,6 +1107,7 @@ def remove_duplicates_between(
         emgfile1=emgfile1,
         emgfile2=emgfile2,
         firings=firings,
+        derivation=derivation,
         timewindow=timewindow,
         threshold=threshold,
         matrixcode=matrixcode,
@@ -1312,6 +1340,15 @@ class MUcv_gui:
         # After that, set up the GUI
         self.root = tk.Tk()
         self.root.title('MUs cv estimation')
+        root_path = os.path.dirname(os.path.abspath(__file__))
+        iconpath = os.path.join(
+            root_path,
+            "..",
+            "gui",
+            "gui_files",
+            "Icon.ico"
+        )
+        self.root.iconbitmap(iconpath)
 
         # Create main frame, assign structure and minimum spacing
         self.frm = ttk.Frame(self.root, padding=15)
@@ -1429,7 +1466,7 @@ class MUcv_gui:
         copy_btn.grid(row=1, column=8, columnspan=1, sticky="we")
 
         # Plot MU 0 while opening the GUI,
-        # this will move the GUI in the foreground ??.
+        # this will move the GUI in the background ??.
         self.gui_plot()
 
         # Bring back the GUI in in the foreground

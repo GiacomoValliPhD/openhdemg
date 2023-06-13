@@ -35,7 +35,7 @@ askopenfile, asksavefile :
 Notes
 -----
 Once opened, the file is returned as a dict with keys:
-    "SOURCE" : source of the file (i.e., "DEMUSE", "OTB", "custom")
+    "SOURCE" : source of the file (i.e., "DEMUSE", "OTB", "CUSTOM")
     "RAW_SIGNAL" : the raw EMG signal
     "REF_SIGNAL" : the reference signal
     "PNR" : pulse to noise ratio
@@ -49,7 +49,7 @@ Once opened, the file is returned as a dict with keys:
     "BINARY_MUS_FIRING" : binary representation of MUs firings
 
 The only exception is when OTB files are loaded with just the reference signal:
-    "SOURCE": source of the file (i.e., "OTB_refsig")
+    "SOURCE": source of the file (i.e., "OTB_REFSIG")
     "FSAMP": sampling frequency
     "REF_SIGNAL": the reference signal
 
@@ -433,7 +433,7 @@ def get_otb_mupulses(binarymusfiring):
 
     for i in binarymusfiring:  # Loop all the MUs
         my_ndarray = []
-        for idx, x in binarymusfiring[i].iteritems():  # Loop the MU firing times
+        for idx, x in binarymusfiring[i].items():  # Loop the MU firing times #This was iteritems() in older versions
             if x > 0:
                 my_ndarray.append(idx)  # Take the firing time and add it to the ndarray
 
@@ -817,7 +817,12 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
     ]:
         # Simplify (rename) columns description and extract all the parameters
         # in a pd.DataFrame
-        df = pd.DataFrame(mat_file["Data"], columns=mat_file["Description"])
+        if isinstance(mat_file["Description"], str):
+            col = [mat_file["Description"]]
+        else:
+            col = mat_file["Description"]
+
+        df = pd.DataFrame(mat_file["Data"], columns=col)
 
         # Convert the input passed to refsig in a list compatible with the
         # function get_otb_refsignal
@@ -825,7 +830,7 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
         REF_SIGNAL = get_otb_refsignal(df=df, refsig=refsig_)
 
         # Use this to know the data source and name of the file
-        SOURCE = "OTB_refsig"
+        SOURCE = "OTB_REFSIG"
         FILENAME = os.path.basename(filepath)
         FSAMP = int(mat_file["SamplingFrequency"])
 
@@ -998,7 +1003,7 @@ def emg_from_customcsv(
     EMG_LENGTH, NUMBER_OF_MUS = IPTS.shape
 
     # Use this to know the data source and name of the file
-    SOURCE = "custom"
+    SOURCE = "CUSTOM"
     FILENAME = os.path.basename(filepath)
 
     if NUMBER_OF_MUS > 0:
@@ -1060,7 +1065,7 @@ def save_json_emgfile(emgfile, filepath):
         This can be a simple string; The use of Path is not necessary.
     """
 
-    if emgfile["SOURCE"] in ["DEMUSE", "OTB", "custom"]:
+    if emgfile["SOURCE"] in ["DEMUSE", "OTB", "CUSTOM"]:
         """
         We need to convert all the components of emgfile to a dictionary and
         then to json object.
@@ -1169,7 +1174,7 @@ def save_json_emgfile(emgfile, filepath):
             # TODO_NEXT_ try to improve writing time. f.write is the bottleneck
             # but it is hard to improve.
 
-    elif emgfile["SOURCE"] == "OTB_refsig":
+    elif emgfile["SOURCE"] == "OTB_REFSIG":
         """
         refsig =   {
                 "SOURCE" : SOURCE,
@@ -1229,7 +1234,7 @@ def emg_from_json(filepath):
     Notes
     -----
     The returned file is called ``emgfile`` for convention
-    (or ``emg_refsig`` if SOURCE = "OTB_refsig").
+    (or ``emg_refsig`` if SOURCE = "OTB_REFSIG").
 
     Examples
     --------
@@ -1262,7 +1267,7 @@ def emg_from_json(filepath):
     filename_dict = json.loads(jsonemgfile[1])
     filename = filename_dict["FILENAME"]
 
-    if source in ["DEMUSE", "OTB", "custom"]:
+    if source in ["DEMUSE", "OTB", "CUSTOM"]:
         # jsonemgfile[2] contains the RAW_SIGNAL in a dictionary, it can be
         # extracted in a new dictionary and converted into a pd.DataFrame.
         # index and columns are imported as str, we need to convert it to int.
@@ -1342,7 +1347,7 @@ def emg_from_json(filepath):
             "BINARY_MUS_FIRING": binary_mus_firing,
         }
 
-    elif source == "OTB_refsig":
+    elif source == "OTB_REFSIG":
         # jsonemgfile[2] contains the fsamp
         fsamp_dict = json.loads(jsonemgfile[2])
         fsamp = int(fsamp_dict["FSAMP"])
@@ -1379,18 +1384,18 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
     initialdir : str or Path, default "/"
         The directory of the file to load (excluding file name).
         This can be a simple string, the use of Path is not necessary.
-    filesource : str {"DEMUSE", "OTB", "OTB_refsig", "custom", "Open_HD-EMG"}, default "DEMUSE"
+    filesource : str {"DEMUSE", "OTB", "OTB_REFSIG", "CUSTOM", "OPENHDEMG"}, default "DEMUSE" # TODO replace with openhdemg, add custom_refignal?
         See notes for how files should be exported from OTB.
 
         ``DEMUSE``
             File saved from DEMUSE (.mat).
         ``OTB``
             File exported from OTB with decomposition and reference signal (.mat).
-        ``OTB_refsig``
+        ``OTB_REFSIG``
             File exported from OTB with only the reference signal (.mat).
-        ``custom``
+        ``CUSTOM``
             Custom file format (.csv).
-        ``Open_HD-EMG``
+        ``OPENHDEMG``
             File saved from openhdemg (.json).
     otb_ext_factor : int, default 8
         The extension factor used for the decomposition in the OTbiolab+
@@ -1451,7 +1456,7 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
     Notes
     -----
     The returned file is called ``emgfile`` for convention (or ``emg_refsig``
-    if SOURCE = "OTB_refsig").
+    if SOURCE = "OTB_REFSIG").
 
     The input .mat file exported from the OTBiolab+ software should have a
     specific content:
@@ -1528,19 +1533,19 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
     root = Tk()
     root.withdraw()
 
-    if filesource in ["DEMUSE", "OTB", "OTB_refsig"]:
+    if filesource in ["DEMUSE", "OTB", "OTB_REFSIG"]:
         file_toOpen = filedialog.askopenfilename(
             initialdir=initialdir,
             title=f"Select a {filesource} file to load",
             filetypes=[("MATLAB files", ".mat")],
         )
-    elif filesource == "Open_HD-EMG":
+    elif filesource == "OPENHDEMG":
         file_toOpen = filedialog.askopenfilename(
             initialdir=initialdir,
-            title="Select an Open_HD-EMG file to load",
+            title="Select an OPENHDEMG file to load",
             filetypes=[("JSON files", ".json")],
         )
-    elif filesource == "custom":
+    elif filesource == "CUSTOM":
         file_toOpen = filedialog.askopenfilename(
             initialdir=initialdir,
             title="Select a custom file to load",
@@ -1548,7 +1553,7 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
         )
     else:
         raise Exception(
-            "filesource not valid, it must be one of 'DEMUSE', 'OTB', 'OTB_refsig' or 'Open_HD-EMG'"
+            "filesource not valid, it must be one of 'DEMUSE', 'OTB', 'OTB_REFSIG' or 'OPENHDEMG'"
         )
 
     # Destroy the root since it is no longer necessary
@@ -1564,14 +1569,14 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
             refsig=kwargs.get("otb_refsig_type", [True, "fullsampled"]),
             version=kwargs.get("otb_version", "1.5.8.0")
         )
-    elif filesource == "OTB_refsig":
+    elif filesource == "OTB_REFSIG":
         ref = kwargs.get("otb_refsig_type", [True, "fullsampled"])
         emgfile = refsig_from_otb(
             filepath=file_toOpen,
             refsig=ref[1],
             version=kwargs.get("otb_version", "1.5.8.0"),
         )
-    elif filesource == "Open_HD-EMG":
+    elif filesource == "OPENHDEMG":
         emgfile = emg_from_json(filepath=file_toOpen)
     else:  # custom
         emgfile = emg_from_customcsv(

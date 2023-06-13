@@ -14,7 +14,7 @@ import warnings
 from openhdemg.library.mathtools import compute_pnr, compute_sil
 
 
-def showselect(emgfile, title="", nclic=2):
+def showselect(emgfile, title="", titlesize=12, nclic=2):
     """
     Select a part of the recording.
 
@@ -30,13 +30,16 @@ def showselect(emgfile, title="", nclic=2):
     title : str
         The title of the plot. It is optional but strongly recommended.
         It should describe the task to do.
-    nclic: int {1, 2, 4}, default 2
-        The number of clics to be collected.
+    titlesize : int, default 12
+        The font size of the title.
+    nclic: int, default 2
+        The number of clics to be collected. If nclic < 1, all the clicks are
+        collected.
 
     Returns
     -------
-    points : int
-        The selected points (sorted in ascending order) based on nclic.
+    points : list
+        A list containing the selected points sorted in ascending order.
 
     Raises
     ------
@@ -48,70 +51,33 @@ def showselect(emgfile, title="", nclic=2):
     Load the EMG file and select the points.
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB_refsig")
-    >>> start_point, end_point = emg.showselect(
+    >>> emgfile = emg.askopenfile(filesource="OTB_REFSIG")
+    >>> points = emg.showselect(
     ...     emgfile,
     ...     title="Select 2 points",
     ...     nclic=2,
     ... )
-    >>> start_point, end_point
-    16115 40473
+    >>> points
+    [16115, 40473]
     """
-
     # Show the signal for the selection
     plt.figure(num="Fig_ginput")
     plt.plot(emgfile["REF_SIGNAL"][0])
     plt.xlabel("Samples")
     plt.ylabel("MVC")
-    plt.title(title, fontweight="bold")
-    ginput_res = plt.ginput(n=-1, timeout=0, mouse_add=None)
+    plt.title(title, fontweight="bold", fontsize=titlesize)
 
-    # Check if the user entered the correct number of clics
-    if nclic != len(ginput_res):
+    ginput_res = plt.ginput(n=-1, timeout=0, mouse_add=False, show_clicks=True)
+
+    plt.close()
+
+    points = [round(point[0]) for point in ginput_res]
+    points.sort()
+
+    if nclic > 0 and nclic != len(points):
         raise ValueError("Wrong number of inputs, read the title")
 
-    # Act according to the number of clics
-    if nclic == 1:
-        start_point = round(ginput_res[0][0])
-
-        plt.close()
-        return start_point
-
-    elif nclic == 2:
-        # Sort the input range. Used to resize the signal,
-        # select the steady-state, calculate MVC
-        if ginput_res[0][0] < ginput_res[1][0]:
-            start_point = round(ginput_res[0][0])
-            end_point = round(ginput_res[1][0])
-        else:
-            start_point = round(ginput_res[1][0])
-            end_point = round(ginput_res[0][0])
-
-        plt.close()
-        return start_point, end_point
-
-    elif nclic == 4:  # Used for activation capacity
-        points = [
-            ginput_res[0][0],
-            ginput_res[1][0],
-            ginput_res[2][0],
-            ginput_res[3][0],
-        ]
-        # Sort the input range
-        points.sort()
-
-        start_point_tw = round(points[0])
-        end_point_tw = round(points[1])
-        start_point_rest = round(points[2])
-        end_point_rest = round(points[3])
-
-        plt.close()
-        return start_point_tw, end_point_tw, start_point_rest, end_point_rest
-
-    else:
-        raise ValueError(
-            f"nclic can be only one of 1, 2, 4. {nclic} was passed instead"
-        )
+    return points
 
 
 def create_binary_firings(emg_length, number_of_mus, mupulses):
@@ -197,10 +163,12 @@ def resize_emgfile(emgfile, area=None):
 
     else:
         # Visualise and select the area to resize
-        start_, end_ = showselect(
+        points = showselect(
             emgfile,
-            title="Select the start/end area to resize, then press enter",
+            title="Select the start/end area to resize by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+            titlesize=10,
         )
+        start_, end_ = points[0], points[1]
 
     # Create the object to store the resized emgfile.
     rs_emgfile = copy.deepcopy(emgfile)
@@ -227,22 +195,25 @@ def resize_emgfile(emgfile, area=None):
     # resize the mupulses. Then, reset the index.
     rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
     first_idx = rs_emgfile["REF_SIGNAL"].index[0]
-    rs_emgfile["REF_SIGNAL"] = rs_emgfile[
-        "REF_SIGNAL"].reset_index(drop=True)
-    rs_emgfile["RAW_SIGNAL"] = rs_emgfile["RAW_SIGNAL"].loc[
-        start_:end_].reset_index(drop=True)
-    rs_emgfile["IPTS"] = rs_emgfile["IPTS"].loc[
-        start_:end_].reset_index(drop=True)
+    rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].reset_index(drop=True)
+    rs_emgfile["RAW_SIGNAL"] = (
+        rs_emgfile["RAW_SIGNAL"].loc[start_:end_].reset_index(drop=True)
+    )
+    rs_emgfile["IPTS"] = rs_emgfile["IPTS"].loc[start_:end_].reset_index(drop=True)
     rs_emgfile["EMG_LENGTH"] = int(len(rs_emgfile["IPTS"].index))
-    rs_emgfile["BINARY_MUS_FIRING"] = rs_emgfile["BINARY_MUS_FIRING"].loc[
-        start_:end_].reset_index(drop=True)
+    rs_emgfile["BINARY_MUS_FIRING"] = (
+        rs_emgfile["BINARY_MUS_FIRING"].loc[start_:end_].reset_index(drop=True)
+    )
 
     for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
         # Mask the array based on a filter and return the values in an array
-        rs_emgfile["MUPULSES"][mu] = rs_emgfile["MUPULSES"][mu][
-            (rs_emgfile["MUPULSES"][mu] >= start_)
-            & (rs_emgfile["MUPULSES"][mu] < end_)
-        ] - first_idx
+        rs_emgfile["MUPULSES"][mu] = (
+            rs_emgfile["MUPULSES"][mu][
+                (rs_emgfile["MUPULSES"][mu] >= start_)
+                & (rs_emgfile["MUPULSES"][mu] < end_)
+            ]
+            - first_idx
+        )
 
     # Compute PNR and SIL
     if rs_emgfile["NUMBER_OF_MUS"] > 0:
@@ -346,7 +317,7 @@ def compute_idr(emgfile):
                     0: "mupulses",
                     1: "diff_mupulses",
                     2: "timesec",
-                    3: "idr"
+                    3: "idr",
                 },
             )
 
@@ -530,7 +501,7 @@ def sort_mus(emgfile):
                 }
     """
 
-    # Identify the sorting_order by the firsr MUpulse of every MUs
+    # Identify the sorting_order by the first MUpulse of every MUs
     df = pd.DataFrame()
     df["firstpulses"] = [
         emgfile["MUPULSES"][i][0] for i in range(emgfile["NUMBER_OF_MUS"])
@@ -547,18 +518,15 @@ def sort_mus(emgfile):
         sorted_emgfile["SIL"].loc[origpos] = emgfile["SIL"].loc[newpos]
 
     # Sort IPTS (multiple columns, sort by columns, then reset columns' name)
-    sorted_emgfile["IPTS"] = sorted_emgfile["IPTS"].reindex(
-        columns=sorting_order
-    )
+    sorted_emgfile["IPTS"] = sorted_emgfile["IPTS"].reindex(columns=sorting_order)
     sorted_emgfile["IPTS"].columns = np.arange(emgfile["NUMBER_OF_MUS"])
 
     # Sort BINARY_MUS_FIRING (multiple columns, sort by columns,
     # then reset columns' name)
-    sorted_emgfile["BINARY_MUS_FIRING"] = sorted_emgfile[
-        "BINARY_MUS_FIRING"].reindex(columns=sorting_order)
-    sorted_emgfile["BINARY_MUS_FIRING"].columns = np.arange(
-        emgfile["NUMBER_OF_MUS"]
+    sorted_emgfile["BINARY_MUS_FIRING"] = sorted_emgfile["BINARY_MUS_FIRING"].reindex(
+        columns=sorting_order
     )
+    sorted_emgfile["BINARY_MUS_FIRING"].columns = np.arange(emgfile["NUMBER_OF_MUS"])
 
     # Sort MUPULSES.
     # Preferable to use the sorting_order as a double-check in alternative to:
@@ -620,10 +588,12 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
     """
 
     if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
-        start_steady, end_steady = showselect(
+        points = showselect(
             emgfile=emgfile,
-            title="Select the start/end of the steady-state then press enter",
+            title="Select the start/end area of the steady-state by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+            titlesize=10,
         )
+        start_steady, end_steady = points[0], points[1]
 
     ref = emgfile["REF_SIGNAL"].loc[start_steady:end_steady]
     covsteady = (ref.std() / ref.mean()) * 100
@@ -772,27 +742,31 @@ def remove_offset(emgfile, offsetval=0, auto=0):
     if auto <= 0:
         if offsetval != 0:
             # Directly subtract the offset value.
-            offs_emgfile["REF_SIGNAL"][0] = offs_emgfile[
-                "REF_SIGNAL"][0] - offsetval
+            offs_emgfile["REF_SIGNAL"][0] = offs_emgfile["REF_SIGNAL"][0] - offsetval
 
         else:
             # Select the area to calculate the offset
             # (average value of the selected area)
-            start_, end_ = showselect(
+            points = showselect(
                 emgfile=offs_emgfile,
-                title="Select the start/end of a resting area to calculate the offset, then press enter",
+                title="Select the start/end of area to calculate the offset by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+                titlesize=10,
             )
+            start_, end_ = points[0], points[1]
+
             offsetval = offs_emgfile["REF_SIGNAL"].loc[start_:end_].mean()
             # We need to convert the series offsetval into float
-            offs_emgfile["REF_SIGNAL"][0] = offs_emgfile[
-                "REF_SIGNAL"][0] - float(offsetval)
+            offs_emgfile["REF_SIGNAL"][0] = (
+                offs_emgfile["REF_SIGNAL"][0] - float(offsetval)
+            )
 
     else:
         # Compute and subtract the offset value.
         offsetval = offs_emgfile["REF_SIGNAL"].iloc[0:auto].mean()
         # We need to convert the series offsetval into float
-        offs_emgfile["REF_SIGNAL"][0] = offs_emgfile[
-            "REF_SIGNAL"][0] - float(offsetval)
+        offs_emgfile["REF_SIGNAL"][0] = (
+            offs_emgfile["REF_SIGNAL"][0] - float(offsetval)
+        )
 
     return offs_emgfile
 
@@ -835,7 +809,7 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
     Load the EMG file, remove reference signal offset and get MVC value.
 
     >>> import openhdemg.library as emg
-    >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
+    >>> emg_refsig = emg.askopenfile(filesource="OTB_REFSIG")
     >>> offs_refsig = emg.remove_offset(emgfile=emg_refsig)
     >>> mvc = emg.get_mvc(emgfile=offs_refsig )
     >>> mvc
@@ -845,7 +819,7 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
     calculating the MVC of the entire file.
 
     >>> import openhdemg.library as emg
-    >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
+    >>> emg_refsig = emg.askopenfile(filesource="OTB_REFSIG")
     >>> mvc = emg.get_mvc(emgfile=emg_refsig, how="all")
     >>> print(mvc)
     50.86
@@ -856,15 +830,19 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
 
     elif how == "showselect":
         # Select the area to measure the MVC (maximum value)
-        start_, end_ = showselect(
+        points = showselect(
             emgfile=emgfile,
-            title="Select the start/end area to measure the MVC, then press enter",
+            title="Select the start/end area to compute MVC by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+            titlesize=10,
         )
+        start_, end_ = points[0], points[1]
 
-        mvc = emgfile["REF_SIGNAL"].loc[start_: end_].max()
+        mvc = emgfile["REF_SIGNAL"].loc[start_:end_].max()
 
     else:
-        raise ValueError(f"how must be one of 'showselect' or 'all', {how} was passed instead")
+        raise ValueError(
+            f"how must be one of 'showselect' or 'all', {how} was passed instead"
+        )
 
     mvc = float(mvc)
 
@@ -878,7 +856,7 @@ def compute_rfd(
     emgfile,
     ms=[50, 100, 150, 200],
     startpoint=None,
-    conversion_val=0
+    conversion_val=0,
 ):
     """
     Calculate the RFD.
@@ -920,7 +898,7 @@ def compute_rfd(
     Load the EMG file, low-pass filter the reference signal and compute RFD.
 
     >>> import openhdemg.library as emg
-    >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
+    >>> emg_refsig = emg.askopenfile(filesource="OTB_REFSIG")
     >>> filteredrefsig  = emg.filter_refsig(
     ...     emgfile=emg_refsig,
     ...     order=4,
@@ -938,7 +916,7 @@ def compute_rfd(
     The process can be automated by bypassing the GUI.
 
     >>> import openhdemg.library as emg
-    >>> emg_refsig = emg.askopenfile(filesource="OTB_refsig")
+    >>> emg_refsig = emg.askopenfile(filesource="OTB_REFSIG")
     >>> filteredrefsig  = emg.filter_refsig(
     ...     emgfile=emg_refsig,
     ...     order=4,
@@ -959,11 +937,13 @@ def compute_rfd(
         start_ = startpoint
     else:
         # Otherwise select the starting point for the RFD
-        start_ = showselect(
+        points = showselect(
             emgfile,
-            title="Select the starting point for RFD, then press enter",
+            title="Select the start area to compute the RFD by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+            titlesize=10,
             nclic=1,
         )
+        start_ = points[0]
 
     # Create a dict to add the RFD
     rfd_dict = dict.fromkeys(ms, None)

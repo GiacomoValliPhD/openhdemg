@@ -1,9 +1,9 @@
 import setuptools
-import openhdemg
+import openhdemg as emg
 
 setuptools.setup(
     name="openhdemg",
-    version=openhdemg.__version__,
+    version=emg.__version__,
     include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",

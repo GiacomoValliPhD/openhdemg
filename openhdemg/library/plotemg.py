@@ -68,7 +68,7 @@ def plot_emgsig(
     channels : int or list
         The channel (int) or channels (list of int) to plot.
         The list can be passed as a manually-written list or with:
-        channels=[*range(0, 12)].
+        channels=[*range(0, 13)].
         We need the " * " operator to unpack the results of range into a list.
         channels is expected to be with base 0 (i.e., the first channel
         in the file is the number 0).
@@ -392,7 +392,7 @@ def plot_refsig(
         )
         ax = sns.lineplot(x=x_axis, y=refsig[0])
         ax.set_ylabel(ylabel)
-        ax.set_xlabel("Time (s)" if timeinseconds else "Samples")
+        ax.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
         showgoodlayout(tight_layout)
         if showimmediately:
@@ -499,7 +499,7 @@ def plot_mupulses(
         # Manage exception of single MU
         if emgfile["NUMBER_OF_MUS"] > 1:
             y_tick_lab = [*range(0, emgfile["NUMBER_OF_MUS"])]
-            ylab = "MUs"
+            ylab = "Motor units"
         else:
             y_tick_lab = []
             ylab = "MU n. 0"
@@ -509,9 +509,14 @@ def plot_mupulses(
         y_tick_lab = []
         ylab = f"MU n. {munumber}"
     elif isinstance(munumber, list):
-        mupulses = [mupulses[mu] for mu in munumber]
-        y_tick_lab = munumber
-        ylab = "MUs"
+        if len(munumber) > 1:
+            mupulses = [mupulses[mu] for mu in munumber]
+            y_tick_lab = munumber
+            ylab = "Motor units"
+        else:
+            mupulses = [mupulses[munumber[0]]]
+            y_tick_lab = []
+            ylab = f"MU n. {munumber[0]}"
     else:
         raise TypeError(
             "While calling the plot_mupulses function, you should pass an integer, a list or 'all' to munumber"
@@ -848,28 +853,40 @@ def plot_idr(
         )
 
         ax1.set_ylabel(
-            "MU {} (pps)".format(munumber)
+            "MU {} (PPS)".format(munumber)
         )  # Useful because if the MU is empty it won't show the channel number
         ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
     elif isinstance(munumber, list):
-        for count, thisMU in enumerate(munumber):
-            # Normalise the series
-            norm_idr = min_max_scaling(idr[thisMU]["idr"])
-            # Add 1 to the previous MUs to avoid overlapping of the MUs
-            norm_idr = norm_idr + count
-            sns.scatterplot(
-                x=idr[thisMU]["timesec" if timeinseconds else "mupulses"],
-                y=norm_idr,
-                ax=ax1,
+        if len(munumber) > 1:
+            for count, thisMU in enumerate(munumber):
+                # Normalise the series
+                norm_idr = min_max_scaling(idr[thisMU]["idr"])
+                # Add 1 to the previous MUs to avoid overlapping of the MUs
+                norm_idr = norm_idr + count
+                sns.scatterplot(
+                    x=idr[thisMU]["timesec" if timeinseconds else "mupulses"],
+                    y=norm_idr,
+                    ax=ax1,
+                )
+
+            # Ensure correct and complete ticks on the left y axis
+            ax1.set_yticks([*range(len(munumber))])
+            ax1.set_yticklabels([str(mu) for mu in munumber])
+            # Set axes labels
+            ax1.set_ylabel("Motor units")
+            ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+
+        else:
+            ax1 = sns.scatterplot(
+                x=idr[munumber[0]]["timesec" if timeinseconds else "mupulses"],
+                y=idr[munumber[0]]["idr"],
             )
 
-        # Ensure correct and complete ticks on the left y axis
-        ax1.set_yticks([*range(len(munumber))])
-        ax1.set_yticklabels([str(mu) for mu in munumber])
-        # Set axes labels
-        ax1.set_ylabel("Motor units")
-        ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+            ax1.set_ylabel(
+                "MU {} (PPS)".format(munumber[0])
+            )  # Useful because if the MU is empty it won't show the channel n
+            ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
     else:
         raise TypeError(
@@ -894,7 +911,8 @@ def plot_idr(
     return fig
 
 
-# TODO_NEXT_kwargs for flexible plotting design (all the plots)
+# TODO_NEXT_kwargs for flexible plotting design (all the plots), also option
+# to show channel numbers in MUAPs plots
 def plot_muaps(
     sta_dict,
     title="MUAPs from STA",
@@ -911,7 +929,7 @@ def plot_muaps(
         STA of specified MUs.
         If a list is passed, different MUs are overlayed. This is useful for
         visualisation of MUAPs during tracking or duplicates removal.
-    tile : str, default "MUAPs from STA"
+    title : str, default "MUAPs from STA"
         Title of the plot.
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
@@ -1292,7 +1310,7 @@ def plot_muaps_for_cv(
     xcc_sta_dict : dict
         dict containing the normalised cross-correlation coefficient of the
         double-differential derivation of a specific MU.
-    tile : str, default "MUAPs from STA"
+    title : str, default "MUAPs from STA"
         Title of the plot.
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
