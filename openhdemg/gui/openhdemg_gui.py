@@ -28,7 +28,7 @@ class emgGUI:
     A class representing a Tkinter TK instance.
 
     This class is used to create a graphical user interface for
-    the Open_HD-EMG library.
+    the openhdemg library.
 
     Attributes
     ----------
@@ -74,7 +74,7 @@ class emgGUI:
         String containing the path to EMG file selected for analysis.
     self.filetype : str
         String containing the filetype of import EMG file.
-        Filetype can be "OTB", "Demuse", or "Refsig".
+        Filetype can be "OTB", "DEMUSE", or "Refsig". # TODO Paul verify this
     self.filter_order : int, default 4
         The filter order.
     self.firings_rec : int, default 4
@@ -93,7 +93,7 @@ class emgGUI:
     self.linewidth : float, default 0.5
         The width of the vertical lines representing the MU firing.
     self.logo :
-        String containing the path to image file containing logo of Open_HD-EMG.
+        String containing the path to image file containing logo of openhdemg.
     self.logo_canvas : tk.canvas
         Canvas to display logo of Open_HG-EMG when openend.
     self.master: tk
@@ -314,7 +314,7 @@ class emgGUI:
         """
         # Set up GUI
         self.master = master
-        self.master.title("Open_HD-EMG")
+        self.master.title("openhdemg")
         master_path = os.path.dirname(os.path.abspath(__file__))
         iconpath = master_path + "/gui_files/Icon.ico"
         self.master.iconbitmap(iconpath)
@@ -344,7 +344,7 @@ class emgGUI:
 
         # Specify Signal
         self.filetype = StringVar()
-        signal_value = ("OTB", "DEMUSE", "REFSIG", "Open_HD-EMG", "custom")
+        signal_value = ("OPENHDEMG", "OTB", "DEMUSE", "OTB_REFSIG", "CUSTOM")
         signal_entry = ttk.Combobox(
             self.left, text="Signal", width=10, textvariable=self.filetype
         )
@@ -583,7 +583,7 @@ class emgGUI:
         emg_from_demuse, emg_from_otb, refsig_from_otb and emg_from_json in library.
         """
         try:
-            if self.filetype.get() in ["OTB", "DEMUSE", "Open_HD-EMG", "custom"]:
+            if self.filetype.get() in ["OTB", "DEMUSE", "OPENHDEMG", "CUSTOM"]:
                 # Check filetype for processing
                 if self.filetype.get() == "OTB":
                     # Ask user to select the file
@@ -607,14 +607,14 @@ class emgGUI:
                     # load file
                     self.resdict = openhdemg.emg_from_demuse(filepath=self.file_path)
 
-                elif self.filetype.get() == "Open_HD-EMG":
+                elif self.filetype.get() == "OPENHDEMG":
                     # Ask user to select the file
                     file_path = filedialog.askopenfilename(
                         title="Open JSON file", filetypes=[("JSON files", "*.json")]
                     )
                     self.file_path = file_path
 
-                    # load Open_HD-EMG (.json)
+                    # load OPENHDEMG (.json)
                     self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
 
                 else:
@@ -825,7 +825,7 @@ class emgGUI:
             # user decided to rest analysis
             try:
                 # reload original file
-                if self.filetype.get() in ["OTB", "DEMUSE", "Open_HD-EMG", "custom"]:
+                if self.filetype.get() in ["OTB", "DEMUSE", "OPENHDEMG", "CUSTOM"]:
                     if self.filetype.get() == "OTB":
                         self.resdict = openhdemg.emg_from_otb(
                             filepath=self.file_path,
@@ -837,10 +837,10 @@ class emgGUI:
                             filepath=self.file_path
                         )
 
-                    elif self.filetype.get() == "Open_HD-EMG":
+                    elif self.filetype.get() == "OPENHDEMG":
                         self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
 
-                    elif self.filetype.get() == "custom":
+                    elif self.filetype.get() == "CUSTOM":
                         self.resdict = openhdemg.emg_from_customcsv(
                             filepath=self.file_path
                         )
@@ -948,10 +948,10 @@ class emgGUI:
         matrix_code = ttk.Combobox(
             self.a_window, width=10, textvariable=self.mat_code_adv
         )
-        matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808")
+        matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808", "None")
         matrix_code["state"] = "readonly"
         matrix_code.grid(row=4, column=1, sticky=(W, E))
-        self.mat_code_adv.set("GR08MM1305")
+        self.mat_code_adv.set("None")
 
         # Instruction
         ttk.Label(
@@ -994,7 +994,7 @@ class emgGUI:
         plot_refsig, plot_idr in the library.
         """
         try:
-            if self.filetype.get() == "REFSIG":
+            if self.filetype.get() == "OTB_REFSIG":
                 self.fig = openhdemg.plot_refsig(
                     emgfile=self.resdict, showimmediately=False, tight_layout=True
                 )
@@ -1333,10 +1333,12 @@ class emgGUI:
         """
         try:
             # Open selection window for user
-            start, end = openhdemg.showselect(
+            points = openhdemg.showselect(
                 emgfile=self.resdict,
-                title="Select the start/end area to consider by hovering the mouse \n and pressing the 'o'-key, then press enter",
+                title="Select the start/end area to resize by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+                titlesize=10,
             )
+            start, end = points[0], points[1]
             self.resdict, _, _ = openhdemg.resize_emgfile(
                 emgfile=self.resdict, area=[start, end]
             )
@@ -1778,7 +1780,7 @@ class emgGUI:
             self.linewidth.set("Linewidth")
 
             # Plot impulse train
-            plt_ipts = ttk.Button(self.head, text="Plot IPTS", command=self.plt_ipts)
+            plt_ipts = ttk.Button(self.head, text="Plot Source", command=self.plt_ipts)
             plt_ipts.grid(column=0, row=6, sticky=W)
 
             self.mu_numb = StringVar()
@@ -1810,10 +1812,10 @@ class emgGUI:
             ttk.Label(self.head, text="Matrix Code*").grid(row=0, column=3, sticky=(W))
             self.mat_code = StringVar()
             matrix_code = ttk.Combobox(self.head, width=15, textvariable=self.mat_code)
-            matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808")
+            matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808", "None")
             matrix_code["state"] = "readonly"
             matrix_code.grid(row=0, column=4, sticky=(W, E))
-            self.mat_code.set("GR08MM1305")
+            self.mat_code.set("None")
 
             # Matrix Orientation
             ttk.Label(self.head, text="Orientation*").grid(row=1, column=3, sticky=(W))
@@ -2063,7 +2065,7 @@ class emgGUI:
         The motor units selected by the user are plotted. The plot can be saved and
         partly edited using the matplotlib options.
 
-        Executed when button "Plot IPTS" in Plot Window is pressed.
+        Executed when button "Plot Source" in Plot Window is pressed.
 
         Raises
         ------
@@ -2211,7 +2213,7 @@ class emgGUI:
             # Create list of figsize
             figsize = [int(i) for i in self.size_fig.get().split(",")]
 
-            # Plot deviation
+            # Plot derivation
             openhdemg.plot_differentials(
                 emgfile=self.resdict,
                 differential=diff_file,
@@ -2320,7 +2322,7 @@ class emgGUI:
 
         # Specify Signal
         self.filetype_adv = StringVar()
-        signal_value = ("OTB", "DEMUSE", "Open_HD-EMG", "custom")
+        signal_value = ("OTB", "DEMUSE", "OPENHDEMG", "CUSTOM")
         signal_entry = ttk.Combobox(
             self.head, text="Signal", width=8, textvariable=self.filetype_adv
         )

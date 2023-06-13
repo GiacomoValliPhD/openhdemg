@@ -1,4 +1,4 @@
-:octicons-tag-24: 0.1.0-beta
+:octicons-tag-24: 0.1.0-beta.1 &nbsp; :octicons-clock-24: June 2023
 
 What's new? Well, everything. This is our firt release, if you are using it,
 congratulations, you are a pioneer!

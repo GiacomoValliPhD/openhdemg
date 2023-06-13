@@ -452,7 +452,7 @@ def derivatives_beamforming(sig, row, teta):
         estimation.
     """
 
-    # TODO implement with nympy arrays instead of pd.Series for performance.
+    # TODO _NEXT_ implement with nympy arrays instead of pd.Series for performance.
     # Check the use of pandas in row-major
 
     # Define some necessary variables

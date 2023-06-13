@@ -15,7 +15,6 @@ The `Matrix Code` must be specified according to the one you used during acquisi
 - `GR04MM1305`
 - `GR10MM0808`
 are implemented. You must choose one from the respective dropdown list.
-Keep in mind that these settings, `Matrix Code` and `Matrix Orientation`, are **ignored** when analysing `DEMUSE` files.
 Once you specified these parameter, you can click the "Advaned Analysis" button to start your analysis.
 
 -----------------------------------------
@@ -26,15 +25,16 @@ When you want to track MUs across two different files, you need to select the `M
 ![mus_tracking](md_graphics/GUI/MU_Tracking_window.png)
 
 1. You need to specify the `Type of file` you want to track MUs across in the respective dropdown. The available filetypes are:
-- `OTB` (.mat file exportable by OTBiolab+)
-- `DEMUSE` (.mat file used in DEMUSE)
-- `Open_HD-EMG` (emgfile or reference signal stored in .json format)
-- `custom` (custom data from a .csv file)
-Each filetype corresponds to a distinct datatype that shpuld match the file you want to analyse. So, select the **Type of file** corresponding to the type of your file. In case you selected `OTB` specify the `extension factor` in the dropdown.
+    - `OTB` (.mat file exportable by OTBiolab+)
+    - `DEMUSE` (.mat file used in DEMUSE)
+    - `OPENHDEMG` (emgfile or reference signal stored in .json format)
+    - `CUSTOM` (custom data from a .csv file)
+
+    Each filetype corresponds to a distinct datatype that should match the file you want to analyse. So, select the **Type of file** corresponding to the type of your file. In case you selected `OTB` specify the `extension factor` in the dropdown.
 
 2. Load the files according to specified `Type of file`using the `Load File 1` and `Load File 2` buttons.
 
-3. Select the cross-correlation minimum value to consider two MUs to be the same in the `Threshold` dropdown.
+3. Select the minimum cross-correlation value to consider two MUs to be the same in the `Threshold` dropdown.
 
 4. Specify the timewindow across which you want the spike triggered average to be computed in the `Timewindow` dropdown.
 
@@ -47,7 +47,7 @@ Each filetype corresponds to a distinct datatype that shpuld match the file you 
 8. By clicking the `Track` button, you can start the analysis. The tracking results will be displayed in the `MUs Tracking Resul` output in the right side of the `MUs Tracking Window`.
 
 ## Duplicate Removal
-When you want to remove MU duplicates across in different files, you need to select the `Duplicate Removal` options and specify the `Matrix Code` and `Matrix Orentation` in the `Advanced Tools Window`. Once you clicked the `Advanced Analysis` button, the `Duplicate Removal Window` will pop-up. `Duplicate Removal` requires similar input as `Motor Unit Tracking`, so please take a look at the [`Motor Unit Tracking`](#motor-unit-tracking) section. However, you need to do two more things. 
+When you want to remove MUs duplicates across different files, you need to select the `Duplicate Removal` options and specify the `Matrix Code` and `Matrix Orentation` in the `Advanced Tools Window`. Once you clicked the `Advanced Analysis` button, the `Duplicate Removal Window` will pop-up. `Duplicate Removal` requires similar input as `Motor Unit Tracking`, so please take a look at the [`Motor Unit Tracking`](#motor-unit-tracking) section. However, you need to do two more things. 
 
 ![duplicate_removal](md_graphics/GUI/Duplicate_Removal_window.png)
 
@@ -56,9 +56,9 @@ When you want to remove MU duplicates across in different files, you need to sel
 - PNR: The MU with the lowest PNR is removed.
 - SIL: The MU with the lowest SIL is removed.
 
-2. By clicking the `Remove Duplicates` button, you start the removal process. A separate plot for each MU will appear.
+2. By clicking the `Remove Duplicates` button, you start the removal process.
 
-3. Specify a filename and location to save the file with duplicates removed in a .json format.
+3. Specify a filename and location to save the file(s) with duplicates removed in a .json format.
 
 ## Conduction Velocity
 Prior to calculation of the `Conduction Velocity` you need to load a file in the main window of the GUI. Take a look at the [intro](GUI_intro.md#specifying-an-analysis-file) section.  Once you have done this, open the `Advanced Tool Window` using the `Advanced Analaysis` button. 
@@ -67,22 +67,22 @@ Prior to calculation of the `Conduction Velocity` you need to load a file in the
 
 2. Click the `Advanced Analysis` button to start the calculation of the `Conduction Velocity`. The `MUs cv estimation` window will pop up. 
 
-![cv_estimation](md_graphics/GUI/CV_Estimation_window.png)
+    ![cv_estimation](md_graphics/GUI/CV_Estimation_window.png)
 
 3. In the top left of the `MUs cv estimation` window select the MU for which you want to calculate the conduction velocity using the `MU Number` dropdown. 
 
 4. In the top middle of the window select the column for which you want to calculate the conduction velocity choosing from the `Column` dropdown.
 
-5. In the top right of the window select the rows for which you want to calculate the conduction velocity using the `From row` and `To row` dropdown. For example, if you want to calculate the conduction velocity from row 5 to 10, select 
+5. In the top right of the window select the rows for which you want to calculate the conduction velocity using the `From row` and `To row` dropdown. For example, if you want to calculate the conduction velocity from row 3 to 7, select 
 
     ```Python
-    From row: 5
-    To row: 10
+    From row: 3
+    To row: 7
     ```
 
 6. Click the `Estimate` button to start the calculation for the respective column and rows. The results will be displayed on the right side of the `MUs cv estimation` window. 
 
-7. You can copy the estimation results using the `Copy Results` button for futher analysis. 
+7. You can copy the estimation results using the `Copy Results` button for futher analysis. The results are copied in the clipboard and can be pasted into any .csv (Excel). 
 
 --------------------------------------
 

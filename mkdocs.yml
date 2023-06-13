@@ -24,6 +24,7 @@ plugins:
         options:
           docstring_style: 'numpy'
           docstring_section_style: 'spacy'
+          show_source: false
           docstring_options:
             ignore_init_summary: True
 - search:
@@ -37,7 +38,7 @@ plugins:
 nav:
   - Welcome: index.md
   - Quick-Start.md
-  - tutorials.md
+  - Tutorials.md
   - Graphical-Interface:
     - intro: GUI_intro.md
     - basics: GUI_basics.md

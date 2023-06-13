@@ -929,7 +929,7 @@ def plot_muaps(
         STA of specified MUs.
         If a list is passed, different MUs are overlayed. This is useful for
         visualisation of MUAPs during tracking or duplicates removal.
-    tile : str, default "MUAPs from STA"
+    title : str, default "MUAPs from STA"
         Title of the plot.
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
@@ -1310,7 +1310,7 @@ def plot_muaps_for_cv(
     xcc_sta_dict : dict
         dict containing the normalised cross-correlation coefficient of the
         double-differential derivation of a specific MU.
-    tile : str, default "MUAPs from STA"
+    title : str, default "MUAPs from STA"
         Title of the plot.
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
