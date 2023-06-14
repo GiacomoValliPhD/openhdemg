@@ -1639,6 +1639,8 @@ def emg_from_samplefile():
     software and contains some reference MUs together with the force/reference
     signal.
 
+    This file contains only few MUs for storage reasons.
+
     Returns
     -------
     emgfile : dict
@@ -1651,7 +1653,7 @@ def emg_from_samplefile():
     # Construct the absolute path to the file in the data subfolder
     file_path = os.path.join(
         script_dir,
-        'Decomposed Test files',
+        'decomposed_test_files',
         'otb_testfile.mat',
     )
 

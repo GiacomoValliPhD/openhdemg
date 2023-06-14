@@ -4,7 +4,8 @@ __pycache__*
 .vs/
 .DS_Store
 docs/.DS_Store
-
 dist/
+testgiacomovalli.egg-info/
+
 prove.py
 prove_storage.py
