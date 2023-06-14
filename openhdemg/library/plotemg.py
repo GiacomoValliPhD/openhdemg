@@ -1390,7 +1390,7 @@ def plot_muaps_for_cv(
             axs[r, pos].tick_params(left=False)
 
             if r != 0:
-                xcc = round(float(xcc_sta_dict[c].iloc[:, r]), 2)
+                xcc = round(xcc_sta_dict[c].iloc[:, r].iloc[0], 2)
                 title = xcc
                 color = "k" if xcc >= 0.8 else "r"
                 axs[r, pos].set_title(

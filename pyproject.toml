@@ -1,19 +1,2 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[project]
-name = "testgiacomovalli"
-version = "0.1.0-beta.1"
-authors = [
-  { name="Giacomo Valli", email="giacomo.valli@phd.unipd.it" },
-  { name="Paul Ritsche", email="paul.ritsche@unibas.ch" },
-]
-description = "Open-source analysis of High-Density EMG data"
-readme = "README.md"
-requires-python = ">=3"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: Apache Software License",
-    "Operating System :: OS Independent"
-]
+[tool.black]
+line-length = 100
