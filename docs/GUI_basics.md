@@ -22,19 +22,14 @@ To remove MUs included in your analysis file, you can click the `Remove MUs` but
 
 2. Click the `Remove MUs` button, and a file is loaded, a pop-up window will open. 
 
-3. Select the MU you want to delete from the analysis file from the `Select MU:`dropdown. Moreover, you can enter the number of several MUs in case you want to delete more than one. In example, selecting
+3. Select the MU you want to delete from the analysis file from the `Select MU:`dropdown.
 
     ```Python
     Select MU: 1
     ```
-    will result in the second MU to be deleted (Python is base 0). Selecting 
+    will result in the second MU to be deleted (Python is base 0).
 
-    ```Python
-    Select MU: 1,2,5
-    ```
-    will result in the removal of the second, third and fifth MU.
-
-4. Click the `Remove MU` button to remove the MU(s). 
+4. Click the `Remove MU` button to remove the MU. 
 
 ## Reference Signal Editing
 The *openhdemg* GUI also allows you to edit and filter reference signals corresponding to your analysis file (this can be either a file containing both the MUs and the reference signal or a file containing only the reference signal).
