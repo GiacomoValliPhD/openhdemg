@@ -134,11 +134,11 @@ def plot_emgsig(
 
     # Check if we have a single channel or a list of channels to plot
     if isinstance(channels, int):
-        ax = sns.lineplot(x=x_axis, y=emgsig[channels])
-        ax.set_ylabel("Ch {}".format(channels))
+        plt.plot(x_axis, emgsig[channels])
+        plt.ylabel("Ch {}".format(channels))
         # set_ylabel is useful because if the channe is empty it won't
         # show the channel number
-        ax.set_xlabel("Time (s)" if timeinseconds else "Samples")
+        plt.xlabel("Time (s)" if timeinseconds else "Samples")
 
     elif isinstance(channels, list):
         # Plot all the channels in the subplots
@@ -147,7 +147,7 @@ def plot_emgsig(
             norm_raw = min_max_scaling(emgfile["RAW_SIGNAL"][thisChannel])
             # Add 1 to the previous channel to avoid overlapping
             norm_raw = norm_raw + count
-            ax = sns.lineplot(x=x_axis, y=norm_raw)
+            plt.plot(x_axis, norm_raw)
 
         # Ensure correct and complete ticks on the left y axis
         ax1.set_yticks([*range(len(channels))])
@@ -287,7 +287,7 @@ def plot_differentials(
         norm_raw = min_max_scaling(emgsig[thisChannel])
         # Add 1 to the previous channel to avoid overlapping
         norm_raw = norm_raw + count
-        sns.lineplot(x=x_axis, y=norm_raw)
+        plt.plot(x_axis, norm_raw)
 
     # Ensure correct and complete ticks on the left y axis
     ax1.set_yticks([*range(len(emgsig.columns))])
@@ -687,8 +687,8 @@ def plot_ipts(
 
     # Check if we have a single MU or a list of MUs to plot
     if isinstance(munumber, int):
-        ax1 = sns.lineplot(x=x_axis, y=ipts[munumber])
-        ax1.set_ylabel("MU {}".format(munumber))
+        plt.plot(x_axis, ipts[munumber])
+        plt.ylabel("MU {}".format(munumber))
         # Use set_ylabel because if the MU is empty,
         # the channel number won't show.
 
@@ -697,12 +697,12 @@ def plot_ipts(
         for count, thisMU in enumerate(munumber):
             norm_ipts = min_max_scaling(ipts[thisMU])
             y_axis = norm_ipts + count
-            sns.lineplot(x=x_axis, y=y_axis, ax=ax1)
+            plt.plot(x_axis, y_axis)
 
             # Ensure correct and complete ticks on the left y axis
-            ax1.set_yticks([*range(len(munumber))])
-            ax1.set_yticklabels([str(mu) for mu in munumber])
-            ax1.set_ylabel("Motor units")
+            plt.yticks([*range(len(munumber))])
+            plt.gca().set_yticklabels([str(mu) for mu in munumber])
+            plt.ylabel("Motor units")
 
     else:
         raise TypeError(
@@ -850,7 +850,7 @@ def plot_idr(
         ax1 = sns.scatterplot(
             x=idr[munumber]["timesec" if timeinseconds else "mupulses"],
             y=idr[munumber]["idr"],
-        )
+        )  # sns.scatterplot breaks if x or y are nan
 
         ax1.set_ylabel(
             "MU {} (PPS)".format(munumber)

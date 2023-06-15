@@ -1588,7 +1588,7 @@ class emgGUI:
                 emgfile=self.resdict,
                 event_=self.ct_event.get(),
                 type_=self.ct_type.get(),
-                mvc=int(self.mvc_value.get()),
+                mvc=float(self.mvc_value.get()),
             )
             # Display results
             self.display_results(self.mu_thresholds)
@@ -1672,7 +1672,7 @@ class emgGUI:
                 emgfile=self.resdict,
                 n_firings_RecDerec=int(self.b_firings_rec.get()),
                 n_firings_steady=int(self.b_firings_ste.get()),
-                mvc=int(self.mvc_value.get()),
+                mvc=float(self.mvc_value.get()),
             )
             # Display results
             self.display_results(self.exportable_df)
