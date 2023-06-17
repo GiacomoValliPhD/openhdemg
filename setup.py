@@ -1,22 +1,9 @@
 # Copyright (C) 2023 Giacomo Valli, Paul Ritsche
 
+# For the openhdemg version
 import openhdemg as emg
-
-# read the contents of the README file
+# To read the content of the README or description file
 from pathlib import Path
-this_directory = Path(__file__).parent
-LONG_DESCRIPTION = (this_directory / "long_description.md").read_text()
-
-DESCRIPTION = "Open-source analysis of High-Density EMG data"
-DISTNAME = "testgiacomovalli"
-MAINTAINER = "Giacomo Valli"
-MAINTAINER_EMAIL = "giacomo.valli@phd.unipd.it"
-DOCUMENTATION_URL = "https://..."
-SOURCECODE_URL = "https://github.com/GiacomoValliPhD/openhdemg"
-BTRACKER_URL = "https://...."
-VERSION = emg.__version__
-LICENSE = "GPL-3.0"
-PACKAGE_DATA = {"openhdemg": ["*"]}
 
 INSTALL_REQUIRES = [
     "customtkinter>=5.1.3",
@@ -57,24 +44,28 @@ try:
 except ImportError:
     from distutils.core import setup
 
+this_directory = Path(__file__).parent
+LONG_DESCRIPTION = (this_directory / "long_description.md").read_text()
+
 if __name__ == "__main__":
     setup(
-        name=DISTNAME,
-        maintainer=MAINTAINER,
-        maintainer_email=MAINTAINER_EMAIL,
-        description=DESCRIPTION,
+        name="testgiacomovalli",
+        maintainer="Giacomo Valli",
+        maintainer_email="giacomo.valli@phd.unipd.it",
+        description="Open-source analysis of High-Density EMG data",
         long_description=LONG_DESCRIPTION,
         long_description_content_type='text/markdown',
-        license=LICENSE,
+        license="GPL-3.0",
         project_urls={
-            'Documentation': DOCUMENTATION_URL,
-            'Source Code': SOURCECODE_URL,
-            'Bug Tracker': BTRACKER_URL,
+            "Documentation": "https://giacomovalli.com/openhdemg",
+            "release notes": "https://giacomovalli.com/openhdemg/What%27s-New",
+            "Source Code": "https://github.com/GiacomoValliPhD/openhdemg",
+            "Bug Tracker": "https://github.com/GiacomoValliPhD/openhdemg/issues",
         },
-        version=VERSION,
+        version=emg.__version__,
         install_requires=INSTALL_REQUIRES,
         include_package_data=True,
         packages=PACKAGES,
-        package_data=PACKAGE_DATA,
+        package_data={"openhdemg": ["*"]},
         classifiers=CLASSIFIERS,
     )
