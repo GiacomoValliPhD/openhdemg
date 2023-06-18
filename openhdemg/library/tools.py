@@ -114,7 +114,7 @@ def create_binary_firings(emg_length, number_of_mus, mupulses):
 
             # Loop through the rows (time) and assign 1 if the MU is firing
             for position in range(len(this_mu_pulses)):
-                firing_point = int(this_mu_pulses.iloc[position])
+                firing_point = int(this_mu_pulses.iat[position, 0])
                 this_mu_binary_firing.iloc[firing_point] = 1
 
             # Merge the work done with the original pd.DataFrame of zeros
@@ -757,15 +757,16 @@ def remove_offset(emgfile, offsetval=0, auto=0):
             offsetval = offs_emgfile["REF_SIGNAL"].loc[start_:end_].mean()
             # We need to convert the series offsetval into float
             offs_emgfile["REF_SIGNAL"][0] = (
-                offs_emgfile["REF_SIGNAL"][0] - float(offsetval)
+                offs_emgfile["REF_SIGNAL"][0] - float(offsetval[0])
             )
+            print(offsetval)
 
     else:
         # Compute and subtract the offset value.
         offsetval = offs_emgfile["REF_SIGNAL"].iloc[0:auto].mean()
         # We need to convert the series offsetval into float
         offs_emgfile["REF_SIGNAL"][0] = (
-            offs_emgfile["REF_SIGNAL"][0] - float(offsetval)
+            offs_emgfile["REF_SIGNAL"][0] - float(offsetval[0])
         )
 
     return offs_emgfile
@@ -844,7 +845,7 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
             f"how must be one of 'showselect' or 'all', {how} was passed instead"
         )
 
-    mvc = float(mvc)
+    mvc = float(mvc[0])
 
     if conversion_val != 0:
         mvc = mvc * conversion_val

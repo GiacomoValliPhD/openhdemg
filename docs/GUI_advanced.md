@@ -89,8 +89,6 @@ Prior to calculation of the `Conduction Velocity` you need to load a file in the
 We are now at the end of describing the advanced functions included in the *openhdemg* GUI. In case you need further clarification, don't hesitate to post a question in the Github discussion forum (LINK). Moreover, if you noticed an error that was not properly catched by the GUI, please file a bug report according to our guidelines (LINK).
 If you want to take a look at more basic stuff, check out the [basic](GUI_basics.md). 
 
+## More questions?
 
-
-    
-
-
+We hope that this tutorial was useful. If you need any additional information, do not hesitate to read the answers or ask a question in the [*openhdemg* discussion section](https://github.com/GiacomoValliPhD/openhdemg/discussions){:target="_blank"}. If you are not familiar with GitHub discussions, please read this [post](https://github.com/GiacomoValliPhD/openhdemg/discussions/42){:target="_blank"}. This will allow the *openhdemg* community to answer your questions.

@@ -951,7 +951,7 @@ class emgGUI:
         matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808", "None")
         matrix_code["state"] = "readonly"
         matrix_code.grid(row=4, column=1, sticky=(W, E))
-        self.mat_code_adv.set("None")
+        self.mat_code_adv.set("GR08MM1305")
 
         # Instruction
         ttk.Label(
@@ -1588,7 +1588,7 @@ class emgGUI:
                 emgfile=self.resdict,
                 event_=self.ct_event.get(),
                 type_=self.ct_type.get(),
-                mvc=int(self.mvc_value.get()),
+                mvc=float(self.mvc_value.get()),
             )
             # Display results
             self.display_results(self.mu_thresholds)
@@ -1672,7 +1672,7 @@ class emgGUI:
                 emgfile=self.resdict,
                 n_firings_RecDerec=int(self.b_firings_rec.get()),
                 n_firings_steady=int(self.b_firings_ste.get()),
-                mvc=int(self.mvc_value.get()),
+                mvc=float(self.mvc_value.get()),
             )
             # Display results
             self.display_results(self.exportable_df)
@@ -1815,7 +1815,7 @@ class emgGUI:
             matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808", "None")
             matrix_code["state"] = "readonly"
             matrix_code.grid(row=0, column=4, sticky=(W, E))
-            self.mat_code.set("None")
+            self.mat_code.set("GR08MM1305")
 
             # Matrix Orientation
             ttk.Label(self.head, text="Orientation*").grid(row=1, column=3, sticky=(W))

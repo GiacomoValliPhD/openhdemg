@@ -39,5 +39,6 @@ Once a file is successfully loaded as described above, you can click the `View M
 In the two sections above, we described the two most rudimental functions in the GUI. To learn more about basic and more advanced analysis features of the GUI, check out the [basic](GUI_basics.md) and [advanced](GUI_advanced.md) chapters.
 
 
+## More questions?
 
-
+We hope that this tutorial was useful. If you need any additional information, do not hesitate to read the answers or ask a question in the [*openhdemg* discussion section](https://github.com/GiacomoValliPhD/openhdemg/discussions){:target="_blank"}. If you are not familiar with GitHub discussions, please read this [post](https://github.com/GiacomoValliPhD/openhdemg/discussions/42){:target="_blank"}. This will allow the *openhdemg* community to answer your questions.

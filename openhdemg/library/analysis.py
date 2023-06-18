@@ -116,7 +116,7 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvc=0):
 
     if type_ != "rel" and mvc == 0:
         # Ask the user to input MVC
-        mvc = int(
+        mvc = float(
             input("--------------------------------\nEnter MVC value in newton: ")
         )
 
@@ -130,10 +130,10 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvc=0):
             mup_rec = MUPULSES[mu][0]
             mup_derec = MUPULSES[mu][-1]
             # Calculate absolute and relative RT and DERT if requested
-            abs_RT = ((float(REF_SIGNAL.loc[mup_rec]) * float(mvc)) / 100)
-            abs_DERT = ((float(REF_SIGNAL.loc[mup_derec]) * float(mvc)) / 100)
-            rel_RT = float(REF_SIGNAL.loc[mup_rec])
-            rel_DERT = float(REF_SIGNAL.loc[mup_derec])
+            abs_RT = ((float(REF_SIGNAL.at[mup_rec, 0]) * mvc) / 100)
+            abs_DERT = ((float(REF_SIGNAL.at[mup_derec, 0]) * mvc) / 100)
+            rel_RT = float(REF_SIGNAL.at[mup_rec, 0])
+            rel_DERT = float(REF_SIGNAL.at[mup_derec, 0])
 
         else:
             abs_RT = np.nan
@@ -526,7 +526,7 @@ def basic_mus_properties(
     # Second: add basic information (MVC, MU number, PNR/SIL, Average PNR/SIL)
     if mvc == 0:
         # Ask the user to input MVC
-        mvc = int(
+        mvc = float(
             input(
                 "--------------------------------\nEnter MVC value in newton: "
             )
