@@ -240,7 +240,7 @@ def plot_differentials(
 
     Examples
     --------
-    Plot plot the differential derivation of the first matrix column (col0).
+    Plot the differential derivation of the first matrix column (col0).
 
     >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)

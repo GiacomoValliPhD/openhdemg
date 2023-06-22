@@ -39,9 +39,6 @@ def diff(sorted_rawemg):
         Every key of the dictionary represents a different column of the
         matrix. Rows are stored in the dict as a pd.DataFrame.
         Electrodes can be sorted with the function emg.sort_rawemg.
-        DEMUSE files should be also passed to emg.sort_rawemg since
-        this function, altough not sorting DEMUSE files, will still divide
-        the channels by matrix row.
 
     Returns
     -------
@@ -61,11 +58,19 @@ def diff(sorted_rawemg):
 
     Examples
     --------
-    Calculate single differential of a DEMUSE file.
+    Calculate single differential of a DEMUSE file with the channels already
+    sorted.
 
     >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="DEMUSE")
-    >>> sorted_rawemg = emg.sort_rawemg(emgfile)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    >>>     emgfile,
+    ...     code="None",
+    ...     orientation=180,
+    ...     dividebycolumn=True,
+    ...     n_rows=13,
+    ...     n_cols=5,
+    ... )
     >>> sd = emg.diff(sorted_rawemg)
     >>> sd["col0"]
                  1         2         3  ...        10        11  12
@@ -81,8 +86,8 @@ def diff(sorted_rawemg):
     63486 -0.002035  0.006104 -0.010681 ... -0.007121  0.020345 NaN
     63487 -0.008647  0.000000 -0.010681 ... -0.011190 -0.027466 NaN
 
-    While alculating the single differential of an OTB file,
-    matrix code and orientation should be also specified.
+    Calculate single differential of an OTB file where the channels need to be
+    sorted.
 
     >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
@@ -124,9 +129,6 @@ def double_diff(sorted_rawemg):
         Every key of the dictionary represents a different column of the
         matrix. Rows are stored in the dict as a pd.DataFrame.
         Electrodes can be sorted with the function emg.sort_rawemg.
-        DEMUSE files should be also passed to emg.sort_rawemg since
-        this function, altough not sorting DEMUSE files, will still divide the
-        channels by matrix row.
 
     Returns
     -------
@@ -145,11 +147,19 @@ def double_diff(sorted_rawemg):
 
     Examples
     --------
-    Calculate double differential.
+    Calculate double differential of a DEMUSE file with the channels already
+    sorted.
 
     >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="DEMUSE")
-    >>> sorted_rawemg = emg.sort_rawemg(emgfile)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    >>>     emgfile,
+    ...     code="None",
+    ...     orientation=180,
+    ...     dividebycolumn=True,
+    ...     n_rows=13,
+    ...     n_cols=5,
+    ... )
     >>> dd = emg.double_diff(sorted_rawemg)
     >>> dd["col0"]
                  2         3         4  ...            10        11  12
@@ -165,8 +175,8 @@ def double_diff(sorted_rawemg):
     63486  0.008138 -0.016785  0.013733 ... -1.068115e-02  0.027466 NaN
     63487  0.008647 -0.010681  0.019836 ... -1.068115e-02 -0.016276 NaN
 
-    While alculating the double differential of an OTB file,
-    matrix code and orientation should be also specified.
+    Calculate single differential of an OTB file where the channels need to be
+    sorted.
 
     >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
@@ -723,7 +733,7 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     return aligned_sta1, aligned_sta2
 
 
-# TODO_NEXT_ update matrixcode and orientation here and in otbelectrodes
+# TODO_NEXT_ update matrixcode and orientation here and in otbelectrodes, also update examples for code="None"
 
 # This function exploits parallel processing:
 #   - sta: calls the emg.sta function which is executed in parallel
@@ -738,6 +748,8 @@ def tracking(
     threshold=0.8,
     matrixcode="GR08MM1305",
     orientation=180,
+    n_rows=None,
+    n_cols=None,
     exclude_belowthreshold=True,
     filter=True,
     show=False,
@@ -767,11 +779,17 @@ def tracking(
     threshold : float, default 0.8
         The 2-dimensional cross-correlation minimum value
         to consider two MUs to be the same. Ranges 0-1.
-    matrixcode : str {"GR08MM1305", "GR04MM1305", "GR10MM0808"}, default "GR08MM1305"
-        The code of the matrix used.
+    matrixcode : str {"GR08MM1305", "GR04MM1305", "GR10MM0808", "None"}, default "GR08MM1305"
+        The code of the matrix used. This is necessary to sort the channels in
+        the correct order. If matrixcode="None", the electrodes are not sorted.
+        In this case, n_rows and n_cols must be specified.
     orientation : int {0, 180}, default 180
         Orientation in degree of the matrix (same as in OTBiolab).
         E.g. 180 corresponds to the matrix connection toward the user.
+    n_rows, n_cols : None or int, default None
+        The number of rows and columns of the matrix. This parameter is used to
+        divide the channels based on the matrix shape. These are normally
+        inferred by the matrix code and must be specified only if code == None.
     exclude_belowthreshold : bool, default True
         Whether to exclude results with XCC below threshold.
     filter : bool, default True
@@ -809,7 +827,6 @@ def tracking(
     Examples
     --------
     Track MUs between two OTB files and show the filtered results.
-    If loading a DEMUSE file, matrixcode and orientation can be ignored.
 
     >>> import openhdemg.library as emg
     >>> emgfile1 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
@@ -823,6 +840,8 @@ def tracking(
     ...     threshold=0.8,
     ...     matrixcode="GR08MM1305",
     ...     orientation=180,
+    ...     n_rows=None,
+    ...     n_cols=None,
     ...     exclude_belowthreshold=True,
     ...     filter=True,
     ...     show=False,
@@ -840,14 +859,21 @@ def tracking(
     9         21        14  0.896419
     10        22        16  0.836356
     """
-    # TODO replace sample files
 
     # Sort the rawemg for the STAs
     emgfile1_sorted = sort_rawemg(
-        emgfile1, code=matrixcode, orientation=orientation,
+        emgfile1,
+        code=matrixcode,
+        orientation=orientation,
+        n_rows=n_rows,
+        n_cols=n_cols,
     )
     emgfile2_sorted = sort_rawemg(
-        emgfile2, code=matrixcode, orientation=orientation
+        emgfile2,
+        code=matrixcode,
+        orientation=orientation,
+        n_rows=n_rows,
+        n_cols=n_cols,
     )
 
     # Calculate the derivation if needed
@@ -1011,6 +1037,8 @@ def remove_duplicates_between(
     threshold=0.9,
     matrixcode="GR08MM1305",
     orientation=180,
+    n_rows=None,
+    n_cols=None,
     filter=True,
     show=False,
     which="munumber",
@@ -1040,11 +1068,17 @@ def remove_duplicates_between(
     threshold : float, default 0.9
         The 2-dimensional cross-correlation minimum value
         to consider two MUs to be the same. Ranges 0-1.
-    matrixcode : str {"GR08MM1305", "GR04MM1305", "GR10MM0808"}, default "GR08MM1305"
-        The code of the matrix used.
+    matrixcode : str {"GR08MM1305", "GR04MM1305", "GR10MM0808", "None"}, default "GR08MM1305"
+        The code of the matrix used. This is necessary to sort the channels in
+        the correct order. If matrixcode="None", the electrodes are not sorted.
+        In this case, n_rows and n_cols must be specified.
     orientation : int {0, 180}, default 180
         Orientation in degree of the matrix (same as in OTBiolab).
         E.g. 180 corresponds to the matrix connection toward the user.
+    n_rows, n_cols : None or int, default None
+        The number of rows and columns of the matrix. This parameter is used to
+        divide the channels based on the matrix shape. These are normally
+        inferred by the matrix code and must be specified only if code == None.
     filter : bool, default True
         If true, when the same MU has a match of XCC > threshold with
         multiple MUs, only the match with the highest XCC is returned.
@@ -1055,10 +1089,10 @@ def remove_duplicates_between(
 
         ``munumber``
             Duplicated MUs are removed from the file with more MUs.
-        ``PNR``
-            The MU with the lowest PNR is removed.
         ``SIL``
             The MU with the lowest SIL is removed.
+        ``PNR``
+            The MU with the lowest PNR is removed.
 
     Returns
     -------
@@ -1077,7 +1111,6 @@ def remove_duplicates_between(
     Remove duplicated MUs between two OTB files and save the emgfiles
     without duplicates. The duplicates are removed from the file with
     more MUs.
-    If loading a DEMUSE file, matrixcode and orientation can be ignored.
 
     >>> emgfile1 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emgfile2 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
@@ -1090,6 +1123,8 @@ def remove_duplicates_between(
     ...     threshold=0.9,
     ...     matrixcode="GR08MM1305",
     ...     orientation=180,
+    ...     n_rows=None,
+    ...     n_cols=None,
     ...     filter=True,
     ...     show=False,
     ...     which="munumber",
@@ -1112,6 +1147,8 @@ def remove_duplicates_between(
         threshold=threshold,
         matrixcode=matrixcode,
         orientation=orientation,
+        n_rows=n_rows,
+        n_cols=n_cols,
         exclude_belowthreshold=True,
         filter=filter,
         show=show,
