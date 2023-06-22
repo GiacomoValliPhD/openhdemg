@@ -1,5 +1,4 @@
-Let's implement together, step-by-step, a script to analyse all the relevant
-motor units' (MUs) properties.
+Let's implement together, step-by-step, a script to analyse all the relevant motor units' (MUs) properties.
 
 In particular, we will go through:
 
@@ -25,13 +24,11 @@ or conda:
 conda install -c conda-forge openhdemg
 ```
 
-Once the installation of *openhdemg* is succesfull, you can install all the
-required packages from the reqirements.txt file.
+Once the installation of *openhdemg* is succesfull, you can install all the required packages from the reqirements.txt file.
 
 ## 2. Load a file
 
-Before calling the functions contained in the *openhdemg* library, we need to
-import it. This can be done as:
+Before calling the functions contained in the *openhdemg* library, we need to import it. This can be done as:
 
 ```Python
 import openhdemg.library as emg
@@ -43,8 +40,7 @@ Great, we are now ready to exploit all the functionalities of the library!
 
 In this example, we will use the sample file provided with *openhdemg*.
 
-This can be simply loaded calling the function
-[emg_from_samplefile](API_openfiles.md#openhdemg.library.openfiles.emg_from_samplefile).
+This can be simply loaded calling the function [emg_from_samplefile](API_openfiles.md#openhdemg.library.openfiles.emg_from_samplefile).
 
 ```Python
 # Import the library with the short name 'emg'
@@ -54,21 +50,19 @@ import openhdemg.library as emg
 emgfile = emg.emg_from_samplefile()
 ```
 
-*emgfile* is organised as a Python dictionary and contains different
-elements (which are labelled by keys).<br>
-For a full list of keys contained in the *emgfile* refer to the
-[openfiles documentation](API_openfiles.md#notes).<br>
+*emgfile* is organised as a Python dictionary and contains different elements (which are labelled by keys).
 
-Each element in the emgfile can be accessed as `emgfile["element"]`.<br>
-So, if we want to access, for example, the reference signal, we can use
-`emgfile["REF_SIGNAL"]`.
+For a full list of keys contained in the *emgfile* refer to the [openfiles documentation](API_openfiles.md#notes).
+
+Each element in the emgfile can be accessed as `emgfile["element"]`.
+
+So, if we want to access, for example, the reference signal, we can use `emgfile["REF_SIGNAL"]`.
 
 ## 3. Visualise the content of the file
 
 Now that we loaded the *emgfile*, we can inspect its content.
 
-As we said above, there are different elements in the *emgfile* and we can
-visualise both their type and their content with 2 lines of code:
+As we said above, there are different elements in the *emgfile* and we can visualise both their type and their content with 2 lines of code:
 
 ```Python
 # Import the library with the short name 'emg'
@@ -101,18 +95,13 @@ print(emgfile["REF_SIGNAL"])
 """
 ```
 
-As you can see from the printed output, the reference signal is contained in a
-pandas DataFrame with 1 column (column 0).<br>
-This is an extremely important information if you want to manipulate the
-content of the emgfile although it is outside the scope of this Quick-Start
-tutorial. This aspect will be investigated more in details in the
-[Tutorials section](Tutorials.md).
+As you can see from the printed output, the reference signal is contained in a pandas DataFrame with 1 column (column 0).
+
+This is an extremely important information if you want to manipulate the content of the emgfile although it is outside the scope of this Quick-Start tutorial. This aspect will be investigated more in details in the [Tutorials section](Tutorials.md).
 
 Apart from accessing the numerical values, we can also plot them.
 
-In this case we are interested in visualising the MUs firing times together
-with the reference signal. This can be done with the function
-[plot_mupulses](API_plotemg.md#openhdemg.library.plotemg.plot_mupulses).
+In this case we are interested in visualising the MUs firing times together with the reference signal. This can be done with the function [plot_mupulses](API_plotemg.md#openhdemg.library.plotemg.plot_mupulses).
 
 ```Python
 # Import the library with the short name 'emg'
@@ -127,13 +116,9 @@ emg.plot_mupulses(emgfile=emgfile)
 
 ![MUs_pulses_non_sorted](md_graphics/Quick-Start/MUs_pulses_non_sorted.png)
 
-Looks good, but I would rather have the MUs ordered by recruitment order and
-also with thinner lines!
+Looks good, but I would rather have the MUs ordered by recruitment order and also with thinner lines!
 
-We can do that with the function
-[sort_mus](API_tools.md#openhdemg.library.tools.sort_mus) and changing the
-parameters in
-[plot_mupulses](API_plotemg.md#openhdemg.library.plotemg.plot_mupulses).
+We can do that with the function [sort_mus](API_tools.md#openhdemg.library.tools.sort_mus) and changing the parameters in [plot_mupulses](API_plotemg.md#openhdemg.library.plotemg.plot_mupulses).
 
 ```Python
 # Import the library with the short name 'emg'
@@ -153,9 +138,7 @@ emg.plot_mupulses(emgfile=emgfile, linewidths=0.4)
 
 <br>
 
-Are you curious about the dicharge rate of the MUs? You can view that with the
-function 
-[plot_idr](API_plotemg.md#openhdemg.library.plotemg.plot_idr).
+Are you curious about the dicharge rate of the MUs? You can view that with the function [plot_idr](API_plotemg.md#openhdemg.library.plotemg.plot_idr).
 
 ```Python
 # Import the library with the short name 'emg'
@@ -175,18 +158,11 @@ emg.plot_idr(emgfile=emgfile)
 
 ## 4. Edit the reference signal
 
-The MUs look quite good; however, the reference signal is a bit noisy and the
-offset is not to 0.
+The MUs look quite good; however, the reference signal is a bit noisy and the offset is not to 0.
 
-The noise can be removed filtering the reference signal with the function
-[filter_refsig](API_tools.md#openhdemg.library.tools.filter_refsig) that, by
-default, applies a 4th order, zero-lag, low-pass Butterworth filter with a
-cutoff frequency of 15 Hz.
+The noise can be removed filtering the reference signal with the function [filter_refsig](API_tools.md#openhdemg.library.tools.filter_refsig) that, by default, applies a 4th order, zero-lag, low-pass Butterworth filter with a cutoff frequency of 15 Hz.
 
-Instead, the offset can be removed with the function
-[remove_offset](API_tools.md#openhdemg.library.tools.remove_offset) that
-automatically detects the offset based on a number of samples at the beginning
-of the recording.
+Instead, the offset can be removed with the function [remove_offset](API_tools.md#openhdemg.library.tools.remove_offset) that automatically detects the offset based on a number of samples at the beginning of the recording.
 
 ```Python
 # Import the library with the short name 'emg'
@@ -213,18 +189,13 @@ emg.plot_idr(emgfile=emgfile)
 
 ## 5. Remove unwanted MUs
 
-There might be cases in which we need to remove one or more MUs from our
-*emgfile*.
+There might be cases in which we need to remove one or more MUs from our *emgfile*.
 
-From the visual inspection of our plots, we can see that the firings pattern of
-MU number 2 (remember, Python is in base 0!!!) is not really regular. We might
-therefore have doubts about its quality.
+From the visual inspection of our plots, we can see that the firings pattern of MU number 2 (remember, Python is in base 0!!!) is not really regular. We might therefore have doubts about its quality.
 
-A way to assess the quality of the MUs is to look at the separation between the
-signal and the noise. This is efficiently measured by the silouette (SIL)
-score.<br>
-This score is automatically calculated while importing the *emgfile* and can be
-easily accessed as `emgfile["SIL"]`.
+A way to assess the quality of the MUs is to look at the separation between the signal and the noise. This is efficiently measured by the silouette (SIL) score.
+
+This score is automatically calculated while importing the *emgfile* and can be easily accessed as `emgfile["SIL"]`.
 
 ```Python
 # Import the library with the short name 'emg'
@@ -248,8 +219,7 @@ print(emgfile["SIL"])
 
 Our suspicion was right, MU number 2 has the lowest SIL score.
 
-In order to remove this MU, we can use the function
-[delete_mus](API_tools.md#openhdemg.library.tools.delete_mus).
+In order to remove this MU, we can use the function [delete_mus](API_tools.md#openhdemg.library.tools.delete_mus).
 
 ```Python
 # Import the library with the short name 'emg'
@@ -279,20 +249,11 @@ emg.plot_idr(emgfile=emgfile)
 
 ## 6. Analyse fundamental MUs properties
 
-Now that we removed the unwanted MUs and adjusted the reference signal, we can
-proceed with the analysis of some fundamental MUs properties like the
-thresholds of recruitment and derecruitment and the discharge rate.
+Now that we removed the unwanted MUs and adjusted the reference signal, we can proceed with the analysis of some fundamental MUs properties like the thresholds of recruitment and derecruitment and the discharge rate.
 
-In the past, this used to require many lines of code, but thanks to
-*openhdemg*, we can now do that with 1 line of code using the function
-[basic_mus_properties](API_analysis.md#openhdemg.library.analysis.basic_mus_properties).
+In the past, this used to require many lines of code, but thanks to *openhdemg*, we can now do that with 1 line of code using the function [basic_mus_properties](API_analysis.md#openhdemg.library.analysis.basic_mus_properties).
 
-After calling the function 
-[basic_mus_properties](API_analysis.md#openhdemg.library.analysis.basic_mus_properties),
-the user will be asked to select the start and the end of the steady-state
-phase. This can be done positioning the mouse on the desired point and then
-pressing a keybord key (such as 'a'). To remove points, right click with your
-mouse.
+After calling the function [basic_mus_properties](API_analysis.md#openhdemg.library.analysis.basic_mus_properties), the user will be asked to select the start and the end of the steady-state phase. This can be done positioning the mouse on the desired point and then pressing a keybord key (such as 'a'). To remove points, right click with your mouse.
 
 ```Python
 # Import the library with the short name 'emg'
@@ -352,11 +313,9 @@ print(results)
 
 ## 7. Save the results and the edited file
 
-It looks like we got a lot of results, which makes it extremely inefficient
-to copy them manually.
+It looks like we got a lot of results, which makes it extremely inefficient to copy them manually.
 
-Obviously, this can be automated using one attribute of the *results* object
-and we can conveniently save all the results in a .csv file.
+Obviously, this can be automated using one attribute of the *results* object and we can conveniently save all the results in a .csv file.
 
 ```Python
 # Import the library with the short name 'emg'
@@ -390,13 +349,7 @@ results = emg.basic_mus_properties(
 results.to_csv("C:/Users/.../Desktop/Results.csv")
 ```
 
-Our results are now safe but, additionally, we might want to save also the
-*emgfile* with all the changes that we made. This can be easily done with the
-function
-[asksavefile](API_openfiles.md#openhdemg.library.openfiles.asksavefile)
-that will save your *emgfile* in the open standard JSON file format which has a
-better integration with Python and has a very high cross-platform
-compatibility.
+Our results are now safe but, additionally, we might want to save also the *emgfile* with all the changes that we made. This can be easily done with the function [asksavefile](API_openfiles.md#openhdemg.library.openfiles.asksavefile) that will save your *emgfile* in the open standard JSON file format which has a better integration with Python and has a very high cross-platform compatibility.
 
 ```Python
 # Import the library with the short name 'emg'
@@ -435,13 +388,6 @@ emg.asksavefile(emgfile=emgfile)
 
 ## 8. Important notes
 
-As you have seen, *openhdemg* makes it really easy to analyse MUs properties
-but please, don't think that what you saw in this tutorial is all you can
-do with this powerful framework.
+As you have seen, *openhdemg* makes it really easy to analyse MUs properties but please, don't think that what you saw in this tutorial is all you can do with this powerful framework.
 
-We invite you to read the **API reference** section and how you can customise all
-the functions present in the library.
-
-<br>
-
-<br>
+We invite you to read the **API reference** section to understand how you can customise all the functions present in the library.

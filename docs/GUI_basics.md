@@ -22,19 +22,14 @@ To remove MUs included in your analysis file, you can click the `Remove MUs` but
 
 2. Click the `Remove MUs` button, and a file is loaded, a pop-up window will open. 
 
-3. Select the MU you want to delete from the analysis file from the `Select MU:`dropdown. Moreover, you can enter the number of several MUs in case you want to delete more than one. In example, selecting
+3. Select the MU you want to delete from the analysis file from the `Select MU:`dropdown.
 
     ```Python
     Select MU: 1
     ```
-    will result in the second MU to be deleted (Python is base 0). Selecting 
+    will result in the second MU to be deleted (Python is base 0).
 
-    ```Python
-    Select MU: 1,2,5
-    ```
-    will result in the removal of the second, third and fifth MU.
-
-4. Click the `Remove MU` button to remove the MU(s). 
+4. Click the `Remove MU` button to remove the MU. 
 
 ## Reference Signal Editing
 The *openhdemg* GUI also allows you to edit and filter reference signals corresponding to your analysis file (this can be either a file containing both the MUs and the reference signal or a file containing only the reference signal).
@@ -283,4 +278,8 @@ We all make mistakes! But, most likely, we are also able to correct them. In cas
 --------------------------------------------
 
 We hope you had fun! We are now at the end of describing the basic functions included in the *openhdemg* GUI. In case you need further clarification, don't hesitate to post a question in the Github discussion forum (LINK). Moreover, if you noticed an error that was not properly catched by the GUI, please file a bug report according to our guidelines (LINK).
-If you want to proceed to the advanced stuff now, take a look at the [advanced](GUI_advanced.md) tab on the left side of the webpage. 
+If you want to proceed to the advanced stuff now, take a look at the [advanced](GUI_advanced.md) tab on the left side of the webpage.
+
+## More questions?
+
+We hope that this tutorial was useful. If you need any additional information, do not hesitate to read the answers or ask a question in the [*openhdemg* discussion section](https://github.com/GiacomoValliPhD/openhdemg/discussions){:target="_blank"}. If you are not familiar with GitHub discussions, please read this [post](https://github.com/GiacomoValliPhD/openhdemg/discussions/42){:target="_blank"}. This will allow the *openhdemg* community to answer your questions.

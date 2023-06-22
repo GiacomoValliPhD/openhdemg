@@ -16,7 +16,3 @@ include openhdemg/gui/gui_files/Redirect.png
 include openhdemg/gui/gui_files/test.pdf
 
 include openhdemg/library/decomposed_test_files/otb_testfile.mat
-
-# Add the non .py files necessary to show the README on PyPI
-include docs/md_graphics/Index/Banner_Logo.png
-include docs/md_graphics/Index/GUI_Preview.png
