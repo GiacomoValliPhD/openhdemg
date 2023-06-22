@@ -41,7 +41,7 @@ nav:
   - Tutorials:
     #- Overview on the tutorials: Tutorials.md
     - For new users:
-      - Setup working environment: tutorials\Setup_working_env\Setup_working_env.md
+      - Setup working environment: tutorials/Setup_working_env/Setup_working_env.md
   - Graphical-Interface:
     - Intro: GUI_intro.md
     - Basics: GUI_basics.md
