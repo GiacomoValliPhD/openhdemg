@@ -311,4 +311,4 @@ class info:
         print(json.dumps(cite, indent=4))
 
         return cite
-# TODO complete infos
+# TODO complete infos 
