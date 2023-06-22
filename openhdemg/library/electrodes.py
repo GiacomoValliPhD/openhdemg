@@ -2,7 +2,6 @@
 This module contains informations about the electrodes commonly used for
 HD-EMG recordings.
 Functions to sort the electrode position are also included.
-The files saved from the DEMUSE software are supposed to be already sorted.
 """
 
 import numpy as np
@@ -147,7 +146,6 @@ def sort_rawemg(
     Notes
     -----
     The returned file is called ``sorted_rawemg`` for convention.
-    Files coming from DEMUSE or OTBiolab+ have the same final format.
 
     Examples
     --------

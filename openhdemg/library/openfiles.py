@@ -1375,7 +1375,7 @@ def emg_from_json(filepath):
 # ---------------------------------------------------------------------
 # Function to open files from a GUI in a single line of code.
 
-def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
+def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
     """
     Select and open files with a GUI.
 
@@ -1384,13 +1384,14 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
     initialdir : str or Path, default "/"
         The directory of the file to load (excluding file name).
         This can be a simple string, the use of Path is not necessary.
-    filesource : str {"DEMUSE", "OTB", "OTB_REFSIG", "CUSTOM", "OPENHDEMG"}, default "DEMUSE" # TODO replace with openhdemg, add custom_refignal?
+    filesource : str {"OPENHDEMG", "DEMUSE", "OTB", "OTB_REFSIG", "CUSTOM"}, default "OPENHDEMG" # TODO add custom_refignal
         See notes for how files should be exported from OTB.
 
         ``DEMUSE``
             File saved from DEMUSE (.mat).
         ``OTB``
-            File exported from OTB with decomposition and reference signal (.mat).
+            File exported from OTB with decomposition and reference signal
+            (.mat).
         ``OTB_REFSIG``
             File exported from OTB with only the reference signal (.mat).
         ``CUSTOM``
@@ -1403,7 +1404,7 @@ def askopenfile(initialdir="/", filesource="DEMUSE", **kwargs):
         Ignore if loading other files.
     otb_refsig_type : list, default [True, "fullsampled"]
         Whether to seacrh also for the REF_SIGNAL and whether to load the full
-        or sub-sampled one. The list is composed as [bool, str]. str can be 
+        or sub-sampled one. The list is composed as [bool, str]. str can be
         "fullsampled" or "subsampled".
         Ignore if loading other files.
     otb_version : str, default "1.5.8.0"
