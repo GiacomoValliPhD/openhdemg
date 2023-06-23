@@ -487,7 +487,6 @@ def get_otb_rawsignal(df):
     # Drop all the known columns different from the raw EMG signal.
     # This is a workaround since the OTBiolab+ software does not export a
     # unique name for the raw EMG signal.
-    # FIXME more extensive pattern could prevent errors if the user exports unexpected elements
     pattern = "Source for decomposition|Decomposition of|acquired data|performed path"
     emg_df = df[df.columns.drop(list(df.filter(regex=pattern)))]
 
@@ -1171,8 +1170,8 @@ def save_json_emgfile(emgfile, filepath):
             json_bytes = json_to_save.encode("utf-8")
             # Write to a file
             f.write(json_bytes)
-            # TODO_NEXT_ try to improve writing time. f.write is the bottleneck
-            # but it is hard to improve.
+            # To improve writing time, f.write is the bottleneck but it is
+            # hard to improve.
 
     elif emgfile["SOURCE"] == "OTB_REFSIG":
         """
@@ -1384,7 +1383,7 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
     initialdir : str or Path, default "/"
         The directory of the file to load (excluding file name).
         This can be a simple string, the use of Path is not necessary.
-    filesource : str {"OPENHDEMG", "DEMUSE", "OTB", "OTB_REFSIG", "CUSTOM"}, default "OPENHDEMG" # TODO add custom_refignal
+    filesource : str {"OPENHDEMG", "DEMUSE", "OTB", "OTB_REFSIG", "CUSTOM"}, default "OPENHDEMG"
         See notes for how files should be exported from OTB.
 
         ``DEMUSE``
@@ -1546,7 +1545,7 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
             title="Select an OPENHDEMG file to load",
             filetypes=[("JSON files", ".json")],
         )
-    elif filesource == "CUSTOM":
+    elif filesource == "CUSTOM":  # TODO add custom_refignal
         file_toOpen = filedialog.askopenfilename(
             initialdir=initialdir,
             title="Select a custom file to load",

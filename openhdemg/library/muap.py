@@ -733,7 +733,7 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     return aligned_sta1, aligned_sta2
 
 
-# TODO_NEXT_ update matrixcode and orientation here and in otbelectrodes, also update examples for code="None"
+# TODO update examples for code="None"
 
 # This function exploits parallel processing:
 #   - sta: calls the emg.sta function which is executed in parallel
@@ -1231,9 +1231,6 @@ def remove_duplicates_between(
         raise ValueError(
             f"which can be one of 'munumber', 'PNR', 'SIL'. {which} was passed instead"
         )
-
-# TODO_NEXT_ processes in the muap module are often slow, a major performance
-# improvement is necessary.
 
 
 def xcc_sta(sta):

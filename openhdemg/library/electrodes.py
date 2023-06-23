@@ -336,8 +336,6 @@ def sort_rawemg(
 
     else:
         pass
-        # TODO_NEXT_ add other electrodes, and orientations?
-        # Here and in dividebycolumn
 
     # Once the order to sort channels has been retrieved,
     # Sort the channels based on pre-specified order and reset columns

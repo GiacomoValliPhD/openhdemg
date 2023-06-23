@@ -97,7 +97,7 @@ print(emgfile["REF_SIGNAL"])
 
 As you can see from the printed output, the reference signal is contained in a pandas DataFrame with 1 column (column 0).
 
-This is an extremely important information if you want to manipulate the content of the emgfile although it is outside the scope of this Quick-Start tutorial. This aspect will be investigated more in details in the [Tutorials section](Tutorials.md).
+This is an extremely important information if you want to manipulate the content of the emgfile although it is outside the scope of this Quick-Start tutorial.
 
 Apart from accessing the numerical values, we can also plot them.
 

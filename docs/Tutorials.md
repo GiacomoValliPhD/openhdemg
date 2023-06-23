@@ -1,1 +1,0 @@
-New tutorials are coming soon!
