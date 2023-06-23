@@ -1,0 +1,9 @@
+# Global owners will be the default owners for everything in
+# the repo. Unless a later match takes precedence,
+# @global-GiacomoValliPhD will be requested for review when
+# someone opens a pull request.
+*       @global-GiacomoValliPhD
+
+# When there are changes in the GUI folder, @giacomovalliphd
+# and @PaulRitsche will be requested for review.
+/openhdemg/gui/ @giacomovalliphd @PaulRitsche
