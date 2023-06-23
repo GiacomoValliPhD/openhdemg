@@ -20,7 +20,7 @@
 7. **Save** the results of the analyses and the edited file.
 
 ## Start immediately
-If you already know how to use Python, that's the way to go! Otherwise, visit the section [Tutorials](Tutorials.md) and navigate to the tutorial [Setup your Python environment](Tutorials.md#setup-your-python-environment).
+If you already know how to use Python, that's the way to go! Otherwise, have a look at the tutorial explaining how to [Setup your Python environment](tutorials/Setup_working_env.md).
 
 *openhdemg* can be easily installed using pip:
 

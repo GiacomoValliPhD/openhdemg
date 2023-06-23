@@ -235,7 +235,7 @@ def norm_twod_xcorr(df1, df2, mode="full"):
     return normxcorr_df, normxcorr_max
 
 
-def compute_sil(ipts, mupulses):  # TODO _NEXT_ add refs in docs when necessary
+def compute_sil(ipts, mupulses):
     """
     Calculate the Silhouette score for a single MU.
 
@@ -348,8 +348,8 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
     # Paired discharges are typical in pathological tremor and the use of both
     # CoVIDI and CoVpIDI accounts for this condition.
     #
-    # However, this heuristic penalty function unfairly penalizes MUs firing
-    # during specific types of contractions like explosive contractions
+    # However, this heuristic penalty function penalizes MUs firing during
+    # specific types of contractions like explosive contractions
     # (MUs discharge up to 200 pps).
     # Therefore, in this implementation of the PNR estimation we did not use a
     # penality based on MUs discharge.
@@ -452,8 +452,8 @@ def derivatives_beamforming(sig, row, teta):
         estimation.
     """
 
-    # TODO _NEXT_ implement with nympy arrays instead of pd.Series for performance.
-    # Check the use of pandas in row-major
+    # To implement with nympy arrays instead of pd.Series for performance?
+    # Check also the use of pandas in row-major.
 
     # Define some necessary variables
     total_rows = len(sig)

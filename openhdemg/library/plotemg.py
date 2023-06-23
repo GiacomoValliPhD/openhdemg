@@ -911,8 +911,6 @@ def plot_idr(
     return fig
 
 
-# TODO_NEXT_kwargs for flexible plotting design (all the plots), also option
-# to show channel numbers in MUAPs plots
 def plot_muaps(
     sta_dict,
     title="MUAPs from STA",

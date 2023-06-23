@@ -45,7 +45,7 @@ except ImportError:
     from distutils.core import setup
 
 this_directory = Path(__file__).parent
-LONG_DESCRIPTION = (this_directory / "long_description.md").read_text()
+LONG_DESCRIPTION = (this_directory / "README.md").read_text()
 
 if __name__ == "__main__":
     setup(
@@ -62,7 +62,7 @@ if __name__ == "__main__":
             "Source Code": "https://github.com/GiacomoValliPhD/openhdemg",
             "Bug Tracker": "https://github.com/GiacomoValliPhD/openhdemg/issues",
         },
-        version=emg.__version__,
+        version=emg.__version__,  # "0.1.0-beta.30",
         install_requires=INSTALL_REQUIRES,
         include_package_data=True,
         packages=PACKAGES,
