@@ -240,7 +240,7 @@ def plot_differentials(
 
     Examples
     --------
-    Plot plot the differential derivation of the first matrix column (col0).
+    Plot the differential derivation of the first matrix column (col0).
 
     >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
@@ -911,8 +911,6 @@ def plot_idr(
     return fig
 
 
-# TODO_NEXT_kwargs for flexible plotting design (all the plots), also option
-# to show channel numbers in MUAPs plots
 def plot_muaps(
     sta_dict,
     title="MUAPs from STA",

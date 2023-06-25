@@ -38,7 +38,10 @@ plugins:
 nav:
   - Welcome: index.md
   - Quick-Start.md
-  - Tutorials.md
+  - Tutorials:
+    #- Overview on the tutorials: Tutorials.md
+    - For new users:
+      - Setup working environment: tutorials/Setup_working_env.md
   - Graphical-Interface:
     - intro: GUI_intro.md
     - basics: GUI_basics.md

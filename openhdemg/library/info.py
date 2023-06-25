@@ -122,7 +122,7 @@ class info:
         "FSAMP": "Sampling frequency",
         "IDR": "Instantaneous discharge rate",
         "IED": "Inter electrode distance",
-        "IPTS": "Impulse train per second",
+        "IPTS": "Impulse train (source of decomposition)",
         "MU": "Motor units",
         "MUAP": "MUs action potential",
         "PNR": "Pulse to noise ratio",
@@ -141,7 +141,7 @@ class info:
             "FSAMP": "Sampling frequency",
             "IDR": "Instantaneous discharge rate",
             "IED": "Inter electrode distance",
-            "IPTS": "Impulse train per second",
+            "IPTS": "Impulse train (source of decomposition)",
             "MU": "Motor units",
             "MUAP": "MUs action potential",
             "PNR": "Pulse to noise ratio",
@@ -272,7 +272,7 @@ class info:
         contact = {
             "Name": "Giacomo Valli",
             "Email": "giacomo.valli@phd.unipd.it",
-            "Twitter": "@giacomo_valli",
+            "Twitter": "@openhdemg",
         }
 
         # Pretty dict printing
@@ -286,15 +286,19 @@ class info:
         Print a collection of useful links.
         """
 
-        link = {
-            "Topic": "We are working on this! Stay Tuned",
+        links = {
+            "Project Website": "https://www.giacomovalli.com/openhdemg/",
+            "Release Notes": "https://www.giacomovalli.com/openhdemg/What%27s-New/",
+            "Cite Us": "https://www.giacomovalli.com/openhdemg/Cite-Us/",
+            "Discussion Forum": "https://github.com/GiacomoValliPhD/openhdemg/discussions",
+            "Report Bugs": "https://github.com/GiacomoValliPhD/openhdemg/issues",
         }
 
         # Pretty dict printing
         print("\nLinks:\n")
-        print(json.dumps(link, indent=4))
+        print(json.dumps(links, indent=4))
 
-        return link
+        return links
 
     def citeus(self):
         """
@@ -311,4 +315,3 @@ class info:
         print(json.dumps(cite, indent=4))
 
         return cite
-# TODO complete infos

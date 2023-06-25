@@ -2,7 +2,7 @@ name: ci
 on:
   push:
     branches:
-      - master 
+      - master
       - main
 permissions:
   contents: write
@@ -21,5 +21,10 @@ jobs:
           path: .cache
           restore-keys: |
             mkdocs-material-
-      - run: pip install mkdocs-material 
+      - run: pip install mkdocs-material
+      - run: pip install mkdocs-material-extensions
+      - run: pip install mkdocs-autorefs
+      - run: pip install mkdocstrings
+      - run: pip install mkdocstrings-python
+      - run: pip install livereload
       - run: mkdocs gh-deploy --force
