@@ -87,8 +87,14 @@ The Virtual environments provide an isolated and controlled environment for your
 
 In order to create a virtual environment type in your terminal:
 
+For Windows users:
 ```shell
 python -m venv myvenv
+```
+
+For Mac users:
+```shell
+python3 -m venv myvenv  
 ```
 
 ![venv_command](Setup_working_env/venv_command.png)

@@ -7,10 +7,10 @@ import tkinter as tk
 import customtkinter
 import webbrowser
 from tkinter import ttk, filedialog, Canvas
-from tkinter import StringVar, Tk, N, S, W, E
+from tkinter import StringVar, Tk, N, S, W, E, IntVar, DoubleVar
 from pandastable import Table, config
-from pathlib import Path
-from sys import platform
+
+from PIL import Image
 
 import matplotlib.pyplot as plt
 import matplotlib
@@ -47,6 +47,10 @@ class emgGUI:
         The channel (int) or channels (list of int) to plot.
         The list can be passed as a manually-written with: "0,1,2,3,4,5...,n",
         channels is expected to be with base 0.
+    self.convert : str, default Multiply
+        The kind of conversion applied to the Refsig during Refsig conversion. Can be "Multiply" or "Divide".
+    self.convert_factor : float, default 2.5
+        Factore used during Refsig converison when multiplication or division is applied.
     self.cutoff_freq : int, default 20
         The cut-off frequency in Hz.
     self.ct_event : str, default "rt_dert"
@@ -74,7 +78,7 @@ class emgGUI:
         String containing the path to EMG file selected for analysis.
     self.filetype : str
         String containing the filetype of import EMG file.
-        Filetype can be "OTB", "DEMUSE", or "Refsig". # TODO Paul verify this
+        Filetype can be "OENHDEMG", "OTB", "DEMUSE", or "OTB_REFSIG", "CUSTOM". 
     self.filter_order : int, default 4
         The filter order.
     self.firings_rec : int, default 4
@@ -127,6 +131,8 @@ class emgGUI:
         The MVC value in the original unit of measurement.
     self.mvc_df : pd.DataFrame
         A Dataframe containing the detected MVC value.
+    self.mvc_value : float
+        The MVC value specified during Refsig conversion.
     self.offsetval: float, default 0
         Value of the offset. If offsetval is 0 (default), the user will be asked to manually
         select an aerea to compute the offset value.
@@ -290,6 +296,10 @@ class emgGUI:
         Method to perform MUs tracking on the loaded EMG files.
     display_results()
         Method used to display result table containing analysis results.
+    to_percent()
+        Method that converts Refsig to a percentag value. Should only be used when the Refsig is in absolute values.
+    convert_refsig()
+        Method that converts Refsig by multiplication or division.
 
     Notes
     -----
@@ -487,7 +497,8 @@ class emgGUI:
         # Create info button
         # Information Button
         info_path = master_path + "/gui_files/Info.png"  # Get infor button path
-        self.info = tk.PhotoImage(file=info_path)
+        self.info = customtkinter.CTkImage(light_image=Image.open(info_path),
+                                             size=(30,30))
         info_button = customtkinter.CTkButton(
             self.right,
             image=self.info,
@@ -497,15 +508,9 @@ class emgGUI:
             bg_color="LightBlue4",
             fg_color="LightBlue4",
             command=lambda: (
-                # Get file path
-                path := Path("./openhdemg/gui/gui_files/test.pdf").resolve(),
                 # Check user OS for pdf opening
                 (
-                    webbrowser.open_new(str(path))
-                    if platform in ("win32", "linux")
-                    else os.system(f"open {str(path)}")
-                    if platform == "darwin"
-                    else None
+                    webbrowser.open("https://www.giacomovalli.com/openhdemg/GUI_intro/")
                 ),
             ),
         )
@@ -513,7 +518,8 @@ class emgGUI:
 
         # Button for online tutorials
         online_path = master_path + "/gui_files/Online.png"
-        self.online = tk.PhotoImage(file=online_path)
+        self.online = customtkinter.CTkImage(light_image=Image.open(online_path),
+                                             size=(30,30))
         online_button = customtkinter.CTkButton(
             self.right,
             image=self.online,
@@ -522,12 +528,19 @@ class emgGUI:
             height=30,
             bg_color="LightBlue4",
             fg_color="LightBlue4",
+            command=lambda: (
+                # Check user OS for pdf opening
+                (
+                    webbrowser.open("https://www.giacomovalli.com/openhdemg/tutorials/Setup_working_env/")
+                ),
+            ),
         )
         online_button.grid(row=1, column=1, sticky=E)
 
         # Button for dev information
         redirect_path = master_path + "/gui_files/Redirect.png"
-        self.redirect = tk.PhotoImage(file=redirect_path)
+        self.redirect = customtkinter.CTkImage(light_image=Image.open(redirect_path),
+                                             size=(30,30))
         redirect_button = customtkinter.CTkButton(
             self.right,
             image=self.redirect,
@@ -541,7 +554,8 @@ class emgGUI:
 
         # Button for contact information
         contact_path = master_path + "/gui_files/Contact.png"
-        self.contact = tk.PhotoImage(file=contact_path)
+        self.contact = customtkinter.CTkImage(light_image=Image.open(contact_path),
+                                             size=(30,30))
         contact_button = customtkinter.CTkButton(
             self.right,
             image=self.contact,
@@ -550,12 +564,19 @@ class emgGUI:
             height=30,
             bg_color="LightBlue4",
             fg_color="LightBlue4",
+            command=lambda: (
+                # Check user OS for pdf opening
+                (
+                    webbrowser.open("https://www.giacomovalli.com/openhdemg/Contacts/")
+                ),
+            ),
         )
         contact_button.grid(row=3, column=1, sticky=E)
 
         # Button for citatoin information
         cite_path = master_path + "/gui_files/Cite.png"
-        self.cite = tk.PhotoImage(file=cite_path)
+        self.cite = customtkinter.CTkImage(light_image=Image.open(cite_path),
+                                             size=(30,30))
         cite_button = customtkinter.CTkButton(
             self.right,
             image=self.cite,
@@ -564,6 +585,12 @@ class emgGUI:
             height=30,
             bg_color="LightBlue4",
             fg_color="LightBlue4",
+            command=lambda: (
+                # Check user OS for pdf opening
+                (
+                    webbrowser.open("https://www.giacomovalli.com/openhdemg/Cite-Us/")
+                ),
+            ),
         )
         cite_button.grid(row=4, column=1, sticky=E)
 
@@ -928,7 +955,7 @@ class emgGUI:
         adv_box.set("Motor Unit Tracking")
 
         # Matrix Orientation
-        ttk.Label(self.a_window, text="Matrix Orientation*").grid(
+        ttk.Label(self.a_window, text="Matrix Orientation").grid(
             row=3, column=0, sticky=(W, E)
         )
         self.mat_orientation_adv = StringVar()
@@ -941,7 +968,7 @@ class emgGUI:
         self.mat_orientation_adv.set("180")
 
         # Matrix code
-        ttk.Label(self.a_window, text="Matrix Code*").grid(
+        ttk.Label(self.a_window, text="Matrix Code").grid(
             row=4, column=0, sticky=(W, E)
         )
         self.mat_code_adv = StringVar()
@@ -952,13 +979,9 @@ class emgGUI:
         matrix_code["state"] = "readonly"
         matrix_code.grid(row=4, column=1, sticky=(W, E))
         self.mat_code_adv.set("GR08MM1305")
-
-        # Instruction
-        ttk.Label(
-            self.a_window,
-            text="*Ignored for DEMUSE files, \ninsert random values",
-            font=("Arial", 8),
-        ).grid(row=5, column=1, sticky=W)
+        
+        # Trace variabel for updating window
+        self.mat_code_adv.trace("w", self.on_matrix_none_adv)
 
         # Analysis Button
         adv_button = ttk.Button(
@@ -967,11 +990,34 @@ class emgGUI:
             command=self.advanced_analysis,
             style="B.TButton",
         )
-        adv_button.grid(column=0, row=6)
+        adv_button.grid(column=0, row=7)
 
         # Add padding to widgets
         for child in self.a_window.winfo_children():
             child.grid_configure(padx=5, pady=5)
+
+    def on_matrix_none_adv(self, *args):
+        """
+        This function is called when the value of the mat_code_adv variable is changed.
+
+        When the variable is set to "None" it will create an Entrybox on the grid at column 1 and row 6,
+        and when the mat_code_adv is set to something else it will remove the entrybox from the grid.
+        """
+        if self.mat_code_adv.get() == "None":
+        
+            self.mat_label_adv = ttk.Label(self.a_window, text="Rows, Columns:")
+            self.mat_label_adv.grid(row=5, column=1, sticky = W)
+            
+            self.matrix_rc_adv = StringVar()
+            self.row_cols_entry_adv = ttk.Entry(self.a_window, width=8, textvariable= self.matrix_rc_adv)
+            self.row_cols_entry_adv.grid(row=6, column=1, sticky = W, padx=5, pady=2)
+        
+        else:
+            if hasattr(self, "row_cols_entry_adv"):
+                self.row_cols_entry_adv.grid_forget()
+                self.mat_label_adv.grid_forget()
+        
+        self.a_window.update_idletasks()
 
     # -----------------------------------------------------------------------------------------------
     # Plotting inside of GUI
@@ -1229,6 +1275,7 @@ class emgGUI:
         ttk.Label(self.head, text="Automatic Offset").grid(
             column=2, row=3, sticky=(W, E)
         )
+
         # Offset removal button
         basic2 = ttk.Button(self.head, text="Remove Offset", command=self.remove_offset)
         basic2.grid(column=0, row=4, sticky=W)
@@ -1242,6 +1289,50 @@ class emgGUI:
         auto = ttk.Entry(self.head, width=10, textvariable=self.auto_eval)
         auto.grid(column=2, row=4)
         self.auto_eval.set(0)
+
+        separator3 = ttk.Separator(self.head, orient="horizontal")
+        separator3.grid(column=0, columnspan=3, row=5, sticky=(W, E), padx=5, pady=5)
+
+        # Convert Reference signal
+        ttk.Label(self.head, text="Operator").grid(column=1, row=6, sticky=(W, E))
+        ttk.Label(self.head, text="Factor").grid(
+            column=2, row=6, sticky=(W, E)
+        )
+
+        self.convert = StringVar()
+        convert = ttk.Combobox(self.head, width=10, textvariable=self.convert)
+        convert["values"] = ("Multiply", "Divide")
+        convert["state"] = "readonly"
+        convert.grid(column=1, row=7)
+        self.convert.set("Multiply")
+
+        self.convert_factor = DoubleVar()
+        factor = ttk.Entry(self.head, width=10, textvariable=self.convert_factor)
+        factor.grid(column=2, row=7)
+        self.convert_factor.set(2.5)
+        
+        convert_button = ttk.Button(self.head, text="Convert", command=self.convert_refsig)
+        convert_button.grid(column=0, row=7, sticky=W)
+
+        separator3 = ttk.Separator(self.head, orient="horizontal")
+        separator3.grid(column=0, columnspan=3, row=8, sticky=(W, E), padx=5, pady=5)
+
+        # Convert to percentage
+        ttk.Label(self.head, text="MVC Value").grid(column=1, row=9, sticky=(W, E))
+        
+        percent_button = ttk.Button(self.head, text="To Percent*", command=self.to_percent)
+        percent_button.grid(column=0, row=10, sticky=W)
+
+        self.mvc_value = DoubleVar()
+        mvc = ttk.Entry(self.head, width=10, textvariable=self.mvc_value)
+        mvc.grid(column=1, row=10)
+
+
+        ttk.Label(self.head,
+                  text= "*Use this button \nonly if your Refsig \nis in absolute values!",
+                  font=("Arial", 8)).grid(
+            column=2, row=9, rowspan=2
+        )
 
         # Add padding to all children widgets of head
         for child in self.head.winfo_children():
@@ -1258,7 +1349,7 @@ class emgGUI:
 
         Raises
         ------
-        TypeError
+        AttributeError
             When no reference signal file is available.
 
         See Also
@@ -1275,19 +1366,19 @@ class emgGUI:
             # Plot filtered Refsig
             self.in_gui_plotting(plot="refsig_fil")
 
-        except TypeError:
+        except AttributeError:
             tk.messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
 
     def remove_offset(self):
         """
-        Instance Method that remves user specified/selected Refsig offset.
+        Instance Method that removes user specified/selected Refsig offset.
 
         Executed when button "Remove offset" in Reference Signal Editing Window is pressed.
         The emgfile and the GUI plot are updated.
 
         Raises
         ------
-        TypeError
+        AttributeError
             When no reference signal file is available
 
         See Also
@@ -1304,13 +1395,67 @@ class emgGUI:
             # Update Plot
             self.in_gui_plotting(plot="refsig_off")
 
-        except TypeError:
+        except AttributeError:
             tk.messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
 
         except ValueError:
-            tk.messagebox.showerror("Information", "Make sure to specify the start & end-point on the plot")
+            tk.messagebox.showerror("Information", "Make sure to specify valid filtering or offset values.")
 
+    def convert_refsig(self):
+        """
+        Instance Method that converts Refsig by multiplication or division.
 
+        Executed when button "Convert" in Reference Signal Editing Window is pressed.
+        The emgfile and the GUI plot are updated.
+
+        Raises
+        ------
+        AttributeError
+            When no reference signal file is available
+        ValueError
+            When invalid conversion factor is specified
+        
+        """
+        try:
+            if self.convert.get() == "Multiply":
+                self.resdict["REF_SIGNAL"] = self.resdict["REF_SIGNAL"] * self.convert_factor.get()
+            elif self.convert.get() == "Divide":
+                self.resdict["REF_SIGNAL"] = self.resdict["REF_SIGNAL"] / self.convert_factor.get()
+        
+            # Update Plot
+            self.in_gui_plotting(plot="refsig_off")
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
+
+        except ValueError:
+            tk.messagebox.showerror("Information", "Make sure to specify a valid conversion factor.")
+
+    def to_percent(self):
+        """
+        Instance Method that converts Refsig to a percentag value. Should only be used when the Refsig is in absolute values.
+
+        Executed when button "To Percen" in Reference Signal Editing Window is pressed.
+        The emgfile and the GUI plot are updated.
+
+        Raises
+        ------
+        AttributeError
+            When no reference signal file is available
+        ValueError
+            When invalid conversion factor is specified
+        """
+        try:
+            self.resdict["REF_SIGNAL"] = (self.resdict["REF_SIGNAL"] * 100) / self.mvc_value.get()
+        
+            # Update Plot
+            self.in_gui_plotting()
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
+
+        except ValueError:
+            tk.messagebox.showerror("Information", "Make sure to specify a valid conversion factor.")
     # -----------------------------------------------------------------------------------------------
     # Resize EMG File
 
@@ -1809,7 +1954,7 @@ class emgGUI:
             )
 
             # Matrix code
-            ttk.Label(self.head, text="Matrix Code*").grid(row=0, column=3, sticky=(W))
+            ttk.Label(self.head, text="Matrix Code").grid(row=0, column=3, sticky=(W))
             self.mat_code = StringVar()
             matrix_code = ttk.Combobox(self.head, width=15, textvariable=self.mat_code)
             matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808", "None")
@@ -1817,8 +1962,11 @@ class emgGUI:
             matrix_code.grid(row=0, column=4, sticky=(W, E))
             self.mat_code.set("GR08MM1305")
 
+            # Trace matrix code value
+            self.mat_code.trace("w", self.on_matrix_none)
+
             # Matrix Orientation
-            ttk.Label(self.head, text="Orientation*").grid(row=1, column=3, sticky=(W))
+            ttk.Label(self.head, text="Orientation").grid(row=1, column=3, sticky=(W))
             self.mat_orientation = StringVar()
             orientation = ttk.Combobox(
                 self.head, width=15, textvariable=self.mat_orientation
@@ -1827,13 +1975,6 @@ class emgGUI:
             orientation["state"] = "readonly"
             orientation.grid(row=1, column=4, sticky=(W, E))
             self.mat_orientation.set("180")
-
-            # Instruction
-            ttk.Label(
-                self.head,
-                text="*Ignored for DEMUSE files, insert random values",
-                font=("Arial", 8),
-            ).grid(row=2, column=3, sticky=W)
 
             # Plot derivation
             # Button
@@ -1909,8 +2050,9 @@ class emgGUI:
             matrix_canvas.create_image(0, 0, anchor="nw", image=self.matrix)
 
             # Information Button
-            self.info = tk.PhotoImage(
-                file=os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Info.png"
+            self.info = customtkinter.CTkImage(
+                light_image=Image.open(os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Info.png"),
+                size = (30, 30)
             )
             info_button = customtkinter.CTkButton(
                 self.head,
@@ -1921,15 +2063,9 @@ class emgGUI:
                 bg_color="LightBlue4",
                 fg_color="LightBlue4",
                 command=lambda: (
-                    # Get file path
-                    path := Path("./openhdemg/gui/gui_files/test.pdf").resolve(),
                     # Check user OS for pdf opening
                     (
-                        webbrowser.open_new(str(path))
-                        if platform in ("win32", "linux")
-                        else os.system(f"open {str(path)}")
-                        if platform == "darwin"
-                        else None
+                        webbrowser.open("https://www.giacomovalli.com/openhdemg/GUI_basics/#plot-motor-units")
                     ),
                 ),
             )
@@ -1937,12 +2073,38 @@ class emgGUI:
 
             for child in self.head.winfo_children():
                 child.grid_configure(padx=5, pady=5)
-        
+
         except AttributeError:
             tk.messagebox.showerror("Information", "Load file prior to computation.")
             self.head.destroy()
 
     ### Define functions for motor unit plotting
+
+    def on_matrix_none(self, *args):
+        """
+        This function is called when the value of the mat_code variable is changed.
+
+        When the variable is set to "None" it will create an Entrybox on the grid at column 1 and row 6,
+        and when the mat_code is set to something else it will remove the entrybox from the grid.
+        """
+    
+        if self.mat_code.get() == "None":
+        
+            self.mat_label = ttk.Label(self.head, text="Rows, Columns:")
+            self.mat_label.grid(row=0, column=5, sticky=E)
+            
+            self.matrix_rc = StringVar()
+            self.row_cols_entry = ttk.Entry(self.head, width=8, textvariable= self.matrix_rc)
+            self.row_cols_entry.grid(row=0, column=6, sticky = W, padx=5)
+        
+        else:
+            if hasattr(self, "row_cols_entry"):
+                self.row_cols_entry.grid_forget()
+                self.mat_label.grid_forget()
+                
+        
+        self.head.update_idletasks()
+
 
     def plt_emgsignal(self):
         """
@@ -2196,12 +2358,26 @@ class emgGUI:
         This function is used to plot also the sorted RAW_SIGNAL.
         """
         try:
-            # Sort emg file
-            sorted_file = openhdemg.sort_rawemg(
-                emgfile=self.resdict,
-                code=self.mat_code.get(),
-                orientation=int(self.mat_orientation.get()),
-            )
+            if self.mat_code.get() == "None":
+                # Get rows and columns and turn into list
+                list_rcs = [int(i) for i in self.row_cols_entry.get().split(",")]
+
+                # Sort emg file
+                sorted_file = openhdemg.sort_rawemg(
+                    emgfile=self.resdict,
+                    code=self.mat_code.get(),
+                    orientation=int(self.mat_orientation.get()),
+                    n_rows=list_rcs[0],
+                    n_cols=list_rcs[1]
+                )
+            
+            else:
+                # Sort emg file
+                sorted_file = openhdemg.sort_rawemg(
+                    emgfile=self.resdict,
+                    code=self.mat_code.get(),
+                    orientation=int(self.mat_orientation.get()),
+                )
 
             # calcualte derivation
             if self.deriv_config.get() == "Single differential":
@@ -2248,55 +2424,68 @@ class emgGUI:
         ``Remember: the different STAs should be matched`` with same number of electrode,
         processing (i.e., differential) and computed on the same timewindow.
         """
-        try:
+        #try:
+        if self.mat_code.get() == "None":
+            # Get rows and columns and turn into list
+            list_rcs = [int(i) for i in self.row_cols_entry.get().split(",")]
+
+            # Sort emg file
+            sorted_file = openhdemg.sort_rawemg(
+                emgfile=self.resdict,
+                code=self.mat_code.get(),
+                orientation=int(self.mat_orientation.get()),
+                n_rows=list_rcs[0],
+                n_cols=list_rcs[1]
+            )
+        else:
             # Sort emg file
             sorted_file = openhdemg.sort_rawemg(
                 emgfile=self.resdict,
                 code=self.mat_code.get(),
                 orientation=int(self.mat_orientation.get()),
             )
-            # calcualte derivation
-            if self.muap_config.get() == "Single differential":
-                diff_file = openhdemg.diff(sorted_rawemg=sorted_file)
+        # calcualte derivation
+        if self.muap_config.get() == "Single differential":
+            diff_file = openhdemg.diff(sorted_rawemg=sorted_file)
 
-            elif self.muap_config.get() == "Double differential":
-                diff_file = openhdemg.double_diff(sorted_rawemg=sorted_file)
+        elif self.muap_config.get() == "Double differential":
+            diff_file = openhdemg.double_diff(sorted_rawemg=sorted_file)
 
-            elif self.muap_config.get() == "Monopolar":
-                diff_file = sorted_file
+        elif self.muap_config.get() == "Monopolar":
+            diff_file = sorted_file
 
-            # Calculate STA dictionary
-            # Plot deviation
-            sta_dict = openhdemg.sta(
-                emgfile=self.resdict,
-                sorted_rawemg=diff_file,
-                firings="all",
-                timewindow=int(self.muap_time.get()),
-            )
+        # Calculate STA dictionary
+        # Plot deviation
+        sta_dict = openhdemg.sta(
+            emgfile=self.resdict,
+            sorted_rawemg=diff_file,
+            firings="all",
+            timewindow=int(self.muap_time.get()),
+        )
 
-            # Create list of figsize
-            figsize = [int(i) for i in self.size_fig.get().split(",")]
+        # Create list of figsize
+        figsize = [int(i) for i in self.size_fig.get().split(",")]
 
-            # Plot MUAPS
-            openhdemg.plot_muaps(sta_dict[int(self.muap_munum.get())], figsize=figsize)
+        # Plot MUAPS
+        openhdemg.plot_muaps(sta_dict[int(self.muap_munum.get())], figsize=figsize)
 
-        except ValueError:
-            tk.messagebox.showerror(
-                "Information",
-                "Enter valid input parameters."
-                + "\nPotenital error sources:"
-                + "\n - Matrix Code"
-                + "\n - Matrix Orientation"
-                + "\n - Figure size"
-                + "\n - Timewindow"
-                + "\n - MU Number",
-            )
+        # except ValueError:
+        #     tk.messagebox.showerror(
+        #         "Information",
+        #         "Enter valid input parameters."
+        #         + "\nPotenital error sources:"
+        #         + "\n - Matrix Code"
+        #         + "\n - Matrix Orientation"
+        #         + "\n - Figure size"
+        #         + "\n - Timewindow"
+        #         + "\n - MU Number",
+        #     )
 
-        except UnboundLocalError:
-            tk.messagebox.showerror("Information", "Enter valid Configuration.")
+        # except UnboundLocalError:
+        #     tk.messagebox.showerror("Information", "Enter valid Configuration.")
 
-        except KeyError:
-            tk.messagebox.showerror("Information", "Enter valid Matrx Column.")
+        # except KeyError:
+        #     tk.messagebox.showerror("Information", "Enter valid Matrx Column.")
 
     # -----------------------------------------------------------------------------------------------
     # Advanced Analysis
@@ -2446,12 +2635,27 @@ class emgGUI:
                 self.head.destroy()
                 self.a_window.destroy()
 
-                # Sort emg file
-                sorted_rawemg = openhdemg.sort_rawemg(
-                    self.resdict,
-                    code=self.mat_code_adv.get(),
-                    orientation=int(self.mat_orientation_adv.get()),
-                )
+                if self.mat_code_adv.get() == "None":
+
+                    # Get rows and columns and turn into list
+                    list_rcs = [int(i) for i in self.row_cols_entry.get().split(",")]
+
+                    # Sort emg file
+                    sorted_rawemg = openhdemg.sort_rawemg(
+                        self.resdict,
+                        code=self.mat_code_adv.get(),
+                        orientation=int(self.mat_orientation_adv.get()),
+                        n_rows=list_rcs[0],
+                        n_cols=list_rcs[1]
+                    )
+
+                else:
+                    # Sort emg file
+                    sorted_rawemg = openhdemg.sort_rawemg(
+                        self.resdict,
+                        code=self.mat_code_adv.get(),
+                        orientation=int(self.mat_orientation_adv.get()),
+                    )
 
                 openhdemg.MUcv_gui(
                     emgfile=self.resdict,
@@ -2470,7 +2674,6 @@ class emgGUI:
         self.a_window.destroy()
 
     ### Define function for advanced analysis tools
-
     def open_emgfile1(self):
         """
         Open EMG file based on the selected file type and extension factor.
