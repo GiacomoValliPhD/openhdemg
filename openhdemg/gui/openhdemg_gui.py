@@ -7,7 +7,7 @@ import tkinter as tk
 import customtkinter
 import webbrowser
 from tkinter import ttk, filedialog, Canvas
-from tkinter import StringVar, Tk, N, S, W, E, IntVar, DoubleVar
+from tkinter import StringVar, Tk, N, S, W, E, DoubleVar
 from pandastable import Table, config
 
 from PIL import Image
@@ -184,11 +184,17 @@ class emgGUI:
         analysis window when OTB files are loaded. Contains
         the extension factor for OTB files.
         Stringvariable containing the
-    self.extension_factor : tk.Stringvar()
+    self.extension_factor : tk.StringVar()
         Stringvariable containing the OTB extension factor value.
     self.advanced_method : tk.Stringvar()
         Stringvariable containing the selected method of advanced
         analysis.
+    self.matrix_rc : tk.StringVar()
+        String containing the channel number of emgfile when
+        matri codes are bypassed. Used in plot window.
+    self.matrix_rc_adv : tk.StringVar()
+        String containing the channel number of emgfile when
+        matri codes are bypassed. Used in advanced window.
     self.emgfile1 : pd.Dataframe
         Dataframe object containing the loaded first emgfile used
         for MU tracking.
@@ -1011,6 +1017,7 @@ class emgGUI:
             self.matrix_rc_adv = StringVar()
             self.row_cols_entry_adv = ttk.Entry(self.a_window, width=8, textvariable= self.matrix_rc_adv)
             self.row_cols_entry_adv.grid(row=6, column=1, sticky = W, padx=5, pady=2)
+            self.matrix_rc_adv.set("13,5")
         
         else:
             if hasattr(self, "row_cols_entry_adv"):
@@ -2087,7 +2094,6 @@ class emgGUI:
         When the variable is set to "None" it will create an Entrybox on the grid at column 1 and row 6,
         and when the mat_code is set to something else it will remove the entrybox from the grid.
         """
-    
         if self.mat_code.get() == "None":
         
             self.mat_label = ttk.Label(self.head, text="Rows, Columns:")
@@ -2096,6 +2102,7 @@ class emgGUI:
             self.matrix_rc = StringVar()
             self.row_cols_entry = ttk.Entry(self.head, width=8, textvariable= self.matrix_rc)
             self.row_cols_entry.grid(row=0, column=6, sticky = W, padx=5)
+            self.matrix_rc.set("13,5")
         
         else:
             if hasattr(self, "row_cols_entry"):
@@ -2360,17 +2367,26 @@ class emgGUI:
         try:
             if self.mat_code.get() == "None":
                 # Get rows and columns and turn into list
-                list_rcs = [int(i) for i in self.row_cols_entry.get().split(",")]
+                list_rcs = [int(i) for i in self.matrix_rc.get().split(",")]
 
-                # Sort emg file
-                sorted_file = openhdemg.sort_rawemg(
-                    emgfile=self.resdict,
-                    code=self.mat_code.get(),
-                    orientation=int(self.mat_orientation.get()),
-                    n_rows=list_rcs[0],
-                    n_cols=list_rcs[1]
-                )
-            
+                try:
+                    # Sort emg file
+                    sorted_file = openhdemg.sort_rawemg(
+                        emgfile=self.resdict,
+                        code=self.mat_code.get(),
+                        orientation=int(self.mat_orientation.get()),
+                        n_rows=list_rcs[0],
+                        n_cols=list_rcs[1]
+                    )
+
+                except ValueError:
+                    tk.messagebox.showerror(
+                        "Information",
+                        "Number of specified rows and columns must match" +
+                        "\nnumber of channels."
+                    )
+                    return
+
             else:
                 # Sort emg file
                 sorted_file = openhdemg.sort_rawemg(
@@ -2405,7 +2421,8 @@ class emgGUI:
                 + "\nPotenital error sources:"
                 + "\n - Matrix Code"
                 + "\n - Matrix Orientation"
-                + "\n - Figure size",
+                + "\n - Figure size arguments"
+                + "\n - Rows, Columns arguments",
             )
         except UnboundLocalError:
             tk.messagebox.showerror(
@@ -2424,68 +2441,80 @@ class emgGUI:
         ``Remember: the different STAs should be matched`` with same number of electrode,
         processing (i.e., differential) and computed on the same timewindow.
         """
-        #try:
-        if self.mat_code.get() == "None":
-            # Get rows and columns and turn into list
-            list_rcs = [int(i) for i in self.row_cols_entry.get().split(",")]
+        try:
+            if self.mat_code.get() == "None":
+                # Get rows and columns and turn into list
+                list_rcs = [int(i) for i in self.matrix_rc.get().split(",")]
 
-            # Sort emg file
-            sorted_file = openhdemg.sort_rawemg(
+                try:
+                    # Sort emg file
+                    sorted_file = openhdemg.sort_rawemg(
+                        emgfile=self.resdict,
+                        code=self.mat_code.get(),
+                        orientation=int(self.mat_orientation.get()),
+                        n_rows=list_rcs[0],
+                        n_cols=list_rcs[1]
+                    )
+
+                except ValueError:
+                    tk.messagebox.showerror(
+                            "Information",
+                            "Number of specified rows and columns must match"
+                            + "\nnumber of channels."
+                    )
+                    return
+                
+            else:
+                # Sort emg file
+                sorted_file = openhdemg.sort_rawemg(
+                    emgfile=self.resdict,
+                    code=self.mat_code.get(),
+                    orientation=int(self.mat_orientation.get()),
+                )
+
+            # calcualte derivation
+            if self.muap_config.get() == "Single differential":
+                diff_file = openhdemg.diff(sorted_rawemg=sorted_file)
+
+            elif self.muap_config.get() == "Double differential":
+                diff_file = openhdemg.double_diff(sorted_rawemg=sorted_file)
+
+            elif self.muap_config.get() == "Monopolar":
+                diff_file = sorted_file
+
+            # Calculate STA dictionary
+            # Plot deviation
+            sta_dict = openhdemg.sta(
                 emgfile=self.resdict,
-                code=self.mat_code.get(),
-                orientation=int(self.mat_orientation.get()),
-                n_rows=list_rcs[0],
-                n_cols=list_rcs[1]
+                sorted_rawemg=diff_file,
+                firings="all",
+                timewindow=int(self.muap_time.get()),
             )
-        else:
-            # Sort emg file
-            sorted_file = openhdemg.sort_rawemg(
-                emgfile=self.resdict,
-                code=self.mat_code.get(),
-                orientation=int(self.mat_orientation.get()),
+
+            # Create list of figsize
+            figsize = [int(i) for i in self.size_fig.get().split(",")]
+
+            # Plot MUAPS
+            openhdemg.plot_muaps(sta_dict[int(self.muap_munum.get())], figsize=figsize)
+
+        except ValueError:
+            tk.messagebox.showerror(
+                "Information",
+                "Enter valid input parameters."
+                + "\nPotenital error sources:"
+                + "\n - Matrix Code"
+                + "\n - Matrix Orientation"
+                + "\n - Figure size arguments"
+                + "\n - Timewindow"
+                + "\n - MU Number"
+                + "\n - Rows, Columns arguments",
             )
-        # calcualte derivation
-        if self.muap_config.get() == "Single differential":
-            diff_file = openhdemg.diff(sorted_rawemg=sorted_file)
 
-        elif self.muap_config.get() == "Double differential":
-            diff_file = openhdemg.double_diff(sorted_rawemg=sorted_file)
+        except UnboundLocalError:
+            tk.messagebox.showerror("Information", "Enter valid Configuration.")
 
-        elif self.muap_config.get() == "Monopolar":
-            diff_file = sorted_file
-
-        # Calculate STA dictionary
-        # Plot deviation
-        sta_dict = openhdemg.sta(
-            emgfile=self.resdict,
-            sorted_rawemg=diff_file,
-            firings="all",
-            timewindow=int(self.muap_time.get()),
-        )
-
-        # Create list of figsize
-        figsize = [int(i) for i in self.size_fig.get().split(",")]
-
-        # Plot MUAPS
-        openhdemg.plot_muaps(sta_dict[int(self.muap_munum.get())], figsize=figsize)
-
-        # except ValueError:
-        #     tk.messagebox.showerror(
-        #         "Information",
-        #         "Enter valid input parameters."
-        #         + "\nPotenital error sources:"
-        #         + "\n - Matrix Code"
-        #         + "\n - Matrix Orientation"
-        #         + "\n - Figure size"
-        #         + "\n - Timewindow"
-        #         + "\n - MU Number",
-        #     )
-
-        # except UnboundLocalError:
-        #     tk.messagebox.showerror("Information", "Enter valid Configuration.")
-
-        # except KeyError:
-        #     tk.messagebox.showerror("Information", "Enter valid Matrx Column.")
+        except KeyError:
+            tk.messagebox.showerror("Information", "Enter valid Matrx Column.")
 
     # -----------------------------------------------------------------------------------------------
     # Advanced Analysis
@@ -2638,16 +2667,24 @@ class emgGUI:
                 if self.mat_code_adv.get() == "None":
 
                     # Get rows and columns and turn into list
-                    list_rcs = [int(i) for i in self.row_cols_entry.get().split(",")]
+                    list_rcs = [int(i) for i in self.matrix_rc_adv.get().split(",")]
 
-                    # Sort emg file
-                    sorted_rawemg = openhdemg.sort_rawemg(
-                        self.resdict,
-                        code=self.mat_code_adv.get(),
-                        orientation=int(self.mat_orientation_adv.get()),
-                        n_rows=list_rcs[0],
-                        n_cols=list_rcs[1]
-                    )
+                    try:
+                        # Sort emg file
+                        sorted_rawemg = openhdemg.sort_rawemg(
+                            self.resdict,
+                            code=self.mat_code_adv.get(),
+                            orientation=int(self.mat_orientation_adv.get()),
+                            n_rows=list_rcs[0],
+                            n_cols=list_rcs[1]
+                        )
+                    except ValueError:
+                        tk.messagebox.showerror(
+                            "Information",
+                            "Number of specified rows and columns must match"
+                            + "\nnumber of channels."
+                        )
+                        return
 
                 else:
                     # Sort emg file
@@ -2669,6 +2706,15 @@ class emgGUI:
                     + "prior to Conduction velocity calculation.",
                 )
                 self.head.destroy()
+            
+            except ValueError:
+                tk.messagebox.showerror(
+                    "Information",
+                    "Please make sure to enter valid Rows, Columns arguments."
+                    + "\nArguments must be non-negative and seperated by `,`.",
+                )
+                self.head.destroy()
+
 
         # Destroy first window to avoid too many pop-ups
         self.a_window.destroy()
@@ -2686,7 +2732,7 @@ class emgGUI:
         --------
         open_emgfile1(), openhdemg.askopenfile()
         """
-        try:    
+        try: 
             # Open OTB file
             if self.filetype_adv.get() == "OTB":
                 self.emgfile1 = openhdemg.askopenfile(

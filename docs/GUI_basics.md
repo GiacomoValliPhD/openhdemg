@@ -215,6 +215,13 @@ These three setting options are universally used in all plots. There are two mor
     - `GR08MM1305`
     - `GR04MM1305`
     - `GR10MM0808`
+    - `None`
+
+    In case you selected `None`, the entrybox `Rows, Columns` will appear. Please specify the number of rows and columns of your used matrix since you now bypass included matrix codes. In example, specifying
+    ```Python
+    Rows, Columns: 13, 5
+    ```
+    means that your File has 65 channels.
 
 2. You need to specify the `Orientation` in row two and column four in the left side of the `Plot Window`. The `Orientaion` must match the one of your matrix during acquisition. You can find a reference image for the `Orientation` at the bottom in the right side of the `Plot Window`.
 
@@ -277,7 +284,7 @@ We all make mistakes! But, most likely, we are also able to correct them. In cas
 
 --------------------------------------------
 
-We hope you had fun! We are now at the end of describing the basic functions included in the *openhdemg* GUI. In case you need further clarification, don't hesitate to post a question in the Github discussion forum (LINK). Moreover, if you noticed an error that was not properly catched by the GUI, please file a bug report according to our guidelines (LINK).
+We hope you had fun! We are now at the end of describing the basic functions included in the *openhdemg* GUI. In case you need further clarification, don't hesitate to post a question in the [*openhdemg* discussion section](https://github.com/GiacomoValliPhD/openhdemg/discussions){:target="_blank"}. Moreover, if you noticed an error that was not properly catched by the GUI, please file a bug report according to our guidelines (LINK).
 If you want to proceed to the advanced stuff now, take a look at the [advanced](GUI_advanced.md) tab on the left side of the webpage.
 
 ## More questions?
