@@ -25,7 +25,7 @@ In case you selected `None`, the entrybox `Rows, Columns` will appear. Please sp
 Rows, Columns: 13, 5
 ```
 means that your File has 65 channels.
-Once you specified these parameter, you can click the "Advaned Analysis" button to start your analysis.
+Once you specified these parameter, you can click the `Advaned Analysis` button to start your analysis.
 
 -----------------------------------------
 
