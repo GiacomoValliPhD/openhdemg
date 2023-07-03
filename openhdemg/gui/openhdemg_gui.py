@@ -2827,6 +2827,21 @@ class emgGUI:
         openhdemg.tracking()
         """
         try:
+            if self.mat_code_adv.get() == "None":
+                # Get rows and columns and turn into list
+                list_rcs = [int(i) for i in self.matrix_rc_adv.get().split(",")]
+                n_rows = list_rcs[0]
+                n_cols = list_rcs[1]
+            else:
+                n_rows = None
+                n_cols = None
+        except ValueError:
+            tk.messagebox.showerror(
+                "Information",
+                "Verify that Rows and Columns are separated by ','",
+            )
+
+        try:
             # Track motor units
             tracking_res = openhdemg.tracking(
                 emgfile1=self.emgfile1,
@@ -2835,6 +2850,8 @@ class emgGUI:
                 timewindow=int(self.time_window.get()),
                 matrixcode=self.mat_code_adv.get(),
                 orientation=int(self.mat_orientation_adv.get()),
+                n_rows=n_rows,
+                n_cols=n_cols,
                 exclude_belowthreshold=self.exclude_thres.get(),
                 filter=self.filter_adv.get(),
                 show=self.show_adv.get(),
@@ -2872,7 +2889,8 @@ class emgGUI:
                 + "\n - Extension Factor (in case of OTB file)"
                 + "\n - Matrix Code"
                 + "\n - Matrix Orientation"
-                + "\n - Threshold",
+                + "\n - Threshold"
+                + "\n - Rows, Columns",
             )
 
     def remove_duplicates_between(self):
@@ -2896,6 +2914,21 @@ class emgGUI:
         openhdemg.remove_duplicates_between(), openhdemg.asksavefile()
         """
         try:
+            if self.mat_code_adv.get() == "None":
+                # Get rows and columns and turn into list
+                list_rcs = [int(i) for i in self.matrix_rc_adv.get().split(",")]
+                n_rows = list_rcs[0]
+                n_cols = list_rcs[1]
+            else:
+                n_rows = None
+                n_cols = None
+        except ValueError:
+            tk.messagebox.showerror(
+                "Information",
+                "Verify that Rows and Columns are separated by ','",
+            )
+
+        try:
             # Remove motor unit duplicates
             emg_file1, emg_file2, _ = openhdemg.remove_duplicates_between(
                 emgfile1=self.emgfile1,
@@ -2904,6 +2937,8 @@ class emgGUI:
                 timewindow=int(self.time_window.get()),
                 matrixcode=self.mat_code_adv.get(),
                 orientation=int(self.mat_orientation_adv.get()),
+                n_rows=n_rows,
+                n_cols=n_cols,
                 filter=self.filter_adv.get(),
                 show=self.show_adv.get(),
                 which=self.which_adv.get(),
@@ -2928,7 +2963,8 @@ class emgGUI:
                 + "\n - Matrix Code"
                 + "\n - Matrix Orientation"
                 + "\n - Threshold"
-                + "\n - Which",
+                + "\n - Which"
+                + "\n - Rows, Columns",
             )
 
     def calculate_conduct_vel(self):
