@@ -37,7 +37,7 @@ or conda:
 conda install -c conda-forge openhdemg
 ```
 
-If you want an overview of what you can do with the *openhdemg* library, have a look at the [**Quick Start** section](https://www.giacomovalli.com/openhdemg/Quick-Start/).
+If you want an overview of what you can do with the *openhdemg* library, have a look at the [Quick Start section](https://www.giacomovalli.com/openhdemg/Quick-Start/).
 
 ## Good to know
 In addition to the rich set of modules and functions presented in the **API documentation**, *openhdemg* offers also a practical graphical user interface (GUI) from which many tasks can be performed without writing a single line of code!

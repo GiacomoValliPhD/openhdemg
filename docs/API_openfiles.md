@@ -35,12 +35,12 @@ Notes
 -----
 Once opened, the file is returned as a dictionary with keys:<br>
 
-"SOURCE" : source of the file (i.e., "DEMUSE", "OTB", "custom")<br>
+"SOURCE" : source of the file (e.g., "DEMUSE", "OTB", "custom")<br>
 "RAW_SIGNAL" : the raw EMG signal<br>
 "REF_SIGNAL" : the reference signal<br>
 "PNR" : pulse to noise ratio<br>
 "SIL" : silouette score<br>
-"IPTS" : pulse train<br>
+"IPTS" : pulse train (decomposed source)<br>
 "MUPULSES" : instants of firing<br>
 "FSAMP" : sampling frequency<br>
 "IED" : interelectrode distance<br>

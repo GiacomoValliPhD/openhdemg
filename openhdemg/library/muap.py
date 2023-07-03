@@ -1098,6 +1098,9 @@ def remove_duplicates_between(
     -------
     emgfile1, emgfile2 : dict
         The original emgfiles without the duplicated MUs.
+    tracking_res : pd.DataFrame
+        The results of the tracking including the MU from file 1,
+        MU from file 2 and the normalised cross-correlation value (XCC).
 
     See also
     --------
@@ -1114,7 +1117,7 @@ def remove_duplicates_between(
 
     >>> emgfile1 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emgfile2 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> emgfile1, emgfile2 = emg.remove_duplicates_between(
+    >>> emgfile1, emgfile2, tracking_res = emg.remove_duplicates_between(
     ...     emgfile1,
     ...     emgfile2,
     ...     firings="all",
@@ -1163,7 +1166,7 @@ def remove_duplicates_between(
                 emgfile=emgfile1, munumber=mus_to_remove, if_single_mu="remove"
             )
 
-            return emgfile1, emgfile2
+            return emgfile1, emgfile2, tracking_res
 
         else:
             # Remove MUs from emgfile2
@@ -1173,7 +1176,7 @@ def remove_duplicates_between(
                 emgfile=emgfile2, munumber=mus_to_remove, if_single_mu="remove"
             )
 
-            return emgfile1, emgfile2
+            return emgfile1, emgfile2, tracking_res
 
     elif which == "PNR":
         # Create a list containing which MU to remove in which file based
@@ -1199,7 +1202,7 @@ def remove_duplicates_between(
             emgfile=emgfile2, munumber=to_remove2, if_single_mu="remove"
         )
 
-        return emgfile1, emgfile2
+        return emgfile1, emgfile2, tracking_res
 
     elif which == "SIL":
         # Create a list containing which MU to remove in which file based
@@ -1225,7 +1228,7 @@ def remove_duplicates_between(
             emgfile=emgfile2, munumber=to_remove2, if_single_mu="remove"
         )
 
-        return emgfile1, emgfile2
+        return emgfile1, emgfile2, tracking_res
 
     else:
         raise ValueError(

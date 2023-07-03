@@ -38,7 +38,7 @@ The *openhdemg* GUI also allows you to edit and filter reference signals corresp
 
 1. View the MUs using the `View MUs` button prior to reference signal editing, so you can see what is happening.
 
-2. Click the `RefSig Editing` button located in row five and column one, a new pop-up window opens. In the `Reference Signal Editing Window`, you can low-pass filter the reference signal as well as remove any signal offset. 
+2. Click the `RefSig Editing` button located in row five and column one, a new pop-up window opens. In the `Reference Signal Editing Window`, you can low-pass filter the reference signal as well as remove any signal offset. Additionally, you can also convert your reference signal by a specific factor (amplification factor) or convert it from absolute to percentage (relative or normalised) values.
 
 3. When you click the `Filter RefSig` button, the reference signal is low-pass filtered (Zero-lag, Butterworth) according to values specified in the `Filter Order` and `Cutoff Freq` textboxes. In example, specifiying 
 
@@ -66,7 +66,21 @@ The *openhdemg* GUI also allows you to edit and filter reference signals corresp
     Offset Value : 0
     Automatic: 0
     ```
-    will allow you to manually correct the offset in a new pop-up plot. You just need to follow the instructions on the plot. 
+    will allow you to manually correct the offset in a new pop-up plot. You just need to follow the instructions on the plot.
+
+5. When you click the `Convert` button, the reference signal will be multiplied or divided (depending on `Operator`) by the `Factor`. In example, specifying
+
+    ```Python
+    Operator : "Multiply"
+    Factor: 2.5
+    ```
+    will amplify the reference signal 2.5 times.
+
+6. When you click the `To Percent` button, the reference signal in absolute values is converted to percentage (relative or normalised) values based on the provided `MVC Value`. **This step should be performed before any analysis, because *openhdemg* is designed to work with a normalised reference signal.** In example, a file with a reference signal in absolute values ranging from 0 to 100 will be normalised from 0 to 20 if
+
+    ```Python
+    MVC Value : 500
+    ```
 
 ## Resize EMG File
 Sometimes, resizing of your analysis file is unevitable. Luckily, *openhdemg* provides an easy solution. In row five and column two in the left side of the GUI, you can find the `Resize File` button. 
@@ -194,7 +208,7 @@ You can choose between the follwing plotting options:
 - Plot the raw emg signal. Single or multiple channels. (Plot EMGSig)
 - Plot the reference signal. (Plot RefSig)
 - Plot all the MUs pulses (binary representation of the firings time). (Plot MUPulses)
-- Plot the source of decomposition. (Plot Source)
+- Plot the decomposed source. (Plot Source)
 - Plot the instantaneous discharge rate (IDR). (Plot IDR)
 - Plot the differential derivation of the raw emg signal by matrix column. (Plot Derivation)
 - Plot motor unit action potentials (MUAPs) obtained from spike-triggered average from one or multiple MUs. (Plot MUAPs)
@@ -239,9 +253,9 @@ These three setting options are universally used in all plots. There are two mor
 2. Enter/select a pulse `Linewidth` in/from the dropdown list. For example, if you want to use a `Linewidth` of one, enter *1* in the dropdown. 
 3. Once you have clicked the `Plot MUpulses` button, a pop-up plot will appear. 
 
-### Plot the Source of decomposition
-1. Click the `Plot Source` button in row seven and column one in the left side of the `Plot Window`, to plot the Source of the MUs decomposition in your analysis file. 
-2. Enter/select a `MU Number` in/from the dropdown list. For example, if you want to plot the source of `MU Number` one enter *0* in the dropdown. If you want to plot the sources of `MU Number` one, two and three enter *0,1,2,* in the dropdown. You can also set `MU Number` to "all" to plot the sources of all included MUs in the analysis file.
+### Plot the Decomposed Source
+1. Click the `Plot Source` button in row seven and column one in the left side of the `Plot Window`, to plot the Source of the decomposed MUs in your analysis file. 
+2. Enter/select a `MU Number` in/from the dropdown list. For example, if you want to plot the source for `MU Number` one enter *0* in the dropdown. If you want to plot the sources for `MU Number` one, two and three enter *0,1,2,* in the dropdown. You can also set `MU Number` to "all" to plot the sources for all included MUs in the analysis file.
 3. Once you have clicked the `Plot Source` button, a pop-up plot will appear. 
 
 ### Plot Instanteous Discharge rate

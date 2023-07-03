@@ -2897,7 +2897,7 @@ class emgGUI:
         """
         try:
             # Remove motor unit duplicates
-            emg_file1, emg_file2 = openhdemg.remove_duplicates_between(
+            emg_file1, emg_file2, _ = openhdemg.remove_duplicates_between(
                 emgfile1=self.emgfile1,
                 emgfile2=self.emgfile2,
                 threshold=float(self.threshold_adv.get()),

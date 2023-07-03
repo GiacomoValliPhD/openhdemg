@@ -374,7 +374,7 @@ def sort_rawemg(
         # columns. But first check for missing empty channel.
         if n_rows * n_cols != sorted_rawemg.shape[1]:
             raise ValueError(
-                "Wrong number of channels in sorted_rawemg. Check also n_rows and n_cols"
+                "Number of specified rows and columns must match the number of channels."
             )
 
         empty_dict = {f"col{n}": None for n in range(n_cols)}
