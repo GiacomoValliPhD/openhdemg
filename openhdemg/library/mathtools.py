@@ -246,7 +246,7 @@ def compute_sil(ipts, mupulses):
     Parameters
     ----------
     ipts : pd.Series
-        The source of decomposition (or pulse train, IPTS[mu]) of the MU of
+        The  decomposed source (or pulse train, IPTS[mu]) of the MU of
         interest.
     mupulses : ndarray
         The time of firing (MUPULSES[mu]) of the MU of interest.
@@ -260,6 +260,10 @@ def compute_sil(ipts, mupulses):
     --------
     - compute_pnr : to calculate the Pulse to Noise ratio of a single MU.
     """
+
+    # Manage exception of no firings (e.g., as can happen in files from DEMUSE)
+    if len(mupulses) == 0:
+        return np.nan
 
     # Extract source and peaks and align source and peaks based on IPTS
     source = ipts.to_numpy()
@@ -296,22 +300,23 @@ def compute_sil(ipts, mupulses):
     return sil
 
 
-def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
+def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=True):
     """
     Calculate the pulse to noise ratio for a single MU.
 
     Parameters
     ----------
     ipts : pd.Series
-        The source of decomposition (or pulse train, IPTS[mu]) of the MU of
+        The decomposed source (or pulse train, IPTS[mu]) of the MU of
         interest.
     mupulses : ndarray
         The time of firing (MUPULSES[mu]) of the MU of interest.
     separate_paired_firings : bool, default False
         Whether to treat differently paired and non-paired firings during
         the estimation of the signal/noise threshold. According to Holobar
-        2012, this is common in pathological tremor. This can be set to
-        True when working with pathological tremor.
+        2012, this is common in pathological tremor. The user is encouraged to
+        use the default value (True) to increase the robustness of the
+        estimation.
 
     Returns
     -------
@@ -325,8 +330,8 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
 
     # According to Holobar 2014, the PNR is calculated as:
     # 10 * log10((mean of firings) / (mean of noise))
-    # Where instants in the source of decomposition are classified as firings
-    # or noise based on a threshold value named "Pi" or "r".
+    # Where instants in the decomposed source are classified as firings or
+    # noise based on a threshold value named "Pi" or "r".
     #
     # Pi is calculated via a heuristic penalty funtion described in Holobar
     # 2012 as:
@@ -357,7 +362,6 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
     # of variations to estimate Pi or not.
     # If both are used, Pi would be calculated as:
     # Pi = CoVIDI + CoVpIDI
-    # which remains valid also in tremor.
     # Otherwise, Pi would be calculated as:
     # Pi = CoV_all_IDI
 
@@ -392,12 +396,14 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=False):
         idinonp = idi[idi >= (fsamp * 0.05)]
         idip = idi[idi < (fsamp * 0.05)]
 
-        CoVIDI = np.std(idinonp) / np.mean(idinonp)
-        if math.isnan(CoVIDI):
+        if len(idinonp) > 1:
+            CoVIDI = np.std(idinonp) / np.mean(idinonp)
+        else:
             CoVIDI = 0
 
-        CoVpIDI = np.std(idip) / np.mean(idip)
-        if math.isnan(CoVpIDI):
+        if len(idip) > 1:
+            CoVpIDI = np.std(idip) / np.mean(idip)
+        else:
             CoVpIDI = 0
 
         # Calculate Pi

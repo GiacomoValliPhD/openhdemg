@@ -582,7 +582,7 @@ def plot_ipts(
     tight_layout=True,
 ):
     """
-    Plot the IPTS (source of decomposition).
+    Plot the IPTS (decomposed source).
 
     IPTS is the non-binary representation of the MUs firing times.
 

@@ -40,7 +40,7 @@ Once opened, the file is returned as a dict with keys:
     "REF_SIGNAL" : the reference signal
     "PNR" : pulse to noise ratio
     "SIL" : silouette score
-    "IPTS" : pulse train
+    "IPTS" : pulse train (decomposed source)
     "MUPULSES" : instants of firing
     "FSAMP" : sampling frequency
     "IED" : interelectrode distance
@@ -433,7 +433,7 @@ def get_otb_mupulses(binarymusfiring):
 
     for i in binarymusfiring:  # Loop all the MUs
         my_ndarray = []
-        for idx, x in binarymusfiring[i].items():  # Loop the MU firing times #This was iteritems() in older versions
+        for idx, x in binarymusfiring[i].items():  # Loop the MU firing times
             if x > 0:
                 my_ndarray.append(idx)  # Take the firing time and add it to the ndarray
 

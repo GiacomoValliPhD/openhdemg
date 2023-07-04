@@ -743,7 +743,7 @@ def tracking(
     emgfile1,
     emgfile2,
     firings="all",
-    derivation="mono",
+    derivation="sd",
     timewindow=50,
     threshold=0.8,
     matrixcode="GR08MM1305",
@@ -771,7 +771,7 @@ def tracking(
             The STA is calculated over all the firings.
         A list can be passed as [start, stop] e.g., [0, 25]
         to compute the STA on the first 25 firings.
-    derivation : str {mono, sd, dd}, default mono
+    derivation : str {mono, sd, dd}, default sd
         Whether to compute the sta on the monopolar signal, or on the single or
         double differential derivation.
     timewindow : int, default 50
@@ -898,6 +898,8 @@ def tracking(
         emgfile2, emgfile2_sorted, firings=firings, timewindow=timewindow * 2,
     )
 
+    print("\nTracking started")
+
     # Tracking function to run in parallel
     def parallel(mu_file1):  # Loop all the MUs of file 1
         # Dict to fill with the 2d cross-correlation results
@@ -911,7 +913,7 @@ def tracking(
                 sta_emgfile2[mu_file2],
                 finalduration=0.5
             )
-            aligned_sta1, aligned_sta2 = sta_emgfile1[mu_file1], sta_emgfile2[mu_file2]
+            #aligned_sta1, aligned_sta2 = sta_emgfile1[mu_file1], sta_emgfile2[mu_file2]
 
             # Second, compute 2d cross-correlation
             df1, _ = unpack_sta(aligned_sta1)
@@ -936,10 +938,10 @@ def tracking(
         return res
 
     # Start parallel execution
-    # Meausere running time
+    # Measure running time
     t0 = time.time()
 
-    res = Parallel(n_jobs=-1)(
+    res = Parallel(n_jobs=8)(
         delayed(parallel)(mu_file1) for mu_file1 in range(emgfile1["NUMBER_OF_MUS"])
     )
 
@@ -1032,7 +1034,7 @@ def remove_duplicates_between(
     emgfile1,
     emgfile2,
     firings="all",
-    derivation="mono",
+    derivation="sd",
     timewindow=50,
     threshold=0.9,
     matrixcode="GR08MM1305",
@@ -1060,7 +1062,7 @@ def remove_duplicates_between(
             The STA is calculated over all the firings.
         A list can be passed as [start, stop] e.g., [0, 25]
         to compute the STA on the first 25 firings.
-    derivation : str {mono, sd, dd}, default mono
+    derivation : str {mono, sd, dd}, default sd
         Whether to compute the sta on the monopolar signal, or on the single or
         double differential derivation.
     timewindow : int, default 50
@@ -1098,6 +1100,9 @@ def remove_duplicates_between(
     -------
     emgfile1, emgfile2 : dict
         The original emgfiles without the duplicated MUs.
+    tracking_res : pd.DataFrame
+        The results of the tracking including the MU from file 1,
+        MU from file 2 and the normalised cross-correlation value (XCC).
 
     See also
     --------
@@ -1114,7 +1119,7 @@ def remove_duplicates_between(
 
     >>> emgfile1 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emgfile2 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    >>> emgfile1, emgfile2 = emg.remove_duplicates_between(
+    >>> emgfile1, emgfile2, tracking_res = emg.remove_duplicates_between(
     ...     emgfile1,
     ...     emgfile2,
     ...     firings="all",
@@ -1163,7 +1168,7 @@ def remove_duplicates_between(
                 emgfile=emgfile1, munumber=mus_to_remove, if_single_mu="remove"
             )
 
-            return emgfile1, emgfile2
+            return emgfile1, emgfile2, tracking_res
 
         else:
             # Remove MUs from emgfile2
@@ -1173,7 +1178,7 @@ def remove_duplicates_between(
                 emgfile=emgfile2, munumber=mus_to_remove, if_single_mu="remove"
             )
 
-            return emgfile1, emgfile2
+            return emgfile1, emgfile2, tracking_res
 
     elif which == "PNR":
         # Create a list containing which MU to remove in which file based
@@ -1199,7 +1204,7 @@ def remove_duplicates_between(
             emgfile=emgfile2, munumber=to_remove2, if_single_mu="remove"
         )
 
-        return emgfile1, emgfile2
+        return emgfile1, emgfile2, tracking_res
 
     elif which == "SIL":
         # Create a list containing which MU to remove in which file based
@@ -1225,7 +1230,7 @@ def remove_duplicates_between(
             emgfile=emgfile2, munumber=to_remove2, if_single_mu="remove"
         )
 
-        return emgfile1, emgfile2
+        return emgfile1, emgfile2, tracking_res
 
     else:
         raise ValueError(

@@ -43,9 +43,9 @@ nav:
     - For new users:
       - Setup working environment: tutorials/Setup_working_env.md
   - Graphical-Interface:
-    - Intro: GUI_intro.md
-    - Basics: GUI_basics.md
-    - Advanced: GUI_advanced.md
+    - intro: GUI_intro.md
+    - basics: GUI_basics.md
+    - advanced: GUI_advanced.md
   - What's-New.md
   - Contacts.md
   - Cite-Us.md
@@ -108,9 +108,9 @@ extra:
   generator: false # Remove 'Made with Material for MkDocs' in the footer.
   social:
     - icon: fontawesome/brands/github 
-      link: https://github.com/GiacomoValliPhD/openhdemg
+      link: https://github.com/GiacomoValliPhD
     - icon: fontawesome/brands/twitter 
-      link: https://twitter.com/openhdemg
+      link: https://
   version:
     provider: mike # TODO versioning
 
