@@ -58,7 +58,7 @@ if __name__ == "__main__":
         license="GPL-3.0",
         project_urls={
             "Documentation": "https://giacomovalli.com/openhdemg",
-            "release notes": "https://giacomovalli.com/openhdemg/What%27s-New",
+            "Release Notes": "https://giacomovalli.com/openhdemg/What%27s-New",
             "Source Code": "https://github.com/GiacomoValliPhD/openhdemg",
             "Bug Tracker": "https://github.com/GiacomoValliPhD/openhdemg/issues",
         },

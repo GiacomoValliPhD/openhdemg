@@ -514,7 +514,6 @@ class emgGUI:
             bg_color="LightBlue4",
             fg_color="LightBlue4",
             command=lambda: (
-                # Check user OS for pdf opening
                 (
                     webbrowser.open("https://www.giacomovalli.com/openhdemg/GUI_intro/")
                 ),
@@ -535,7 +534,6 @@ class emgGUI:
             bg_color="LightBlue4",
             fg_color="LightBlue4",
             command=lambda: (
-                # Check user OS for pdf opening
                 (
                     webbrowser.open("https://www.giacomovalli.com/openhdemg/tutorials/Setup_working_env/")
                 ),
@@ -555,6 +553,11 @@ class emgGUI:
             height=30,
             bg_color="LightBlue4",
             fg_color="LightBlue4",
+            command=lambda: (
+                (
+                    webbrowser.open("https://www.giacomovalli.com/openhdemg/Contacts/#meet-the-developers")
+                ),
+            ),
         )
         redirect_button.grid(row=2, column=1, sticky=E)
 
@@ -571,7 +574,6 @@ class emgGUI:
             bg_color="LightBlue4",
             fg_color="LightBlue4",
             command=lambda: (
-                # Check user OS for pdf opening
                 (
                     webbrowser.open("https://www.giacomovalli.com/openhdemg/Contacts/")
                 ),
@@ -2070,7 +2072,6 @@ class emgGUI:
                 bg_color="LightBlue4",
                 fg_color="LightBlue4",
                 command=lambda: (
-                    # Check user OS for pdf opening
                     (
                         webbrowser.open("https://www.giacomovalli.com/openhdemg/GUI_basics/#plot-motor-units")
                     ),
