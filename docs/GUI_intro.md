@@ -1,7 +1,13 @@
 # Graphical Interface
 
 Welcome, to the *openhdemg* Graphical User Interface (GUI) introduction! 
-The *openhdemg* GUI incorporates all relevant high-level functions of the *openhdemg* library. The GUI allows you to successfully perform High-Density Electromyography (HD-EMG) data anlysis **without any programming skills required**. Moreover, there is no downside to using the GUI even if you are an experienced programmer. 
+The *openhdemg* GUI incorporates all relevant high-level functions of the *openhdemg* library. The GUI allows you to successfully perform High-Density Electromyography (HD-EMG) data anlysis **without any programming skills required**. Moreover, there is no downside to using the GUI even if you are an experienced programmer.
+
+The GUI can be simply accessed from the command line with:
+
+```shell
+python -m openhdemg.gui.openhdemg_gui
+```
 
 -------------------------------------------------
 

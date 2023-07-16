@@ -17,14 +17,18 @@ theme:
   features:
     - content.code.copy
   palette:
-  - scheme: default
-    toggle:
-      icon: material/brightness-7
-      name: Switch to dark mode
-  - scheme: slate
-    toggle:
-      icon: material/brightness-4
-      name: Switch to light mode
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
 
 # Select a plugin to get the docs from docstrings and setup the numpy stile as
 # the default style.
