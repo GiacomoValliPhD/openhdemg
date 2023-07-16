@@ -4,6 +4,10 @@ site_author: Giacomo Valli & Paul Ritsche
 site_description: >-
   All you need to know about openhdemg
 
+# Repository
+repo_name: openhdemg
+repo_url: https://github.com/GiacomoValliPhD/openhdemg
+
 copyright: Copyright &copy; 2022 - 2023 Giacomo Valli & Paul Ritsche
 
 theme:
@@ -12,6 +16,15 @@ theme:
   favicon: yml_graphics/Transp_Icon.png
   features:
     - content.code.copy
+  palette:
+  - scheme: default
+    toggle:
+      icon: material/brightness-7
+      name: Switch to dark mode
+  - scheme: slate
+    toggle:
+      icon: material/brightness-4
+      name: Switch to light mode
 
 # Select a plugin to get the docs from docstrings and setup the numpy stile as
 # the default style.
@@ -112,7 +125,7 @@ extra:
   generator: false # Remove 'Made with Material for MkDocs' in the footer.
   social:
     - icon: fontawesome/brands/github 
-      link: https://github.com/GiacomoValliPhD
+      link: https://github.com/GiacomoValliPhD/openhdemg
     - icon: fontawesome/brands/twitter 
       link: https://twitter.com/openhdemg
   version:
