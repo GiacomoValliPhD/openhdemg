@@ -515,7 +515,7 @@ class emgGUI:
             fg_color="LightBlue4",
             command=lambda: (
                 (
-                    webbrowser.open("https://www.giacomovalli.com/openhdemg/GUI_intro/")
+                    webbrowser.open("https://www.giacomovalli.com/openhdemg/gui_intro/")
                 ),
             ),
         )
@@ -535,7 +535,7 @@ class emgGUI:
             fg_color="LightBlue4",
             command=lambda: (
                 (
-                    webbrowser.open("https://www.giacomovalli.com/openhdemg/tutorials/Setup_working_env/")
+                    webbrowser.open("https://www.giacomovalli.com/openhdemg/tutorials/setup_working_env/")
                 ),
             ),
         )
@@ -555,7 +555,7 @@ class emgGUI:
             fg_color="LightBlue4",
             command=lambda: (
                 (
-                    webbrowser.open("https://www.giacomovalli.com/openhdemg/Contacts/#meet-the-developers")
+                    webbrowser.open("https://www.giacomovalli.com/openhdemg/about-us/#meet-the-developers")
                 ),
             ),
         )
@@ -575,7 +575,7 @@ class emgGUI:
             fg_color="LightBlue4",
             command=lambda: (
                 (
-                    webbrowser.open("https://www.giacomovalli.com/openhdemg/Contacts/")
+                    webbrowser.open("https://www.giacomovalli.com/openhdemg/contacts/")
                 ),
             ),
         )
@@ -596,7 +596,7 @@ class emgGUI:
             command=lambda: (
                 # Check user OS for pdf opening
                 (
-                    webbrowser.open("https://www.giacomovalli.com/openhdemg/Cite-Us/")
+                    webbrowser.open("https://www.giacomovalli.com/openhdemg/cite-us/")
                 ),
             ),
         )
@@ -2073,7 +2073,7 @@ class emgGUI:
                 fg_color="LightBlue4",
                 command=lambda: (
                     (
-                        webbrowser.open("https://www.giacomovalli.com/openhdemg/GUI_basics/#plot-motor-units")
+                        webbrowser.open("https://www.giacomovalli.com/openhdemg/gui_basics/#plot-motor-units")
                     ),
                 ),
             )

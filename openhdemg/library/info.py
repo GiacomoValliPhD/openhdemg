@@ -244,7 +244,7 @@ class info:
             \x1B[0m
 
         For the full list of contributors visit:
-        https://www.giacomovalli.com/openhdemg/About-us/
+        https://www.giacomovalli.com/openhdemg/about-us/
         """
 
         # Make Text Bold and Italic with Escape Sequence
@@ -298,8 +298,8 @@ class info:
 
         links = {
             "Project Website": "https://www.giacomovalli.com/openhdemg/",
-            "Release Notes": "https://www.giacomovalli.com/openhdemg/What%27s-New/",
-            "Cite Us": "https://www.giacomovalli.com/openhdemg/Cite-Us/",
+            "Release Notes": "https://www.giacomovalli.com/openhdemg/what%27s-new/",
+            "Cite Us": "https://www.giacomovalli.com/openhdemg/cite-us/",
             "Discussion Forum": "https://github.com/GiacomoValliPhD/openhdemg/discussions",
             "Report Bugs": "https://github.com/GiacomoValliPhD/openhdemg/issues",
         }

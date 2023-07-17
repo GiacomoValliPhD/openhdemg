@@ -12,8 +12,8 @@ copyright: Copyright &copy; 2022 - 2023 Giacomo Valli & Paul Ritsche
 
 theme:
   name: "material"
-  logo: yml_graphics/Transp_Icon.png
-  favicon: yml_graphics/Transp_Icon.png
+  logo: yml_graphics/transp_icon.png
+  favicon: yml_graphics/transp_icon.png
   features:
     - content.code.copy
   palette:
@@ -54,31 +54,31 @@ plugins:
 # front of the filename whose title you want to change.
 nav:
   - Welcome: index.md
-  - About-us.md
-  - Quick-Start.md
+  - About us: about-us.md
+  - Quick-Start: quick-start.md
   - Tutorials:
     #- Overview on the tutorials: Tutorials.md
     - For new users:
-      - Setup working environment: tutorials/Setup_working_env.md
+      - Setup working environment: tutorials/setup_working_env.md
     - Basics of openhdemg:
       - Structure of the emgfile: tutorials/emgfile_structure.md
   - Graphical Interface:
-    - Intro: GUI_intro.md
-    - Basics: GUI_basics.md
-    - Advanced: GUI_advanced.md
-  - What's-New.md
-  - Contacts.md
-  - Cite-Us.md
-  - Contribute.md
+    - Intro: gui_intro.md
+    - Basics: gui_basics.md
+    - Advanced: gui_advanced.md
+  - What's New: what's-new.md
+  - Contacts: contacts.md
+  - Cite us: cite-us.md
+  - Contribute: contribute.md
   - API Reference:
-    - openfiles: API_openfiles.md
-    - plotemg: API_plotemg.md
-    - analysis: API_analysis.md
-    - tools: API_tools.md
-    - mathtools: API_mathtools.md
-    - muap: API_muap.md
-    - electrodes: API_electrodes.md
-    - info: API_info.md
+    - openfiles: api_openfiles.md
+    - plotemg: api_plotemg.md
+    - analysis: api_analysis.md
+    - tools: api_tools.md
+    - mathtools: api_mathtools.md
+    - muap: api_muap.md
+    - electrodes: api_electrodes.md
+    - info: api_info.md
     
 # Extensions
 markdown_extensions:

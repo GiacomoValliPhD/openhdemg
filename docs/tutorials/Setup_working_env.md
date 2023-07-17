@@ -2,7 +2,7 @@
 
 Welcome to the tutorial on setting up your working environment.
 
-This is the first step necessary to start using *openhdemg*, both if you want to use the library's functions and develop your scripts, or if you only want to use the [graphical user interface (GUI)](../GUI_intro.md).
+This is the first step necessary to start using *openhdemg*, both if you want to use the library's functions and develop your scripts, or if you only want to use the [graphical user interface (GUI)](../gui_intro.md).
 
 The working environment refers to the set of resources necessary to carry out a particular task or job. In the context of this tutorial, we refer to the combination of a computer, a programming language, an integrated development environment and a set of algorithms.
 
@@ -18,7 +18,7 @@ The integrated development environment is a software that facilitates to write, 
 
 By following the steps outlined in this tutorial, you will be able to install Python, set up VS Code, and configure your environment to write clean and efficient Python code.
 
-![vscode_overview](Setup_working_env/vscode_overview.png)
+![vscode_overview](setup_working_env/vscode_overview.png)
 
 ## Install Python and VS Code on Windows
 
@@ -67,7 +67,7 @@ Now that VS Code is installed, you need to set it up to code in Python and to in
 1. Open Visual Studio Code.
 2. Install the "Python" extension by Microsoft. To do so, click on the Extensions view on the left sidebar, search for "Python" in the search bar, and click the "Install" button next to the "Python" extension by Microsoft.
 
-![python_extension](Setup_working_env/python_extension.png)
+![python_extension](setup_working_env/python_extension.png)
 
 Once the extension is installed, you need to create a folder where you will palce all the scripts that you will write. You can create this folder with any name an in any location in your computer, but make it simple to find! In this tutorial the folder was placed in the Desktop and named `Test_folder`.
 
@@ -77,7 +77,7 @@ Once the folder is created:
 2. In VS Code click on 'Terminal' and then on 'New Terminal'.
 3. Select your folder in the window that pops up.
 
-![add_folder_toworks](Setup_working_env/add_folder_toworks.png)
+![add_folder_toworks](setup_working_env/add_folder_toworks.png)
 
 With your powershell terminal that is **pointing to your folder path**, you can now create a Virtual environment.
 
@@ -97,7 +97,7 @@ For Mac users:
 python3 -m venv myvenv  
 ```
 
-![venv_command](Setup_working_env/venv_command.png)
+![venv_command](setup_working_env/venv_command.png)
 
 This command will create a Virtual environment named `myvenv`.
 
@@ -113,7 +113,7 @@ For Mac users:
 source myvenv/bin/activate  
 ```
 
-![activated_venv](Setup_working_env/activated_venv.png)
+![activated_venv](setup_working_env/activated_venv.png)
 
 If everything was successful, you should see the colourful name of your Virtual environment to the left of your folder path (as in the figure above).
 
@@ -137,7 +137,7 @@ python -m openhdemg.gui.openhdemg_gui
 
 And the GUI will start:
 
-![openhdemg GUI](../md_graphics/Index/GUI_Preview.png)
+![openhdemg GUI](../md_graphics/index/gui_preview.png)
 
 If you instead want to write your own script using the functions contained in *openhdemg*, follow these steps:
 
@@ -145,11 +145,11 @@ If you instead want to write your own script using the functions contained in *o
 2. Click on the icon to create a new file in your workspace folder (`Test_folder` in this case).
 3. Name the file as you wish but wit a .py extension.
 
-![create_newfile](Setup_working_env/create_newfile.png)
+![create_newfile](setup_working_env/create_newfile.png)
 
 Now you can open your .py file, write your code and execute it.
 
-![first_script](Setup_working_env/first_script.png)
+![first_script](setup_working_env/first_script.png)
 
 ## Troubleshooting
 

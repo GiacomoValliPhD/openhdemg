@@ -1,6 +1,6 @@
 ## What is the emgfile
 
-The `emgfile` is the basic data structure of the *openhdemg* framework. In practical terms, it is a Python object containing all the information of the decomposed HD-EMG file loaded in the [working environment](Setup_working_env.md) via the dedicated *openhdemg* functions.
+The `emgfile` is the basic data structure of the *openhdemg* framework. In practical terms, it is a Python object containing all the information of the decomposed HD-EMG file loaded in the [working environment](setup_working_env.md) via the dedicated *openhdemg* functions.
 
 For example:
 

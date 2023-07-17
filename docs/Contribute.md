@@ -2,7 +2,7 @@ This is probably the most important page of the website. As a community, we need
 
 There are many ways by which you can contribute to the growth of the *openhdemg* project, and all of them are equally important.
 
-If you want to become part of the [team](About-us.md#meet-the-developers), read through the next sections to understand which ways of contribution fit better with your skills and expertise. For any question, or to begin the collaboration, [contact us](Contacts.md) through your favorite channel.
+If you want to become part of the [team](about-us.md#meet-the-developers), read through the next sections to understand which ways of contribution fit better with your skills and expertise. For any question, or to begin the collaboration, [contact us](contacts.md) through your favorite channel.
 
 ## Contribution categories
 
