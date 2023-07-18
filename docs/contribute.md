@@ -8,7 +8,7 @@ If you want to become part of the [team](about-us.md#meet-the-developers), read 
 
 :fontawesome-solid-microchip: &nbsp; Code development
 
-This category is for individuals who want to contribute to the openhdemg project by writing code. As a developer, you can help enhance the framework's functionality, improve existing features, fix bugs, and implement new algorithms and analysis techniques. Your contributions will directly impact the usability and effectiveness of *openhdemg*. For details, read the specific section [Guidelines for code developers](#guidelines-for-code-developers).
+This category is for individuals who want to contribute to the openhdemg project by writing code. As a developer, you can help enhance the framework's functionality, improve existing features, fix bugs, and implement new algorithms and analysis techniques. Your contributions will directly impact the usability and effectiveness of *openhdemg*. For details, read the specific section [Guidelines for code developers](#general-guidelines-for-code-developers).
 
 
 :fontawesome-solid-brain: &nbsp; Knowledge sharing
