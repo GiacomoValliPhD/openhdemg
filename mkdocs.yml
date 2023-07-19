@@ -91,7 +91,7 @@ markdown_extensions:
   - toc:
       permalink: true
       title: On this page
-      toc_depth: 2
+      toc_depth: 3
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.betterem:

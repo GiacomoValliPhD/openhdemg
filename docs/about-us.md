@@ -7,7 +7,7 @@
 </div>
 
 <br>
-But we cannot achieve this alone! That's why openhdemg is a community-driven project where everyone's contribution is welcomed and essential.
+But we cannot achieve this alone! That's why *openhdemg* is a community-driven project where everyone's [contribution](contribute.md) is welcomed and essential.
 
 ## Goals
 
@@ -21,7 +21,30 @@ We want to empower researchers with an efficient, effective and comprehensive fr
 
 ## Roadmap
 
-A roadmap is 
+A roadmap is a collection of planned **milestones** and **tasks** that are necessary for the successful development and growth of the *openhdemg* project. It outlines the key steps and objectives that need to be achieved to meet the project's goals and deliver value to the community. The roadmap drives the project's evolution, ensuring that efforts are focused, organized, and aligned with the overall vision.
+
+At this stage, we have identified and set six major milestones for the *openhdemg* project. These milestones are divided into two categories: three on the development side and three on the engagement side.
+
+To read the complete roadmap, click on the next button.
+
+[Complete roadmap &nbsp; :fontawesome-solid-map-location-dot:](about-us/complete-roadmap.md){ .md-button .md-button--primary }
+
+<br>
+
+``` mermaid
+graph TB;
+    A[Development] --> B(Feedback from beta test)
+    B --> C(Stable release v0.1)
+    C --> D(Continuous updates)
+    E[Engagement] --> F(Reach)
+    E[Engagement] --> G(Outreach)
+    E[Engagement] --> H(New contributors)
+    F --> I(Feedback)
+    G --> I(Feedback)
+    I --> D
+    H --> D
+    D --> L(Release v1.0)
+```
 
 ## Meet the developers
 
@@ -49,4 +72,4 @@ Francesco Negro:
 
 - Contribution: &nbsp; :fontawesome-solid-brain: Knowledge sharing &nbsp; :fontawesome-solid-file-code: Code sharing &nbsp; :octicons-codescan-checkmark-24: Accuracy check
 
-- Short bio for Francesco
+- Prof. Negro is a Full Professor at the Department of Clinical and Experimental Sciences at Universita’ degli Studi di Brescia (IT). His research interests include applied physiology of the human motor system, signal processing of intramuscular and surface electromyography, and modeling of spinal neural networks.
