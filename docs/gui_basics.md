@@ -1,22 +1,22 @@
 # Graphical Interface
 
-This is the basic introduction to the *openhdemg* GUI. In the next few sections, we will go through the basic analysis functions embedded in the GUI. For the advanced stuff, take a look at the [advanced](GUI_advanced.md) chapter. We will start with how to sort the motor units (MUs) included in your analysis file, go over force and MU property analysis, take a detour on plotting, and take a look at how to save and reset your analysis. Have fun!
+This is the basic introduction to the *openhdemg* GUI. In the next few sections, we will go through the basic analysis functions embedded in the GUI. For the advanced stuff, take a look at the [advanced](gui_advanced.md) chapter. We will start with how to sort the motor units (MUs) included in your analysis file, go over force and MU property analysis, take a detour on plotting, and take a look at how to save and reset your analysis. Have fun!
 
 --------------------------------------------
 
 ## Motor Unit Sorting
 To sort the MUs included in your analysis file in order of their recruitement, we implemented a sorting algorithm. The MUs are sorted based on their recruitement order in an ascending manner.
 
-1. Load a file. Take a look at the [intro](GUI_intro.md#specifying-an-analysis-file) section on how to do so.
+1. Load a file. Take a look at the [intro](gui_intro.md#specifying-an-analysis-file) section on how to do so.
 
-2. Pay attention to view the MUs first, using the `View MUs` button (we explained this button in the [intro](GUI_intro.md) chapter). The MUs will be sorted anyways, but without viewing them you won't see what is happening. 
+2. Pay attention to view the MUs first, using the `View MUs` button (we explained this button in the [intro](gui_intro.md) chapter). The MUs will be sorted anyways, but without viewing them you won't see what is happening. 
 
 3. On the left hand side in the main window of the GUI, you can find the `Sort MUs` button. It is located in row three, column two. Once you press the button, the MUs will be sorted. 
 
 ## Remove Motor Units
 To remove MUs included in your analysis file, you can click the `Remove MUs` button. The button is located on the left hand side in the main window of the GUI in column one of row four.
 
-![remove_mus](md_graphics/GUI/Remove_MU_window.png)
+![remove_mus](md_graphics/gui/remove_mu_window.png)
 
 1. View the MUs using the `View MUs` button prior to MU removal, you can directly see what is happening.
 
@@ -34,7 +34,7 @@ To remove MUs included in your analysis file, you can click the `Remove MUs` but
 ## Reference Signal Editing
 The *openhdemg* GUI also allows you to edit and filter reference signals corresponding to your analysis file (this can be either a file containing both the MUs and the reference signal or a file containing only the reference signal).
 
-![reference_sig](md_graphics/GUI/Refsig_Filter_window.png)
+![reference_sig](md_graphics/gui/refsig_filter_window.png)
 
 1. View the MUs using the `View MUs` button prior to reference signal editing, so you can see what is happening.
 
@@ -85,7 +85,7 @@ The *openhdemg* GUI also allows you to edit and filter reference signals corresp
 ## Resize EMG File
 Sometimes, resizing of your analysis file is unevitable. Luckily, *openhdemg* provides an easy solution. In row five and column two in the left side of the GUI, you can find the `Resize File` button. 
 
-![resize_emg](md_graphics/GUI/Resize_window.png)
+![resize_emg](md_graphics/gui/resize_window.png)
 
 1. View the MUs using the `View MUs` button prior to file resizing, you can directly see what is happening.
 
@@ -96,7 +96,7 @@ Sometimes, resizing of your analysis file is unevitable. Luckily, *openhdemg* pr
 ## Analyse Force Signal
 In order to analyse the force signal in your analysis file, you can press the `Analyse Force` button located in row six and column one in the left side of the GUI. A new pop-up window will open where you can analyse the maximum voluntary contraction (MVC) value as well as the rate of force development (RFD). 
 
-![force_analysis](md_graphics/GUI/Force_Analysis_window.png)
+![force_analysis](md_graphics/gui/force_analysis_window.png)
 
 ### Maximum voluntary contraction
 1. In order to get the MVC value, simply press the `Get MVC` button. A pop-up plot opens and you can select the area where you suspect the MVC to be. 
@@ -119,7 +119,7 @@ In order to analyse the force signal in your analysis file, you can press the `A
 ## Motor Unit Properties
 When you press the `MU Properties` button in row six and column two, the `Motor Unit Properties` Window will pop up. In this window, you have the option to analyse several MUs propierties such as the MUs recruitement threshold or the MUs discharge rate. 
 
-![mus_properties](md_graphics/GUI/MU_properties_window.png)
+![mus_properties](md_graphics/gui/mu_properties_window.png)
 
 1. Specify your priorly calculated MVC in the `Enter MVC [N]:` textbox, like
 
@@ -201,7 +201,7 @@ and are all displayed in the `Result Output` once the analysis in completed.
 In *openhdemg* we have implemented options to plot your analysis file ... a lot of options!
 Upon clicking the `Plot MUs` button, the `Plot Window` will pop up. In the top right corner of the window, you can find an information button forwarding you directly to some tutorials. 
 
-![plot_mus](md_graphics/GUI/Plot_window.png)
+![plot_mus](md_graphics/gui/plot_window.png)
 
 You can choose between the follwing plotting options:
 
@@ -298,9 +298,10 @@ We all make mistakes! But, most likely, we are also able to correct them. In cas
 
 --------------------------------------------
 
-We hope you had fun! We are now at the end of describing the basic functions included in the *openhdemg* GUI. In case you need further clarification, don't hesitate to post a question in the [*openhdemg* discussion section](https://github.com/GiacomoValliPhD/openhdemg/discussions){:target="_blank"}. Moreover, if you noticed an error that was not properly catched by the GUI, please file a bug report according to our guidelines (LINK).
-If you want to proceed to the advanced stuff now, take a look at the [advanced](GUI_advanced.md) tab on the left side of the webpage.
+If you want to proceed to the advanced stuff now, take a look at the [advanced](gui_advanced.md) tab on the left side of the webpage.
 
 ## More questions?
 
 We hope that this tutorial was useful. If you need any additional information, do not hesitate to read the answers or ask a question in the [*openhdemg* discussion section](https://github.com/GiacomoValliPhD/openhdemg/discussions){:target="_blank"}. If you are not familiar with GitHub discussions, please read this [post](https://github.com/GiacomoValliPhD/openhdemg/discussions/42){:target="_blank"}. This will allow the *openhdemg* community to answer your questions.
+
+Moreover, if you noticed an error that was not properly catched by the GUI, please [report the issue](https://github.com/GiacomoValliPhD/openhdemg/issues){:target="_blank"}.

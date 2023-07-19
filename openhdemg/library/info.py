@@ -217,7 +217,7 @@ class info:
         Us
         --
 
-        People that contributed to the development of this project are:
+        The developers of this project are:
 
         Mr. Giacomo Valli:
             The creator of the project and the developer of the library.
@@ -242,6 +242,9 @@ class info:
             methods to evaluate muscle morphological as well architectural
             parameters.
             \x1B[0m
+
+        For the full list of contributors visit:
+        https://www.giacomovalli.com/openhdemg/about-us/
         """
 
         # Make Text Bold and Italic with Escape Sequence
@@ -264,15 +267,17 @@ class info:
         --------
         >>> import openhdemg.library as emg
         >>> emg.info().contacts()
-        "Name": "Giacomo Valli",
-        "Email": "giacomo.valli@phd.unipd.it",
-        "Twitter": "@giacomo_valli"
+        "Primary contact": "openhdemg@gmail.com",
+        "Twitter": "@openhdemg",
+        "Maintainer": "Giacomo Valli",
+        "Maintainer Email": "giacomo.valli@phd.unipd.it",
         """
 
         contact = {
-            "Name": "Giacomo Valli",
-            "Email": "giacomo.valli@phd.unipd.it",
+            "Primary contact": "openhdemg@gmail.com",
             "Twitter": "@openhdemg",
+            "Maintainer": "Giacomo Valli",
+            "Maintainer Email": "giacomo.valli@phd.unipd.it",
         }
 
         # Pretty dict printing
@@ -284,12 +289,17 @@ class info:
     def links(self):
         """
         Print a collection of useful links.
+
+        Examples
+        --------
+        >>> import openhdemg.library as emg
+        >>> emg.info().links()
         """
 
         links = {
             "Project Website": "https://www.giacomovalli.com/openhdemg/",
-            "Release Notes": "https://www.giacomovalli.com/openhdemg/What%27s-New/",
-            "Cite Us": "https://www.giacomovalli.com/openhdemg/Cite-Us/",
+            "Release Notes": "https://www.giacomovalli.com/openhdemg/what%27s-new/",
+            "Cite Us": "https://www.giacomovalli.com/openhdemg/cite-us/",
             "Discussion Forum": "https://github.com/GiacomoValliPhD/openhdemg/discussions",
             "Report Bugs": "https://github.com/GiacomoValliPhD/openhdemg/issues",
         }
@@ -303,6 +313,11 @@ class info:
     def citeus(self):
         """
         Print how to cite the project.
+
+        Examples
+        --------
+        >>> import openhdemg.library as emg
+        >>> emg.info().citeus()
         """
 
         cite = {

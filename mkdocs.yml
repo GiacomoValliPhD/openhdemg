@@ -4,14 +4,31 @@ site_author: Giacomo Valli & Paul Ritsche
 site_description: >-
   All you need to know about openhdemg
 
+# Repository
+repo_name: openhdemg
+repo_url: https://github.com/GiacomoValliPhD/openhdemg
+
 copyright: Copyright &copy; 2022 - 2023 Giacomo Valli & Paul Ritsche
 
 theme:
   name: "material"
-  logo: yml_graphics/Transp_Icon.png
-  favicon: yml_graphics/Transp_Icon.png
+  logo: yml_graphics/transp_icon.png
+  favicon: yml_graphics/transp_icon.png
   features:
     - content.code.copy
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
 
 # Select a plugin to get the docs from docstrings and setup the numpy stile as
 # the default style.
@@ -37,27 +54,31 @@ plugins:
 # front of the filename whose title you want to change.
 nav:
   - Welcome: index.md
-  - Quick-Start.md
+  - About us: about-us.md
+  - Quick-Start: quick-start.md
   - Tutorials:
     #- Overview on the tutorials: Tutorials.md
     - For new users:
-      - Setup working environment: tutorials/Setup_working_env.md
-  - Graphical-Interface:
-    - intro: GUI_intro.md
-    - basics: GUI_basics.md
-    - advanced: GUI_advanced.md
-  - What's-New.md
-  - Contacts.md
-  - Cite-Us.md
-  - 'API Reference':
-    - openfiles: API_openfiles.md
-    - plotemg: API_plotemg.md
-    - analysis: API_analysis.md
-    - tools: API_tools.md
-    - mathtools: API_mathtools.md
-    - muap: API_muap.md
-    - electrodes: API_electrodes.md
-    - info: API_info.md
+      - Setup working environment: tutorials/setup_working_env.md
+    - Basics of openhdemg:
+      - Structure of the emgfile: tutorials/emgfile_structure.md
+  - Graphical Interface:
+    - Intro: gui_intro.md
+    - Basics: gui_basics.md
+    - Advanced: gui_advanced.md
+  - What's New: what's-new.md
+  - Contacts: contacts.md
+  - Cite us: cite-us.md
+  - Contribute: contribute.md
+  - API Reference:
+    - openfiles: api_openfiles.md
+    - plotemg: api_plotemg.md
+    - analysis: api_analysis.md
+    - tools: api_tools.md
+    - mathtools: api_mathtools.md
+    - muap: api_muap.md
+    - electrodes: api_electrodes.md
+    - info: api_info.md
     
 # Extensions
 markdown_extensions:
@@ -70,7 +91,7 @@ markdown_extensions:
   - toc:
       permalink: true
       title: On this page
-      toc_depth: 2
+      toc_depth: 3
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.betterem:
@@ -108,7 +129,7 @@ extra:
   generator: false # Remove 'Made with Material for MkDocs' in the footer.
   social:
     - icon: fontawesome/brands/github 
-      link: https://github.com/GiacomoValliPhD
+      link: https://github.com/GiacomoValliPhD/openhdemg
     - icon: fontawesome/brands/twitter 
       link: https://twitter.com/openhdemg
   version:

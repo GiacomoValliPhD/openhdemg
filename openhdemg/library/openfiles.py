@@ -35,7 +35,7 @@ askopenfile, asksavefile :
 Notes
 -----
 Once opened, the file is returned as a dict with keys:
-    "SOURCE" : source of the file (i.e., "DEMUSE", "OTB", "CUSTOM")
+    "SOURCE" : source of the file (i.e., "CUSTOM", "DEMUSE", "OTB")
     "RAW_SIGNAL" : the raw EMG signal
     "REF_SIGNAL" : the reference signal
     "PNR" : pulse to noise ratio
@@ -1553,7 +1553,7 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
         )
     else:
         raise Exception(
-            "filesource not valid, it must be one of 'DEMUSE', 'OTB', 'OTB_REFSIG' or 'OPENHDEMG'"
+            "filesource not valid, it must be one of 'DEMUSE', 'OTB', 'OTB_REFSIG', 'OPENHDEMG' or 'CUSTOM'"
         )
 
     # Destroy the root since it is no longer necessary

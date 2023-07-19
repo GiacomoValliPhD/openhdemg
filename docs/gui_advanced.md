@@ -2,7 +2,7 @@
 
 This is the toturial for the `Advanced Tools` in the *openhdemg* GUI. Great that you made it this far! In the next few sections we will take a look at the more advanced functions implemented in the GUI. But first of all, you need to click the `Advanced Tools`button in the main window of the GUI to get to the respective adavanced analysis. The `Advanced Tools Window` will open.
 
-![advanced_analysis](md_graphics/GUI/Advanced_analysis_window.png)
+![advanced_analysis](md_graphics/gui/advanced_analysis_window.png)
 
 So far, we have included three advanced analyses in the *openhdemg* GUI.
 
@@ -32,7 +32,7 @@ Once you specified these parameter, you can click the `Advaned Analysis` button 
 ## Motor Unit Tracking
 When you want to track MUs across two different files, you need to select the `Motor Unit Tracking` options and specify the `Matrix Code` and `Matrix Orentation` in the `Advanced Tools Window`. Once you clicked the `Advanced Analysis` button, the `MUs Tracking Window` will pop-up.
 
-![mus_tracking](md_graphics/GUI/MU_Tracking_window.png)
+![mus_tracking](md_graphics/gui/mu_tracking_window.png)
 
 1. You need to specify the `Type of file` you want to track MUs across in the respective dropdown. The available filetypes are:
 
@@ -60,7 +60,7 @@ When you want to track MUs across two different files, you need to select the `M
 ## Duplicate Removal
 When you want to remove MUs duplicates across different files, you need to select the `Duplicate Removal` options and specify the `Matrix Code` and `Matrix Orentation` in the `Advanced Tools Window`. Once you clicked the `Advanced Analysis` button, the `Duplicate Removal Window` will pop-up. `Duplicate Removal` requires similar input as `Motor Unit Tracking`, so please take a look at the [`Motor Unit Tracking`](#motor-unit-tracking) section. However, you need to do two more things. 
 
-![duplicate_removal](md_graphics/GUI/Duplicate_Removal_window.png)
+![duplicate_removal](md_graphics/gui/duplicate_removal_window.png)
 
 1. You should specify How to remove the duplicated MUs in the `Which` dropdown. You can choose between
 
@@ -73,13 +73,13 @@ When you want to remove MUs duplicates across different files, you need to selec
 3. Specify a filename and location to save the file(s) with duplicates removed in a .json format.
 
 ## Conduction Velocity
-Prior to calculation of the `Conduction Velocity` you need to load a file in the main window of the GUI. Take a look at the [intro](GUI_intro.md#specifying-an-analysis-file) section.  Once you have done this, open the `Advanced Tool Window` using the `Advanced Analaysis` button. 
+Prior to calculation of the `Conduction Velocity` you need to load a file in the main window of the GUI. Take a look at the [intro](gui_intro.md#specifying-an-analysis-file) section.  Once you have done this, open the `Advanced Tool Window` using the `Advanced Analaysis` button. 
 
 1. Select `Conduction Velocity` in the `Analysis Tool` dropdown, decide on the `Matrix Orientation` and `Matrix Code` as described [above](#graphical-interface).
 
 2. Click the `Advanced Analysis` button to start the calculation of the `Conduction Velocity`. The `MUs cv estimation` window will pop up. 
 
-    ![cv_estimation](md_graphics/GUI/CV_Estimation_window.png)
+    ![cv_estimation](md_graphics/gui/cv_estimation_window.png)
 
 3. In the top left of the `MUs cv estimation` window select the MU for which you want to calculate the conduction velocity using the `MU Number` dropdown. 
 
@@ -98,9 +98,10 @@ Prior to calculation of the `Conduction Velocity` you need to load a file in the
 
 --------------------------------------
 
-We are now at the end of describing the advanced functions included in the *openhdemg* GUI. In case you need further clarification, don't hesitate to post a question in the Github discussion forum (LINK). Moreover, if you noticed an error that was not properly catched by the GUI, please file a bug report according to our guidelines (LINK).
-If you want to take a look at more basic stuff, check out the [basic](GUI_basics.md). 
+We are now at the end of describing the advanced functions included in the *openhdemg* GUI. If you want to take a look at more basic stuff, check out the [basic](gui_basics.md).
 
 ## More questions?
 
 We hope that this tutorial was useful. If you need any additional information, do not hesitate to read the answers or ask a question in the [*openhdemg* discussion section](https://github.com/GiacomoValliPhD/openhdemg/discussions){:target="_blank"}. If you are not familiar with GitHub discussions, please read this [post](https://github.com/GiacomoValliPhD/openhdemg/discussions/42){:target="_blank"}. This will allow the *openhdemg* community to answer your questions.
+
+Moreover, if you noticed an error that was not properly catched by the GUI, please [report the issue](https://github.com/GiacomoValliPhD/openhdemg/issues){:target="_blank"}.

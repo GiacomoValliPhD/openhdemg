@@ -35,7 +35,7 @@ Notes
 -----
 Once opened, the file is returned as a dictionary with keys:<br>
 
-"SOURCE" : source of the file (e.g., "DEMUSE", "OTB", "custom")<br>
+"SOURCE" : source of the file (i.e., "CUSTOM", "DEMUSE", "OTB")<br>
 "RAW_SIGNAL" : the raw EMG signal<br>
 "REF_SIGNAL" : the reference signal<br>
 "PNR" : pulse to noise ratio<br>
@@ -50,13 +50,15 @@ Once opened, the file is returned as a dictionary with keys:<br>
 
 The only exception is when OTB files are loaded with just the reference signal:
 
-"SOURCE": source of the file (i.e., "OTB_refsig")<br>
+"SOURCE": source of the file (i.e., "OTB_REFSIG")<br>
 "FSAMP": sampling frequency<br>
 "REF_SIGNAL": the reference signal<br>
 
 Additional informations can be found in the
-[info module](API_info.md#openhdemg.library.info.info.data) and in the
+[info module](api_info.md#openhdemg.library.info.info.data) and in the
 function's description.
+
+Furthermore, all the users are encouraged to read the dedicated tutorial [Structure of the emgfile](tutorials/emgfile_structure.md).
 
 <br/>
 
