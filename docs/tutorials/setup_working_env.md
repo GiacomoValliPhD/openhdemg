@@ -69,7 +69,7 @@ Now that VS Code is installed, you need to set it up to code in Python and to in
 
 ![python_extension](setup_working_env/python_extension.png)
 
-Once the extension is installed, you need to create a folder where you will palce all the scripts that you will write. You can create this folder with any name an in any location in your computer, but make it simple to find! In this tutorial the folder was placed in the Desktop and named `Test_folder`.
+Once the extension is installed, you need to create a folder where you will place all the scripts that you will write. You can create this folder with any name an in any location in your computer, but make it simple to find! In this tutorial the folder was placed in the Desktop and named `Test_folder`.
 
 Once the folder is created:
 
@@ -143,7 +143,7 @@ If you instead want to write your own script using the functions contained in *o
 
 1. click on the Explorer view on the left sidebar.
 2. Click on the icon to create a new file in your workspace folder (`Test_folder` in this case).
-3. Name the file as you wish but wit a .py extension.
+3. Name the file as you wish but with a .py extension.
 
 ![create_newfile](setup_working_env/create_newfile.png)
 
