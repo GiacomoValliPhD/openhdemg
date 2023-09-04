@@ -1086,15 +1086,13 @@ def remove_duplicates_between(
         multiple MUs, only the match with the highest XCC is returned.
     show : bool, default False
         Whether to plot the STA of pairs of MUs with XCC above threshold.
-    which : str {"munumber", "PNR", "SIL"}
+    which : str {"munumber", "accuracy"}
         How to remove the duplicated MUs.
 
         ``munumber``
             Duplicated MUs are removed from the file with more MUs.
-        ``SIL``
-            The MU with the lowest SIL is removed.
-        ``PNR``
-            The MU with the lowest PNR is removed.
+        ``accuracy``
+            The MU with the lowest accuracy is removed.
 
     Returns
     -------
@@ -1117,6 +1115,7 @@ def remove_duplicates_between(
     without duplicates. The duplicates are removed from the file with
     more MUs.
 
+    >>> import openhdemg.library as emg
     >>> emgfile1 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emgfile2 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emgfile1, emgfile2, tracking_res = emg.remove_duplicates_between(
@@ -1180,42 +1179,16 @@ def remove_duplicates_between(
 
             return emgfile1, emgfile2, tracking_res
 
-    elif which == "PNR":
+    elif which == "accuracy":
         # Create a list containing which MU to remove in which file based
-        # on PNR value.
+        # on ACCURACY value.
         to_remove1 = []
         to_remove2 = []
         for i, row in tracking_res.iterrows():
-            pnr1 = emgfile1["PNR"].loc[int(row["MU_file1"])]
-            pnr2 = emgfile2["PNR"].loc[int(row["MU_file2"])]
+            acc1 = emgfile1["ACCURACY"].loc[int(row["MU_file1"])]
+            acc2 = emgfile2["ACCURACY"].loc[int(row["MU_file2"])]
 
-            if pnr1[0] <= pnr2[0]:
-                # This MU should be removed from emgfile1
-                to_remove1.append(int(row["MU_file1"]))
-            else:
-                # This MU should be removed from emgfile2
-                to_remove2.append(int(row["MU_file2"]))
-
-        # Delete the MUs
-        emgfile1 = delete_mus(
-            emgfile=emgfile1, munumber=to_remove1, if_single_mu="remove"
-        )
-        emgfile2 = delete_mus(
-            emgfile=emgfile2, munumber=to_remove2, if_single_mu="remove"
-        )
-
-        return emgfile1, emgfile2, tracking_res
-
-    elif which == "SIL":
-        # Create a list containing which MU to remove in which file based
-        # on SIL score.
-        to_remove1 = []
-        to_remove2 = []
-        for _, row in tracking_res.iterrows():
-            sil1 = emgfile1["SIL"].loc[int(row["MU_file1"])]
-            sil2 = emgfile2["SIL"].loc[int(row["MU_file2"])]
-
-            if sil1[0] <= sil2[0]:
+            if acc1[0] <= acc2[0]:
                 # This MU should be removed from emgfile1
                 to_remove1.append(int(row["MU_file1"]))
             else:
@@ -1234,7 +1207,7 @@ def remove_duplicates_between(
 
     else:
         raise ValueError(
-            f"which can be one of 'munumber', 'PNR', 'SIL'. {which} was passed instead"
+            f"which can be one of 'munumber' or 'accuracy'. {which} was passed instead"
         )
 
 
