@@ -482,6 +482,15 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
             "While calling the delete_mus function, you should pass an integer or a list to munumber= "
         )
 
+    # Verify if all the MUs have been removed. In that case, restore column
+    # names in empty pd.DataFrames.
+    if del_emgfile["NUMBER_OF_MUS"] == 0:
+        # pd.DataFrame
+        del_emgfile["IPTS"] = pd.DataFrame(columns=[0])
+        del_emgfile["BINARY_MUS_FIRING"] = pd.DataFrame(columns=[0])
+        # list of ndarray
+        del_emgfile["MUPULSES"] = [np.array([])]
+
     return del_emgfile
 
 

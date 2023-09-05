@@ -416,7 +416,7 @@ def get_otb_ied(df):
 
     Returns
     -------
-    IED : int
+    IED : float
         The interelectrode distance in millimeters.
     """
 
@@ -428,15 +428,15 @@ def get_otb_ied(df):
 
             return IED
 
-        else:
-            warnings.warn(
-                "OTB recording grid not found, IED could not be inferred"
-            )
+    # If no matrix is found and we exit the loop:
+    warnings.warn(
+        "OTB recording grid not found, IED could not be inferred"
+    )
 
-            return np.nan
+    return np.nan
 
 
-def get_otb_rawsignal(df):
+def get_otb_rawsignal(df, extras_regex):
     """
     Extract the raw signal from the OTB .mat file.
 
@@ -445,6 +445,8 @@ def get_otb_rawsignal(df):
     df : pd.DataFrame
         A pd.DataFrame containing all the informations extracted
         from the OTB .mat file.
+    extras_regex : str
+        A regex pattern unequivocally identifying the EXTRAS.
 
     Returns
     -------
@@ -455,17 +457,22 @@ def get_otb_rawsignal(df):
     # Drop all the known columns different from the raw EMG signal.
     # This is a workaround since the OTBiolab+ software does not export a
     # unique name for the raw EMG signal.
-    pattern = "Source for decomposition|Decomposition of|acquired data|performed path"
+    base_pattern = "Source for decomposition|Decomposition of|acquired data|performed path"
+    pattern = base_pattern + "|" + extras_regex
     emg_df = df[df.columns.drop(list(df.filter(regex=pattern)))]
 
     # Check if the number of remaining columns matches the expected number of
     # matrix channels.
+    expectedchannels = np.nan
     for matrix in OTBelectrodes_Nelectrodes.keys():
         # Check the matrix used in the columns name (in the emg_df) to know
         # the number of expected channels.
         if matrix in str(emg_df.columns):
             expectedchannels = int(OTBelectrodes_Nelectrodes[matrix])
             break
+
+    if expectedchannels is np.nan:
+        raise ValueError("Matrix not recognised")
 
     if len(emg_df.columns) == expectedchannels:
         emg_df.columns = np.arange(len(emg_df.columns))
@@ -476,9 +483,35 @@ def get_otb_rawsignal(df):
     else:
         # This check here is usefull to control that only the appropriate
         # elements have been included in the .mat file exported from OTBiolab+.
-        raise Exception(
+        raise ValueError(
             "\nFailure in searching the raw signal, please check that it is present in the .mat file and that only the accepted parameters have been included\n"
         )
+
+
+def get_otb_extras(df, extras):
+    """
+    Extract the EXTRAS from the OTB .mat file.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        A pd.DataFrame containing all the informations extracted
+        from the OTB .mat file.
+
+    Returns
+    -------
+    EXTRAS : pd.DataFrame
+        A pd.DataFrame containing the EXTRAS.
+    """
+
+    if extras is None:
+
+        return pd.DataFrame(columns=[0])
+
+    else:
+        EXTRAS = df.filter(regex=extras)
+
+        return EXTRAS
 
 
 # ---------------------------------------------------------------------
@@ -525,7 +558,7 @@ def emg_from_otb(
         results.
     extras : None or str, default None
         Extras is used to store additional custom values. These information
-        will be stored in a pd.DataFrame with columns named as in the .csv
+        will be stored in a pd.DataFrame with columns named as in the .mat
         file. If not None, pass a regex pattern unequivocally identifying the
         variable in the .mat file to load as extras.
 
@@ -564,7 +597,7 @@ def emg_from_otb(
         OTBioLab+) with all the channels. Don't exclude unwanted channels
         before exporting the .mat file.
     - NO OTHER ELEMENTS SHOULD BE PRESENT, unless an appropriate regex pattern
-    is passed to 'extras'! #TODO
+    is passed to 'extras='!
 
     Structure of the returned emgfile:
         emgfile = {
@@ -644,7 +677,7 @@ def emg_from_otb(
         IED = get_otb_ied(df=df)
 
         # Get RAW_SIGNAL
-        RAW_SIGNAL = get_otb_rawsignal(df)
+        RAW_SIGNAL = get_otb_rawsignal(df=df, extras_regex=extras)
 
         # Get IPTS and BINARY_MUS_FIRING
         IPTS, BINARY_MUS_FIRING = get_otb_decomposition(df=df)
@@ -672,29 +705,37 @@ def emg_from_otb(
         else:
             ACCURACY = pd.DataFrame(columns=[0])
 
-        emgfile = {
-            "SOURCE": SOURCE,
-            "FILENAME": FILENAME,
-            "RAW_SIGNAL": RAW_SIGNAL,
-            "REF_SIGNAL": REF_SIGNAL,
-            "ACCURACY": ACCURACY,
-            "IPTS": IPTS,
-            "MUPULSES": MUPULSES,
-            "FSAMP": FSAMP,
-            "IED": IED,
-            "EMG_LENGTH": EMG_LENGTH,
-            "NUMBER_OF_MUS": NUMBER_OF_MUS,
-            "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
-            "EXTRAS": pd.DataFrame(columns=[0]),  # TODO collection of extras and drop in regex RAW_EMG
-        }
+        # Get EXTRAS
+        EXTRAS = get_otb_extras(df=df, extras=extras)
 
-        return emgfile
+    emgfile = {
+        "SOURCE": SOURCE,
+        "FILENAME": FILENAME,
+        "RAW_SIGNAL": RAW_SIGNAL,
+        "REF_SIGNAL": REF_SIGNAL,
+        "ACCURACY": ACCURACY,
+        "IPTS": IPTS,
+        "MUPULSES": MUPULSES,
+        "FSAMP": FSAMP,
+        "IED": IED,
+        "EMG_LENGTH": EMG_LENGTH,
+        "NUMBER_OF_MUS": NUMBER_OF_MUS,
+        "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
+        "EXTRAS": EXTRAS,
+    }
+
+    return emgfile
 
 
 # ---------------------------------------------------------------------
 # Function to load the reference signal from OBIolab+.
-# TODO extras
-def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
+
+def refsig_from_otb(
+    filepath,
+    refsig="fullsampled",
+    version="1.5.8.0",
+    extras=None,
+):
     """
     Import the reference signal in the .mat file exportable by OTBiolab+.
 
@@ -727,6 +768,11 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
         If your specific version is not available in the tested versions,
         trying with the closer one usually works, but please double check the
         results.
+    extras : None or str, default None
+        Extras is used to store additional custom values. These information
+        will be stored in a pd.DataFrame with columns named as in the .mat
+        file. If not None, pass a regex pattern unequivocally identifying the
+        variable in the .mat file to load as extras.
 
     Returns
     -------
@@ -749,6 +795,8 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
         version (in OTBioLab+ the "performed path" refers to the subsampled
         signal, the "acquired data" to the fullsampled signal), REF_SIGNAL is
         expected to be expressed as % of the MVC (but not compulsory).
+    - NO OTHER ELEMENTS SHOULD BE PRESENT, unless an appropriate regex pattern
+    is passed to 'extras='!
 
     Structure of the returned emg_refsig:
         emg_refsig = {
@@ -756,6 +804,7 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
             "FILENAME": FILENAME,
             "FSAMP": FSAMP,
             "REF_SIGNAL": REF_SIGNAL,
+            "EXTRAS": EXTRAS,
         }
 
     Examples
@@ -810,25 +859,28 @@ def refsig_from_otb(filepath, refsig="fullsampled", version="1.5.8.0"):
 
         df = pd.DataFrame(mat_file["Data"], columns=col)
 
-        # Convert the input passed to refsig in a list compatible with the
-        # function get_otb_refsignal
-        refsig_ = [True, refsig]
-        REF_SIGNAL = get_otb_refsignal(df=df, refsig=refsig_)
-
         # Use this to know the data source and name of the file
         SOURCE = "OTB_REFSIG"
         FILENAME = os.path.basename(filepath)
         FSAMP = float(mat_file["SamplingFrequency"])
 
-        emg_refsig = {
-            "SOURCE": SOURCE,
-            "FILENAME": FILENAME,
-            "FSAMP": FSAMP,
-            "REF_SIGNAL": REF_SIGNAL,
-            "EXTRAS": pd.DataFrame(columns=[0]),  # TODO collection of extras and drop in regex RAW_EMG
-        }
+        # Convert the input passed to refsig in a list compatible with the
+        # function get_otb_refsignal
+        refsig_ = [True, refsig]
+        REF_SIGNAL = get_otb_refsignal(df=df, refsig=refsig_)
 
-        return emg_refsig
+        # Get EXTRAS
+        EXTRAS = get_otb_extras(df=df, extras=extras)
+
+    emg_refsig = {
+        "SOURCE": SOURCE,
+        "FILENAME": FILENAME,
+        "FSAMP": FSAMP,
+        "REF_SIGNAL": REF_SIGNAL,
+        "EXTRAS": EXTRAS,
+    }
+
+    return emg_refsig
 
 
 # ---------------------------------------------------------------------
@@ -1633,7 +1685,8 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
     - The raw EMG signal should be present (it has no specific name in
         OTBioLab+) with all the channels. Don't exclude unwanted channels
         before exporting the .mat file.
-    - NO OTHER ELEMENTS SHOULD BE PRESENT! Unless these are specified in extras # TODO add otB extras input and edit code
+    - NO OTHER ELEMENTS SHOULD BE PRESENT! unless an appropriate regex pattern
+    is passed to 'extras='!
 
     For custom .csv files:
     The variables of interest should be contained in columns. The name of the
