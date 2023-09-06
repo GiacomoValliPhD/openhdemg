@@ -78,7 +78,7 @@ class emgGUI:
         String containing the path to EMG file selected for analysis.
     self.filetype : str
         String containing the filetype of import EMG file.
-        Filetype can be "OENHDEMG", "OTB", "DEMUSE", or "OTB_REFSIG", "CUSTOM". 
+        Filetype can be "OPENHDEMG", "OTB", "DEMUSE", "OTB_REFSIG", "CUSTOMCSV", "CUSTOMCSV_REFSIG".
     self.filter_order : int, default 4
         The filter order.
     self.firings_rec : int, default 4
@@ -295,7 +295,7 @@ class emgGUI:
         Method do display extension factor combobx when filetype loaded is
         OTB.
     open_emgfile1()
-                Method to open EMG file based on the selected file type and extension factor.
+        Method to open EMG file based on the selected file type and extension factor.
     open_emgfile2()
         Method to open EMG file based on the selected file type and extension factor.
     track_mus()
@@ -360,7 +360,7 @@ class emgGUI:
 
         # Specify Signal
         self.filetype = StringVar()
-        signal_value = ("OPENHDEMG", "OTB", "DEMUSE", "OTB_REFSIG", "CUSTOM")
+        signal_value = ("OPENHDEMG", "OTB", "DEMUSE", "OTB_REFSIG", "CUSTOMCSV", "CUSTOMCSV_REFSIG")
         signal_entry = ttk.Combobox(
             self.left, text="Signal", width=10, textvariable=self.filetype
         )
@@ -618,10 +618,10 @@ class emgGUI:
         emg_from_demuse, emg_from_otb, refsig_from_otb and emg_from_json in library.
         """
         try:
-            if self.filetype.get() in ["OTB", "DEMUSE", "OPENHDEMG", "CUSTOM"]:
+            if self.filetype.get() in ["OTB", "DEMUSE", "OPENHDEMG", "CUSTOMCSV"]:
                 # Check filetype for processing
                 if self.filetype.get() == "OTB":
-                    # Ask user to select the file
+                    # Ask user to select the decomposed file
                     file_path = filedialog.askopenfilename(
                         title="Open OTB file", filetypes=[("MATLAB files", "*.mat")]
                     )
@@ -655,12 +655,12 @@ class emgGUI:
                 else:
                     # Ask user to select the file
                     file_path = filedialog.askopenfilename(
-                        title="Open CUSTOM file",
-                        filetypes=[("CSV files", ".csv")],
+                        title="Open CUSTOMCSV file",
+                        filetypes=[("CSV files", "*.csv")],
                     )
                     self.file_path = file_path
 
-                    # load refsig
+                    # load file
                     self.resdict = openhdemg.emg_from_customcsv(filepath=self.file_path)
 
                 # Get filename
@@ -679,27 +679,41 @@ class emgGUI:
                 )
                 ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
                     column=2, row=4, sticky=(W, E)
-                )
+                )   
+                """
+                # BUG with "OPENHDEMG" type we identify all files saved from openhdemg,
+                regardless of the content. This will result in an error for ttk.Label
+                self.resdict["NUMBER_OF_MUS"] and self.resdict["EMG_LENGTH"].
+                """
 
             else:
-                # Ask user to select the file
-                file_path = filedialog.askopenfilename(
-                    title="Open REFSIG file",
-                    filetypes=[
-                        ("MATLAB files", "*.mat"),
-                        ("JSON files", "*.json"),
-                    ],
-                )
-                self.file_path = file_path
+                # Ask user to select the refsig file
+                if self.filetype.get() == "OTB_REFSIG":
+                    file_path = filedialog.askopenfilename(
+                        title="Open OTB_REFSIG file",
+                        filetypes=[("MATLAB files", "*.mat")],
+                    )
+                    self.file_path = file_path
+                    # load refsig
+                    self.resdict = openhdemg.refsig_from_otb(filepath=self.file_path)
+
+                else:  # CUSTOMCSV_REFSIG
+                    file_path = filedialog.askopenfilename(
+                        title="Open CUSTOMCSV_REFSIG file",
+                        filetypes=[("CSV files", "*.csv")],
+                    )
+                    self.file_path = file_path
+                    # load refsig
+                    self.resdict = openhdemg.refsig_from_customcsv(filepath=self.file_path)
+
                 # Get filename
                 filename = os.path.splitext(os.path.basename(file_path))[0]
                 self.filename = filename
 
                 # Add filename to label
                 self.master.title(self.filename)
-                # load refsig
-                self.resdict = openhdemg.refsig_from_otb(filepath=self.file_path)
-                # Recondifgure labels for refsig
+
+                # Reconfigure labels for refsig
                 ttk.Label(
                     self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))
                 ).grid(column=2, row=2, sticky=(W, E))
@@ -821,7 +835,7 @@ class emgGUI:
             if hasattr(self, "mu_thresholds"):
                 self.mu_thresholds.to_excel(writer, sheet_name="MU Thresholds")
 
-            writer.save()
+            writer.close()
 
         except IndexError:
             tk.messagebox.showerror(
@@ -860,7 +874,7 @@ class emgGUI:
             # user decided to rest analysis
             try:
                 # reload original file
-                if self.filetype.get() in ["OTB", "DEMUSE", "OPENHDEMG", "CUSTOM"]:
+                if self.filetype.get() in ["OTB", "DEMUSE", "OPENHDEMG", "CUSTOMCSV"]:
                     if self.filetype.get() == "OTB":
                         self.resdict = openhdemg.emg_from_otb(
                             filepath=self.file_path,
@@ -875,7 +889,7 @@ class emgGUI:
                     elif self.filetype.get() == "OPENHDEMG":
                         self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
 
-                    elif self.filetype.get() == "CUSTOM":
+                    elif self.filetype.get() == "CUSTOMCSV":
                         self.resdict = openhdemg.emg_from_customcsv(
                             filepath=self.file_path
                         )
@@ -893,7 +907,11 @@ class emgGUI:
 
                 else:
                     # load refsig
-                    self.resdict = openhdemg.refsig_from_otb(filepath=self.file_path)
+                    if self.filetype.get() == "OTB_REFSIG":
+                        self.resdict = openhdemg.refsig_from_otb(filepath=self.file_path)
+                    else:  # CUSTOMCSV_REFSIG
+                        self.resdict = openhdemg.refsig_from_customcsv(filepath=self.file_path)
+
                     # Recondifgure labels for refsig
                     ttk.Label(
                         self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))
@@ -1049,7 +1067,7 @@ class emgGUI:
         plot_refsig, plot_idr in the library.
         """
         try:
-            if self.filetype.get() == "OTB_REFSIG":
+            if self.filetype.get() in ["OTB_REFSIG", "CUSTOMCSV_REFSIG"]:
                 self.fig = openhdemg.plot_refsig(
                     emgfile=self.resdict, showimmediately=False, tight_layout=True
                 )
@@ -1792,7 +1810,10 @@ class emgGUI:
             tk.messagebox.showerror("Information", "Load file prior to computation.")
 
         except ValueError:
-            tk.messagebox.showerror("Information", "Enter valid Firings value.")
+            tk.messagebox.showerror(
+                "Information",
+                "Enter valid Firings value or select a correct number of points."
+            )
 
         except AssertionError:
             tk.messagebox.showerror("Information", "Specify Event and/or Type.")
@@ -1835,7 +1856,10 @@ class emgGUI:
             tk.messagebox.showerror("Information", "Load file prior to computation.")
 
         except ValueError:
-            tk.messagebox.showerror("Information", "Enter valid MVC.")
+            tk.messagebox.showerror(
+                "Information",
+                "Enter valid MVC or select a correct number of points."
+            )
 
         except AssertionError:
             tk.messagebox.showerror("Information", "Specify Event and/or Type.")
@@ -2531,7 +2555,7 @@ class emgGUI:
             head_title = "Duplicate Removal Window"
         else:
             head_title = "Conduction Velocity Window"
-        
+
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title(head_title)
         self.head.iconbitmap(
@@ -2541,7 +2565,7 @@ class emgGUI:
 
         # Specify Signal
         self.filetype_adv = StringVar()
-        signal_value = ("OTB", "DEMUSE", "OPENHDEMG", "CUSTOM")
+        signal_value = ("OTB", "DEMUSE", "OPENHDEMG", "CUSTOMCSV")
         signal_entry = ttk.Combobox(
             self.head, text="Signal", width=8, textvariable=self.filetype_adv
         )
@@ -2646,7 +2670,7 @@ class emgGUI:
             self.which_adv = StringVar()
             which_combobox = ttk.Combobox(
                 self.head,
-                values=["munumber", "SIL", "PNR"],
+                values=["munumber", "accuracy"],
                 textvariable=self.which_adv,
                 state="readonly",
                 width=8,

@@ -458,7 +458,11 @@ def get_otb_rawsignal(df, extras_regex):
     # This is a workaround since the OTBiolab+ software does not export a
     # unique name for the raw EMG signal.
     base_pattern = "Source for decomposition|Decomposition of|acquired data|performed path"
-    pattern = base_pattern + "|" + extras_regex
+    if extras_regex is None:
+        pattern = base_pattern
+    else:
+        pattern = base_pattern + "|" + extras_regex
+
     emg_df = df[df.columns.drop(list(df.filter(regex=pattern)))]
 
     # Check if the number of remaining columns matches the expected number of
@@ -522,7 +526,7 @@ def emg_from_otb(
     filepath,
     ext_factor=8,
     refsig=[True, "fullsampled"],
-    version="1.5.8.0",
+    version="1.5.9.3",
     extras=None,
 ):
     """
@@ -543,7 +547,7 @@ def emg_from_otb(
         Whether to seacrh also for the REF_SIGNAL and whether to load the full
         or sub-sampled one. The list is composed as [bool, str]. str can be
         "fullsampled" or "subsampled". Please read notes section.
-    version : str, default "1.5.8.0"
+    version : str, default "1.5.9.3"
         Version of the OTBiolab+ software used (4 points).
         Tested versions are:
             "1.5.3.0",
@@ -553,9 +557,9 @@ def emg_from_otb(
             "1.5.7.2",
             "1.5.7.3",
             "1.5.8.0",
+            "1.5.9.3",
         If your specific version is not available in the tested versions,
-        trying with the closer one usually works, but please double check the
-        results.
+        trying with the closer one usually works.
     extras : None or str, default None
         Extras is used to store additional custom values. These information
         will be stored in a pd.DataFrame with columns named as in the .mat
@@ -647,6 +651,7 @@ def emg_from_otb(
         "1.5.7.2",
         "1.5.7.3",
         "1.5.8.0",
+        "1.5.9.3",
     ]
     if version not in valid_versions:
         raise ValueError(
@@ -661,6 +666,7 @@ def emg_from_otb(
         "1.5.7.2",
         "1.5.7.3",
         "1.5.8.0",
+        "1.5.9.3",
     ]:
         # Simplify (rename) columns description and extract all the parameters
         # in a pd.DataFrame
@@ -733,7 +739,7 @@ def emg_from_otb(
 def refsig_from_otb(
     filepath,
     refsig="fullsampled",
-    version="1.5.8.0",
+    version="1.5.9.3",
     extras=None,
 ):
     """
@@ -755,7 +761,7 @@ def refsig_from_otb(
     refsig : str {"fullsampled", "subsampled"}, default "fullsampled"
         Whether to load the full or sub-sampled one.
         Please read notes section.
-    version : str, default "1.5.8.0"
+    version : str, default "1.5.9.3"
         Version of the OTBiolab+ software used (4 points).
         Tested versions are:
             "1.5.3.0",
@@ -765,6 +771,7 @@ def refsig_from_otb(
             "1.5.7.2",
             "1.5.7.3",
             "1.5.8.0",
+            "1.5.9.3",
         If your specific version is not available in the tested versions,
         trying with the closer one usually works, but please double check the
         results.
@@ -835,6 +842,7 @@ def refsig_from_otb(
         "1.5.7.2",
         "1.5.7.3",
         "1.5.8.0",
+        "1.5.9.3",
     ]
     if version not in valid_versions:
         raise ValueError(
@@ -849,6 +857,7 @@ def refsig_from_otb(
         "1.5.7.2",
         "1.5.7.3",
         "1.5.8.0",
+        "1.5.9.3",
     ]:
         # Simplify (rename) columns description and extract all the parameters
         # in a pd.DataFrame
@@ -1611,7 +1620,7 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
         or sub-sampled one. The list is composed as [bool, str]. str can be
         "fullsampled" or "subsampled".
         Ignore if loading other files.
-    otb_version : str, default "1.5.8.0"
+    otb_version : str, default "1.5.9.3"
         Version of the OTBiolab+ software used (4 points).
         Tested versions are:
             "1.5.3.0",
@@ -1621,6 +1630,7 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
             "1.5.7.2",
             "1.5.7.3",
             "1.5.8.0",
+            "1.5.9.3",
         If your specific version is not available in the tested versions,
         trying with the closer one usually works, but please double check the
         results. Ignore if loading other files.
@@ -1786,14 +1796,14 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
             filepath=file_toOpen,
             ext_factor=kwargs.get("otb_ext_factor", 8),
             refsig=kwargs.get("otb_refsig_type", [True, "fullsampled"]),
-            version=kwargs.get("otb_version", "1.5.8.0")
+            version=kwargs.get("otb_version", "1.5.9.3")
         )
     elif filesource == "OTB_REFSIG":
         ref = kwargs.get("otb_refsig_type", [True, "fullsampled"])
         emgfile = refsig_from_otb(
             filepath=file_toOpen,
             refsig=ref[1],
-            version=kwargs.get("otb_version", "1.5.8.0"),
+            version=kwargs.get("otb_version", "1.5.9.3"),
         )
     elif filesource == "OPENHDEMG":
         emgfile = emg_from_json(filepath=file_toOpen)

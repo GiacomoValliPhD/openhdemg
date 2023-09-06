@@ -494,6 +494,32 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
     return del_emgfile
 
 
+def delete_empty_mus(emgfile):
+    """
+    Delete all the MUs without firings.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+
+    Returns
+    -------
+    emgfile : dict
+        The dictionary containing the emgfile without the empty MUs.
+    """
+
+    # Find the index of empty MUs
+    ind = []
+    for i, mu in enumerate(range(emgfile["NUMBER_OF_MUS"])):
+        if len(emgfile["MUPULSES"][mu]) == 0:
+            ind.append(i)
+
+    emgfile = delete_mus(emgfile, munumber=ind, if_single_mu="remove")
+
+    return emgfile
+
+
 def sort_mus(emgfile):
     """
     Sort the MUs in order of recruitment.
@@ -534,10 +560,14 @@ def sort_mus(emgfile):
     """
 
     # Identify the sorting_order by the first MUpulse of every MUs
-    df = pd.DataFrame()
-    df["firstpulses"] = [
-        emgfile["MUPULSES"][i][0] for i in range(emgfile["NUMBER_OF_MUS"])
-    ]
+    df = []
+    for mu in range(emgfile["NUMBER_OF_MUS"]):
+        if len(emgfile["MUPULSES"][mu]) > 0:
+            df.append(emgfile["MUPULSES"][mu][0])
+        else:
+            df.append(np.inf)
+
+    df = pd.DataFrame(df, columns=["firstpulses"])
     df.sort_values(by="firstpulses", inplace=True)
     sorting_order = list(df.index)
 

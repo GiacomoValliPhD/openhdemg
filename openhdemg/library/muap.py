@@ -369,6 +369,7 @@ def sta(
         sorted_rawemg_sta["munumber"] = mu
 
         return sorted_rawemg_sta
+        # TODO verify built-in options to return from joblib.Parallel
 
     # Start parallel execution
     # Meausere running time

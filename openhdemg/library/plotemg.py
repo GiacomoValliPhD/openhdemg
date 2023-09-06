@@ -877,7 +877,7 @@ def plot_idr(
             ax1.set_ylabel("Motor units")
             ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
-        else:
+        elif len(munumber) == 1:
             ax1 = sns.scatterplot(
                 x=idr[munumber[0]]["timesec" if timeinseconds else "mupulses"],
                 y=idr[munumber[0]]["idr"],
