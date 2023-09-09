@@ -36,17 +36,16 @@ print(type(emgfile))
 print(emgfile.keys())
 
 """Output
-dict_keys(['SOURCE', 'FILENAME', 'RAW_SIGNAL', 'REF_SIGNAL', 'PNR', 'SIL', 'IPTS', 'MUPULSES', 'FSAMP', 'IED', 'EMG_LENGTH', 'NUMBER_OF_MUS', 'BINARY_MUS_FIRING'])
+dict_keys(['SOURCE', 'FILENAME', 'RAW_SIGNAL', 'REF_SIGNAL', 'ACCURACY', 'IPTS', 'MUPULSES', 'FSAMP', 'IED', 'EMG_LENGTH', 'NUMBER_OF_MUS', 'BINARY_MUS_FIRING'])
 """
 ```
 
 That means that the `emgfile` contains the following keys (or variables, in simpler terms):
 
-- "SOURCE" : source of the file (i.e., "CUSTOM", "DEMUSE", "OTB")
+- "SOURCE" : source of the file (i.e., "CUSTOMCSV", "DEMUSE", "OTB")
 - "RAW_SIGNAL" : the raw EMG signal
 - "REF_SIGNAL" : the reference signal
-- "PNR" : pulse to noise ratio
-- "SIL" : silouette score
+- "ACCURACY" : accuracy score (depending on source file type)
 - "IPTS" : pulse train (decomposed source)
 - "MUPULSES" : instants of firing
 - "FSAMP" : sampling frequency
@@ -54,6 +53,7 @@ That means that the `emgfile` contains the following keys (or variables, in simp
 - "EMG_LENGTH" : length of the emg file (in samples)
 - "NUMBER_OF_MUS" : total number of MUs
 - "BINARY_MUS_FIRING" : binary representation of MUs firings
+- "EXTRAS" : additional custom values
 
 Each key has a specific content and structure that will be presented in the next code block.
 
@@ -71,14 +71,14 @@ info = emg.info()
 info.data(emgfile)
 
 """Output
-Data structure of the emgfile loaded with the function emg_from_otb.
---------------------------------------------------------------------
+Data structure of the emgfile
+-----------------------------
 
 emgfile type is:
 <class 'dict'>
 
 emgfile keys are:
-dict_keys(['SOURCE', 'FILENAME', 'RAW_SIGNAL', 'REF_SIGNAL', 'PNR', 'SIL', 'IPTS', 'MUPULSES', 'FSAMP', 'IED', 'EMG_LENGTH', 'NUMBER_OF_MUS', 'BINARY_MUS_FIRING'])
+dict_keys(['SOURCE', 'FILENAME', 'RAW_SIGNAL', 'REF_SIGNAL', 'ACCURACY', 'IPTS', 'MUPULSES', 'FSAMP', 'IED', 'EMG_LENGTH', 'NUMBER_OF_MUS', 'BINARY_MUS_FIRING', 'EXTRAS'])
 
 Any key can be acced as emgfile[key].
 
@@ -90,18 +90,18 @@ otb_testfile.mat
 
 MUST NOTE: emgfile from OTB has 64 channels, from DEMUSE 65 (includes empty channel).
 emgfile['RAW_SIGNAL'] is a <class 'pandas.core.frame.DataFrame'> of value:
-              0          1          2          3          4          5          6          7          8   ...         55         56         57         58         59         60         61         62         63 
-0      10.172526   5.086263  12.715657  11.189778   9.155273   8.138021   9.155273  13.224284   2.034505  ...   7.120768   6.612142  10.172526   8.138021  10.681152   2.034505  14.750163   4.577637  11.698405 
-1      14.750163   8.138021  12.715657  12.715657  10.681152   6.612142  13.732910  16.276041   3.051758  ...   4.577637   3.560384  11.698405   7.120768  10.681152   0.508626  10.681152   4.069010  11.698405 
-2       6.103516   1.017253   6.103516  15.767415   6.103516   3.051758   6.103516  11.698405   2.034505  ...   1.525879   1.525879   3.560384  -1.017253   4.069010  -4.577637   8.138021  -1.525879   5.086263 
-3      -3.051758  -7.120768  -3.051758   4.577637  -4.069010  -8.138021  -2.543132   2.543132  -7.120768  ...  -8.646647  -9.155273  -3.560384  -9.155273  -6.103516 -13.732910  -1.017253 -11.698405  -2.543132 
-4     -11.189778 -15.767415 -15.767415  -5.086263 -11.698405 -13.732910  -7.120768  -3.560384 -12.207031  ... -15.767415 -18.310547 -12.207031 -12.715657 -11.189778 -17.293295  -8.646647 -17.293295 -11.189778 
-...          ...        ...        ...        ...        ...        ...        ...        ...        ...  ...        ...        ...        ...        ...        ...        ...        ...        ...        ... 
-66555  11.189778  17.801920  16.276041  17.801920   2.034505  22.379557   8.646647  14.750163  14.750163  ...  -2.034505   0.508626   2.034505   2.034505  13.224284   0.000000  10.172526  10.172526  17.801920 
-66556  12.715657  22.888184  21.362305  20.853678  10.172526  26.448568  12.207031  19.836426  16.276041  ...   2.034505   7.120768   4.577637   8.646647  14.241536   5.086263  18.819174  16.276041  16.276041 
-66557   6.103516   7.120768  12.207031  12.715657   0.508626  16.276041   3.051758   9.663899   5.594889  ...  -5.594889  -1.525879  -6.103516  -1.525879   6.103516  -1.525879   7.629395   8.646647   8.646647 
-66558  -9.663899  -9.663899  -7.120768  -7.629395 -14.241536  -1.017253 -14.750163  -7.629395 -10.681152  ... -23.905436 -17.801920 -22.888184 -20.853678 -10.681152 -17.801920 -13.224284  -8.646647  -9.155273 
-66559   0.508626   1.017253   0.000000   4.577637  -2.543132   6.612142  -3.051758   1.525879  -2.034505  ... -12.715657  -6.612142 -14.750163 -10.172526   0.000000  -6.103516   1.017253  -3.051758  -2.543132 
+              0          1          2          3          4          5          6          7          8   ...         55         56         57         58         59         60         61         62         63
+0      10.172526   5.086263  12.715657  11.189778   9.155273   8.138021   9.155273  13.224284   2.034505  ...   7.120768   6.612142  10.172526   8.138021  10.681152   2.034505  14.750163   4.577637  11.698405
+1      14.750163   8.138021  12.715657  12.715657  10.681152   6.612142  13.732910  16.276041   3.051758  ...   4.577637   3.560384  11.698405   7.120768  10.681152   0.508626  10.681152   4.069010  11.698405
+2       6.103516   1.017253   6.103516  15.767415   6.103516   3.051758   6.103516  11.698405   2.034505  ...   1.525879   1.525879   3.560384  -1.017253   4.069010  -4.577637   8.138021  -1.525879   5.086263
+3      -3.051758  -7.120768  -3.051758   4.577637  -4.069010  -8.138021  -2.543132   2.543132  -7.120768  ...  -8.646647  -9.155273  -3.560384  -9.155273  -6.103516 -13.732910  -1.017253 -11.698405  -2.543132
+4     -11.189778 -15.767415 -15.767415  -5.086263 -11.698405 -13.732910  -7.120768  -3.560384 -12.207031  ... -15.767415 -18.310547 -12.207031 -12.715657 -11.189778 -17.293295  -8.646647 -17.293295 -11.189778
+...          ...        ...        ...        ...        ...        ...        ...        ...        ...  ...        ...        ...        ...        ...        ...        ...        ...        ...        ...
+66555  11.189778  17.801920  16.276041  17.801920   2.034505  22.379557   8.646647  14.750163  14.750163  ...  -2.034505   0.508626   2.034505   2.034505  13.224284   0.000000  10.172526  10.172526  17.801920
+66556  12.715657  22.888184  21.362305  20.853678  10.172526  26.448568  12.207031  19.836426  16.276041  ...   2.034505   7.120768   4.577637   8.646647  14.241536   5.086263  18.819174  16.276041  16.276041
+66557   6.103516   7.120768  12.207031  12.715657   0.508626  16.276041   3.051758   9.663899   5.594889  ...  -5.594889  -1.525879  -6.103516  -1.525879   6.103516  -1.525879   7.629395   8.646647   8.646647
+66558  -9.663899  -9.663899  -7.120768  -7.629395 -14.241536  -1.017253 -14.750163  -7.629395 -10.681152  ... -23.905436 -17.801920 -22.888184 -20.853678 -10.681152 -17.801920 -13.224284  -8.646647  -9.155273
+66559   0.508626   1.017253   0.000000   4.577637  -2.543132   6.612142  -3.051758   1.525879  -2.034505  ... -12.715657  -6.612142 -14.750163 -10.172526   0.000000  -6.103516   1.017253  -3.051758  -2.543132
 
 [66560 rows x 64 columns]
 
@@ -121,15 +121,7 @@ emgfile['REF_SIGNAL'] is a <class 'pandas.core.frame.DataFrame'> of value:
 
 [66560 rows x 1 columns]
 
-emgfile['PNR'] is a <class 'pandas.core.frame.DataFrame'> of value:
-           0
-0  33.609118
-1  34.442821
-2  28.640680
-3  27.480307
-4  28.946493
-
-emgfile['SIL'] is a <class 'pandas.core.frame.DataFrame'> of value:
+emgfile['ACCURACY'] is a <class 'pandas.core.frame.DataFrame'> of value:
           0
 0  0.879079
 1  0.955819
@@ -170,11 +162,11 @@ emgfile['MUPULSES'][0] is a <class 'numpy.ndarray'> of value:
  53161 53390 53795 54154 54386 54823 55032 55283 55653 56026 56282 56538
  56931 57578 57871 58429 59077]
 
-emgfile['FSAMP'] is a <class 'int'> of value:
-2048
+emgfile['FSAMP'] is a <class 'float'> of value:
+2048.0
 
-emgfile['IED'] is a <class 'int'> of value:
-8
+emgfile['IED'] is a <class 'float'> of value:
+8.0
 
 emgfile['EMG_LENGTH'] is a <class 'int'> of value:
 66560
@@ -197,6 +189,11 @@ emgfile['BINARY_MUS_FIRING'] is a <class 'pandas.core.frame.DataFrame'> of value
 66559  0.0  0.0  0.0  0.0  0.0
 
 [66560 rows x 5 columns]
+
+emgfile['EXTRAS'] is a <class 'pandas.core.frame.DataFrame'> of value:
+Empty DataFrame
+Columns: [0]
+Index: []
 """
 ```
 
@@ -210,16 +207,17 @@ At the moment, the only alternative to the basic `emgfile` structure is reserved
 
 In this case, the `emg_refsig` is a Python dictionary with the following keys:
 
-- "SOURCE": source of the file (i.e., "OTB_REFSIG")
+- "SOURCE": source of the file (i.e., "CUSTOMCSV_REFSIG", "OTB_REFSIG")
 - "FSAMP": sampling frequency
 - "REF_SIGNAL": the reference signal
+- "EXTRAS" : additional custom values
 
 ## Modify the emgfile to fit your needs
 
 This is a fundamental part of this tutorial. You can modify the `emgfile` as you wish, but there are 2 simple rules that must be followed to allow a seamless integration with the *openhdemg* functions.
 
 1. Do not alter the `emgfile` keys. You should not add or remove keys and you should not alter the data type under each key. If you need to do so, please remember that some of the built-in functions might not work anymore and you might encounter unexpected errors.
-2. Preserve data structures. If there is missing data you should fill the `emgfile` keys with the original data structure and np.nan values. The original data structure is the one presented in section [Structure of the emgfile](#structure-of-the-emgfile).
+2. Preserve data structures. If there is missing data you should fill the `emgfile` keys with the original data structure. The original data structure is the one presented in section [Structure of the emgfile](#structure-of-the-emgfile). For example, the reference signal is by default contained in a pd.DataFrame. Therefore, if the reference signal is absent, the dict key "REF_SIGNAL" should contain an empty pd.DataFrame.
 
 To modify the `emgfile` you can simply act as for modifying any Python dictionary:
 
@@ -237,7 +235,7 @@ emgfile = emg.emg_from_samplefile()
 print(emgfile.keys())
 
 """Output
-dict_keys(['SOURCE', 'FILENAME', 'RAW_SIGNAL', 'REF_SIGNAL', 'PNR', 'SIL', 'IPTS', 'MUPULSES', 'FSAMP', 'IED', 'EMG_LENGTH', 'NUMBER_OF_MUS', 'BINARY_MUS_FIRING'])
+dict_keys(['SOURCE', 'FILENAME', 'RAW_SIGNAL', 'REF_SIGNAL', 'ACCURACY', 'IPTS', 'MUPULSES', 'FSAMP', 'IED', 'EMG_LENGTH', 'NUMBER_OF_MUS', 'BINARY_MUS_FIRING'])
 """
 
 # Visualise the original data structure contained in the 'REF_SIGNAL' key
@@ -249,22 +247,24 @@ print(type(emgfile['REF_SIGNAL']))
 
 # Replace the current 'REF_SIGNAL' with a random reference signal.
 random_data = np.random.randint(0 ,20, size=(emgfile['EMG_LENGTH'], 1))
-rand_ref = pd.DataFrame(random_data, columns=['REF_SIGNAL'])
+rand_ref = pd.DataFrame(random_data, columns=[0])
 emgfile['REF_SIGNAL'] = rand_ref
 
 print(emgfile['REF_SIGNAL'])
 
 """Output
-       REF_SIGNAL
-0              37
-2              25
-3              14
-4              91
-...           ...
-66555          62
-66556          57
-66558           1
-66559          77
+        0
+0       2
+1      15
+2      13
+3      18
+4       3
+...    ..
+66555  13
+66556  11
+66557  13
+66558   1
+66559   7
 """
 ```
 
@@ -272,7 +272,7 @@ print(emgfile['REF_SIGNAL'])
 
 *openhdemg* offers a number of built-in functions to load the data from different sources. However, there might be special circumnstances that require more flexibility. In this case, the user can create custom functions to load any type of decomposed HD-EMG files. However, in order to interact with the *openhdemg* functions, the `emgfile` loaded with any custom function must respect the original [structure](#structure-of-the-emgfile).
 
-In case your decomposed HD-EMG file does not contain a specific variable, you should mantain the original `emgfile` keys and the original data structure for each key, but filled with np.nan values.
+In case your decomposed HD-EMG file does not contain a specific variable, you should mantain the original `emgfile` keys and the original data structure, although empty.
 
 
 ## More questions?

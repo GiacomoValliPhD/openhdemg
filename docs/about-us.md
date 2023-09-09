@@ -72,7 +72,7 @@ Francesco Negro:
 
 - Contribution: &nbsp; :fontawesome-solid-brain: Knowledge sharing &nbsp; :fontawesome-solid-file-code: Code sharing &nbsp; :octicons-codescan-checkmark-24: Accuracy check
 
-- Prof. Negro is a Full Professor at the Department of Clinical and Experimental Sciences at Universita’ degli Studi di Brescia (IT). His research interests include applied physiology of the human motor system, signal processing of intramuscular and surface electromyography, and modeling of spinal neural networks.
+- Francesco Negro is a Full Professor at the Department of Clinical and Experimental Sciences at Universita’ degli Studi di Brescia (IT). His research interests include applied physiology of the human motor system, signal processing of intramuscular and surface electromyography, and modeling of spinal neural networks.
 
 Andrea Casolo:
 
@@ -81,3 +81,12 @@ Andrea Casolo:
 - Contribution: &nbsp; :fontawesome-solid-brain: Knowledge sharing &nbsp; :octicons-codescan-checkmark-24: Accuracy check
 
 - Andrea Casolo is an Assistant Professor at the Department of Biomedical Sciences, University of Padova (IT). He obtained a MSc in Health and Physical Activity (2016) and a PhD in Human Movement and Sport Sciences (2020) from the University of Rome "Foro Italico". His research interests focus on the neural control of movement and the study of neuromuscular plasticity to physical exercise investigated with high-density surface electromyography.
+
+Giuseppe De Vito:
+
+- giuseppe.devito@unipd.it
+
+- Contribution: &nbsp; :fontawesome-solid-brain: Knowledge sharing
+
+- Giuseppe De Vito is a full Professor of Human Physiology in the Department of Biomedical Sciences at University of Padova (IT). He was, from 2007 until 2019, Professor and Dean in the School of Public Health, Physiotherapy & Sports Science at University College Dublin (IE) (Head of School between 2014 and 2019). Giuseppe does research in Human and Exercise Physiology.
+

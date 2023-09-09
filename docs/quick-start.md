@@ -193,9 +193,9 @@ There might be cases in which we need to remove one or more MUs from our *emgfil
 
 From the visual inspection of our plots, we can see that the firings pattern of MU number 2 (remember, Python is in base 0!!!) is not really regular. We might therefore have doubts about its quality.
 
-A way to assess the quality of the MUs is to look at the separation between the signal and the noise. This is efficiently measured by the silouette (SIL) score.
+A way to assess the quality of the MUs is to look at the separation between the signal and the noise. This is efficiently measured by accuracy scores.
 
-This score is automatically calculated while importing the *emgfile* and can be easily accessed as `emgfile["SIL"]`.
+This score is automatically calculated while importing the *emgfile* and can be easily accessed as `emgfile["ACCURACY"]`. In our sample file, the accuracy is calculated by the Silhouette (SIL) score (Negro 2016).
 
 ```Python
 # Import the library with the short name 'emg'
@@ -205,7 +205,7 @@ import openhdemg.library as emg
 emgfile = emg.emg_from_samplefile()
 
 # Print the SIL score
-print(emgfile["SIL"])
+print(emgfile["ACCURACY"])
 
 """Output
           0
@@ -217,7 +217,7 @@ print(emgfile["SIL"])
 """
 ```
 
-Our suspicion was right, MU number 2 has the lowest SIL score.
+Our suspicion was right, MU number 2 has the lowest accuracy score.
 
 In order to remove this MU, we can use the function [delete_mus](api_tools.md#openhdemg.library.tools.delete_mus).
 
@@ -285,35 +285,29 @@ results = emg.basic_mus_properties(
 print(results)
 
 """
-     MVC  MU_number        PNR    avg_PNR       SIL   avg_SIL      abs_RT  \
-0  634.0          0  27.480307  29.877575  0.899082  0.922923   30.621759
-1    NaN          1  28.946493        NaN  0.919601       NaN   32.427026
-2    NaN          2  28.640680        NaN  0.917190       NaN   68.371911
-3    NaN          3  34.442821        NaN  0.955819       NaN  118.504004
+     MVC  MU_number  ACCURACY  avg_ACCURACY      abs_RT    abs_DERT  \
+0  634.0          0  0.899082      0.922923   30.621759   36.168135  
+1    NaN          1  0.919601           NaN   32.427026   31.167703  
+2    NaN          2  0.917190           NaN   68.371911   67.308703  
+3    NaN          3  0.955819           NaN  118.504004  102.761472  
 
-     abs_DERT     rel_RT   rel_DERT    DR_rec  DR_derec  DR_start_steady  \
-0   36.168135   4.829930   5.704753  7.548770  5.449581        11.788779
-1   31.167703   5.114673   4.916041  8.344515  5.333535        11.254445
-2   67.308703  10.784213  10.616515  5.699017  3.691367         9.007505
-3  102.761472  18.691483  16.208434  5.701081  4.662196         7.393645
+       rel_RT   rel_DERT    DR_rec  DR_derec  DR_start_steady  DR_end_steady  \
+0    4.829930   5.704753  7.548770  5.449581        11.788779      10.401857  
+1    5.114673   4.916041  8.344515  5.333535        11.254445       9.999033  
+2   10.784213  10.616515  5.699017  3.691367         9.007505       7.053079  
+3   18.691483  16.208434  5.701081  4.662196         7.393645       6.430807  
 
-   DR_end_steady  DR_all_steady     DR_all  COVisi_steady  COVisi_all  \
-0      10.401857      11.154952  10.693076       6.833642   19.104306
-1       9.999033      10.751960  10.543011       8.364553   15.408739
-2       7.053079       8.168471   7.949294      10.097045   23.324503
-3       6.430807       6.908502   6.814687      11.211862   16.319474
-
-   COV_steady
-0    1.422424
-1         NaN
-2         NaN
-3         NaN
+   DR_all_steady     DR_all  COVisi_steady  COVisi_all  COV_steady
+0      11.154952  10.693076       6.833642   19.104306    1.422424
+1      10.751960  10.543011       8.364553   15.408739         NaN
+2       8.168471   7.949294      10.097045   23.324503         NaN
+3       6.908502   6.814687      11.211862   16.319474         NaN
 """
 ```
 
 ## 7. Save the results and the edited file
 
-It looks like we got a lot of results, which makes it extremely inefficient to copy them manually.
+It looks like we got a lot of results, which makes of it extremely inefficient to copy them manually.
 
 Obviously, this can be automated using one attribute of the *results* object and we can conveniently save all the results in a .csv file.
 

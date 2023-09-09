@@ -1,7 +1,6 @@
 Description
 -----------
-This module contains all the functions used to visualise the emg file,
-the MUs properties or to save figures.
+This module contains all the functions used to visualise the content of the imported EMG file, the MUs properties or to save figures.
 
 <br/>
 

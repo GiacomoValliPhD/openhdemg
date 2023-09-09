@@ -1,6 +1,7 @@
 # Graphical Interface
 
 Welcome, to the *openhdemg* Graphical User Interface (GUI) introduction! 
+
 The *openhdemg* GUI incorporates all relevant high-level functions of the *openhdemg* library. The GUI allows you to successfully perform High-Density Electromyography (HD-EMG) data anlysis **without any programming skills required**. Moreover, there is no downside to using the GUI even if you are an experienced programmer.
 
 The GUI can be simply accessed from the command line with:
@@ -27,9 +28,10 @@ This is your starting point for every analysis. On the left hand side you can fi
     - `DEMUSE` (.mat file used in DEMUSE)
     - `OTB_REFSIG` (Reference signal in the .mat file exportable by OTBiolab+)
     - `OPENHDEMG` (emgfile or reference signal stored in .json format)
-    - `CUSTOM` (custom data from a .csv file)
+    - `CUSTOMCSV` (custom data from a .csv file)
+    - `CUSTOMCSV_REFSIG` (Reference signal in a custom .csv file)
 
-    Each filetype corresponds to a distinct datatype that should match the file you want to analyse. So, select the `Type of file` corresponding to the type of your file. 
+    Each filetype corresponds to a distinct datatype that should match the file you want to analyse. So, select the `Type of file` corresponding to the type of your file. In case you selected `OTB`, specify the `extension factor` in the dropdown.
 
 2. To actually load the file, click the **Load File** button and select the file you want to analyse. In case of occurence, follow the error messages and repeat this and the previos step.
 
@@ -38,6 +40,7 @@ This is your starting point for every analysis. On the left hand side you can fi
 ## Viewing an analysis file
 
 It doesn't get any simpler than this! 
+
 Once a file is successfully loaded as described above, you can click the `View MUs` button to plot/view your file. In the middle section of the GUI, a plot containing your data should appear.
 
 ----------------------------------------

@@ -8,9 +8,10 @@ So far, we have included three advanced analyses in the *openhdemg* GUI.
 
 - `Motor Unit Tracking`
 - `Duplicate Removal`
-- `Conduction Velocity Calculation`
+- `Conduction Velocity Estimation`
 
 For all of those, the specification of a `Matrix Orientation` and a `Matrix Code` is required. The `Matrix Orientaion` must match the one of your matrix during acquisition. You can find a reference image for the `Orientation` at the bottom in the right side of the `Plot Window` when using the `Plot EMG`function. The `Matrix Orientation` can be either **0** or **180** and must be chosen from the dropdown list.
+
 The `Matrix Code` must be specified according to the one you used during acquisition. So far, the codes
 
 - `GR08MM1305`
@@ -18,13 +19,13 @@ The `Matrix Code` must be specified according to the one you used during acquisi
 - `GR10MM0808`
 - `None`
 
-are implemented. You must choose one from the respective dropdown list.
-In case you selected `None`, the entrybox `Rows, Columns` will appear. Please specify the number of rows and columns of your used matrix since you now bypass included matrix codes. In example, specifying
+are implemented. You must choose one from the respective dropdown list. In case you selected `None`, the entrybox `Rows, Columns` will appear. Please specify the number of rows and columns of your used matrix since you now bypass included matrix codes. `Orientation` is ignored when `Matrix Code` is `None`. In example, specifying
 
 ```Python
 Rows, Columns: 13, 5
 ```
 means that your File has 65 channels.
+
 Once you specified these parameter, you can click the `Advaned Analysis` button to start your analysis.
 
 -----------------------------------------
@@ -39,9 +40,9 @@ When you want to track MUs across two different files, you need to select the `M
     - `OTB` (.mat file exportable by OTBiolab+)
     - `DEMUSE` (.mat file used in DEMUSE)
     - `OPENHDEMG` (emgfile or reference signal stored in .json format)
-    - `CUSTOM` (custom data from a .csv file)
+    - `CUSTOMCSV` (custom data from a .csv file)
 
-    Each filetype corresponds to a distinct datatype that should match the file you want to analyse. So, select the **Type of file** corresponding to the type of your file. In case you selected `OTB` specify the `extension factor` in the dropdown.
+    Each filetype corresponds to a distinct datatype that should match the file you want to analyse. So, select the **Type of file** corresponding to the type of your file. In case you selected `OTB`, specify the `extension factor` in the dropdown.
 
 2. Load the files according to specified `Type of file`using the `Load File 1` and `Load File 2` buttons.
 
@@ -65,8 +66,7 @@ When you want to remove MUs duplicates across different files, you need to selec
 1. You should specify How to remove the duplicated MUs in the `Which` dropdown. You can choose between
 
     - munumber: Duplicated MUs are removed from the file with more MUs.
-    - PNR: The MU with the lowest PNR is removed.
-    - SIL: The MU with the lowest SIL is removed.
+    - accuracy: The MU with the lowest accuracy score is removed.
 
 2. By clicking the `Remove Duplicates` button, you start the removal process.
 
