@@ -15,7 +15,7 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvc=0):
     """
     Calculates recruitment/derecruitment thresholds.
 
-    Values are calculated both in absolute and relative therms.
+    Values are calculated both in absolute and relative terms.
 
     Parameters
     ----------
@@ -56,7 +56,7 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvc=0):
         contraction.
     - compute_covisi : calculate the coefficient of variation of interspike
         interval.
-    - compute_drvariability : claculate the DR variability.
+    - compute_drvariability : calculate the DR variability.
 
     Examples
     --------
@@ -230,7 +230,7 @@ def compute_dr(
         contraction.
     - compute_covisi : calculate the coefficient of variation of interspike
         interval.
-    - compute_drvariability : claculate the DR variability.
+    - compute_drvariability : calculate the DR variability.
 
     Notes
     -----
@@ -490,7 +490,7 @@ def basic_mus_properties(
     - compute_dr : calculate the discharge rate.
     - compute_covisi : calculate the coefficient of variation of interspike
         interval.
-    - compute_drvariability : claculate the DR variability.
+    - compute_drvariability : calculate the DR variability.
 
     Examples
     --------
@@ -695,7 +695,7 @@ def compute_covisi(
     single_mu_number=-1,
 ):
     """
-    Calculate theCOVisi.
+    Calculate the COVisi.
 
     This function calculates the coefficient of variation of interspike
     interval (COVisi).
@@ -742,7 +742,7 @@ def compute_covisi(
     - compute_dr : calculate the discharge rate.
     - basic_mus_properties : calculate basic MUs properties on a trapezoidal
         contraction.
-    - compute_drvariability : claculate the DR variability.
+    - compute_drvariability : calculate the DR variability.
 
     Notes
     -----
@@ -903,7 +903,7 @@ def compute_drvariability(
     event_="rec_derec_steady",
 ):
     """
-    Claculate the DR variability.
+    Calculate the DR variability.
 
     This function calculates the variability (as the coefficient of variation)
     of the instantaneous discharge rate (DR) at recruitment, derecruitment,

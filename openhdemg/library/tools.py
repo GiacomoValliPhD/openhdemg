@@ -99,8 +99,7 @@ def create_binary_firings(emg_length, number_of_mus, mupulses):
     Returns
     -------
     binary_MUs_firing : pd.DataFrame
-        A pd.DataFrame containing the binary representation of MUs firing or
-        np.nan if the variable was not found.
+        A pd.DataFrame containing the binary representation of MUs firing.
     """
 
     # skip the step if I don't have the mupulses (is nan)
@@ -123,7 +122,7 @@ def create_binary_firings(emg_length, number_of_mus, mupulses):
         return binary_MUs_firing
 
     else:
-        return np.nan
+        raise ValueError("mupulses is not a list of ndarrays")
 
 
 def mupulses_from_binary(binarymusfiring):
@@ -292,10 +291,11 @@ def compute_idr(emgfile):
     idr : dict
         A dict containing a pd.DataFrame for each MU (keys are integers).
         Accessing the key, we have a pd.DataFrame containing:
-            mupulses: firing sample.
-            diff_mupulses: delta between consecutive firing samples.
-            timesec: delta between consecutive firing samples in seconds.
-            idr: instantaneous discharge rate.
+
+            - mupulses: firing sample.
+            - diff_mupulses: delta between consecutive firing samples.
+            - timesec: delta between consecutive firing samples in seconds.
+            - idr: instantaneous discharge rate.
 
     Examples
     --------
@@ -848,9 +848,9 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
     conversion_val : float or int, default 0
         The conversion value to multiply the original reference signal.
         I.e., if the original reference signal is in kilogram (kg) and
-        conversion_val=9.81, the output will be in Newton/Sec (N/Sec).
-        If conversion_val=0 (default), the results will simply be Original
-        measure unit. conversion_val can be any custom int or float.
+        conversion_val=9.81, the output will be in Newton (N).
+        If conversion_val=0 (default), the results will simply be in the
+        original measure unit. conversion_val can be any custom int or float.
 
     Returns
     -------

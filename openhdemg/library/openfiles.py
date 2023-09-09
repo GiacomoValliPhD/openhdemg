@@ -125,6 +125,7 @@ def emg_from_demuse(filepath):
     (as for OTB matrix standards) in the case of a 64 electrodes matrix.
 
     Structure of the emgfile:
+
         emgfile = {
             "SOURCE": SOURCE,
             "FILENAME": FILENAME,
@@ -589,7 +590,8 @@ def emg_from_otb(
 
     The input .mat file exported from the OTBiolab+ software must have a
     specific content:
-    - refsig signal is optional but, if present, there should be the
+
+    - The reference signal is optional but, if present, there should be the
         fullsampled or the subsampled version (in OTBioLab+ the "performed
         path" refers to the subsampled signal, the "acquired data" to the
         fullsampled signal), REF_SIGNAL is expected to be expressed as % of
@@ -604,6 +606,7 @@ def emg_from_otb(
     is passed to 'extras='!
 
     Structure of the returned emgfile:
+
         emgfile = {
             "SOURCE": SOURCE,
             "FILENAME": FILENAME,
@@ -749,8 +752,8 @@ def refsig_from_otb(
     software as a dictionary of Python objects (mainly pandas dataframes).
     Compared to the function emg_from_otb, this function only imports the
     REF_SIGNAL and, therefore, it can be used for special cases where only the
-    REF_SIGNAL is necessary. This will allow a faster execution of the script
-    and to avoid exceptions for missing data.
+    REF_SIGNAL is necessary. This will allow for a faster execution of the
+    script and to avoid exceptions for missing data.
 
     Parameters
     ----------
@@ -798,7 +801,8 @@ def refsig_from_otb(
     The returned file is called ``emg_refsig`` for convention.
 
     The input .mat file exported from the OTBiolab+ software must contain:
-    - refsig signal: there must be the fullsampled or the subsampled
+
+    - Reference signal: there must be the fullsampled or the subsampled
         version (in OTBioLab+ the "performed path" refers to the subsampled
         signal, the "acquired data" to the fullsampled signal), REF_SIGNAL is
         expected to be expressed as % of the MVC (but not compulsory).
@@ -806,6 +810,7 @@ def refsig_from_otb(
     is passed to 'extras='!
 
     Structure of the returned emg_refsig:
+
         emg_refsig = {
             "SOURCE": SOURCE,
             "FILENAME": FILENAME,
@@ -972,6 +977,7 @@ def emg_from_customcsv(
     The returned file is called ``emgfile`` for convention.
 
     Structure of the emgfile:
+
         emgfile = {
             "SOURCE": SOURCE,
             "FILENAME": FILENAME,
@@ -1142,8 +1148,8 @@ def refsig_from_customcsv(
 
     Compared to the function emg_from_customcsv, this function only imports the
     REF_SIGNAL and, therefore, it can be used for special cases where only the
-    REF_SIGNAL is necessary. This will allow a faster execution of the script
-    and to avoid exceptions for missing data.
+    REF_SIGNAL is necessary. This will allow for a faster execution of the
+    script and to avoid exceptions for missing data.
 
     This function detects the content of the .csv by parsing the .csv columns.
     For parsing, column labels should be provided. A label is a term common
@@ -1178,11 +1184,13 @@ def refsig_from_customcsv(
     The returned file is called ``emg_refsig`` for convention.
 
     Structure of the returned emg_refsig:
+
         emg_refsig = {
             "SOURCE": SOURCE,
             "FILENAME": FILENAME,
             "FSAMP": FSAMP,
             "REF_SIGNAL": REF_SIGNAL,
+            "EXTRAS": EXTRAS,
         }
 
     Examples
@@ -1596,7 +1604,8 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
         The directory of the file to load (excluding file name).
         This can be a simple string, the use of Path is not necessary.
     filesource : str {"OPENHDEMG", "DEMUSE", "OTB", "OTB_REFSIG", "CUSTOMCSV", CUSTOMCSV_REFSIG}, default "OPENHDEMG"
-        See notes for how files should be exported from OTB.
+        The source of the file. See notes for how files should be exported
+        from OTB.
 
         ``OPENHDEMG``
             File saved from openhdemg (.json).
@@ -1684,6 +1693,7 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
 
     The input .mat file exported from the OTBiolab+ software should have a
     specific content:
+
     - refsig signal is optional but, if present, there should be both the
         fullsampled and the subsampled version (in OTBioLab+ the "performed
         path" refers to the subsampled signal, the "acquired data" to the
@@ -1716,6 +1726,7 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
     are 'ref_signal' and 'ipts'.
 
     Structure of the returned emgfile:
+
         emgfile = {
             "SOURCE": SOURCE,
             "FILENAME": FILENAME,
@@ -1733,6 +1744,7 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
         }
 
     Structure of the returned emg_refsig:
+
         emg_refsig = {
             "SOURCE": SOURCE,
             "FILENAME": FILENAME,
