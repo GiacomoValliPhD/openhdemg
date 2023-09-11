@@ -181,6 +181,7 @@ Subsequently to specifying the MVC, you can calculate a number of basic MUs prop
 
 - The absolute/relative recruitment/derecruitment thresholds
 - The discharge rate at recruitment, derecruitment, during the steady-state phase and during the entire contraction
+- The individual and average accuracy
 - The coefficient of variation of interspike interval
 - The coefficient of variation of force signal
 
@@ -237,7 +238,7 @@ These three setting options are universally used in all plots. There are two mor
     ```
     means that your File has 65 channels.
 
-2. You need to specify the `Orientation` in row two and column four in the left side of the `Plot Window`. The `Orientaion` must match the one of your matrix during acquisition. You can find a reference image for the `Orientation` at the bottom in the right side of the `Plot Window`.
+2. You need to specify the `Orientation` in row two and column four in the left side of the `Plot Window`. The `Orientaion` must match the one of your matrix during acquisition. You can find a reference image for the `Orientation` at the bottom in the right side of the `Plot Window`. `Orientation` is ignored when `Matrix Code` is `None`.
 
 ### Plot Raw EMG Signal
 1. Click the `Plot EMGsig` button in row four and column one in the left side of the `Plot Window`, to plot the raw emg signal of your analysis file. 

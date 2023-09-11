@@ -1,6 +1,6 @@
 """
-This module contains all the functions used to visualise the emg file,
-the MUs properties or to save figures.
+This module contains all the functions used to visualise the content of the
+imported EMG file, the MUs properties or to save figures.
 """
 
 import matplotlib.pyplot as plt
@@ -58,7 +58,7 @@ def plot_emgsig(
     """
     Plot the RAW_SIGNAL. Single or multiple channels.
 
-    Up to 12 channels (a common matrix row) can be easily observed togheter
+    Up to 12 channels (a common matrix row) can be easily observed togheter,
     but more can be plotted.
 
     Parameters
@@ -423,10 +423,10 @@ def plot_mupulses(
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    munumber : str {"all"}, int or list, default "all"
+    munumber : str, int or list, default "all"
+
         ``all``
             IPTS of all the MUs is plotted.
-
         Otherwise, a single MU (int) or multiple MUs (list of int) can be
         specified.
         The list can be passed as a manually-written list or with:
@@ -590,10 +590,9 @@ def plot_ipts(
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    munumber : str {"all"}, int or list, default "all"
+    munumber : str, int or list, default "all"
         ``all``
             IPTS of all the MUs is plotted.
-
         Otherwise, a single MU (int) or multiple MUs (list of int) can be
         specified.
         The list can be passed as a manually-written list or with:
@@ -877,7 +876,7 @@ def plot_idr(
             ax1.set_ylabel("Motor units")
             ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
-        else:
+        elif len(munumber) == 1:
             ax1 = sns.scatterplot(
                 x=idr[munumber[0]]["timesec" if timeinseconds else "mupulses"],
                 y=idr[munumber[0]]["idr"],
@@ -950,6 +949,7 @@ def plot_muaps(
     -----
     There is no limit to the number of MUs and STA files that can be
     overplotted.
+
     ``Remember: the different STAs should be matched`` with same number of
         electrode, processing (i.e., differential) and computed on the same
         timewindow.
@@ -1131,7 +1131,7 @@ def plot_muap(
     --------
     Plot all the consecutive MUAPs of a single MU.
     In this case we are plotting the matrix channel 45 which is placed in
-    column 4 ("col3") as Python numbering is base 0.
+    column 4 ("col3" as Python numbering is base 0).
 
     >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)

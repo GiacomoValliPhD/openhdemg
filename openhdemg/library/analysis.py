@@ -15,7 +15,7 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvc=0):
     """
     Calculates recruitment/derecruitment thresholds.
 
-    Values are calculated both in absolute and relative therms.
+    Values are calculated both in absolute and relative terms.
 
     Parameters
     ----------
@@ -56,7 +56,7 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvc=0):
         contraction.
     - compute_covisi : calculate the coefficient of variation of interspike
         interval.
-    - compute_drvariability : claculate the DR variability.
+    - compute_drvariability : calculate the DR variability.
 
     Examples
     --------
@@ -230,7 +230,7 @@ def compute_dr(
         contraction.
     - compute_covisi : calculate the coefficient of variation of interspike
         interval.
-    - compute_drvariability : claculate the DR variability.
+    - compute_drvariability : calculate the DR variability.
 
     Notes
     -----
@@ -431,6 +431,7 @@ def basic_mus_properties(
     n_firings_steady=10,
     start_steady=-1,
     end_steady=-1,
+    accuracy="default",
     mvc=0,
 ):
     """
@@ -443,6 +444,8 @@ def basic_mus_properties(
     phase and during the entire contraction,
     the coefficient of variation of interspike interval,
     the coefficient of variation of force signal.
+
+    Accuracy measures, MVC and steadiness are also returned.
 
     Parameters
     ----------
@@ -458,6 +461,19 @@ def basic_mus_properties(
         The start and end point (in samples) of the steady-state phase.
         If < 0 (default), the user will need to manually select the start and
         end of the steady-state phase.
+    accuracy : str {"default", "SIL", "PNR", "SIL_PNR"}, default "default"
+        The accuracy measure to return.
+
+        ``default``
+            The original accuracy measure already contained in the emgfile is
+            returned without any computation.
+        ``SIL``
+            The Silhouette score is computed.
+        ``PNR``
+            The pulse to noise ratio is computed.
+        ``SIL_PNR``
+            Both the Silhouette score and the pulse to noise ratio are
+            computed.
     mvc : float, default 0
         The maximum voluntary contraction (MVC). It is suggest to report
         MVC in Newton (N). If 0 (default), the user will be asked to imput it
@@ -474,7 +490,7 @@ def basic_mus_properties(
     - compute_dr : calculate the discharge rate.
     - compute_covisi : calculate the coefficient of variation of interspike
         interval.
-    - compute_drvariability : claculate the DR variability.
+    - compute_drvariability : calculate the DR variability.
 
     Examples
     --------
@@ -509,6 +525,7 @@ def basic_mus_properties(
     2    NaN          3   80.757524   87.150011  10.274494  11.087788  6.101529  4.789000         7.293547       5.846093       7.589531   8.055731      36.996894   35.308650         NaN
     3    NaN          4   34.606886   37.569257   4.402912   4.779804  6.345692  5.333535        13.289651       9.694317      11.613640  11.109796      26.028689   29.372524         NaN
     """
+    # TODO make new examples, also with accuracy
 
     # Check if we need to select the steady-state phase
     if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
@@ -523,7 +540,7 @@ def basic_mus_properties(
     # First: create a dataframe that contains all the output
     exportable_df = []
 
-    # Second: add basic information (MVC, MU number, PNR/SIL, Average PNR/SIL)
+    # Second: add basic information (MVC, MU number, ACCURACY, Average ACCURACY)
     if mvc == 0:
         # Ask the user to input MVC
         mvc = float(
@@ -543,40 +560,94 @@ def basic_mus_properties(
     toappend = pd.DataFrame(toappend)
     exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
-    # Calculate PNR
-    # Repeat the task for every new column to fill and concatenate
-    toappend = []
-    for mu in range(emgfile["NUMBER_OF_MUS"]):
-        pnr = compute_pnr(
-            ipts=emgfile["IPTS"][mu],
-            mupulses=emgfile["MUPULSES"][mu],
-            fsamp=emgfile["FSAMP"],
+    if accuracy == "default":
+        # Report the original accuracy
+        toappend = emgfile["ACCURACY"]
+        toappend.columns = ["Accuracy"]
+        exportable_df = pd.concat([exportable_df, toappend], axis=1)
+
+        # Calculate avrage accuracy
+        avg_accuracy = exportable_df["Accuracy"].mean()
+        toappend = pd.DataFrame([{"avg_Accuracy": avg_accuracy}])
+        exportable_df = pd.concat([exportable_df, toappend], axis=1)
+
+    elif accuracy == "SIL":
+        # Calculate SIL
+        toappend = []
+        for mu in range(emgfile["NUMBER_OF_MUS"]):
+            sil = compute_sil(
+                ipts=emgfile["IPTS"][mu],
+                mupulses=emgfile["MUPULSES"][mu],
+            )
+            toappend.append({"SIL": sil})
+        toappend = pd.DataFrame(toappend)
+        exportable_df = pd.concat([exportable_df, toappend], axis=1)
+
+        # Calculate avrage SIL
+        avg_sil = exportable_df["SIL"].mean()
+        toappend = pd.DataFrame([{"avg_SIL": avg_sil}])
+        exportable_df = pd.concat([exportable_df, toappend], axis=1)
+
+    elif accuracy == "PNR":
+        # Calculate PNR
+        # Repeat the task for every new column to fill and concatenate
+        toappend = []
+        for mu in range(emgfile["NUMBER_OF_MUS"]):
+            pnr = compute_pnr(
+                ipts=emgfile["IPTS"][mu],
+                mupulses=emgfile["MUPULSES"][mu],
+                fsamp=emgfile["FSAMP"],
+            )
+            toappend.append({"PNR": pnr})
+        toappend = pd.DataFrame(toappend)
+        exportable_df = pd.concat([exportable_df, toappend], axis=1)
+
+        # Calculate avrage PNR
+        # dropna to avoid nan average.
+        avg_pnr = exportable_df["PNR"].mean()
+        toappend = pd.DataFrame([{"avg_PNR": avg_pnr}])
+        exportable_df = pd.concat([exportable_df, toappend], axis=1)
+
+    elif accuracy == "SIL_PNR":
+        # Calculate SIL
+        toappend = []
+        for mu in range(emgfile["NUMBER_OF_MUS"]):
+            sil = compute_sil(
+                ipts=emgfile["IPTS"][mu],
+                mupulses=emgfile["MUPULSES"][mu],
+            )
+            toappend.append({"SIL": sil})
+        toappend = pd.DataFrame(toappend)
+        exportable_df = pd.concat([exportable_df, toappend], axis=1)
+
+        # Calculate avrage SIL
+        avg_sil = exportable_df["SIL"].mean()
+        toappend = pd.DataFrame([{"avg_SIL": avg_sil}])
+        exportable_df = pd.concat([exportable_df, toappend], axis=1)
+
+        # Calculate PNR
+        # Repeat the task for every new column to fill and concatenate
+        toappend = []
+        for mu in range(emgfile["NUMBER_OF_MUS"]):
+            pnr = compute_pnr(
+                ipts=emgfile["IPTS"][mu],
+                mupulses=emgfile["MUPULSES"][mu],
+                fsamp=emgfile["FSAMP"],
+            )
+            toappend.append({"PNR": pnr})
+        toappend = pd.DataFrame(toappend)
+        exportable_df = pd.concat([exportable_df, toappend], axis=1)
+
+        # Calculate avrage PNR
+        # dropna to avoid nan average.
+        avg_pnr = exportable_df["PNR"].mean()
+        toappend = pd.DataFrame([{"avg_PNR": avg_pnr}])
+        exportable_df = pd.concat([exportable_df, toappend], axis=1)
+
+    else:
+        raise ValueError(
+            f"accuracy must be one of 'default', 'SIL', 'PNR', 'SIL_PNR'. {accuracy} was passed instead"
         )
-        toappend.append({"PNR": pnr})
-    toappend = pd.DataFrame(toappend)
-    exportable_df = pd.concat([exportable_df, toappend], axis=1)
-
-    # Calculate avrage PNR
-    # dropna to avoid nan average.
-    avg_pnr = exportable_df["PNR"].mean()
-    toappend = pd.DataFrame([{"avg_PNR": avg_pnr}])
-    exportable_df = pd.concat([exportable_df, toappend], axis=1)
-
-    # Calculate SIL
-    toappend = []
-    for mu in range(emgfile["NUMBER_OF_MUS"]):
-        sil = compute_sil(
-            ipts=emgfile["IPTS"][mu],
-            mupulses=emgfile["MUPULSES"][mu],
-        )
-        toappend.append({"SIL": sil})
-    toappend = pd.DataFrame(toappend)
-    exportable_df = pd.concat([exportable_df, toappend], axis=1)
-
-    # Calculate avrage SIL
-    avg_sil = exportable_df["SIL"].mean()
-    toappend = pd.DataFrame([{"avg_SIL": avg_sil}])
-    exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
     # Calculate RT and DERT
     mus_thresholds = compute_thresholds(emgfile=emgfile, mvc=mvc)
@@ -624,7 +695,7 @@ def compute_covisi(
     single_mu_number=-1,
 ):
     """
-    Calculate theCOVisi.
+    Calculate the COVisi.
 
     This function calculates the coefficient of variation of interspike
     interval (COVisi).
@@ -671,7 +742,7 @@ def compute_covisi(
     - compute_dr : calculate the discharge rate.
     - basic_mus_properties : calculate basic MUs properties on a trapezoidal
         contraction.
-    - compute_drvariability : claculate the DR variability.
+    - compute_drvariability : calculate the DR variability.
 
     Notes
     -----
@@ -832,7 +903,7 @@ def compute_drvariability(
     event_="rec_derec_steady",
 ):
     """
-    Claculate the DR variability.
+    Calculate the DR variability.
 
     This function calculates the variability (as the coefficient of variation)
     of the instantaneous discharge rate (DR) at recruitment, derecruitment,

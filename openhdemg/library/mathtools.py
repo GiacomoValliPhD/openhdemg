@@ -168,7 +168,7 @@ def norm_twod_xcorr(df1, df2, mode="full"):
     1. Load the EMG file and band-pass filter the raw EMG signal
     2. Sort the matrix channels and compute the spike-triggered average
     3. Extract the STA of the MUs of interest from all the STAs
-    4. Unpack the STAs of single MUs and remove np.nan to pas them to
+    4. Unpack the STAs of single MUs and remove np.nan to pass them to
         norm_twod_xcorr
     5. Compute 2dxcorr to identify a common lag/delay
 
