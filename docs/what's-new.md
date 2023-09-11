@@ -1,13 +1,13 @@
 ## :octicons-tag-24: 0.1.0-beta.2
 :octicons-clock-24: September 2023
 
-This release introduces important changes. It is mainly addressing the necessity of maximum flexibility and easy integration with any custom or propietary file source. This relase is not bakward compatible.
+This release introduces important changes. It is mainly addressing the necessity of maximum flexibility and easy integration with any custom or proprietary file source. This release is not backward compatible.
 
 MAJOR CHANGES:
 
 - **Accuracy Measurement:** Replaced the double accuracy measures in the `emgfile` (i.e., “SIL” and “PNR”) with a single accuracy measure named “ACCURACY.” For files containing the decomposed source (also named “IPTS”), the “ACCURACY” variable will contain the silhouette score (Negro et al. 2016). For files that do not contain the decomposed source, the accuracy will be the original (often proprietary) accuracy estimate. This allows for maximum flexibility and is fundamental to interface the *openhdemg* library with any proprietary and custom implementation of the different decomposition algorithms currently available.
 
-    To accommodate this change, all the functions in the `openfile` module have been updated. Consequently, the functions using the “SIL” or “PNR” variables have also been modified. Specifially:
+    To accommodate this change, all the functions in the `openfile` module have been updated. Consequently, the functions using the “SIL” or “PNR” variables have also been modified. Specifically:
     
     - The `basic_mus_properties` function has a new input parameter (i.e., “accuracy”) to customize the returned accuracy estimate.
     - In the function `remove_duplicates_between`, the input parameter “which” now only accepts “munumber” and “accuracy” instead of “munumber,” “SIL,” and “PNR.”
