@@ -226,9 +226,10 @@ def sta(
         Every key of the dictionary represents a different column of the
         matrix. Rows are stored in the dict as a pd.DataFrame.
     firings : list or str {"all"}, default [0, 50]
-        The range of firnings to be used for the STA.
+        The range of firings to be used for the STA.
         If a MU has less firings than the range, the upper limit
         is adjusted accordingly.
+
         ``all``
             The STA is calculated over all the firings.
     timewindow : int, default 50
@@ -369,6 +370,7 @@ def sta(
         sorted_rawemg_sta["munumber"] = mu
 
         return sorted_rawemg_sta
+        # TODO verify built-in options to return from joblib.Parallel
 
     # Start parallel execution
     # Meausere running time
@@ -411,10 +413,10 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
     -------
     stmuap : dict
         dict containing a dict of ST MUAPs (pd.DataFrame) for every MUs.
-        pd.DataFrames containing the ST MUAPs are organised based on matrix
+        The pd.DataFrames containing the ST MUAPs are organised based on matrix
         rows (dict) and matrix channel.
         For example, the ST MUAPs of the first MU (0), in the second electrode
-        of the matrix can be accessed as stmuap[0]["col0"][1].
+        of the first matrix column can be accessed as stmuap[0]["col0"][1].
 
     See also
     --------
@@ -623,19 +625,17 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     Returns
     -------
     aligned_sta1 : dict
-        A dictionary containing the aligned and STA of the first MU
-        with the final expected timewindow
-        (duration of sta_mu1 * finalduration).
+        A dictionary containing the aligned STA of the first MU with the final
+        expected timewindow (duration of sta_mu * finalduration).
     aligned_sta2 : dict
-        A dictionary containing the aligned and STA of the second MU
-        with the final expected timewindow
-        (duration of sta_mu1 * finalduration).
+        A dictionary containing the aligned STA of the second MU with the
+        final expected timewindow (duration of sta_mu * finalduration).
 
     See also
     --------
     - sta : computes the STA of every MUs.
     - norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
-        two MUS.
+        two MUs.
 
     Notes
     -----
@@ -764,7 +764,7 @@ def tracking(
     emgfile2 : dict
         The dictionary containing the second emgfile.
     firings : list or str {"all"}, default "all"
-        The range of firnings to be used for the STA.
+        The range of firings to be used for the STA.
         If a MU has less firings than the range, the upper limit
         is adjusted accordingly.
         ``all``
@@ -786,10 +786,14 @@ def tracking(
     orientation : int {0, 180}, default 180
         Orientation in degree of the matrix (same as in OTBiolab).
         E.g. 180 corresponds to the matrix connection toward the user.
-    n_rows, n_cols : None or int, default None
-        The number of rows and columns of the matrix. This parameter is used to
-        divide the channels based on the matrix shape. These are normally
-        inferred by the matrix code and must be specified only if code == None.
+    n_rows : None or int, default None
+        The number of rows of the matrix. This parameter is used to divide the
+        channels based on the matrix shape. These are normally inferred by the
+        matrix code and must be specified only if code == None.
+    n_cols : None or int, default None
+        The number of columns of the matrix. This parameter is used to divide
+        the channels based on the matrix shape. These are normally inferred by
+        the matrix code and must be specified only if code == None.
     exclude_belowthreshold : bool, default True
         Whether to exclude results with XCC below threshold.
     filter : bool, default True
@@ -813,7 +817,7 @@ def tracking(
     --------
     - sta : computes the STA of every MUs.
     - norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
-        two MUS.
+        two MUs.
     - remove_duplicates_between : remove duplicated MUs across two different
         files based on STA.
 
@@ -1055,7 +1059,7 @@ def remove_duplicates_between(
     emgfile2 : dict
         The dictionary containing the second emgfile.
     firings : list or str {"all"}, default "all"
-        The range of firnings to be used for the STA.
+        The range of firings to be used for the STA.
         If a MU has less firings than the range, the upper limit
         is adjusted accordingly.
         ``all``
@@ -1077,24 +1081,26 @@ def remove_duplicates_between(
     orientation : int {0, 180}, default 180
         Orientation in degree of the matrix (same as in OTBiolab).
         E.g. 180 corresponds to the matrix connection toward the user.
-    n_rows, n_cols : None or int, default None
-        The number of rows and columns of the matrix. This parameter is used to
-        divide the channels based on the matrix shape. These are normally
-        inferred by the matrix code and must be specified only if code == None.
+    n_rows : None or int, default None
+        The number of rows of the matrix. This parameter is used to divide the
+        channels based on the matrix shape. These are normally inferred by the
+        matrix code and must be specified only if code == None.
+    n_cols : None or int, default None
+        The number of columns of the matrix. This parameter is used to divide
+        the channels based on the matrix shape. These are normally inferred by
+        the matrix code and must be specified only if code == None.
     filter : bool, default True
         If true, when the same MU has a match of XCC > threshold with
         multiple MUs, only the match with the highest XCC is returned.
     show : bool, default False
         Whether to plot the STA of pairs of MUs with XCC above threshold.
-    which : str {"munumber", "PNR", "SIL"}
+    which : str {"munumber", "accuracy"}
         How to remove the duplicated MUs.
 
         ``munumber``
             Duplicated MUs are removed from the file with more MUs.
-        ``SIL``
-            The MU with the lowest SIL is removed.
-        ``PNR``
-            The MU with the lowest PNR is removed.
+        ``accuracy``
+            The MU with the lowest accuracy is removed.
 
     Returns
     -------
@@ -1108,7 +1114,7 @@ def remove_duplicates_between(
     --------
     - sta : computes the STA of every MUs.
     - norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
-        two MUS.
+        two MUs.
     - tracking : track MUs across two different files.
 
     Examples
@@ -1117,6 +1123,7 @@ def remove_duplicates_between(
     without duplicates. The duplicates are removed from the file with
     more MUs.
 
+    >>> import openhdemg.library as emg
     >>> emgfile1 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emgfile2 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> emgfile1, emgfile2, tracking_res = emg.remove_duplicates_between(
@@ -1180,42 +1187,16 @@ def remove_duplicates_between(
 
             return emgfile1, emgfile2, tracking_res
 
-    elif which == "PNR":
+    elif which == "accuracy":
         # Create a list containing which MU to remove in which file based
-        # on PNR value.
+        # on ACCURACY value.
         to_remove1 = []
         to_remove2 = []
         for i, row in tracking_res.iterrows():
-            pnr1 = emgfile1["PNR"].loc[int(row["MU_file1"])]
-            pnr2 = emgfile2["PNR"].loc[int(row["MU_file2"])]
+            acc1 = emgfile1["ACCURACY"].loc[int(row["MU_file1"])]
+            acc2 = emgfile2["ACCURACY"].loc[int(row["MU_file2"])]
 
-            if pnr1[0] <= pnr2[0]:
-                # This MU should be removed from emgfile1
-                to_remove1.append(int(row["MU_file1"]))
-            else:
-                # This MU should be removed from emgfile2
-                to_remove2.append(int(row["MU_file2"]))
-
-        # Delete the MUs
-        emgfile1 = delete_mus(
-            emgfile=emgfile1, munumber=to_remove1, if_single_mu="remove"
-        )
-        emgfile2 = delete_mus(
-            emgfile=emgfile2, munumber=to_remove2, if_single_mu="remove"
-        )
-
-        return emgfile1, emgfile2, tracking_res
-
-    elif which == "SIL":
-        # Create a list containing which MU to remove in which file based
-        # on SIL score.
-        to_remove1 = []
-        to_remove2 = []
-        for _, row in tracking_res.iterrows():
-            sil1 = emgfile1["SIL"].loc[int(row["MU_file1"])]
-            sil2 = emgfile2["SIL"].loc[int(row["MU_file2"])]
-
-            if sil1[0] <= sil2[0]:
+            if acc1[0] <= acc2[0]:
                 # This MU should be removed from emgfile1
                 to_remove1.append(int(row["MU_file1"]))
             else:
@@ -1234,7 +1215,7 @@ def remove_duplicates_between(
 
     else:
         raise ValueError(
-            f"which can be one of 'munumber', 'PNR', 'SIL'. {which} was passed instead"
+            f"which can be one of 'munumber' or 'accuracy'. {which} was passed instead"
         )
 
 
@@ -1326,7 +1307,7 @@ class MUcv_gui:
         matrix.
         Rows are stored in the dict as a pd.DataFrame.
     n_firings : list or str {"all"}, default [0, 50]
-        The range of firnings to be used for the STA.
+        The range of firings to be used for the STA.
         If a MU has less firings than the range, the upper limit
         is adjusted accordingly.
         ``all``

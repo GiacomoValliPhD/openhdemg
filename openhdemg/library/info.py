@@ -60,7 +60,7 @@ class info:
         emgfile type is:
         <class 'dict'>
         emgfile keys are:
-        dict_keys(['SOURCE', 'FILENAME', 'RAW_SIGNAL', 'REF_SIGNAL', 'PNR', 'SIL', 'IPTS', 'MUPULSES', 'FSAMP', 'IED', 'EMG_LENGTH', 'NUMBER_OF_MUS', 'BINARY_MUS_FIRING'])
+        dict_keys(['SOURCE', 'FILENAME', 'RAW_SIGNAL', 'REF_SIGNAL', 'ACCURACY', 'IPTS', 'MUPULSES', 'FSAMP', 'IED', 'EMG_LENGTH', 'NUMBER_OF_MUS', 'BINARY_MUS_FIRING', 'EXTRAS'])
         Any key can be acced as emgfile[key].
         emgfile['SOURCE'] is a <class 'str'> of value:
         DEMUSE
@@ -70,8 +70,8 @@ class info:
         """
 
         if emgfile["SOURCE"] in ["DEMUSE", "OTB", "CUSTOM"]:
-            print("\nData structure of the emgfile loaded with the function emg_from_otb.")
-            print("--------------------------------------------------------------------\n")
+            print("\nData structure of the emgfile")
+            print("-----------------------------\n")
             print(f"emgfile type is:\n{type(emgfile)}\n")
             print(f"emgfile keys are:\n{emgfile.keys()}\n")
             print("Any key can be acced as emgfile[key].\n")
@@ -80,8 +80,7 @@ class info:
             print("MUST NOTE: emgfile from OTB has 64 channels, from DEMUSE 65 (includes empty channel).")
             print(f"emgfile['RAW_SIGNAL'] is a {type(emgfile['RAW_SIGNAL'])} of value:\n{emgfile['RAW_SIGNAL']}\n")
             print(f"emgfile['REF_SIGNAL'] is a {type(emgfile['REF_SIGNAL'])} of value:\n{emgfile['REF_SIGNAL']}\n")
-            print(f"emgfile['PNR'] is a {type(emgfile['PNR'])} of value:\n{emgfile['PNR']}\n")
-            print(f"emgfile['SIL'] is a {type(emgfile['SIL'])} of value:\n{emgfile['SIL']}\n")
+            print(f"emgfile['ACCURACY'] is a {type(emgfile['ACCURACY'])} of value:\n{emgfile['ACCURACY']}\n")
             print(f"emgfile['IPTS'] is a {type(emgfile['IPTS'])} of value:\n{emgfile['IPTS']}\n")
             print(f"emgfile['MUPULSES'] is a {type(emgfile['MUPULSES'])} of length depending on total MUs number.")
             if emgfile['NUMBER_OF_MUS'] > 0:  # Manage exceptions
@@ -92,10 +91,11 @@ class info:
             print(f"emgfile['EMG_LENGTH'] is a {type(emgfile['EMG_LENGTH'])} of value:\n{emgfile['EMG_LENGTH']}\n")
             print(f"emgfile['NUMBER_OF_MUS'] is a {type(emgfile['NUMBER_OF_MUS'])} of value:\n{emgfile['NUMBER_OF_MUS']}\n")
             print(f"emgfile['BINARY_MUS_FIRING'] is a {type(emgfile['BINARY_MUS_FIRING'])} of value:\n{emgfile['BINARY_MUS_FIRING']}\n")
+            print(f"emgfile['EXTRAS'] is a {type(emgfile['EXTRAS'])} of value:\n{emgfile['EXTRAS']}\n")
 
-        elif emgfile["SOURCE"] == "OTB_REFSIG":
-            print("\nData structure of the emgfile loaded with the function refsig_from_otb.")
-            print("-----------------------------------------------------------------------\n")
+        elif emgfile["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG"]:
+            print("\nData structure of the emgfile")
+            print("-----------------------------\n")
             print(f"emgfile type is:\n{type(emgfile)}\n")
             print(f"emgfile keys are:\n{emgfile.keys()}\n")
             print("Any key can be acced as emgfile[key].\n")
@@ -103,6 +103,7 @@ class info:
             print(f"emgfile['FILENAME'] is a {type(emgfile['FILENAME'])} of value:\n{emgfile['FILENAME']}\n")
             print(f"emgfile['FSAMP'] is a {type(emgfile['FSAMP'])} of value:\n{emgfile['FSAMP']}\n")
             print(f"emgfile['REF_SIGNAL'] is a {type(emgfile['REF_SIGNAL'])} of value:\n{emgfile['REF_SIGNAL']}\n")
+            print(f"emgfile['EXTRAS'] is a {type(emgfile['EXTRAS'])} of value:\n{emgfile['EXTRAS']}\n")
 
         else:
             raise ValueError(f"Source '{emgfile['SOURCE']}' not recognised")
@@ -217,7 +218,7 @@ class info:
         Us
         --
 
-        People that contributed to the development of this project are:
+        The developers of this project are:
 
         Mr. Giacomo Valli:
             The creator of the project and the developer of the library.
@@ -242,6 +243,9 @@ class info:
             methods to evaluate muscle morphological as well architectural
             parameters.
             \x1B[0m
+
+        For the full list of contributors visit:
+        https://www.giacomovalli.com/openhdemg/about-us/
         """
 
         # Make Text Bold and Italic with Escape Sequence
@@ -264,15 +268,17 @@ class info:
         --------
         >>> import openhdemg.library as emg
         >>> emg.info().contacts()
-        "Name": "Giacomo Valli",
-        "Email": "giacomo.valli@phd.unipd.it",
-        "Twitter": "@giacomo_valli"
+        "Primary contact": "openhdemg@gmail.com",
+        "Twitter": "@openhdemg",
+        "Maintainer": "Giacomo Valli",
+        "Maintainer Email": "giacomo.valli@phd.unipd.it",
         """
 
         contact = {
-            "Name": "Giacomo Valli",
-            "Email": "giacomo.valli@phd.unipd.it",
+            "Primary contact": "openhdemg@gmail.com",
             "Twitter": "@openhdemg",
+            "Maintainer": "Giacomo Valli",
+            "Maintainer Email": "giacomo.valli@phd.unipd.it",
         }
 
         # Pretty dict printing
@@ -284,12 +290,17 @@ class info:
     def links(self):
         """
         Print a collection of useful links.
+
+        Examples
+        --------
+        >>> import openhdemg.library as emg
+        >>> emg.info().links()
         """
 
         links = {
             "Project Website": "https://www.giacomovalli.com/openhdemg/",
-            "Release Notes": "https://www.giacomovalli.com/openhdemg/What%27s-New/",
-            "Cite Us": "https://www.giacomovalli.com/openhdemg/Cite-Us/",
+            "Release Notes": "https://www.giacomovalli.com/openhdemg/what%27s-new/",
+            "Cite Us": "https://www.giacomovalli.com/openhdemg/cite-us/",
             "Discussion Forum": "https://github.com/GiacomoValliPhD/openhdemg/discussions",
             "Report Bugs": "https://github.com/GiacomoValliPhD/openhdemg/issues",
         }
@@ -303,6 +314,11 @@ class info:
     def citeus(self):
         """
         Print how to cite the project.
+
+        Examples
+        --------
+        >>> import openhdemg.library as emg
+        >>> emg.info().citeus()
         """
 
         cite = {

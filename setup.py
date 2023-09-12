@@ -6,16 +6,16 @@ import openhdemg as emg
 from pathlib import Path
 
 INSTALL_REQUIRES = [
-    "customtkinter>=5.1.3",
-    "matplotlib>=3.7.1",
-    "numpy>=1.24.3",
-    "openpyxl>=3.1.2",
-    "pandas>=2.0.2",
-    "pandastable>=0.13.1",
-    "pyperclip>=1.8.2",
-    "scipy>=1.10.1",
-    "seaborn>=0.12.2",
-    "joblib>=1.3.1",
+    "customtkinter==5.2.0",
+    "matplotlib==3.7.1",
+    "numpy==1.25.0",
+    "openpyxl==3.1.2",
+    "pandas==2.0.3",
+    "pandastable==0.13.1",
+    "pyperclip==1.8.2",
+    "scipy==1.11.1",
+    "seaborn==0.12.2",
+    "joblib==1.3.1",
 ]
 
 PACKAGES = [
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         license="GPL-3.0",
         project_urls={
             "Documentation": "https://giacomovalli.com/openhdemg",
-            "Release Notes": "https://giacomovalli.com/openhdemg/What%27s-New",
+            "Release Notes": "https://giacomovalli.com/openhdemg/what%27s-new",
             "Source Code": "https://github.com/GiacomoValliPhD/openhdemg",
             "Bug Tracker": "https://github.com/GiacomoValliPhD/openhdemg/issues",
         },

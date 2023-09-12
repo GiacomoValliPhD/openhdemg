@@ -2,7 +2,7 @@
 <br/>
 
 <p align="center">
-  <img src="https://www.giacomovalli.com/openhdemg/md_graphics/Index/Banner_Logo.png" />
+  <img src="https://www.giacomovalli.com/openhdemg/md_graphics/index/banner_logo.png" />
 </p>
 
 <br/>
@@ -23,7 +23,7 @@ Electromyography (HD-EMG) recordings. Some of its main features are listed below
 7. **Save** the results of the analyses and the edited file.
 
 ## Start immediately
-If you already know how to use Python, that's the way to go! Otherwise, have a look at the tutorial explaining how to [Setup your Python working environment](https://www.giacomovalli.com/openhdemg/tutorials/Setup_working_env/).
+If you already know how to use Python, that's the way to go! Otherwise, have a look at the tutorial explaining how to [Setup your Python working environment](https://www.giacomovalli.com/openhdemg/tutorials/setup_working_env/).
 
 *openhdemg* can be easily installed using pip:
 
@@ -37,7 +37,7 @@ or conda:
 conda install -c conda-forge openhdemg
 ```
 
-If you want an overview of what you can do with the *openhdemg* library, have a look at the [Quick Start section](https://www.giacomovalli.com/openhdemg/Quick-Start/).
+If you want an overview of what you can do with the *openhdemg* library, have a look at the [Quick Start section](https://www.giacomovalli.com/openhdemg/quick-start/).
 
 ## Good to know
 In addition to the rich set of modules and functions presented in the **API documentation**, *openhdemg* offers also a practical graphical user interface (GUI) from which many tasks can be performed without writing a single line of code!
@@ -50,7 +50,7 @@ python -m openhdemg.gui.openhdemg_gui
 
 Once opened, it will look like this. It is cool, isn't it?
 
-![gui_preview](https://www.giacomovalli.com/openhdemg/md_graphics/Index/GUI_Preview.png)
+![gui_preview](https://www.giacomovalli.com/openhdemg/md_graphics/index/gui_preview.png)
 
 ## Why openhdemg
 The *openhdemg* project was born in 2022 with the aim to provide the HD-EMG community with a free and open-source framework to analyse motor units' properties.

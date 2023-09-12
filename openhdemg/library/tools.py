@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 import warnings
-from openhdemg.library.mathtools import compute_pnr, compute_sil
+from openhdemg.library.mathtools import compute_sil
 
 
 def showselect(emgfile, title="", titlesize=12, nclic=2):
@@ -99,8 +99,7 @@ def create_binary_firings(emg_length, number_of_mus, mupulses):
     Returns
     -------
     binary_MUs_firing : pd.DataFrame
-        A pd.DataFrame containing the binary representation of MUs firing or
-        np.nan if the variable was not found.
+        A pd.DataFrame containing the binary representation of MUs firing.
     """
 
     # skip the step if I don't have the mupulses (is nan)
@@ -123,10 +122,43 @@ def create_binary_firings(emg_length, number_of_mus, mupulses):
         return binary_MUs_firing
 
     else:
-        return np.nan
+        raise ValueError("mupulses is not a list of ndarrays")
 
 
-def resize_emgfile(emgfile, area=None):
+def mupulses_from_binary(binarymusfiring):
+    """
+    Extract the MUPULSES from the binary MUs firings.
+
+    Parameters
+    ----------
+    binarymusfiring : pd.DataFrame
+        A pd.DataFrame containing the binary representation of MUs firings.
+
+    Returns
+    -------
+    MUPULSES : list
+        A list of ndarrays containing the firing time of each MU.
+    """
+
+    # Create empty list of lists to fill with ndarrays containing the MUPULSES
+    # (point of firing)
+    numberofMUs = len(binarymusfiring.columns)
+    MUPULSES = [[] for _ in range(numberofMUs)]
+
+    for i in binarymusfiring:  # Loop all the MUs
+        my_ndarray = []
+        for idx, x in binarymusfiring[i].items():  # Loop the MU firing times
+            if x > 0:
+                my_ndarray.append(idx)
+                # Take the firing time and add it to the ndarray
+
+        my_ndarray = np.array(my_ndarray)
+        MUPULSES[i] = my_ndarray
+
+    return MUPULSES
+
+
+def resize_emgfile(emgfile, area=None, accuracy="recalculate"):
     """
     Resize all the emgfile.
 
@@ -141,6 +173,13 @@ def resize_emgfile(emgfile, area=None):
         The resizing area. If already known, it can be passed in samples, as a
         list (e.g., [120,2560]).
         If None, the user can select the area of interest manually.
+    accuracy : str {"recalculate", "maintain"}, default "recalculate"
+        ``recalculate``
+            The Silhouette score is computed in the new resized file. This can
+            be done only if IPTS is present.
+        ``maintain``
+            The original accuracy measure already contained in the emgfile is
+            returned without any computation.
 
     Returns
     -------
@@ -152,8 +191,6 @@ def resize_emgfile(emgfile, area=None):
     Notes
     -----
     Suggested names for the returned objects: rs_emgfile, start_, end_.
-
-    PNR and SIL are computed again in the new resized area.
     """
 
     # Identify the area of interest
@@ -173,14 +210,13 @@ def resize_emgfile(emgfile, area=None):
     # Create the object to store the resized emgfile.
     rs_emgfile = copy.deepcopy(emgfile)
     """
-    PNR and SIL should be re-computed on the new portion of the file.
+    ACCURACY should be re-computed on the new portion of the file if possible.
     Need to be resized: ==>
     emgfile =   {
                 "SOURCE": SOURCE,
                 ==> "RAW_SIGNAL": RAW_SIGNAL,
                 ==> "REF_SIGNAL": REF_SIGNAL,
-                ==> "PNR": PNR,
-                ==> "SIL": SIL,
+                ==> "ACCURACY": ACCURACY,
                 ==> "IPTS": IPTS,
                 ==> "MUPULSES": MUPULSES,
                 "FSAMP": FSAMP,
@@ -215,32 +251,24 @@ def resize_emgfile(emgfile, area=None):
             - first_idx
         )
 
-    # Compute PNR and SIL
-    if rs_emgfile["NUMBER_OF_MUS"] > 0:
-        # Calculate PNR
-        to_append = []
-        for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
-            res = compute_pnr(
-                ipts=rs_emgfile["IPTS"][mu],
-                mupulses=rs_emgfile["MUPULSES"][mu],
-                fsamp=emgfile["FSAMP"],
-            )
-            to_append.append(res)
-        rs_emgfile["PNR"] = pd.DataFrame(to_append)
+    # Compute SIL or leave original ACCURACY
+    if accuracy == "recalculate":
+        if rs_emgfile["NUMBER_OF_MUS"] > 0:
+            if not rs_emgfile["IPTS"].empty:
+                # Calculate SIL
+                to_append = []
+                for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
+                    res = compute_sil(
+                        ipts=rs_emgfile["IPTS"][mu],
+                        mupulses=rs_emgfile["MUPULSES"][mu],
+                    )
+                    to_append.append(res)
+                rs_emgfile["ACCURACY"] = pd.DataFrame(to_append)
 
-        # Calculate SIL
-        to_append = []
-        for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
-            res = compute_sil(
-                ipts=rs_emgfile["IPTS"][mu],
-                mupulses=rs_emgfile["MUPULSES"][mu],
-            )
-            to_append.append(res)
-        rs_emgfile["SIL"] = pd.DataFrame(to_append)
-
-    else:
-        rs_emgfile["PNR"] = np.nan
-        rs_emgfile["SIL"] = np.nan
+            else:
+                raise ValueError(
+                    "Impossible to calculate ACCURACY (SIL). IPTS not found"
+                )
 
     return rs_emgfile, start_, end_
 
@@ -263,10 +291,11 @@ def compute_idr(emgfile):
     idr : dict
         A dict containing a pd.DataFrame for each MU (keys are integers).
         Accessing the key, we have a pd.DataFrame containing:
-            mupulses: firing sample.
-            diff_mupulses: delta between consecutive firing samples.
-            timesec: delta between consecutive firing samples in seconds.
-            idr: instantaneous discharge rate.
+
+            - mupulses: firing sample.
+            - diff_mupulses: delta between consecutive firing samples.
+            - timesec: delta between consecutive firing samples in seconds.
+            - idr: instantaneous discharge rate.
 
     Examples
     --------
@@ -400,8 +429,7 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
                 "SOURCE" : SOURCE,
                 "RAW_SIGNAL" : RAW_SIGNAL,
                 "REF_SIGNAL" : REF_SIGNAL,
-                ==> "PNR" : PNR,
-                ==> "SIL" : SIL
+                ==> "ACCURACY" : ACCURACY
                 ==> "IPTS" : IPTS,
                 ==> "MUPULSES" : MUPULSES,
                 "FSAMP" : FSAMP,
@@ -413,14 +441,10 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
     """
 
     # Common part working for all the possible inputs to munumber
-    # Drop PNR values and reset the index
-    del_emgfile["PNR"] = del_emgfile["PNR"].drop(munumber)
+    # Drop ACCURACY values and reset the index
+    del_emgfile["ACCURACY"] = del_emgfile["ACCURACY"].drop(munumber)
     # .drop() Works with lists and integers
-    del_emgfile["PNR"] = del_emgfile["PNR"].reset_index(drop=True)
-
-    # Drop SIL values and reset the index
-    del_emgfile["SIL"] = del_emgfile["SIL"].drop(munumber)
-    del_emgfile["SIL"] = del_emgfile["SIL"].reset_index(drop=True)
+    del_emgfile["ACCURACY"] = del_emgfile["ACCURACY"].reset_index(drop=True)
 
     # Drop IPTS by columns and rename the columns
     del_emgfile["IPTS"] = del_emgfile["IPTS"].drop(munumber, axis=1)
@@ -458,7 +482,42 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
             "While calling the delete_mus function, you should pass an integer or a list to munumber= "
         )
 
+    # Verify if all the MUs have been removed. In that case, restore column
+    # names in empty pd.DataFrames.
+    if del_emgfile["NUMBER_OF_MUS"] == 0:
+        # pd.DataFrame
+        del_emgfile["IPTS"] = pd.DataFrame(columns=[0])
+        del_emgfile["BINARY_MUS_FIRING"] = pd.DataFrame(columns=[0])
+        # list of ndarray
+        del_emgfile["MUPULSES"] = [np.array([])]
+
     return del_emgfile
+
+
+def delete_empty_mus(emgfile):
+    """
+    Delete all the MUs without firings.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+
+    Returns
+    -------
+    emgfile : dict
+        The dictionary containing the emgfile without the empty MUs.
+    """
+
+    # Find the index of empty MUs
+    ind = []
+    for i, mu in enumerate(range(emgfile["NUMBER_OF_MUS"])):
+        if len(emgfile["MUPULSES"][mu]) == 0:
+            ind.append(i)
+
+    emgfile = delete_mus(emgfile, munumber=ind, if_single_mu="remove")
+
+    return emgfile
 
 
 def sort_mus(emgfile):
@@ -489,8 +548,7 @@ def sort_mus(emgfile):
                 "SOURCE" : SOURCE,
                 "RAW_SIGNAL" : RAW_SIGNAL,
                 "REF_SIGNAL" : REF_SIGNAL,
-                ==> "PNR" : PNR,
-                ==> "SIL": SIL,
+                ==> "ACCURACY": ACCURACY,
                 ==> "IPTS" : IPTS,
                 ==> "MUPULSES" : MUPULSES,
                 "FSAMP" : FSAMP,
@@ -502,20 +560,20 @@ def sort_mus(emgfile):
     """
 
     # Identify the sorting_order by the first MUpulse of every MUs
-    df = pd.DataFrame()
-    df["firstpulses"] = [
-        emgfile["MUPULSES"][i][0] for i in range(emgfile["NUMBER_OF_MUS"])
-    ]
+    df = []
+    for mu in range(emgfile["NUMBER_OF_MUS"]):
+        if len(emgfile["MUPULSES"][mu]) > 0:
+            df.append(emgfile["MUPULSES"][mu][0])
+        else:
+            df.append(np.inf)
+
+    df = pd.DataFrame(df, columns=["firstpulses"])
     df.sort_values(by="firstpulses", inplace=True)
     sorting_order = list(df.index)
 
-    # Sort PNR (single column)
+    # Sort ACCURACY (single column)
     for origpos, newpos in enumerate(sorting_order):
-        sorted_emgfile["PNR"].loc[origpos] = emgfile["PNR"].loc[newpos]
-
-    # Sort SIL (single column)
-    for origpos, newpos in enumerate(sorting_order):
-        sorted_emgfile["SIL"].loc[origpos] = emgfile["SIL"].loc[newpos]
+        sorted_emgfile["ACCURACY"].loc[origpos] = emgfile["ACCURACY"].loc[newpos]
 
     # Sort IPTS (multiple columns, sort by columns, then reset columns' name)
     sorted_emgfile["IPTS"] = sorted_emgfile["IPTS"].reindex(columns=sorting_order)
@@ -790,9 +848,9 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
     conversion_val : float or int, default 0
         The conversion value to multiply the original reference signal.
         I.e., if the original reference signal is in kilogram (kg) and
-        conversion_val=9.81, the output will be in Newton/Sec (N/Sec).
-        If conversion_val=0 (default), the results will simply be Original
-        measure unit. conversion_val can be any custom int or float.
+        conversion_val=9.81, the output will be in Newton (N).
+        If conversion_val=0 (default), the results will simply be in the
+        original measure unit. conversion_val can be any custom int or float.
 
     Returns
     -------
