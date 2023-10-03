@@ -110,6 +110,7 @@ def sort_rawemg(
     Sort RAW_SIGNAL based on matrix type and orientation.
 
     To date, built-in sorting functions have been implemented for the matrices:
+
         Code        (Orientation)
         GR08MM1305  (0, 180),
         GR04MM1305  (0, 180),
@@ -129,10 +130,14 @@ def sort_rawemg(
         the ground (depending on the limb).
     dividebycolumn = bool, default True
         Whether to return the sorted channels classified by matrix column.
-    n_rows, n_cols : None or int, default None
-        The number of rows and columns of the matrix. This parameter is used to
-        divide the channels based on the matrix shape. These are normally
-        inferred by the matrix code and must be specified only if code == None.
+    n_rows : None or int, default None
+        The number of rows of the matrix. This parameter is used to divide the
+        channels based on the matrix shape. These are normally inferred by the
+        matrix code and must be specified only if code == None.
+    n_cols : None or int, default None
+        The number of columns of the matrix. This parameter is used to divide
+        the channels based on the matrix shape. These are normally inferred by
+        the matrix code and must be specified only if code == None.
 
     Returns
     -------

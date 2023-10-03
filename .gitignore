@@ -5,7 +5,7 @@ __pycache__*
 .DS_Store
 docs/.DS_Store
 dist/
-testgiacomovalli.egg-info/
+openhdemg.egg-info/
 
 prove.py
 prove_storage.py
