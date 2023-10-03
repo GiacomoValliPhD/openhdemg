@@ -334,13 +334,35 @@ class emgGUI:
         master_path = os.path.dirname(os.path.abspath(__file__))
         iconpath = master_path + "/gui_files/Icon.ico"
         self.master.iconbitmap(iconpath)
+        self.master.columnconfigure(0, weight=1)
+        self.master.rowconfigure(0, weight=1)
 
         # Create left side framing for functionalities
         self.left = ttk.Frame(self.master, padding="10 10 12 12")
-        self.left.grid(column=0, row=0, sticky=(N, S, W))
+        self.left.grid(column=0, row=0, sticky="nsew")
         self.left.columnconfigure(0, weight=1)
         self.left.columnconfigure(1, weight=1)
         self.left.columnconfigure(2, weight=1)
+        self.left.columnconfigure(3, weight=1)
+        self.left.rowconfigure(0, weight=1)
+        self.left.rowconfigure(1, weight=1)
+        self.left.rowconfigure(2, weight=1)
+        self.left.rowconfigure(3, weight=1)
+        self.left.rowconfigure(4, weight=1)
+        self.left.rowconfigure(5, weight=1)
+        self.left.rowconfigure(6, weight=1)
+        self.left.rowconfigure(7, weight=1)
+        self.left.rowconfigure(8, weight=1)
+        self.left.rowconfigure(9, weight=1)
+        self.left.rowconfigure(10, weight=1)
+        self.left.rowconfigure(11, weight=1)
+        self.left.rowconfigure(12, weight=1)
+        self.left.rowconfigure(13, weight=1)
+        self.left.rowconfigure(14, weight=1)
+        self.left.rowconfigure(15, weight=1)
+        self.left.rowconfigure(16, weight=1)
+        self.left.rowconfigure(17, weight=1)
+        self.left.rowconfigure(18, weight=1)
 
         # Style
         style = ttk.Style()
@@ -483,7 +505,9 @@ class emgGUI:
 
         # Create right side framing for functionalities
         self.right = ttk.Frame(self.master, padding="10 10 12 12")
-        self.right.grid(column=1, row=0, sticky=(N, S, E))
+        self.right.grid(column=1, row=0, sticky=(N, S, E, W))
+        self.right.columnconfigure(0, weight=1)
+        self.right.columnconfigure(1, weight=1)
 
         # Create empty figure
         self.first_fig = Figure(figsize=(20 / 2.54, 15 / 2.54))
