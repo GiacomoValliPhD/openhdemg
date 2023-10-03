@@ -1,9 +1,3 @@
-__all__= ["openfiles", "analysis", "plotemg", "tools", "mathtools", "otbelectrodes"]
+__all__ = ["__version__"]
 
-from openhdemg.openfiles import emg_from_otb, emg_from_demuse, refsig_from_otb, save_json_emgfile, emg_from_json, askopenfile
-from openhdemg.analysis import *
-from openhdemg.plotemg import *
-from openhdemg.tools import *
-from openhdemg.mathtools import *
-from openhdemg.otbelectrodes import *
-from openhdemg.muap import*
+__version__ = "0.1.0-beta.1"

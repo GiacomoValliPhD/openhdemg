@@ -1,0 +1,124 @@
+# Define the skeleton of the website/documentation
+site_name: openhdemg
+site_author: Giacomo Valli & Paul Ritsche
+site_description: >-
+  All you need to know about openhdemg
+
+copyright: Copyright &copy; 2022 - 2023 Giacomo Valli & Paul Ritsche
+
+theme:
+  name: "material"
+  logo: yml_graphics/Transp_Icon.png
+  favicon: yml_graphics/Transp_Icon.png
+  features:
+    - content.code.copy
+
+# Select a plugin to get the docs from docstrings and setup the numpy stile as
+# the default style.
+# In order change the docstring_style we need to access:
+# mkdocstrings/python/src/mkdocstrings_handlers/python/handler.py
+plugins:
+- mkdocstrings:
+    handlers:
+      python:
+        options:
+          docstring_style: 'numpy'
+          docstring_section_style: 'spacy'
+          show_source: false
+          docstring_options:
+            ignore_init_summary: True
+- search:
+    lang: en
+    separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+- tags:
+
+# Specify custom pages-menu order.
+# If you don’t like a page’s title, you can optionally add another element in
+# front of the filename whose title you want to change.
+nav:
+  - Welcome: index.md
+  - Quick-Start.md
+  - Tutorials:
+    #- Overview on the tutorials: Tutorials.md
+    - For new users:
+      - Setup working environment: tutorials/Setup_working_env.md
+  - Graphical-Interface:
+    - intro: GUI_intro.md
+    - basics: GUI_basics.md
+    - advanced: GUI_advanced.md
+  - What's-New.md
+  - Contacts.md
+  - Cite-Us.md
+  - 'API Reference':
+    - openfiles: API_openfiles.md
+    - plotemg: API_plotemg.md
+    - analysis: API_analysis.md
+    - tools: API_tools.md
+    - mathtools: API_mathtools.md
+    - muap: API_muap.md
+    - electrodes: API_electrodes.md
+    - info: API_info.md
+    
+# Extensions
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      title: On this page
+      toc_depth: 2
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:materialx.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: squidfunk
+      repo: mkdocs-material
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Modify extra tools.
+extra:
+  generator: false # Remove 'Made with Material for MkDocs' in the footer.
+  social:
+    - icon: fontawesome/brands/github 
+      link: https://github.com/GiacomoValliPhD
+    - icon: fontawesome/brands/twitter 
+      link: https://
+  version:
+    provider: mike # TODO versioning
+
+# Need to have or pip install:
+# mkdocs
+# mkdocs-autorefs
+# mkdocs-material
+# mkdocs-material-extensions
+# mkdocstrings
+# mkdocstrings-python
+# mike
