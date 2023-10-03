@@ -1541,6 +1541,11 @@ class emgGUI:
             # Update Plot
             self.in_gui_plotting()
 
+            # Update filelength
+            ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
+                    column=2, row=4, sticky=(W, E)
+            ) 
+
         except AttributeError:
             tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
