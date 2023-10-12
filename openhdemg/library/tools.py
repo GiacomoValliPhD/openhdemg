@@ -94,7 +94,8 @@ def create_binary_firings(emg_length, number_of_mus, mupulses):
     number_of_mus : int
         Number of MUs in the emg file.
     mupulses : list of ndarrays
-        Each ndarray should contain the times of firing of each MU.
+        Each ndarray should contain the times of firing (in samples) of each
+        MU.
 
     Returns
     -------
@@ -137,7 +138,7 @@ def mupulses_from_binary(binarymusfiring):
     Returns
     -------
     MUPULSES : list
-        A list of ndarrays containing the firing time of each MU.
+        A list of ndarrays containing the firing time (in samples) of each MU.
     """
 
     # Create empty list of lists to fill with ndarrays containing the MUPULSES

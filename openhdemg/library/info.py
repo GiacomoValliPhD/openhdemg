@@ -69,7 +69,7 @@ class info:
         .
         """
 
-        if emgfile["SOURCE"] in ["DEMUSE", "OTB", "CUSTOM"]:
+        if emgfile["SOURCE"] in ["DEMUSE", "OTB", "CUSTOMCSV"]:
             print("\nData structure of the emgfile")
             print("-----------------------------\n")
             print(f"emgfile type is:\n{type(emgfile)}\n")

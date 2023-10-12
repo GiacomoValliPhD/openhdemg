@@ -1254,7 +1254,7 @@ def refsig_from_customcsv(
 # ---------------------------------------------------------------------
 # Functions to convert and save the emgfile to JSON.
 
-def save_json_emgfile(emgfile, filepath):
+def save_json_emgfile(emgfile, filepath, compresslevel=4):
     """
     Save the emgfile or emg_refsig as a JSON file.
 
@@ -1266,6 +1266,12 @@ def save_json_emgfile(emgfile, filepath):
         The directory and the name of the file to save (including file
         extension .json).
         This can be a simple string; The use of Path is not necessary.
+    compresslevel : int, default 4
+        An int from 0 to 9, where 0 is no compression and nine maximum
+        compression. Compressed files will take less space, but will require
+        more computation. The relationship between compression level and time
+        required for the compression is not linear. For optimised performance,
+        we suggest values between 2 and 6, with 4 providing the best balance.
     """
 
     if emgfile["SOURCE"] in ["DEMUSE", "OTB", "CUSTOMCSV"]:
@@ -1273,14 +1279,14 @@ def save_json_emgfile(emgfile, filepath):
         We need to convert all the components of emgfile to a dictionary and
         then to json object.
         pd.DataFrame cannot be converted with json.dumps.
-        Once all the elements are converted to json objects, we create a list
+        Once all the elements are converted to json objects, we create a dict
         of json objects and dump/save it into a single json file.
         emgfile = {
             "SOURCE": SOURCE,
             "FILENAME": FILENAME,
             "RAW_SIGNAL": RAW_SIGNAL,
             "REF_SIGNAL": REF_SIGNAL,
-            "ACCURACY": ACCURACY
+            "ACCURACY": ACCURACY,
             "IPTS": IPTS,
             "MUPULSES": MUPULSES,
             "FSAMP": FSAMP,
@@ -1291,53 +1297,25 @@ def save_json_emgfile(emgfile, filepath):
             "EXTRAS": EXTRAS,
         }
         """
-        # str or int
-        # Directly convert the ditionary to a json format
-        source = {"SOURCE": emgfile["SOURCE"]}
-        filename = {"FILENAME": emgfile["FILENAME"]}
-        fsamp = {"FSAMP": emgfile["FSAMP"]}
-        ied = {"IED": emgfile["IED"]}
-        emg_length = {"EMG_LENGTH": emgfile["EMG_LENGTH"]}
-        number_of_mus = {"NUMBER_OF_MUS": emgfile["NUMBER_OF_MUS"]}
-        source = json.dumps(source)
-        filename = json.dumps(filename)
-        fsamp = json.dumps(fsamp)
-        ied = json.dumps(ied)
-        emg_length = json.dumps(emg_length)
-        number_of_mus = json.dumps(number_of_mus)
+
+        # str or float
+        # Directly convert str or float to a json format.
+        source = json.dumps(emgfile["SOURCE"])
+        filename = json.dumps(emgfile["FILENAME"])
+        fsamp = json.dumps(emgfile["FSAMP"])
+        ied = json.dumps(emgfile["IED"])
+        emg_length = json.dumps(emgfile["EMG_LENGTH"])
+        number_of_mus = json.dumps(emgfile["NUMBER_OF_MUS"])
 
         # df
-        # Extract the df from the dict, convert the df to a json, put the
-        # json in a dict, convert the dict to a json.
-        # We use dict converted to json to locate better the objects while
-        # re-importing them in python.
-        raw_signal = emgfile["RAW_SIGNAL"]
-        ref_signal = emgfile["REF_SIGNAL"]
-        accuracy = emgfile["ACCURACY"]
-        ipts = emgfile["IPTS"]
-        binary_mus_firing = emgfile["BINARY_MUS_FIRING"]
-        extras = emgfile["EXTRAS"]
-
-        raw_signal = raw_signal.to_json()
-        ref_signal = ref_signal.to_json()
-        accuracy = accuracy.to_json()
-        ipts = ipts.to_json()
-        binary_mus_firing = binary_mus_firing.to_json()
-        extras = extras.to_json()
-
-        raw_signal = {"RAW_SIGNAL": raw_signal}
-        ref_signal = {"REF_SIGNAL": ref_signal}
-        accuracy = {"ACCURACY": accuracy}
-        ipts = {"IPTS": ipts}
-        binary_mus_firing = {"BINARY_MUS_FIRING": binary_mus_firing}
-        extras = {"EXTRAS": extras}
-
-        raw_signal = json.dumps(raw_signal)
-        ref_signal = json.dumps(ref_signal)
-        accuracy = json.dumps(accuracy)
-        ipts = json.dumps(ipts)
-        binary_mus_firing = json.dumps(binary_mus_firing)
-        extras = json.dumps(extras)
+        # Access and convert the df to a json object.
+        # orient='split' is fundamental for performance.
+        raw_signal = emgfile["RAW_SIGNAL"].to_json(orient='split')
+        ref_signal = emgfile["REF_SIGNAL"].to_json(orient='split')
+        accuracy = emgfile["ACCURACY"].to_json(orient='split')
+        ipts = emgfile["IPTS"].to_json(orient='split')
+        binary_mus_firing = emgfile["BINARY_MUS_FIRING"].to_json(orient='split')
+        extras = emgfile["EXTRAS"].to_json(orient='split')
 
         # list of ndarray.
         # Every array has to be converted in a list; then, the list of lists
@@ -1347,70 +1325,79 @@ def save_json_emgfile(emgfile, filepath):
             mupulses.insert(ind, array.tolist())
         mupulses = json.dumps(mupulses)
 
-        # Convert a list of json objects to json. The result of the conversion
+        # Convert a dict of json objects to json. The result of the conversion
         # will be saved as the final json file.
-        # Don't alter this order unless you modify also the emg_from_json
-        # function.
-        list_to_save = [
-            source,
-            filename,
-            raw_signal,
-            ref_signal,
-            accuracy,
-            ipts,
-            mupulses,
-            fsamp,
-            ied,
-            emg_length,
-            number_of_mus,
-            binary_mus_firing,
-            extras,
-        ]
-        json_to_save = json.dumps(list_to_save)
+        emgfile = {
+            "SOURCE": source,
+            "FILENAME": filename,
+            "RAW_SIGNAL": raw_signal,
+            "REF_SIGNAL": ref_signal,
+            "ACCURACY": accuracy,
+            "IPTS": ipts,
+            "MUPULSES": mupulses,
+            "FSAMP": fsamp,
+            "IED": ied,
+            "EMG_LENGTH": emg_length,
+            "NUMBER_OF_MUS": number_of_mus,
+            "BINARY_MUS_FIRING": binary_mus_firing,
+            "EXTRAS": extras,
+        }
 
         # Compress and write the json file
-        # From: https://stackoverflow.com/questions/39450065/python-3-read-write-compressed-json-objects-from-to-gzip-file
-        with gzip.open(filepath, "w") as f:
+        with gzip.open(
+            filepath,
+            "wt",
+            encoding="utf-8",
+            compresslevel=compresslevel
+        ) as f:
+            json.dump(emgfile, f)
+
+        # Adapted from:
+        # https://stackoverflow.com/questions/39450065/python-3-read-write-compressed-json-objects-from-to-gzip-file
+        """ with gzip.open(filepath, "w", compresslevel=compresslevel) as f:
             # Encode json
             json_bytes = json_to_save.encode("utf-8")
             # Write to a file
-            f.write(json_bytes)
-            # To improve writing time, f.write is the bottleneck but it is
-            # hard to improve.
+            f.write(json_bytes) """
 
     elif emgfile["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG"]:
         """
-        refsig =   {
-                "SOURCE" : SOURCE,
-                "FILENAME": FILENAME,
-                "FSAMP" : FSAMP,
-                "REF_SIGNAL" : REF_SIGNAL,
-                "EXTRAS": EXTRAS,
-                }
+        refsig = {
+            "SOURCE": SOURCE,
+            "FILENAME": FILENAME,
+            "FSAMP": FSAMP,
+            "REF_SIGNAL": REF_SIGNAL,
+            "EXTRAS": EXTRAS,
+        }
         """
-        # str or int
-        source = {"SOURCE": emgfile["SOURCE"]}
-        filename = {"FILENAME": emgfile["FILENAME"]}
-        fsamp = {"FSAMP": emgfile["FSAMP"]}
-        source = json.dumps(source)
-        filename = json.dumps(filename)
-        fsamp = json.dumps(fsamp)
+        # str or float
+        # Directly convert str or float to a json format.
+        source = json.dumps(emgfile["SOURCE"])
+        filename = json.dumps(emgfile["FILENAME"])
+        fsamp = json.dumps(emgfile["FSAMP"])
+
         # df
-        ref_signal = emgfile["REF_SIGNAL"]
-        ref_signal = ref_signal.to_json()
-        ref_signal = {"REF_SIGNAL": ref_signal}
-        ref_signal = json.dumps(ref_signal)
-        extras = emgfile["EXTRAS"]
-        extras = extras.to_json()
-        extras = {"EXTRAS": extras}
-        extras = json.dumps(extras)
-        # Merge all the objects in one
-        list_to_save = [source, filename, fsamp, ref_signal, extras]
-        json_to_save = json.dumps(list_to_save)
+        # Access and convert the df to a json object.
+        ref_signal = emgfile["REF_SIGNAL"].to_json(orient='split')
+        extras = emgfile["EXTRAS"].to_json(orient='split')
+
+        # Merge all the objects in one dict
+        refsig = {
+            "SOURCE": source,
+            "FILENAME": filename,
+            "FSAMP": fsamp,
+            "REF_SIGNAL": ref_signal,
+            "EXTRAS": extras,
+        }
+
         # Compress and save
-        with gzip.open(filepath, "w") as f:
-            json_bytes = json_to_save.encode("utf-8")
-            f.write(json_bytes)
+        with gzip.open(
+            filepath,
+            "wt",
+            encoding="utf-8",
+            compresslevel=compresslevel
+        ) as f:
+            json.dump(refsig, f)
 
     else:
         raise ValueError("\nFile source not recognised\n")
@@ -1456,94 +1443,69 @@ def emg_from_json(filepath):
     """
 
     # Read and decompress json file
-    with gzip.open(filepath, "r") as fin:
-        json_bytes = fin.read()
-        # Decode json file
-        json_str = json_bytes.decode("utf-8")
-        jsonemgfile = json.loads(json_str)
+    with gzip.open(filepath, "rt", encoding="utf-8") as f:
+        jsonemgfile = json.load(f)
 
     """
     print(type(jsonemgfile))
-    <class 'list'>
-    print(len(jsonemgfile))
-    13
+    <class 'dict'>
     """
-    # Access the dictionaries and extract the data
-    # jsonemgfile[0] contains the SOURCE in a dictionary
-    source_dict = json.loads(jsonemgfile[0])
-    source = source_dict["SOURCE"]
-    # jsonemgfile[1] contains the FILENAME in all the sources
-    filename_dict = json.loads(jsonemgfile[1])
-    filename = filename_dict["FILENAME"]
+
+    # Access the dictionaries and extract the data.
+    source = json.loads(jsonemgfile["SOURCE"])
+    filename = json.loads(jsonemgfile["FILENAME"])
 
     if source in ["DEMUSE", "OTB", "CUSTOMCSV"]:
-        # jsonemgfile[2] contains the RAW_SIGNAL in a dictionary, it can be
-        # extracted in a new dictionary and converted into a pd.DataFrame.
+        # RAW_SIGNAL
+        # df are stored in json as a dictionary, it can be directly extracted
+        # and converted into a pd.DataFrame.
         # index and columns are imported as str, we need to convert it to int.
-        raw_signal_dict = json.loads(jsonemgfile[2])
-        raw_signal_dict = json.loads(raw_signal_dict["RAW_SIGNAL"])
-        raw_signal = pd.DataFrame(raw_signal_dict)
+        raw_signal = pd.read_json(jsonemgfile["RAW_SIGNAL"], orient='split')
+        # Check dtypes for safety, little computational cost
         raw_signal.columns = raw_signal.columns.astype(int)
         raw_signal.index = raw_signal.index.astype(int)
         raw_signal.sort_index(inplace=True)
-        # jsonemgfile[3] contains the REF_SIGNAL to be treated as jsonemgfile[2]
-        ref_signal_dict = json.loads(jsonemgfile[3])
-        ref_signal_dict = json.loads(ref_signal_dict["REF_SIGNAL"])
-        ref_signal = pd.DataFrame(ref_signal_dict)
+        # REF_SIGNAL
+        ref_signal = pd.read_json(jsonemgfile["REF_SIGNAL"], orient='split')
         ref_signal.columns = ref_signal.columns.astype(int)
         ref_signal.index = ref_signal.index.astype(int)
         ref_signal.sort_index(inplace=True)
-        # jsonemgfile[4] contains the ACCURACY to be treated as jsonemgfile[2]
-        accuracy_dict = json.loads(jsonemgfile[4])
-        accuracy_dict = json.loads(accuracy_dict["ACCURACY"])
-        accuracy = pd.DataFrame(accuracy_dict)
+        # ACCURACY
+        accuracy = pd.read_json(jsonemgfile["ACCURACY"], orient='split')
         accuracy.columns = accuracy.columns.astype(int)
         accuracy.index = accuracy.index.astype(int)
         accuracy.sort_index(inplace=True)
-        # jsonemgfile[5] contains the IPTS to be treated as jsonemgfile[2]
-        ipts_dict = json.loads(jsonemgfile[5])
-        ipts_dict = json.loads(ipts_dict["IPTS"])
-        ipts = pd.DataFrame(ipts_dict)
+        # IPTS
+        ipts = pd.read_json(jsonemgfile["IPTS"], orient='split')
         ipts.columns = ipts.columns.astype(int)
         ipts.index = ipts.index.astype(int)
         ipts.sort_index(inplace=True)
-        # jsonemgfile[6] contains the MUPULSES which is a list of lists but
-        # has to be converted in a list of ndarrays.
-        mupulses = json.loads(jsonemgfile[6])
+        # MUPULSES
+        # It is s list of lists but has to be converted in a list of ndarrays.
+        mupulses = json.loads(jsonemgfile["MUPULSES"])
         for num, element in enumerate(mupulses):
             mupulses[num] = np.array(element)
-        # jsonemgfile[7] contains the FSAMP to be treated as jsonemgfile[0]
-        fsamp_dict = json.loads(jsonemgfile[7])
-        fsamp = float(fsamp_dict["FSAMP"])
-        # jsonemgfile[8] contains the IED to be treated as jsonemgfile[0]
-        ied_dict = json.loads(jsonemgfile[8])
-        ied = float(ied_dict["IED"])
-        # jsonemgfile[9] contains the EMG_LENGTH to be treated as
-        # jsonemgfile[0]
-        emg_length_dict = json.loads(jsonemgfile[9])
-        emg_length = int(emg_length_dict["EMG_LENGTH"])
-        # jsonemgfile[10] contains the NUMBER_OF_MUS to be treated as
-        # jsonemgfile[0]
-        number_of_mus_dict = json.loads(jsonemgfile[10])
-        number_of_mus = int(number_of_mus_dict["NUMBER_OF_MUS"])
-        # jsonemgfile[11] contains the BINARY_MUS_FIRING to be treated as
-        # jsonemgfile[2]
-        binary_mus_firing_dict = json.loads(jsonemgfile[11])
-        binary_mus_firing_dict = json.loads(
-            binary_mus_firing_dict["BINARY_MUS_FIRING"]
+        # FSAMP
+        # Make sure to convert it to float
+        fsamp = float(json.loads(jsonemgfile["FSAMP"]))
+        # IED
+        ied = float(json.loads(jsonemgfile["IED"]))
+        # EMG_LENGTH
+        # Make sure to convert it to int
+        emg_length = int(json.loads(jsonemgfile["EMG_LENGTH"]))
+        # NUMBER_OF_MUS
+        number_of_mus = int(json.loads(jsonemgfile["NUMBER_OF_MUS"]))
+        # BINARY_MUS_FIRING
+        binary_mus_firing = pd.read_json(
+            jsonemgfile["BINARY_MUS_FIRING"],
+            orient='split',
         )
-        binary_mus_firing = pd.DataFrame(binary_mus_firing_dict)
         binary_mus_firing.columns = binary_mus_firing.columns.astype(int)
         binary_mus_firing.index = binary_mus_firing.index.astype(int)
-        # jsonemgfile[12] contains the EXTRAS to be treated as
-        # jsonemgfile[2]
-        extras_dict = json.loads(jsonemgfile[12])
-        extras_dict = json.loads(extras_dict["EXTRAS"])
-        extras = pd.DataFrame(extras_dict)
-        # extras.columns = extras.columns.astype(int)
-        # extras.index = extras.index.astype(int)
-        # extras.sort_index(inplace=True)
-        # Don't alter extras, leave that to the user for maximum control
+        binary_mus_firing.sort_index(inplace=True)
+        # EXTRAS
+        # Don't alter index and columns as these could contain anything.
+        extras = pd.read_json(jsonemgfile["EXTRAS"], orient='split')
 
         emgfile = {
             "SOURCE": source,
@@ -1562,20 +1524,15 @@ def emg_from_json(filepath):
         }
 
     elif source in ["OTB_REFSIG", "CUSTOMCSV_REFSIG"]:
-        # jsonemgfile[2] contains the fsamp
-        fsamp_dict = json.loads(jsonemgfile[2])
-        fsamp = float(fsamp_dict["FSAMP"])
-        # jsonemgfile[3] contains the REF_SIGNAL
-        ref_signal_dict = json.loads(jsonemgfile[3])
-        ref_signal_dict = json.loads(ref_signal_dict["REF_SIGNAL"])
-        ref_signal = pd.DataFrame(ref_signal_dict)
+        # FSAMP
+        fsamp = float(json.loads(jsonemgfile["FSAMP"]))
+        # REF_SIGNAL
+        ref_signal = pd.read_json(jsonemgfile["REF_SIGNAL"], orient='split')
         ref_signal.columns = ref_signal.columns.astype(int)
         ref_signal.index = ref_signal.index.astype(int)
         ref_signal.sort_index(inplace=True)
-        # jsonemgfile[4] contains the EXTRAS
-        extras_dict = json.loads(jsonemgfile[4])
-        extras_dict = json.loads(extras_dict["EXTRAS"])
-        extras = pd.DataFrame(extras_dict)
+        # EXTRAS
+        extras = pd.read_json(jsonemgfile["EXTRAS"], orient='split')
 
         emgfile = {
             "SOURCE": source,
@@ -1793,7 +1750,7 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
             filetypes=[("CSV files", "*.csv")],
         )
     else:
-        raise Exception(
+        raise ValueError(
             "\nfilesource not valid, it must be one of 'DEMUSE', 'OTB', 'OTB_REFSIG', 'OPENHDEMG', 'CUSTOMCSV', 'CUSTOMCSV_REFSIG'\n"
         )
 
@@ -1848,7 +1805,7 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
     return emgfile
 
 
-def asksavefile(emgfile):
+def asksavefile(emgfile, compresslevel=4):
     """
     Select where to save files with a GUI.
 
@@ -1856,6 +1813,12 @@ def asksavefile(emgfile):
     ----------
     emgfile : dict
         The dictionary containing the emgfile to save.
+    compresslevel : int, default 4
+        An int from 0 to 9, where 0 is no compression and nine maximum
+        compression. Compressed files will take less space, but will require
+        more computation. The relationship between compression level and time
+        required for the compression is not linear. For optimised performance,
+        we suggest values between 2 and 6, with 4 providing the best balance.
 
     See also
     --------
@@ -1878,7 +1841,7 @@ def asksavefile(emgfile):
 
     print("\n-----------\nSaving file\n")
 
-    save_json_emgfile(emgfile, filepath)
+    save_json_emgfile(emgfile, filepath, compresslevel)
 
     print("File saved\n-----------\n")
 
