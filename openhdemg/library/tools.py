@@ -103,31 +103,11 @@ def create_binary_firings(emg_length, number_of_mus, mupulses):
         A pd.DataFrame containing the binary representation of MUs firing.
     """
 
-    """ # skip the step if I don't have the mupulses (is nan)
-    if isinstance(mupulses, list):
-        # create an empty pd.DataFrame containing zeros
-        binary_MUs_firing = pd.DataFrame(np.zeros((emg_length, number_of_mus)))
-        # Loop through the columns (MUs) and isolate the data of interest
-        for i in range(number_of_mus):
-            this_mu_binary_firing = binary_MUs_firing[i]
-            this_mu_pulses = pd.DataFrame(mupulses[i])
-
-            # Loop through the rows (time) and assign 1 if the MU is firing
-            for position in range(len(this_mu_pulses)):
-                firing_point = int(this_mu_pulses.iat[position, 0])
-                this_mu_binary_firing.iloc[firing_point] = 1
-
-            # Merge the work done with the original pd.DataFrame of zeros
-            binary_MUs_firing[i] = this_mu_binary_firing
-
-        return binary_MUs_firing
-
-    else:
-        raise ValueError("mupulses is not a list of ndarrays") """
+    # Skip the step if I don't have the mupulses (is nan)
     if not isinstance(mupulses, list):
         raise ValueError("mupulses is not a list of ndarrays")
 
-    # Initialize a DataFrame with zeros
+    # Initialize a pd.DataFrame with zeros
     binary_MUs_firing = pd.DataFrame(
         np.zeros((emg_length, number_of_mus), dtype=int)
     )
