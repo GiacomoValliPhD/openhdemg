@@ -2,8 +2,8 @@
 Description
 -----------
 This module contains all the functions that are necessary to open or save
-MATLAB (.mat), JSON (.json) or custom (.csv) files.
-MATLAB files are used to store data from the DEMUSE and the OTBiolab+
+MATLAB (.mat), text (.txt), JSON (.json) or custom (.csv) files.
+MATLAB files are used to store data from the DEMUSE, OTBiolab+ and Delsys
 software while JSON files are used to save and load files from this
 library.
 The choice of saving files in the open standard JSON file format was
@@ -20,11 +20,16 @@ emg_from_otb and emg_from_demuse :
     order to be compatible with this library should be exported with a
     strict structure as described in the function emg_from_otb.
     In both cases, the input file is a .mat file.
+emg_from_delsys :
+    Used to load a combination of .mat and .txt files exported by the Delsys
+    Neuromap and Neuromap explorer software containing the raw EMG signal and
+    the decomposition outcome.
 emg_from_customcsv :
     Used to load custom file formats contained in .csv files.
-refsig_from_otb and refsig_from_customcsv:
-    Used to load files from the OTBiolab+ software or from a custom .csv file
-    that contain only the REF_SIGNAL.
+refsig_from_otb, refsig_from_delsys and refsig_from_customcsv:
+    Used to load files from the OTBiolab+ (.mat) and the Delsys Neuromap
+    software (.mat) or from a custom .csv file that contain only the
+    reference signal.
 save_json_emgfile, emg_from_json :
     Used to save the working file to a .json file or to load the .json
     file.
@@ -35,12 +40,12 @@ askopenfile, asksavefile :
 Notes
 -----
 Once opened, the file is returned as a dict with keys:
-    "SOURCE" : source of the file (i.e., "CUSTOMCSV", "DEMUSE", "OTB")
+    "SOURCE" : source of the file (i.e., "CUSTOMCSV", "DEMUSE", "OTB", "DELSYS")
     "FILENAME" : the name of the opened file
     "RAW_SIGNAL" : the raw EMG signal
     "REF_SIGNAL" : the reference signal
     "ACCURACY" : accuracy score (depending on source file type)
-    "IPTS" : pulse train (decomposed source)
+    "IPTS" : pulse train (decomposed source, depending on source file type)
     "MUPULSES" : instants of firing
     "FSAMP" : sampling frequency
     "IED" : interelectrode distance
@@ -50,7 +55,7 @@ Once opened, the file is returned as a dict with keys:
     "EXTRAS" : additional custom values
 
 The only exception is when files are loaded with just the reference signal:
-    "SOURCE": source of the file (i.e., "CUSTOMCSV_REFSIG", "OTB_REFSIG")
+    "SOURCE": source of the file (i.e., "CUSTOMCSV_REFSIG", "OTB_REFSIG", "DELSYS_REFSIG")
     "FILENAME" : the name of the opened file
     "FSAMP": sampling frequency
     "REF_SIGNAL": the reference signal
@@ -63,18 +68,20 @@ the function's description.
 # Some functions contained in this file are called internally and should not
 # be exposed to the final user.
 # Functions should be exposed in the __init__ file as:
-#     from openhdemg.openfiles import (
-#         emg_from_otb,
-#         emg_from_demuse,
-#         refsig_from_otb,
-#         emg_from_customcsv,
-#         refsig_from_customcsv
-#         save_json_emgfile,
-#         emg_from_json,
-#         askopenfile,
-#         asksavefile,
-#         emg_from_samplefile,
-#     ) # TODO add emg_from_delsys here, in init, in upper description and in docs description
+#   from openhdemg.library.openfiles import (
+#       emg_from_otb,
+#       emg_from_demuse,
+#       emg_from_delsys,
+#       emg_from_customcsv,
+#       refsig_from_otb,
+#       refsig_from_delsys,
+#       refsig_from_customcsv,
+#       save_json_emgfile,
+#       emg_from_json,
+#       askopenfile,
+#       asksavefile,
+#       emg_from_samplefile,
+#   )
 
 
 from scipy.io import loadmat
@@ -89,10 +96,11 @@ import json
 import gzip
 import warnings
 import os
+import fnmatch
 
 
 # --------------------------------------------------------------------- #
-# Main function to open decomposed files coming from DEMUSE.
+# Function to open decomposed files coming from DEMUSE.
 
 def emg_from_demuse(filepath):
     """
@@ -116,6 +124,7 @@ def emg_from_demuse(filepath):
     - refsig_from_otb : import REF_SIGNAL in the .mat file exportable by
         OTBiolab+.
     - emg_from_customcsv : Import custom data from a .csv file.
+    - askopenfile : Select and open files with a GUI.
 
     Notes
     -----
@@ -531,7 +540,7 @@ def emg_from_otb(
     extras=None,
 ):
     """
-    Import the .mat file exportable by OTBiolab+.
+    Import the .mat file exportable from OTBiolab+.
 
     This function is used to import the .mat file exportable by the OTBiolab+
     software as a dictionary of Python objects (mainly pandas dataframes).
@@ -578,6 +587,7 @@ def emg_from_otb(
         OTBiolab+.
     - emg_from_demuse : import the .mat file used in DEMUSE.
     - emg_from_customcsv : Import custom data from a .csv file.
+    - askopenfile : Select and open files with a GUI.
 
     Raises
     ------
@@ -795,6 +805,7 @@ def refsig_from_otb(
     - emg_from_demuse : import the .mat file used in DEMUSE.
     - emg_from_customcsv : Import custom data from a .csv file.
     - refsig_from_customcsv : Import the reference signal from a custom .csv.
+    - askopenfile : Select and open files with a GUI.
 
     Notes
     ---------
@@ -897,6 +908,341 @@ def refsig_from_otb(
     return emg_refsig
 
 
+# --------------------------------------------------------------------- #
+# Function to open decomposed files coming from Delsys.
+def emg_from_delsys(
+        rawemg_filepath,
+        mus_directory,
+        emg_sensor_name="Galileo sensor",
+        refsig_sensor_name="Trigno Load Cell",
+        filename_from="mus_directory",
+):
+    """
+    Import the .mat and .csv files exportable from Delsys softwares.
+
+    This function is used to load .mat files from the Delsys Neuromap software
+    (containing the RAW EMG signal and the reference signal) and .txt files
+    from the Delsys Neuromap Explorer software (containing the decomposition
+    outcome, accuracy measure and MUAPs).
+
+    Parameters
+    ----------
+    rawemg_filepath : str or Path
+        The directory and the name of the file containing the raw EMG data to
+        load (including file extension .mat).
+        This can be a simple string, the use of Path is not necessary.
+    mus_directory : str or Path
+        The directory (path to the folder) containing .txt files with firing
+        times, MUAPs, and accuracy data.
+        This can be a simple string, the use of Path is not necessary.
+        The .txt files should all be contained in the same folder and should
+        follow the standard Deslys naming convention (e.g., the file
+        containing accuracy data will have the string "Stats" in its name).
+    emg_sensor_name : str, default "Galileo sensor"
+        The name of the EMG sensor used to collect the data. We currently
+        support only the "Galileo sensor".
+    refsig_sensor_name : str, default "Trigno Load Cell"
+        The name of the sensor used to record the reference signal. This is by
+        default "Trigno Load Cell". However, since this can have any name (and
+        can also be renamed by the user), here you should pass the effective
+        name (or regex pattern) by which you identify the sensor.
+        Ignore if no reference signal was recorded.
+    filename_from : str {"rawemg_file", "mus_directory"}, default "mus_directory"
+        The source by which the imported file will be named. This can either be
+        the same name of the file containing the raw EMG signal or of the
+        folder containing the decomposition outcome.
+
+    Returns
+    --------
+    emgfile : dict
+        A dictionary containing all the useful variables.
+
+    See also
+    --------
+    - refsig_from_delsys : Import the reference signal exportable from Delsys.
+    - askopenfile : Select and open files with a GUI.
+
+    Notes
+    ---------
+    The returned file is called ``emgfile`` for convention.
+
+    Structure of the returned emgfile:
+
+        emgfile = {
+            "SOURCE": SOURCE,
+            "FILENAME": FILENAME,
+            "RAW_SIGNAL": RAW_SIGNAL,
+            "REF_SIGNAL": REF_SIGNAL,
+            "ACCURACY": PROPRIETARY ACCURACY MEASURE,
+            "IPTS": IPTS,
+            "MUPULSES": MUPULSES,
+            "FSAMP": FSAMP,
+            "IED": IED,
+            "EMG_LENGTH": EMG_LENGTH,
+            "NUMBER_OF_MUS": NUMBER_OF_MUS,
+            "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
+            "EXTRAS": EXTRAS,
+        }
+
+    For Delsys files, the accuracy is the one provided after the decomposition
+    and it is not computed internally, being this a proprietary measure.
+
+    We collect the raw EMG and the reference signal from the .mat file because
+    the .csv doesn't contain the information about sampling frequency.
+    Similarly, we collect the firing times, MUAPs and accuracy from the .txt
+    files because in the .mat file, the accuracy is contained in a table,
+    which is not compatible with Python.
+
+    Examples
+    --------
+    For an extended explanation of the imported emgfile use:
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_delsys(
+    ...     rawemg_filepath="path/filename.mat",
+    ...     mus_directory="/directory",
+    ... )
+    >>> info = emg.info()
+    >>> info.data(emgfile)
+    """
+
+    # From the rawemg_filepath:
+    # Parse the .mat obtained from Delsys to see the available variables.
+    # We start from the file containing the raw EMG as this also contains the
+    # sampling frequency.
+    rawemg_file = loadmat(rawemg_filepath, simplify_cells=True)
+    """ print(
+        "\n--------------------------------\nAvailable dict keys are:\n\n{}\n".format(
+            rawemg_file.keys()
+        )
+    ) """
+
+    # Use this to know the data source and name of the file
+    SOURCE = "DELSYS"
+    if filename_from == "rawemg_file":
+        FILENAME = os.path.basename(rawemg_filepath)
+    elif filename_from == "mus_directory":
+        FILENAME = os.path.basename(mus_directory)
+    else:
+        raise ValueError(
+            "\nfilename_from not valid, it must be one of 'rawemg_file', 'mus_directory'\n"
+        )
+    FSAMP = float(rawemg_file["Fs"][0])
+    IED = float(5)
+
+    # Extract the data contained in the Data variable of the rawemg_file.
+    # This contains the raw EMG and the reference signal.
+    df = pd.DataFrame(rawemg_file["Data"].T, columns=rawemg_file["Channels"])
+
+    # Get RAW_SIGNAL
+    # Create a list of indexes where emg_sensor_name is found
+    RAW_SIGNAL = df.filter(regex=emg_sensor_name)
+    RAW_SIGNAL.columns = np.arange(len(RAW_SIGNAL.columns))
+    # Verify to have the IPTS
+    if RAW_SIGNAL.empty:
+        raise ValueError(
+            "\nRaw EMG signal not found in the .mat file\n"
+        )
+
+    # Get REF_SIGNAL
+    REF_SIGNAL = df.filter(regex=refsig_sensor_name)
+    REF_SIGNAL.columns = np.arange(len(REF_SIGNAL.columns))
+    if REF_SIGNAL.empty:
+        warnings.warn(
+            "\nReference signal not found, it might be necessary for some analyses\n"
+        )
+        REF_SIGNAL = pd.DataFrame(columns=[0])
+
+    # From the mus_directory:
+    # Obtain the name (and path) of the files containing MUPULSES, ACCURACY
+    # and EXTRAS. Automate this because it will be too boring manually.
+    # Get all file names in the directory
+    files = os.listdir(mus_directory)
+    # Define the keywords to match
+    keywords = ["Firings", "Stats", "MUAPs"]
+    # Initialize a dictionary to store the keyword-path mapping
+    keyword_paths = {}
+    # Iterate over the files and match keywords
+    for keyword in keywords:
+        for file in files:
+            if fnmatch.fnmatch(file, f"*{keyword}*"):
+                keyword_paths[keyword] = os.path.join(mus_directory, file)
+    # Check if we have found paths for all three keywords
+    if not all(keyword in keyword_paths for keyword in keywords):
+        missing_keywords = [
+            keyword for keyword in keywords if keyword not in keyword_paths
+        ]
+        raise ValueError(
+            f"Missing paths for: {', '.join(missing_keywords)}"
+        )
+    # Now, 'keyword_paths' contains the mapping of keywords to file paths:
+    # For example, keyword_paths["Firings"] contains the path to the "Firings",
+    # file and so on for the other keywords.
+
+    # Get MUPULSES
+    MUPULSES = np.genfromtxt(
+        keyword_paths["Firings"],
+        delimiter='\t',
+        skip_header=True,
+    ).T
+    # Store MUPULSES as a list of np.arrays
+    to_append = []
+    for pulse in MUPULSES:
+        # Drop nan and convert from seconds to samples
+        pulse = pulse[~np.isnan(pulse)] * FSAMP
+        # Store int samples
+        to_append.append(np.round(pulse).astype(int))
+    MUPULSES = to_append
+
+    # Get EMG_LENGTH and NUMBER_OF_MUS
+    EMG_LENGTH = len(RAW_SIGNAL)
+    NUMBER_OF_MUS = len(MUPULSES)
+
+    # Get BINARY_MUS_FIRING
+    BINARY_MUS_FIRING = create_binary_firings(
+        emg_length=EMG_LENGTH,
+        number_of_mus=NUMBER_OF_MUS,
+        mupulses=MUPULSES,
+    )
+
+    # Get IPTS
+    # Empty pd.DataFrame as we don't have this from Delsys decomposition.
+    IPTS = pd.DataFrame(columns=np.arange(NUMBER_OF_MUS))
+
+    # Get ACCURACY
+    ACCURACY = pd.read_csv(keyword_paths["Stats"], sep='\t')
+    ACCURACY = ACCURACY[["Accuracy"]]
+    ACCURACY.columns = [0]
+
+    # Get EXTRAS (MUAPs for Delsys)
+    # MUAPs from Delsys for all the MUs are all stored in the same table.
+    # We want them divided in different columns based on MU and channel.
+    EXTRAS = pd.read_csv(keyword_paths["MUAPs"], sep='\t')
+    df = {}
+    for mu in range(1, NUMBER_OF_MUS + 1):  # Named in base 1 from Delsys
+        this_mu_all_ch = EXTRAS.loc[EXTRAS["MU_Num"] == mu]
+        for ch in range(1, 5):  # Galileo has 4 recording pins, in base 1
+            col_name = f"MU_{mu-1}_CH_{ch-1}"
+            arr = this_mu_all_ch.filter(regex=str(ch)).to_numpy()
+            df[col_name] = arr[:, 0]
+    EXTRAS = pd.DataFrame(df)
+
+    emgfile = {
+        "SOURCE": SOURCE,
+        "FILENAME": FILENAME,
+        "RAW_SIGNAL": RAW_SIGNAL,
+        "REF_SIGNAL": REF_SIGNAL,
+        "ACCURACY": ACCURACY,
+        "IPTS": IPTS,
+        "MUPULSES": MUPULSES,
+        "FSAMP": FSAMP,
+        "IED": IED,
+        "EMG_LENGTH": EMG_LENGTH,
+        "NUMBER_OF_MUS": NUMBER_OF_MUS,
+        "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
+        "EXTRAS": EXTRAS,
+    }
+
+    return emgfile
+
+
+# --------------------------------------------------------------------- #
+# Function to open the reference signal from Delsys.
+def refsig_from_delsys(filepath, refsig_sensor_name="Trigno Load Cell",):
+    """
+    Import the reference signal in the .mat file exportable by Delsys Neuromap.
+
+    This function is used to import the .mat file exportable by the Delsys
+    Neuromap software as a dictionary of Python objects (mainly pandas
+    dataframes). Compared to the function emg_from_delsys, this function only
+    imports the REF_SIGNAL and, therefore, it can be used for special cases
+    where only the REF_SIGNAL is necessary. This will allow for a faster
+    execution of the script and to avoid exceptions for missing data.
+
+    Parameters
+    ----------
+    filepath : str or Path
+        The directory and the name of the file to load (including file
+        extension .mat). This can be a simple string, the use of Path is not
+        necessary.
+    refsig_sensor_name : str, default "Trigno Load Cell"
+        The name of the sensor used to record the reference signal. This is by
+        default "Trigno Load Cell". However, since this can have any name (and
+        can also be renamed by the user), here you should pass the effective
+        name (or regex pattern) by which you identify the sensor.
+
+    Returns
+    -------
+    emg_refsig : dict
+        A dictionary containing all the useful variables.
+
+    See also
+    --------
+    - emg_from_delsys : Import the Delsys decomposition outcome.
+    - askopenfile : Select and open files with a GUI.
+
+    Notes
+    ---------
+    The returned file is called ``emg_refsig`` for convention.
+
+    Structure of the returned emg_refsig:
+
+        emg_refsig = {
+            "SOURCE": SOURCE,
+            "FILENAME": FILENAME,
+            "FSAMP": FSAMP,
+            "REF_SIGNAL": REF_SIGNAL,
+            "EXTRAS": EXTRAS,
+        }
+
+    Examples
+    --------
+    For an extended explanation of the imported emgfile use:
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.refsig_from_delsys(filepath="path/filename.mat")
+    >>> info = emg.info()
+    >>> info.data(emgfile)
+    """
+    # TODO add extras option
+
+    # Parse the .mat obtained from Delsys to see the available variables.
+    # The .mat file should containing the reference signal and the sampling
+    # frequency.
+    refsig_file = loadmat(filepath, simplify_cells=True)
+    """ print(
+        "\n--------------------------------\nAvailable dict keys are:\n\n{}\n".format(
+            rawemg_file.keys()
+        )
+    ) """
+
+    # Use this to know the data source and name of the file
+    SOURCE = "DELSYS_REFSIG"
+    FILENAME = os.path.basename(filepath)
+    FSAMP = float(refsig_file["Fs"][0])
+
+    # Extract the data contained in the Data variable of the .mat file.
+    # This contains the reference signal.
+    df = pd.DataFrame(refsig_file["Data"].T, columns=refsig_file["Channels"])
+    # Get REF_SIGNAL
+    REF_SIGNAL = df.filter(regex=refsig_sensor_name)
+    REF_SIGNAL.columns = np.arange(len(REF_SIGNAL.columns))
+    if REF_SIGNAL.empty:
+        raise ValueError(
+            "\nReference signal not found\n"
+        )
+
+    emg_refsig = {
+        "SOURCE": SOURCE,
+        "FILENAME": FILENAME,
+        "FSAMP": FSAMP,
+        "REF_SIGNAL": REF_SIGNAL,
+        "EXTRAS": pd.DataFrame(columns=[0]),
+    }
+
+    return emg_refsig
+
+
 # ---------------------------------------------------------------------
 # Function to load custom CSV documents.
 def emg_from_customcsv(
@@ -971,6 +1317,7 @@ def emg_from_customcsv(
     - refsig_from_otb : import reference signal in the .mat file exportable by
         OTBiolab+.
     - refsig_from_customcsv : Import the reference signal from a custom .csv.
+    - askopenfile : Select and open files with a GUI.
 
     Notes
     -----
@@ -1179,6 +1526,11 @@ def refsig_from_customcsv(
     emg_refsig : dict
         A dictionary containing all the useful variables.
 
+    See also
+    --------
+    - emg_from_customcsv : Import the emgfile from a custom .csv file.
+    - askopenfile : Select and open files with a GUI.
+
     Notes
     ---------
     The returned file is called ``emg_refsig`` for convention.
@@ -1274,7 +1626,7 @@ def save_json_emgfile(emgfile, filepath, compresslevel=4):
         we suggest values between 2 and 6, with 4 providing the best balance.
     """
 
-    if emgfile["SOURCE"] in ["DEMUSE", "OTB", "CUSTOMCSV"]:
+    if emgfile["SOURCE"] in ["DEMUSE", "OTB", "CUSTOMCSV", "DELSYS"]:
         """
         We need to convert all the components of emgfile to a dictionary and
         then to json object.
@@ -1360,7 +1712,7 @@ def save_json_emgfile(emgfile, filepath, compresslevel=4):
             # Write to a file
             f.write(json_bytes) """
 
-    elif emgfile["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG"]:
+    elif emgfile["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]:
         """
         refsig = {
             "SOURCE": SOURCE,
@@ -1421,16 +1773,13 @@ def emg_from_json(filepath):
 
     See also
     --------
-    - emg_from_demuse : import the .mat file used in DEMUSE.
-    - emg_from_otb : import the .mat file exportable by OTBiolab+.
-    - refsig_from_otb : import REF_SIGNAL in the .mat file exportable by
-        OTBiolab+.
-    - emg_from_customcsv : import custom data from a .csv file.
+    - save_json_emgfile : Save the emgfile or emg_refsig as a JSON file.
+    - askopenfile : Select and open files with a GUI.
 
     Notes
     -----
     The returned file is called ``emgfile`` for convention
-    (or ``emg_refsig`` if SOURCE in ["OTB_REFSIG", "CUSTOMCSV_REFSIG"]).
+    (or ``emg_refsig`` if SOURCE in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]).
 
     Examples
     --------
@@ -1455,7 +1804,7 @@ def emg_from_json(filepath):
     source = json.loads(jsonemgfile["SOURCE"])
     filename = json.loads(jsonemgfile["FILENAME"])
 
-    if source in ["DEMUSE", "OTB", "CUSTOMCSV"]:
+    if source in ["DEMUSE", "OTB", "CUSTOMCSV", "DELSYS"]:
         # RAW_SIGNAL
         # df are stored in json as a dictionary, it can be directly extracted
         # and converted into a pd.DataFrame.
@@ -1523,7 +1872,7 @@ def emg_from_json(filepath):
             "EXTRAS": extras,
         }
 
-    elif source in ["OTB_REFSIG", "CUSTOMCSV_REFSIG"]:
+    elif source in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]:
         # FSAMP
         fsamp = float(json.loads(jsonemgfile["FSAMP"]))
         # REF_SIGNAL
@@ -1560,21 +1909,27 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
     initialdir : str or Path, default "/"
         The directory of the file to load (excluding file name).
         This can be a simple string, the use of Path is not necessary.
-    filesource : str {"OPENHDEMG", "DEMUSE", "OTB", "OTB_REFSIG", "CUSTOMCSV", CUSTOMCSV_REFSIG}, default "OPENHDEMG"
+    filesource : str {"OPENHDEMG", "DEMUSE", "OTB", "DELSYS", "CUSTOMCSV", "OTB_REFSIG", "DELSYS_REFSIG", CUSTOMCSV_REFSIG}, default "OPENHDEMG"
         The source of the file. See notes for how files should be exported
-        from OTB.
+        from other softwares or platforms.
 
         ``OPENHDEMG``
             File saved from openhdemg (.json).
         ``DEMUSE``
             File saved from DEMUSE (.mat).
         ``OTB``
-            File exported from OTB with decomposition and reference signal
+            File exported from OTB with decomposition and EMG signal.
             (.mat).
+        ``DELSYS``
+            Files exported from Delsys Neuromap and Neuromap explorer with
+            decomposition and EMG signal (.mat + .txt).
+        ``CUSTOMCSV``
+            Custom file format (.csv) with decomposition and EMG signal.
         ``OTB_REFSIG``
             File exported from OTB with only the reference signal (.mat).
-        ``CUSTOMCSV``
-            Custom file format (.csv).
+        ``DELSYS_REFSIG``
+            File exported from DELSYS Neuromap with the reference signal
+            (.mat).
         ``CUSTOMCSV_REFSIG``
             Custom file format (.csv) containing only the reference signal.
     otb_ext_factor : int, default 8
@@ -1600,6 +1955,21 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
         If your specific version is not available in the tested versions,
         trying with the closer one usually works, but please double check the
         results. Ignore if loading other files.
+    delsys_emg_sensor_name : str, default "Galileo sensor"
+        The name of the EMG sensor used to collect the data. We currently
+        support only the "Galileo sensor".
+        Ignore if loading other files or only the reference signal.
+    delsys_refsig_sensor_name : str, default "Trigno Load Cell"
+        The name of the sensor used to record the reference signal. This is by
+        default "Trigno Load Cell". However, since this can have any name (and
+        can also be renamed by the user), here you should pass the effective
+        name (or regex pattern) by which you identify the sensor.
+        Ignore if loading other files or if no reference signal was recorded.
+    delsys_filename_from : str {"rawemg_file", "mus_directory"}, default "mus_directory"
+        The source by which the imported file will be named. This can either be
+        the same name of the file containing the raw EMG signal or of the
+        folder containing the decomposition outcome.
+        Ignore if loading other files or only the reference signal.
     custom_ref_signal : str, default 'REF_SIGNAL'
         Label of the column(s) containing the reference signal of the custom
         file.
@@ -1646,7 +2016,7 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
     Notes
     -----
     The returned file is called ``emgfile`` for convention (or ``emg_refsig``
-    if SOURCE in ["OTB_REFSIG", CUSTOMCSV_REFSIG]).
+    if SOURCE in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]).
 
     The input .mat file exported from the OTBiolab+ software should have a
     specific content:
@@ -1664,6 +2034,15 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
         before exporting the .mat file.
     - NO OTHER ELEMENTS SHOULD BE PRESENT! unless an appropriate regex pattern
     is passed to 'extras='!
+
+    For Delsys files:
+    We collect the raw EMG and the reference signal from the .mat file
+    exported from the Delsys Neuromap software because the .csv doesn't
+    contain the information about sampling frequency.
+    Similarly, we collect the firing times, MUAPs and accuracy from the .txt
+    files exported from the Delsys Neuromap Explorer software because in the
+    .mat file, the accuracy is contained in a table, which is not compatible
+    with Python.
 
     For custom .csv files:
     The variables of interest should be contained in columns. The name of the
@@ -1690,7 +2069,7 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
             "RAW_SIGNAL": RAW_SIGNAL,
             "REF_SIGNAL": REF_SIGNAL,
             "ACCURACY": accuracy score (depending on source file type),
-            "IPTS": IPTS,
+            "IPTS": IPTS (depending on source file type),
             "MUPULSES": MUPULSES,
             "FSAMP": FSAMP,
             "IED": IED,
@@ -1731,11 +2110,21 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
     root = Tk()
     root.withdraw()
 
-    if filesource in ["DEMUSE", "OTB", "OTB_REFSIG"]:
+    if filesource in ["DEMUSE", "OTB", "OTB_REFSIG", "DELSYS_REFSIG"]:
         file_toOpen = filedialog.askopenfilename(
             initialdir=initialdir,
             title=f"Select a {filesource} file to load",
             filetypes=[("MATLAB files", "*.mat")],
+        )
+    elif filesource == "DELSYS":
+        emg_file_toOpen = filedialog.askopenfilename(
+            initialdir=initialdir,
+            title="Select a DELSYS file with raw EMG to load",
+            filetypes=[("MATLAB files", "*.mat")],
+        )
+        mus_file_toOpen = filedialog.askdirectory(
+            initialdir=initialdir,
+            title="Select the folder containing the DELSYS decomposition",
         )
     elif filesource == "OPENHDEMG":
         file_toOpen = filedialog.askopenfilename(
@@ -1746,12 +2135,14 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
     elif filesource in ["CUSTOMCSV", "CUSTOMCSV_REFSIG"]:
         file_toOpen = filedialog.askopenfilename(
             initialdir=initialdir,
-            title="Select a custom file to load",
+            title=f"Select a {filesource} file to load",
             filetypes=[("CSV files", "*.csv")],
         )
     else:
         raise ValueError(
-            "\nfilesource not valid, it must be one of 'DEMUSE', 'OTB', 'OTB_REFSIG', 'OPENHDEMG', 'CUSTOMCSV', 'CUSTOMCSV_REFSIG'\n"
+            "\nfilesource not valid, it must be one of " +
+            "'DEMUSE', 'OTB', 'DELSYS', 'OTB_REFSIG', 'DELSYS_REFSIG', " +
+            "'OPENHDEMG', 'CUSTOMCSV', 'CUSTOMCSV_REFSIG'\n"
         )
 
     # Destroy the root since it is no longer necessary
@@ -1773,6 +2164,27 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
             filepath=file_toOpen,
             refsig=ref[1],
             version=kwargs.get("otb_version", "1.5.9.3"),
+        )
+    elif filesource == "DELSYS":
+        emgfile = emg_from_delsys(
+            rawemg_filepath=emg_file_toOpen,
+            mus_directory=mus_file_toOpen,
+            emg_sensor_name=kwargs.get(
+                "delsys_emg_sensor_name", "Galileo sensor"
+            ),
+            refsig_sensor_name=kwargs.get(
+                "delsys_refsig_sensor_name", "Trigno Load Cell"
+            ),
+            filename_from=kwargs.get(
+                "delsys_filename_from", "mus_directory"
+            ),
+        )
+    elif filesource == "DELSYS_REFSIG":
+        emgfile = refsig_from_delsys(
+            filepath=file_toOpen,
+            refsig_sensor_name=kwargs.get(
+                "delsys_refsig_sensor_name", "Trigno Load Cell"
+            ),
         )
     elif filesource == "OPENHDEMG":
         emgfile = emg_from_json(filepath=file_toOpen)

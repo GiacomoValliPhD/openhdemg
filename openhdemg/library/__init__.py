@@ -12,8 +12,10 @@ __all__ = [
 from openhdemg.library.openfiles import (
     emg_from_otb,
     emg_from_demuse,
-    refsig_from_otb,
+    emg_from_delsys,
     emg_from_customcsv,
+    refsig_from_otb,
+    refsig_from_delsys,
     refsig_from_customcsv,
     save_json_emgfile,
     emg_from_json,
