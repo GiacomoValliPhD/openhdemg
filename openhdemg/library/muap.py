@@ -210,7 +210,6 @@ def double_diff(sorted_rawemg):
     return dd
 
 
-# This function exploits parallel processing to compute the STA
 def sta(
     emgfile, sorted_rawemg, firings=[0, 50], timewindow=50
 ):
@@ -325,72 +324,31 @@ def sta(
     sta_dict = {mu: {} for mu in range(emgfile["NUMBER_OF_MUS"])}
 
     # Calculate STA on sorted_rawemg for every mu and put it into sta_dict[mu]
-    # Loop all the MUs to fill sta_dict
     for mu in sta_dict.keys():
-        pass
-
-    # STA function to run in parallel
-    def parallel(mu):
         # Set firings if firings="all"
         if firings == "all":
             firings_ = [0, len(emgfile["MUPULSES"][mu])]
         else:
             firings_ = firings
 
-        # Loop the matrix columns
+        # Calculate STA for each column in sorted_rawemg
         sorted_rawemg_sta = {}
         for col in sorted_rawemg.keys():
-            # Container of STA for matrix rows
             row_dict = {}
-            # Loop the matrix rows
             for row in sorted_rawemg[col].columns:
-
-                # Find the mupulses
                 thismups = emgfile["MUPULSES"][mu][firings_[0]: firings_[1]]
-
-                # Container of ST area for averaging
-                df = {}
-                for pos, pulse in enumerate(thismups):
-                    df[pos] = (
-                        sorted_rawemg[col][row]
-                        .iloc[pulse - halftime: pulse + halftime]
-                        .reset_index(drop=True)
-                    )
-
-                # Average df columns and fill df
-                df = pd.DataFrame(df)
-                df = df.mean(axis="columns")
-
-                row_dict[row] = df
-
+                df = sorted_rawemg[col][row].to_numpy()
+                # Calculate STA using NumPy vectorized operations
+                sta_values = []
+                for pulse in thismups:
+                    sta_values.append(df[pulse - halftime: pulse + halftime])
+                row_dict[row] = np.mean(sta_values, axis=0)
             sorted_rawemg_sta[col] = pd.DataFrame(row_dict)
-
-        # Add a reference to the MU number to sort the values returned by
-        # parallel processing
-        sorted_rawemg_sta["munumber"] = mu
-
-        return sorted_rawemg_sta
-        # TODO verify built-in options to return from joblib.Parallel
-
-    # Start parallel execution
-    # Meausere running time
-    t0 = time.time()
-
-    res = Parallel(n_jobs=-1)(delayed(parallel)(mu) for mu in sta_dict.keys())
-
-    t1 = time.time()
-    print(f"\nTime of sta parallel processing: {round(t1-t0, 2)} Sec\n")
-
-    # Sort output of the parallel processing according to MU number
-    for i in res:
-        mu = i["munumber"]
-        del i["munumber"]
-        sta_dict[mu] = i
+        sta_dict[mu] = sorted_rawemg_sta
 
     return sta_dict
 
 
-# This function exploits parallel processing to compute the MUAPs
 def st_muap(emgfile, sorted_rawemg, timewindow=50):
     """
     Generate spike triggered MUAPs of every MUs.
@@ -414,7 +372,7 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
     stmuap : dict
         dict containing a dict of ST MUAPs (pd.DataFrame) for every MUs.
         The pd.DataFrames containing the ST MUAPs are organised based on matrix
-        rows (dict) and matrix channel.
+        rows (dict) and matrix channels.
         For example, the ST MUAPs of the first MU (0), in the second electrode
         of the first matrix column can be accessed as stmuap[0]["col0"][1].
 
@@ -460,64 +418,33 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
     timewindow_samples = round((timewindow / 1000) * emgfile["FSAMP"])
     halftime = round(timewindow_samples / 2)
 
-    # Container of the STA for every MUs
-    # {0: {}, 1: {}, 2: {}, 3: {}}
-    stmuap = {mu: {} for mu in range(emgfile["NUMBER_OF_MUS"])}
+    # Container of the ST for every MUs
+    # {0: {}, 1: {}, 2: {}, 3: {} ...}
+    sta_dict = {mu: {} for mu in range(emgfile["NUMBER_OF_MUS"])}
 
-    # Calculate ST MUAPs on sorted_rawemg for every mu and put it into
-    # sta_dict[mu]. Loop all the MUs to fill sta_dict.
-    # ST MUAPS function to run in parallel
-    def parallel(mu):
-        # Loop the matrix columns
-        sorted_rawemg_st = {}
+    # Calculate ST on sorted_rawemg for every mu and put it into sta_dict[mu]
+    for mu in sta_dict.keys():
+        # Container for the st of each MUs' matrix column.
+        sta_dict_cols = {}
+        # Get MUPULSES for this MU
+        thismups = emgfile["MUPULSES"][mu]
+        # Calculate ST for each channel in each column in sorted_rawemg
         for col in sorted_rawemg.keys():
-
-            # Container of ST MUAPs for matrix rows
-            row_dict = {}
-            # Loop the matrix rows
+            # Container for the st of each channel (row) in that matrix column.
+            sta_dict_crows = {}
             for row in sorted_rawemg[col].columns:
-
-                # Find the mupulses
-                thismups = emgfile["MUPULSES"][mu]
-
-                # Container of ST area for averaging
-                df = {}
+                this_emgsig = sorted_rawemg[col][row].to_numpy()
+                # Container for the pd.DataFrame with MUAPs of each channel.
+                crow_muaps = {}
+                # Calculate ST using NumPy vectorized operations
                 for pos, pulse in enumerate(thismups):
-                    df[pos] = (
-                        sorted_rawemg[col][row]
-                        .iloc[pulse - halftime: pulse + halftime]
-                        .reset_index(drop=True)
-                    )
+                    muap = this_emgsig[pulse - halftime: pulse + halftime]
+                    crow_muaps[pos] = muap
+                sta_dict_crows[row] = pd.DataFrame(crow_muaps)
+            sta_dict_cols[col] = sta_dict_crows
+        sta_dict[mu] = sta_dict_cols
 
-                # Fill df with ST MUAPs
-                df = pd.DataFrame(df)
-
-                row_dict[row] = df
-
-            sorted_rawemg_st[col] = row_dict
-
-        # Add a reference to the MU number to sort the values returned by
-        # parallel processing
-        sorted_rawemg_st["munumber"] = mu
-
-        return sorted_rawemg_st
-
-    # Start parallel execution
-    # Meausere running time
-    t0 = time.time()
-
-    res = Parallel(n_jobs=1)(delayed(parallel)(mu) for mu in stmuap.keys())
-
-    t1 = time.time()
-    print(f"\nTime of st_muap parallel processing: {round(t1-t0, 2)} Sec\n")
-
-    # Sort output of the parallel processing according to MU number
-    for i in res:
-        mu = i["munumber"]
-        del i["munumber"]
-        stmuap[mu] = i
-
-    return stmuap
+    return sta_dict
 
 
 def unpack_sta(sta_mu):
