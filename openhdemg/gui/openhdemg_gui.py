@@ -5,6 +5,7 @@ This file contains the gui functionalities of openhdemg.
 import os
 import tkinter as tk
 import customtkinter
+import threading
 import webbrowser
 from tkinter import ttk, filedialog, Canvas
 from tkinter import StringVar, Tk, N, S, W, E, DoubleVar
@@ -244,6 +245,8 @@ class emgGUI:
         Executed when button "Remove MUs" in master GUI window pressed.
     remove()
         Method used to remove single motor units.
+    remove_empty()
+        Method that removes all empty MUs.
     edit_refsig()
         Opens seperate window to edit emg reference signal.
         Executed when button "RefSig Editing" in master GUI window pressed.
@@ -396,6 +399,7 @@ class emgGUI:
         # Load file
         load = ttk.Button(self.left, text="Load File", command=self.get_file_input)
         load.grid(column=0, row=3, sticky=W)
+
 
         # File specifications
         ttk.Label(self.left, text="Filespecs:").grid(column=1, row=1, sticky=(W, E))
@@ -642,6 +646,11 @@ class emgGUI:
         emg_from_demuse, emg_from_otb, refsig_from_otb and emg_from_json in library.
         """
         try:
+            # Indicate Progress
+            progress = ttk.Progressbar(self.left, mode="indeterminate")
+            progress.grid(row=4, column=0)
+            progress.start(1)
+
             if self.filetype.get() in ["OTB", "DEMUSE", "OPENHDEMG", "CUSTOMCSV"]:
                 # Check filetype for processing
                 if self.filetype.get() == "OTB":
@@ -655,6 +664,16 @@ class emgGUI:
                         filepath=self.file_path,
                         ext_factor=int(self.extension_factor.get()),
                     )
+                    # Add filespecs
+                    ttk.Label(
+                        self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
+                    ).grid(column=2, row=2, sticky=(W, E))
+                    ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
+                        column=2, row=3, sticky=(W, E)
+                    )
+                    ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
+                        column=2, row=4, sticky=(W, E)
+                    )
 
                 elif self.filetype.get() == "DEMUSE":
                     # Ask user to select the file
@@ -662,20 +681,31 @@ class emgGUI:
                         title="Open DEMUSE file", filetypes=[("MATLAB files", "*.mat")]
                     )
                     self.file_path = file_path
-
                     # load file
                     self.resdict = openhdemg.emg_from_demuse(filepath=self.file_path)
-
+                    # Add filespecs
+                    ttk.Label(
+                        self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
+                    ).grid(column=2, row=2, sticky=(W, E))
+                    ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
+                        column=2, row=3, sticky=(W, E)
+                    )
+                    ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
+                        column=2, row=4, sticky=(W, E)
+                    )
                 elif self.filetype.get() == "OPENHDEMG":
                     # Ask user to select the file
                     file_path = filedialog.askopenfilename(
                         title="Open JSON file", filetypes=[("JSON files", "*.json")]
                     )
                     self.file_path = file_path
-
                     # load OPENHDEMG (.json)
                     self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
-
+                    # Add filespecs
+                    ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E))
+                    ttk.Label(self.left, text="").grid(column=2, row=3, sticky=(W, E))
+                    ttk.Label(self.left, text="").grid(column=2, row=4, sticky=(W, E)
+                    )
                 else:
                     # Ask user to select the file
                     file_path = filedialog.askopenfilename(
@@ -683,9 +713,12 @@ class emgGUI:
                         filetypes=[("CSV files", "*.csv")],
                     )
                     self.file_path = file_path
-
                     # load file
                     self.resdict = openhdemg.emg_from_customcsv(filepath=self.file_path)
+                    # Add filespecs
+                    ttk.Label(self.left, text="Custom CSV").grid(column=2, row=2, sticky=(W, E))
+                    ttk.Label(self.left, text="").grid(column=2, row=3, sticky=(W, E))
+                    ttk.Label(self.left, text="").grid(olumn=2, row=4, sticky=(W, E))
 
                 # Get filename
                 filename = os.path.splitext(os.path.basename(file_path))[0]
@@ -693,22 +726,6 @@ class emgGUI:
 
                 # Add filename to label
                 self.master.title(self.filename)
-
-                # Add filespecs
-                ttk.Label(
-                    self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
-                ).grid(column=2, row=2, sticky=(W, E))
-                ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
-                    column=2, row=3, sticky=(W, E)
-                )
-                ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
-                    column=2, row=4, sticky=(W, E)
-                )   
-                """
-                # BUG with "OPENHDEMG" type we identify all files saved from openhdemg,
-                regardless of the content. This will result in an error for ttk.Label
-                self.resdict["NUMBER_OF_MUS"] and self.resdict["EMG_LENGTH"].
-                """
 
             else:
                 # Ask user to select the refsig file
@@ -745,6 +762,10 @@ class emgGUI:
                 ttk.Label(self.left, text="        ").grid(
                     column=2, row=4, sticky=(W, E)
                 )
+                
+            # End progress
+            progress.stop()
+            #progress.grid_remove()
 
         except ValueError:
             tk.messagebox.showerror(
@@ -791,36 +812,55 @@ class emgGUI:
     def decompose_file(self):
         pass
 
+    import threading
+
     def save_emgfile(self):
         """
-        Instance method to save the edited emgfile. Results are saves in .json file.
+        Instance method to save the edited emgfile. Results are saved in a .json file.
 
-        Executed when the button "Save File" in master GUI window is pressed.
+        Executed when the "Save File" button in the master GUI window is pressed.
 
         Raises
         ------
         AttributeError
-            When file was not loaded in the GUI.
+            When a file was not loaded in the GUI.
 
         See Also
         --------
         save_json_emgfile in library.
         """
-        try:
-            # Ask user to select the directory and file name
-            save_filepath = filedialog.asksaveasfilename(
-                defaultextension=".*",
-                filetypes=(("JSON files", "*.json"), ("all files", "*.*")),
-            )
+        def save_file():
+            try:
+                # Ask user to select the directory and file name
+                save_filepath = filedialog.asksaveasfilename(
+                    defaultextension=".json",
+                    filetypes=(("JSON files", "*.json"), ("all files", "*.*")),
+                )
 
-            # Get emgfile
-            save_emg = self.resdict
+                if not save_filepath:
+                    return  # User canceled the file dialog
 
-            # Save json file
-            openhdemg.save_json_emgfile(emgfile=save_emg, filepath=save_filepath)
+                # Get emgfile
+                save_emg = self.resdict
 
-        except AttributeError:
-            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
+                # Save json file
+                openhdemg.save_json_emgfile(emgfile=save_emg, filepath=save_filepath)
+
+                # End progress
+                progress.stop()
+                progress.grid_remove()
+            except AttributeError:
+                tk.messagebox.showerror("Information", "Make sure a file is loaded.")
+
+        # Indicate Progress
+        progress = ttk.Progressbar(self.left, mode="indeterminate")
+        progress.grid(row=4, column=0)
+        progress.start(1)
+
+        # Create a thread to run the save_file function
+        save_thread = threading.Thread(target=save_file)
+        save_thread.start()
+
 
     def export_to_excel(self):
         """
@@ -1173,7 +1213,7 @@ class emgGUI:
 
             # Select Motor Unit
             ttk.Label(self.head, text="Select MU:").grid(
-                column=0, row=0, padx=5, pady=5
+                column=1, row=0, padx=5, pady=5, sticky=W
             )
 
             self.mu_to_remove = StringVar()
@@ -1183,18 +1223,21 @@ class emgGUI:
             )
             removed_mu["values"] = removed_mu_value
             removed_mu["state"] = "readonly"
-            removed_mu.grid(column=1, row=0, sticky=(W, E), padx=5, pady=5)
+            removed_mu.grid(column=1, row=1, columnspan=2, sticky=(W, E), padx=5, pady=5)
 
             # Remove Motor unit
             remove = ttk.Button(self.head, text="Remove MU", command=self.remove)
-            remove.grid(column=1, row=1, sticky=(W, E), padx=5, pady=5)
+            remove.grid(column=1, row=2, sticky=(W, E), padx=5, pady=5)
 
+            # Remove empty MUs
+            remove_empty = ttk.Button(self.head, text="Remove empty MUs", command=self.remove_empty)
+            remove_empty.grid(column=2, row=2, padx=5, pady=5)
         else:
             tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
     def remove(self):
         """
-        Instance methof that actually removes a selected motor unit based on user specification.
+        Instance method that actually removes a selected motor unit based on user specification.
 
         Executed when button "Remove MU" in Motor Unit Removal Window is pressed.
         The emgfile and the plot are subsequently updated.
@@ -1221,7 +1264,44 @@ class emgGUI:
             )
             removed_mu["values"] = removed_mu_value
             removed_mu["state"] = "readonly"
-            removed_mu.grid(column=1, row=0, sticky=(W, E), padx=5, pady=5)
+            removed_mu.grid(column=1, row=1, columnspan=2, sticky=(W, E), padx=5, pady=5)
+
+            # Update plot
+            if hasattr(self, "fig"):
+                self.in_gui_plotting()
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
+
+    def remove_empty(self):
+        """
+        Instance method that removes all empty MUs.
+
+        Executed when button "Remove empty MUs" in Motor Unit Removal Window is pressed.
+        The emgfile and the plot are subsequently updated.
+
+        See Also
+        --------
+        delete_empty_mus in library.
+        """
+        try:
+            # Get resdict with MU removed
+            self.resdict = openhdemg.delete_empty_mus(self.resdict)
+
+            # Upate MU number
+            ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
+                column=2, row=3, sticky=(W, E)
+            )
+
+            # Update selection field
+            self.mu_to_remove = StringVar()
+            removed_mu_value = [*range(0, self.resdict["NUMBER_OF_MUS"])]
+            removed_mu = ttk.Combobox(
+                self.head, width=10, textvariable=self.mu_to_remove
+            )
+            removed_mu["values"] = removed_mu_value
+            removed_mu["state"] = "readonly"
+            removed_mu.grid(column=1, row=1, columnspan=2, sticky=(W, E), padx=5, pady=5)
 
             # Update plot
             if hasattr(self, "fig"):
