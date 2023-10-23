@@ -861,7 +861,6 @@ class emgGUI:
         save_thread = threading.Thread(target=save_file)
         save_thread.start()
 
-
     def export_to_excel(self):
         """
         Instnace method to export any prior analysis results. Results are saved in an excel sheet
