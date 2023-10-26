@@ -400,7 +400,6 @@ class emgGUI:
         load = ttk.Button(self.left, text="Load File", command=self.get_file_input)
         load.grid(column=0, row=3, sticky=W)
 
-
         # File specifications
         ttk.Label(self.left, text="Filespecs:").grid(column=1, row=1, sticky=(W, E))
         ttk.Label(self.left, text="N Channels:").grid(column=1, row=2, sticky=(W, E))
