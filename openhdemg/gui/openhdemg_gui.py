@@ -382,7 +382,7 @@ class emgGUI:
         style.configure("TEntry", font=("Lucida Sans", 12), foreground="black")
         style.configure("TCombobox", background="LightBlue4", foreground="black")
         style.configure("TLabelFrame", foreground="black", font=("Lucida Sans", 16))
-
+        style.configure("TProgressbar", foreground="#FFBF00", background="#FFBF00")
         # Specify Signal
         self.filetype = StringVar()
         signal_value = ("OPENHDEMG", "OTB", "DEMUSE", "OTB_REFSIG", "CUSTOMCSV", "CUSTOMCSV_REFSIG")
@@ -645,134 +645,139 @@ class emgGUI:
         --------
         emg_from_demuse, emg_from_otb, refsig_from_otb and emg_from_json in library.
         """
-        try:
-            # Indicate Progress
-            progress = ttk.Progressbar(self.left, mode="indeterminate")
-            progress.grid(row=4, column=0)
-            progress.start(1)
+        def load_file():
+            try:
+                if self.filetype.get() in ["OTB", "DEMUSE", "OPENHDEMG", "CUSTOMCSV"]:
+                    # Check filetype for processing
+                    if self.filetype.get() == "OTB":
+                        # Ask user to select the decomposed file
+                        file_path = filedialog.askopenfilename(
+                            title="Open OTB file", filetypes=[("MATLAB files", "*.mat")]
+                        )
+                        self.file_path = file_path
+                        # Load file
+                        self.resdict = openhdemg.emg_from_otb(
+                            filepath=self.file_path,
+                            ext_factor=int(self.extension_factor.get()),
+                        )
+                        # Add filespecs
+                        ttk.Label(
+                            self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
+                        ).grid(column=2, row=2, sticky=(W, E))
+                        ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
+                            column=2, row=3, sticky=(W, E)
+                        )
+                        ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
+                            column=2, row=4, sticky=(W, E)
+                        )
 
-            if self.filetype.get() in ["OTB", "DEMUSE", "OPENHDEMG", "CUSTOMCSV"]:
-                # Check filetype for processing
-                if self.filetype.get() == "OTB":
-                    # Ask user to select the decomposed file
-                    file_path = filedialog.askopenfilename(
-                        title="Open OTB file", filetypes=[("MATLAB files", "*.mat")]
-                    )
-                    self.file_path = file_path
-                    # Load file
-                    self.resdict = openhdemg.emg_from_otb(
-                        filepath=self.file_path,
-                        ext_factor=int(self.extension_factor.get()),
-                    )
-                    # Add filespecs
-                    ttk.Label(
-                        self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
-                    ).grid(column=2, row=2, sticky=(W, E))
-                    ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
-                        column=2, row=3, sticky=(W, E)
-                    )
-                    ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
-                        column=2, row=4, sticky=(W, E)
-                    )
+                    elif self.filetype.get() == "DEMUSE":
+                        # Ask user to select the file
+                        file_path = filedialog.askopenfilename(
+                            title="Open DEMUSE file", filetypes=[("MATLAB files", "*.mat")]
+                        )
+                        self.file_path = file_path
+                        # load file
+                        self.resdict = openhdemg.emg_from_demuse(filepath=self.file_path)
+                        # Add filespecs
+                        ttk.Label(
+                            self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
+                        ).grid(column=2, row=2, sticky=(W, E))
+                        ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
+                            column=2, row=3, sticky=(W, E)
+                        )
+                        ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
+                            column=2, row=4, sticky=(W, E)
+                        )
+                    elif self.filetype.get() == "OPENHDEMG":
+                        # Ask user to select the file
+                        file_path = filedialog.askopenfilename(
+                            title="Open JSON file", filetypes=[("JSON files", "*.json")]
+                        )
+                        self.file_path = file_path
+                        # load OPENHDEMG (.json)
+                        self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
+                        # Add filespecs
+                        ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E))
+                        ttk.Label(self.left, text="").grid(column=2, row=3, sticky=(W, E))
+                        ttk.Label(self.left, text="").grid(column=2, row=4, sticky=(W, E)
+                        )
+                    else:
+                        # Ask user to select the file
+                        file_path = filedialog.askopenfilename(
+                            title="Open CUSTOMCSV file",
+                            filetypes=[("CSV files", "*.csv")],
+                        )
+                        self.file_path = file_path
+                        # load file
+                        self.resdict = openhdemg.emg_from_customcsv(filepath=self.file_path)
+                        # Add filespecs
+                        ttk.Label(self.left, text="Custom CSV").grid(column=2, row=2, sticky=(W, E))
+                        ttk.Label(self.left, text="").grid(column=2, row=3, sticky=(W, E))
+                        ttk.Label(self.left, text="").grid(olumn=2, row=4, sticky=(W, E))
 
-                elif self.filetype.get() == "DEMUSE":
-                    # Ask user to select the file
-                    file_path = filedialog.askopenfilename(
-                        title="Open DEMUSE file", filetypes=[("MATLAB files", "*.mat")]
-                    )
-                    self.file_path = file_path
-                    # load file
-                    self.resdict = openhdemg.emg_from_demuse(filepath=self.file_path)
-                    # Add filespecs
-                    ttk.Label(
-                        self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
-                    ).grid(column=2, row=2, sticky=(W, E))
-                    ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
-                        column=2, row=3, sticky=(W, E)
-                    )
-                    ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
-                        column=2, row=4, sticky=(W, E)
-                    )
-                elif self.filetype.get() == "OPENHDEMG":
-                    # Ask user to select the file
-                    file_path = filedialog.askopenfilename(
-                        title="Open JSON file", filetypes=[("JSON files", "*.json")]
-                    )
-                    self.file_path = file_path
-                    # load OPENHDEMG (.json)
-                    self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
-                    # Add filespecs
-                    ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E))
-                    ttk.Label(self.left, text="").grid(column=2, row=3, sticky=(W, E))
-                    ttk.Label(self.left, text="").grid(column=2, row=4, sticky=(W, E)
-                    )
+                    # Get filename
+                    filename = os.path.splitext(os.path.basename(file_path))[0]
+                    self.filename = filename
+
+                    # Add filename to label
+                    self.master.title(self.filename)
+
                 else:
-                    # Ask user to select the file
-                    file_path = filedialog.askopenfilename(
-                        title="Open CUSTOMCSV file",
-                        filetypes=[("CSV files", "*.csv")],
+                    # Ask user to select the refsig file
+                    if self.filetype.get() == "OTB_REFSIG":
+                        file_path = filedialog.askopenfilename(
+                            title="Open OTB_REFSIG file",
+                            filetypes=[("MATLAB files", "*.mat")],
+                        )
+                        self.file_path = file_path
+                        # load refsig
+                        self.resdict = openhdemg.refsig_from_otb(filepath=self.file_path)
+
+                    else:  # CUSTOMCSV_REFSIG
+                        file_path = filedialog.askopenfilename(
+                            title="Open CUSTOMCSV_REFSIG file",
+                            filetypes=[("CSV files", "*.csv")],
+                        )
+                        self.file_path = file_path
+                        # load refsig
+                        self.resdict = openhdemg.refsig_from_customcsv(filepath=self.file_path)
+
+                    # Get filename
+                    filename = os.path.splitext(os.path.basename(file_path))[0]
+                    self.filename = filename
+
+                    # Add filename to label
+                    self.master.title(self.filename)
+
+                    # Reconfigure labels for refsig
+                    ttk.Label(
+                        self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))
+                    ).grid(column=2, row=2, sticky=(W, E))
+                    ttk.Label(self.left, text="NA").grid(column=2, row=3, sticky=(W, E))
+                    ttk.Label(self.left, text="        ").grid(
+                        column=2, row=4, sticky=(W, E)
                     )
-                    self.file_path = file_path
-                    # load file
-                    self.resdict = openhdemg.emg_from_customcsv(filepath=self.file_path)
-                    # Add filespecs
-                    ttk.Label(self.left, text="Custom CSV").grid(column=2, row=2, sticky=(W, E))
-                    ttk.Label(self.left, text="").grid(column=2, row=3, sticky=(W, E))
-                    ttk.Label(self.left, text="").grid(olumn=2, row=4, sticky=(W, E))
+                    
+                # End progress
+                progress.stop()
+                progress.grid_remove()
 
-                # Get filename
-                filename = os.path.splitext(os.path.basename(file_path))[0]
-                self.filename = filename
-
-                # Add filename to label
-                self.master.title(self.filename)
-
-            else:
-                # Ask user to select the refsig file
-                if self.filetype.get() == "OTB_REFSIG":
-                    file_path = filedialog.askopenfilename(
-                        title="Open OTB_REFSIG file",
-                        filetypes=[("MATLAB files", "*.mat")],
-                    )
-                    self.file_path = file_path
-                    # load refsig
-                    self.resdict = openhdemg.refsig_from_otb(filepath=self.file_path)
-
-                else:  # CUSTOMCSV_REFSIG
-                    file_path = filedialog.askopenfilename(
-                        title="Open CUSTOMCSV_REFSIG file",
-                        filetypes=[("CSV files", "*.csv")],
-                    )
-                    self.file_path = file_path
-                    # load refsig
-                    self.resdict = openhdemg.refsig_from_customcsv(filepath=self.file_path)
-
-                # Get filename
-                filename = os.path.splitext(os.path.basename(file_path))[0]
-                self.filename = filename
-
-                # Add filename to label
-                self.master.title(self.filename)
-
-                # Reconfigure labels for refsig
-                ttk.Label(
-                    self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))
-                ).grid(column=2, row=2, sticky=(W, E))
-                ttk.Label(self.left, text="NA").grid(column=2, row=3, sticky=(W, E))
-                ttk.Label(self.left, text="        ").grid(
-                    column=2, row=4, sticky=(W, E)
+            except ValueError:
+                tk.messagebox.showerror(
+                    "Information",
+                    "When an OTB file is loaded, make sure to "
+                    + "\nspecify an extension factor (number) first.",
                 )
-                
-            # End progress
-            progress.stop()
-            #progress.grid_remove()
+            
+        # Indicate Progress
+        progress = ttk.Progressbar(self.left, mode="indeterminate")
+        progress.grid(row=4, column=0)
+        progress.start(1)
 
-        except ValueError:
-            tk.messagebox.showerror(
-                "Information",
-                "When an OTB file is loaded, make sure to "
-                + "\nspecify an extension factor (number) first.",
-            )
+        # Create a thread to run the load_file function
+        save_thread = threading.Thread(target=load_file)
+        save_thread.start()
 
     def on_filetype_change(self, *args):
         """
@@ -849,6 +854,7 @@ class emgGUI:
                 # End progress
                 progress.stop()
                 progress.grid_remove()
+
             except AttributeError:
                 tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
