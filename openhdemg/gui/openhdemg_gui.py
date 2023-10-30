@@ -768,6 +768,25 @@ class emgGUI:
                     "When an OTB file is loaded, make sure to "
                     + "\nspecify an extension factor (number) first.",
                 )
+
+                # End progress
+                progress.stop()
+                progress.grid_remove()
+            
+            except FileNotFoundError:
+                # End progress
+                progress.stop()
+                progress.grid_remove()
+            
+            except TypeError:
+                tk.messagebox.showerror(
+                    "Information",
+                    "Make sure to load correct file"
+                    + "\naccording to your specification.",
+                )
+                # End progress
+                progress.stop()
+                progress.grid_remove()
             
         # Indicate Progress
         progress = ttk.Progressbar(self.left, mode="indeterminate")
@@ -842,6 +861,9 @@ class emgGUI:
                 )
 
                 if not save_filepath:
+                    # End progress
+                    progress.stop()
+                    progress.grid_remove()
                     return  # User canceled the file dialog
 
                 # Get emgfile
