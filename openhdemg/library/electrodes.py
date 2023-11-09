@@ -93,6 +93,44 @@ matrix in OTBelectrodes_tuple.
 }
 """
 
+DELSYSelectrodes_tuple = (
+    "Trigno Galileo Sensor",
+)
+"""
+Tuple containing the names of different recording electrodes.
+
+>>> DELSYSelectrodes_tuple
+(
+    'Trigno Galileo Sensor',
+)
+"""
+
+DELSYSelectrodes_ied = {
+    "Trigno Galileo Sensor": 5,
+}
+"""
+A dict containing information about the interelectrode distance for each
+matrix in DELSYSelectrodes_tuple.
+
+>>> DELSYelectrodes_ied
+{
+    'Trigno Galileo Sensor': 5,
+}
+"""
+
+DELSYSelectrodes_Nelectrodes = {
+    "Trigno Galileo Sensor": 4,
+}
+"""
+A dict containing information about the number of electrodes for each
+matrix in DELSYSelectrodes_tuple.
+
+>>> DELSYSelectrodes_Nelectrodes
+{
+    'Trigno Galileo Sensor': 4,
+}
+"""
+
 
 # ---------------------------------------------------------------------
 # Sort the electrodes of different matrices.
@@ -111,23 +149,31 @@ def sort_rawemg(
 
     To date, built-in sorting functions have been implemented for the matrices:
 
-        Code        (Orientation)
-        GR08MM1305  (0, 180),
-        GR04MM1305  (0, 180),
-        GR10MM0808  (0, 180).
+        Code                    (Orientation)
+        GR08MM1305              (0, 180),
+        GR04MM1305              (0, 180),
+        GR10MM0808              (0, 180),
+        Trigno Galileo Sensor   (na).
 
     Parameters
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    code : str {"GR08MM1305", "GR04MM1305", "GR10MM0808", "None"}, default "GR08MM1305"
-        The code of the matrix used.
+    code : str, default "GR08MM1305"
+        The code of the matrix used. It can be one of:
+
+        ``GR08MM1305``
+        ``GR04MM1305``
+        ``GR10MM0808``
+        ``Trigno Galileo Sensor``
         If "None", the electodes are not sorted but n_rows and n_cols must be
         specified when dividebycolumn == True.
     orientation : int {0, 180}, default 180
         Orientation in degree of the matrix.
         E.g. 180 corresponds to the matrix connection toward the researcher or
         the ground (depending on the limb).
+        Ignore if using the "Trigno Galileo Sensor". In this case, channels
+        will be oriented as in the Delsys Neuromap Explorer software.
     dividebycolumn = bool, default True
         Whether to return the sorted channels classified by matrix column.
     n_rows : None or int, default None
@@ -142,11 +188,12 @@ def sort_rawemg(
     Returns
     -------
     sorted_rawemg : dict or pd.DataFrame
-        If dividebycolumn == True a dict containing the sorted electrodes.
-        Every key of the dictionary represents a different column of the
-        matrix. Rows are stored in the dict as a pd.DataFrame.
+        If dividebycolumn == True a dict containing the sorted electrodes is
+        returned. Every key of the dictionary represents a different column of
+        the matrix. Rows are stored in the dict as a pd.DataFrame.
         If dividebycolumn == False a pd.DataFrame containing the sorted
-        electrodes. The matrix channels are stored in the pd.DataFrame columns.
+        electrodes is returned. The matrix channels are stored in the
+        pd.DataFrame columns.
 
     Notes
     -----
@@ -220,7 +267,14 @@ def sort_rawemg(
     62463  0.020854  0.028992  0.017802 ... 0.013733  0.037638 NaN
     """
 
-    if code not in ["GR08MM1305", "GR04MM1305", "GR10MM0808", "None"]:
+    valid_codes = [
+        "GR08MM1305",
+        "GR04MM1305",
+        "GR10MM0808",
+        "Trigno Galileo Sensor",
+        "None",
+    ]
+    if code not in valid_codes:
         return ValueError("Unsupported code in sort_rawemg()")
 
     # Work on a copy of the RAW_SIGNAL
@@ -339,6 +393,23 @@ def sort_rawemg(
                 63, 62, 61, 60, 59, 58, 57, 56,
             ]
 
+    elif code == "Trigno Galileo Sensor":
+        """
+        Channel Order Trigno Galileo Sensor
+
+            1
+        4       2
+            3
+
+        Will be represented as:
+            0
+        0   1
+        1   2
+        2   3
+        3   4
+        """
+        base0_sorting_order = [0, 1, 2, 3]
+
     else:
         pass
 
@@ -363,6 +434,10 @@ def sort_rawemg(
             if orientation in [0, 180]:
                 n_rows = 8
                 n_cols = 8
+
+        elif code == "Trigno Galileo Sensor":
+            n_rows = 4
+            n_cols = 1
 
         else:
             # Check if n_rows and n_cols have been passed

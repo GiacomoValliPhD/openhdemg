@@ -210,6 +210,46 @@ def double_diff(sorted_rawemg):
     return dd
 
 
+def extract_delsys_muaps(emgfile):
+    """
+    Extract MUAPs obtained from Delsys decomposition.
+
+    The extracted MUAPs will be stored in the same structure of the MUAPs
+    obtained with the ``sta`` funtion.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+
+    Returns
+    -------
+    muaps_dict : dict
+        dict containing a dict of MUAPs (pd.DataFrame) for every MUs.
+
+    See also
+    --------
+    - sta : Computes the spike-triggered average (STA) of every MUs.
+
+    Notes
+    -----
+    The returned file can be used wherever MUAPs from spike triggered
+    averaging are required.
+
+    Examples
+    --------
+    """
+
+    all_muaps = emgfile["EXTRAS"]
+    muaps_dict = {mu: None for mu in range(emgfile["NUMBER_OF_MUS"])}
+    for mu in range(emgfile["NUMBER_OF_MUS"]):
+        df = pd.DataFrame(all_muaps.filter(regex=f"MU_{mu}_CH_"))
+        df.columns = range(len(df.columns))
+        muaps_dict[mu] = {"col0": df}
+
+    return muaps_dict
+
+
 def sta(
     emgfile, sorted_rawemg, firings=[0, 50], timewindow=50
 ):
@@ -663,7 +703,6 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
 # TODO update examples for code="None"
 
 # This function exploits parallel processing:
-#   - sta: calls the emg.sta function which is executed in parallel
 #   - align and xcorr are processed in parallel
 #   - plotting is processed in parallel
 def tracking(
@@ -677,12 +716,13 @@ def tracking(
     orientation=180,
     n_rows=None,
     n_cols=None,
+    custom_muaps=None,
     exclude_belowthreshold=True,
     filter=True,
     show=False,
 ):
     """
-    Track MUs across two different files.
+    Track MUs across two files comparing the MUAPs' shape and distribution.
 
     Parameters
     ----------
@@ -706,8 +746,13 @@ def tracking(
     threshold : float, default 0.8
         The 2-dimensional cross-correlation minimum value
         to consider two MUs to be the same. Ranges 0-1.
-    matrixcode : str {"GR08MM1305", "GR04MM1305", "GR10MM0808", "None"}, default "GR08MM1305"
-        The code of the matrix used. This is necessary to sort the channels in
+    matrixcode : str, default "GR08MM1305"
+        The code of the matrix used. It can be one of:
+
+        ``GR08MM1305``
+        ``GR04MM1305``
+        ``GR10MM0808``
+        This is necessary to sort the channels in
         the correct order. If matrixcode="None", the electrodes are not sorted.
         In this case, n_rows and n_cols must be specified.
     orientation : int {0, 180}, default 180
@@ -721,6 +766,18 @@ def tracking(
         The number of columns of the matrix. This parameter is used to divide
         the channels based on the matrix shape. These are normally inferred by
         the matrix code and must be specified only if code == None.
+    custom_muaps : None or list, default None
+        With this parameter, it is possible to perform MUs tracking on MUAPs
+        computed with custom techniques. If this parameter is None (default),
+        MUs tracking is performed on the MUAPs computed via spike triggered
+        averaging. Otherwise, it is possible to pass a list of 2 dictionaries
+        containing the MUAPs of the MUs from 2 different files. These
+        dictionaries should be structured as the output of the ``sta``
+        function. If custom MUAPs are passed, all the previous parameters
+        (except for ``emgfile1`` and ``emgfile2`` can be ignored).
+        If custom MUAPs are provided, these are not aligned by the algorithm,
+        contrary to what is done for MUAPs obtained via spike triggered
+        averaging.
     exclude_belowthreshold : bool, default True
         Whether to exclude results with XCC below threshold.
     filter : bool, default True
@@ -752,8 +809,8 @@ def tracking(
     -----
     Parallel processing can improve performances by 5-10 times compared to
     serial processing. In this function, parallel processing has been
-    implemented for the tasks involving 2-dimensional cross-correlation, sta
-    and plotting.
+    implemented for the tasks involving 2-dimensional cross-correlation, and
+    plotting. This might change in future releases.
 
     Examples
     --------
@@ -766,7 +823,7 @@ def tracking(
     ...     emgfile1=emgfile1,
     ...     emgfile2=emgfile2,
     ...     firings="all",
-    ...     derivation="mono",
+    ...     derivation="sd",
     ...     timewindow=50,
     ...     threshold=0.8,
     ...     matrixcode="GR08MM1305",
@@ -791,43 +848,63 @@ def tracking(
     10        22        16  0.836356
     """
 
-    # Sort the rawemg for the STAs
-    emgfile1_sorted = sort_rawemg(
-        emgfile1,
-        code=matrixcode,
-        orientation=orientation,
-        n_rows=n_rows,
-        n_cols=n_cols,
-    )
-    emgfile2_sorted = sort_rawemg(
-        emgfile2,
-        code=matrixcode,
-        orientation=orientation,
-        n_rows=n_rows,
-        n_cols=n_cols,
-    )
+    # Obtain STAs
+    if not isinstance(custom_muaps, list):
+        # Sort the rawemg for the STAs
+        emgfile1_sorted = sort_rawemg(
+            emgfile1,
+            code=matrixcode,
+            orientation=orientation,
+            n_rows=n_rows,
+            n_cols=n_cols,
+        )
+        emgfile2_sorted = sort_rawemg(
+            emgfile2,
+            code=matrixcode,
+            orientation=orientation,
+            n_rows=n_rows,
+            n_cols=n_cols,
+        )
 
-    # Calculate the derivation if needed
-    if derivation == "mono":
-        pass
-    elif derivation == "sd":
-        emgfile1_sorted = diff(sorted_rawemg=emgfile1_sorted)
-        emgfile2_sorted = diff(sorted_rawemg=emgfile2_sorted)
-    elif derivation == "dd":
-        emgfile1_sorted = double_diff(sorted_rawemg=emgfile1_sorted)
-        emgfile2_sorted = double_diff(sorted_rawemg=emgfile2_sorted)
+        # Calculate the derivation if needed
+        if derivation == "mono":
+            pass
+        elif derivation == "sd":
+            emgfile1_sorted = diff(sorted_rawemg=emgfile1_sorted)
+            emgfile2_sorted = diff(sorted_rawemg=emgfile2_sorted)
+        elif derivation == "dd":
+            emgfile1_sorted = double_diff(sorted_rawemg=emgfile1_sorted)
+            emgfile2_sorted = double_diff(sorted_rawemg=emgfile2_sorted)
+        else:
+            raise ValueError(
+                f"derivation can be one of 'mono', 'sd', 'dd'. {derivation} was passed instead"
+                )
+
+        # Get the STAs
+        sta_emgfile1 = sta(
+            emgfile1,
+            emgfile1_sorted,
+            firings=firings,
+            timewindow=timewindow * 2,
+        )
+        sta_emgfile2 = sta(
+            emgfile2,
+            emgfile2_sorted,
+            firings=firings,
+            timewindow=timewindow * 2,
+        )
+
+    # Obtain custom MUAPs
     else:
-        raise ValueError(
-            f"derivation can be one of 'mono', 'sd', dd. {derivation} was passed instead"
-            )
-
-    # Get the STAs
-    sta_emgfile1 = sta(
-        emgfile1, emgfile1_sorted, firings=firings, timewindow=timewindow * 2,
-    )
-    sta_emgfile2 = sta(
-        emgfile2, emgfile2_sorted, firings=firings, timewindow=timewindow * 2,
-    )
+        if len(custom_muaps) == 2:
+            sta_emgfile1 = custom_muaps[0]
+            sta_emgfile2 = custom_muaps[1]
+            if not isinstance(sta_emgfile1, dict):
+                raise ValueError("custom_muaps[0] is not a dictionary")
+            if not isinstance(sta_emgfile2, dict):
+                raise ValueError("custom_muaps[1] is not a dictionary")
+        else:
+            raise ValueError("custom_muaps is not a list of two dictionaries")
 
     print("\nTracking started")
 
@@ -839,12 +916,15 @@ def tracking(
         # Compare mu_file1 against all the MUs in file2
         for mu_file2 in range(emgfile2["NUMBER_OF_MUS"]):
             # Firs, align the STAs
-            aligned_sta1, aligned_sta2 = align_by_xcorr(
-                sta_emgfile1[mu_file1],
-                sta_emgfile2[mu_file2],
-                finalduration=0.5
-            )
-            #aligned_sta1, aligned_sta2 = sta_emgfile1[mu_file1], sta_emgfile2[mu_file2]
+            if not isinstance(custom_muaps, list):
+                aligned_sta1, aligned_sta2 = align_by_xcorr(
+                    sta_emgfile1[mu_file1],
+                    sta_emgfile2[mu_file2],
+                    finalduration=0.5
+                )
+            else:
+                aligned_sta1 = sta_emgfile1[mu_file1]
+                aligned_sta2 = sta_emgfile2[mu_file2]
 
             # Second, compute 2d cross-correlation
             df1, _ = unpack_sta(aligned_sta1)
@@ -872,7 +952,7 @@ def tracking(
     # Measure running time
     t0 = time.time()
 
-    res = Parallel(n_jobs=8)(
+    res = Parallel(n_jobs=-1)(
         delayed(parallel)(mu_file1) for mu_file1 in range(emgfile1["NUMBER_OF_MUS"])
     )
 
@@ -931,11 +1011,16 @@ def tracking(
         def parallel(ind):  # Function for the parallel execution of plotting
             if tracking_res["XCC"].loc[ind] >= threshold:
                 # Align STA
-                aligned_sta1, aligned_sta2 = align_by_xcorr(
-                    sta_emgfile1[tracking_res["MU_file1"].loc[ind]],
-                    sta_emgfile2[tracking_res["MU_file2"].loc[ind]],
-                    finalduration=0.5,
-                )
+                if not isinstance(custom_muaps, list):
+                    aligned_sta1, aligned_sta2 = align_by_xcorr(
+                        sta_emgfile1[tracking_res["MU_file1"].loc[ind]],
+                        sta_emgfile2[tracking_res["MU_file2"].loc[ind]],
+                        finalduration=0.5,
+                    )
+                else:
+                    aligned_sta1 = sta_emgfile1[tracking_res["MU_file1"].loc[ind]]
+                    aligned_sta2 = sta_emgfile2[tracking_res["MU_file2"].loc[ind]]
+
                 title = "MUAPs from MU '{}' in file 1 and MU '{}' in file 2, XCC = {}".format(
                     tracking_res["MU_file1"].loc[ind],
                     tracking_res["MU_file2"].loc[ind],
@@ -972,6 +1057,7 @@ def remove_duplicates_between(
     orientation=180,
     n_rows=None,
     n_cols=None,
+    custom_muaps=None,
     filter=True,
     show=False,
     which="munumber",
@@ -1016,12 +1102,24 @@ def remove_duplicates_between(
         The number of columns of the matrix. This parameter is used to divide
         the channels based on the matrix shape. These are normally inferred by
         the matrix code and must be specified only if code == None.
+    custom_muaps : None or list, default None
+        With this parameter, it is possible to perform MUs tracking on MUAPs
+        computed with custom techniques. If this parameter is None (default),
+        MUs tracking is performed on the MUAPs computed via spike triggered
+        averaging. Otherwise, it is possible to pass a list of 2 dictionaries
+        containing the MUAPs of the MUs from 2 different files. These
+        dictionaries should be structured as the output of the ``sta``
+        function. If custom MUAPs are passed, all the previous parameters
+        (except for ``emgfile1`` and ``emgfile2`` can be ignored).
+        If custom MUAPs are provided, these are not aligned by the algorithm,
+        contrary to what is done for MUAPs obtained via spike triggered
+        averaging.
     filter : bool, default True
         If true, when the same MU has a match of XCC > threshold with
         multiple MUs, only the match with the highest XCC is returned.
     show : bool, default False
         Whether to plot the STA of pairs of MUs with XCC above threshold.
-    which : str {"munumber", "accuracy"}
+    which : str {"munumber", "accuracy"}, default "munumber"
         How to remove the duplicated MUs.
 
         ``munumber``
@@ -1088,6 +1186,7 @@ def remove_duplicates_between(
         orientation=orientation,
         n_rows=n_rows,
         n_cols=n_cols,
+        custom_muaps=custom_muaps,
         exclude_belowthreshold=True,
         filter=filter,
         show=show,

@@ -36,13 +36,13 @@ print(type(emgfile))
 print(emgfile.keys())
 
 """Output
-dict_keys(['SOURCE', 'FILENAME', 'RAW_SIGNAL', 'REF_SIGNAL', 'ACCURACY', 'IPTS', 'MUPULSES', 'FSAMP', 'IED', 'EMG_LENGTH', 'NUMBER_OF_MUS', 'BINARY_MUS_FIRING'])
+dict_keys(['SOURCE', 'FILENAME', 'RAW_SIGNAL', 'REF_SIGNAL', 'ACCURACY', 'IPTS', 'MUPULSES', 'FSAMP', 'IED', 'EMG_LENGTH', 'NUMBER_OF_MUS', 'BINARY_MUS_FIRING', 'EXTRAS'])
 """
 ```
 
 That means that the `emgfile` contains the following keys (or variables, in simpler terms):
 
-- "SOURCE" : source of the file (i.e., "CUSTOMCSV", "DEMUSE", "OTB")
+- "SOURCE" : source of the file (i.e., "CUSTOMCSV", "DEMUSE", "OTB", "DELSYS")
 - "RAW_SIGNAL" : the raw EMG signal
 - "REF_SIGNAL" : the reference signal
 - "ACCURACY" : accuracy score (depending on source file type)
@@ -207,7 +207,7 @@ At the moment, the only alternative to the basic `emgfile` structure is reserved
 
 In this case, the `emg_refsig` is a Python dictionary with the following keys:
 
-- "SOURCE": source of the file (i.e., "CUSTOMCSV_REFSIG", "OTB_REFSIG")
+- "SOURCE": source of the file (i.e., "CUSTOMCSV_REFSIG", "OTB_REFSIG", "DELSYS_REFSIG")
 - "FSAMP": sampling frequency
 - "REF_SIGNAL": the reference signal
 - "EXTRAS" : additional custom values
@@ -235,7 +235,7 @@ emgfile = emg.emg_from_samplefile()
 print(emgfile.keys())
 
 """Output
-dict_keys(['SOURCE', 'FILENAME', 'RAW_SIGNAL', 'REF_SIGNAL', 'ACCURACY', 'IPTS', 'MUPULSES', 'FSAMP', 'IED', 'EMG_LENGTH', 'NUMBER_OF_MUS', 'BINARY_MUS_FIRING'])
+dict_keys(['SOURCE', 'FILENAME', 'RAW_SIGNAL', 'REF_SIGNAL', 'ACCURACY', 'IPTS', 'MUPULSES', 'FSAMP', 'IED', 'EMG_LENGTH', 'NUMBER_OF_MUS', 'BINARY_MUS_FIRING', 'EXTRAS'])
 """
 
 # Visualise the original data structure contained in the 'REF_SIGNAL' key

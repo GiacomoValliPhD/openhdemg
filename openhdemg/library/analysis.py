@@ -362,10 +362,9 @@ def compute_dr(
         c2 = math.isnan(index_endsteady)
 
         if not c1 and not c2:
-            # # DR drstartsteady
-            # Use +1 because to work only on the steady state (here and after)
-            # because the idr is calculated on the previous firing (on the
-            # ramp).
+            # DR drstartsteady
+            # Use +1 to work only on the steady state (here and after)
+            # because the idr is calculated on the previous firing.
             selected_idr = idr[mu]["idr"].loc[
                 index_startsteady + 1: index_startsteady + n_firings_steady
             ]
