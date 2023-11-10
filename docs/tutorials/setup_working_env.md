@@ -187,6 +187,18 @@ Set-ExecutionPolicy Unrestricted -Force
 
 This should solve the issue and you should now be able to activate your Virtual environment. For additional information on this topic visit the [stackoverflow thread](https://stackoverflow.com/questions/18713086/virtualenv-wont-activate-on-windows){:target="_blank"}.
 
+### *openhdemg* Installation Issues
+
+Windows:
+
+If trying to install *openhdemg* via pip you see this (or a similar) message in the terminal:
+
+```
+ImportError: DLL load failed while importing _cext: The specified module could not be found.
+```
+
+the problem might be that you do not have the necessary Visual C++ Redistributable. This can be simply solved by visitng the [Microsoft website](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170){:target="_blank"} and dowloading and installing the latest Visual Studio 2015, 2017, 2019 and 2022 redistributable. Please note, this is a single redistributable, you don't need to perform multiple dowloads. This should solve the issue and you should now be able to pip install *openhdemg*. If that's not the case, continue reading.
+
 ## More questions?
 
 We hope that this tutorial was useful. If you need any additional information, do not hesitate to read the answers or ask a question in the [*openhdemg* discussion section](https://github.com/GiacomoValliPhD/openhdemg/discussions){:target="_blank"}. If you are not familiar with GitHub discussions, please read this [post](https://github.com/GiacomoValliPhD/openhdemg/discussions/42){:target="_blank"}. This will allow the *openhdemg* community to answer your questions.
