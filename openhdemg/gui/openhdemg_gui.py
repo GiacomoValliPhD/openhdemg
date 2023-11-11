@@ -385,7 +385,7 @@ class emgGUI:
         style.configure("TProgressbar", foreground="#FFBF00", background="#FFBF00")
         # Specify Signal
         self.filetype = StringVar()
-        signal_value = ("OPENHDEMG", "OTB", "DEMUSE", "OTB_REFSIG", "CUSTOMCSV", "CUSTOMCSV_REFSIG")
+        signal_value = ("OPENHDEMG", "DEMUSE","OTB",  "OTB_REFSIG", "DELSYS", "DELSYS_REFSIG", "CUSTOMCSV", "CUSTOMCSV_REFSIG")
         signal_entry = ttk.Combobox(
             self.left, text="Signal", width=10, textvariable=self.filetype
         )
@@ -646,12 +646,12 @@ class emgGUI:
         """
         def load_file():
             try:
-                if self.filetype.get() in ["OTB", "DEMUSE", "OPENHDEMG", "CUSTOMCSV"]:
+                if self.filetype.get() in ["OTB", "DEMUSE", "OPENHDEMG", "CUSTOMCSV", "DELSYS", "DELSYS_REFSIG"]:
                     # Check filetype for processing
                     if self.filetype.get() == "OTB":
                         # Ask user to select the decomposed file
                         file_path = filedialog.askopenfilename(
-                            title="Open OTB file", filetypes=[("MATLAB files", "*.mat")]
+                            title="Open OTB file to load", filetypes=[("MATLAB files", "*.mat")]
                         )
                         self.file_path = file_path
                         # Load file
@@ -673,7 +673,7 @@ class emgGUI:
                     elif self.filetype.get() == "DEMUSE":
                         # Ask user to select the file
                         file_path = filedialog.askopenfilename(
-                            title="Open DEMUSE file", filetypes=[("MATLAB files", "*.mat")]
+                            title="Open DEMUSE file to load", filetypes=[("MATLAB files", "*.mat")]
                         )
                         self.file_path = file_path
                         # load file
@@ -688,23 +688,47 @@ class emgGUI:
                         ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
                             column=2, row=4, sticky=(W, E)
                         )
+                    elif self.filetype.get() == "DELSYS":
+                        # Ask user to select the file
+                        file_path = filedialog.askopenfilename(
+                            title="Select a DELSYS file with raw EMG to load",
+                            filetypes=[("MATLAB files", "*.mat")]
+                        )
+                        # Ask user to open the Delsys decompostition
+                        mus_path = filedialog.askdirectory(
+                            title="Select the folder containing the DELSYS decomposition",
+                        )
+                        self.file_path = file_path
+
+                        # load DELSYS
+                        self.resdict = openhdemg.emg_from_delsys(rawemg_filepath=self.file_path,
+                                                                 mus_directory=mus_path)
+                        # Add filespecs
+                        ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E))
+                        ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
+                            column=2, row=3, sticky=(W, E)
+                        )
+                        ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
+                            column=2, row=4, sticky=(W, E)
+                        )
+
                     elif self.filetype.get() == "OPENHDEMG":
                         # Ask user to select the file
                         file_path = filedialog.askopenfilename(
-                            title="Open JSON file", filetypes=[("JSON files", "*.json")]
+                            title="Open JSON file to load", filetypes=[("JSON files", "*.json")]
                         )
                         self.file_path = file_path
                         # load OPENHDEMG (.json)
                         self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
                         # Add filespecs
                         ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E))
-                        ttk.Label(self.left, text="").grid(column=2, row=3, sticky=(W, E))
-                        ttk.Label(self.left, text="").grid(column=2, row=4, sticky=(W, E)
+                        ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W, E))
+                        ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W, E)
                         )
                     else:
                         # Ask user to select the file
                         file_path = filedialog.askopenfilename(
-                            title="Open CUSTOMCSV file",
+                            title="Open CUSTOMCSV file to load",
                             filetypes=[("CSV files", "*.csv")],
                         )
                         self.file_path = file_path
@@ -722,20 +746,32 @@ class emgGUI:
                     # Add filename to label
                     self.master.title(self.filename)
 
-                else:
-                    # Ask user to select the refsig file
+                # This sections is used for refsig loading as they required not the 
+                # the filespecs to be loaded.
+                else: 
+
                     if self.filetype.get() == "OTB_REFSIG":
                         file_path = filedialog.askopenfilename(
-                            title="Open OTB_REFSIG file",
+                            title="Open OTB_REFSIG file to load",
                             filetypes=[("MATLAB files", "*.mat")],
                         )
                         self.file_path = file_path
                         # load refsig
                         self.resdict = openhdemg.refsig_from_otb(filepath=self.file_path)
+                    
+                    elif self.filetype.get() == "DELSYS_REFSIG":
+                        # Ask user to select the file
+                        file_path = filedialog.askopenfilename(
+                            title="Select a DELSYS_REFSIG file with raw EMG to load",
+                            filetypes=[("MATLAB files", "*.mat")]
+                        )
+                        self.file_path = file_path
+                        # load DELSYS
+                        self.resdict = openhdemg.refsig_from_delsys(filepath=self.file_path)
 
                     else:  # CUSTOMCSV_REFSIG
                         file_path = filedialog.askopenfilename(
-                            title="Open CUSTOMCSV_REFSIG file",
+                            title="Open CUSTOMCSV_REFSIG file to load",
                             filetypes=[("CSV files", "*.csv")],
                         )
                         self.file_path = file_path
