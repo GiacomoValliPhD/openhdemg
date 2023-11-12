@@ -261,8 +261,17 @@ def resize_emgfile(emgfile, area=None, accuracy="recalculate"):
 
             else:
                 raise ValueError(
-                    "Impossible to calculate ACCURACY (SIL). IPTS not found"
+                    "Impossible to calculate ACCURACY (SIL). IPTS not found." +
+                    " If IPTS is not present or empty, set accuracy='maintain'"
                 )
+
+    elif accuracy == "maintain":
+        rs_emgfile["ACCURACY"] = rs_emgfile["ACCURACY"]
+
+    else:
+        raise ValueError(
+            f"Accuracy can only be 'recalculate' or 'maintain'. {accuracy} was passed instead."
+        )
 
     return rs_emgfile, start_, end_
 
