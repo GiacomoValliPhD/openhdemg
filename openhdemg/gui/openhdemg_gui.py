@@ -385,7 +385,7 @@ class emgGUI:
         style.configure("TProgressbar", foreground="#FFBF00", background="#FFBF00")
         # Specify Signal
         self.filetype = StringVar()
-        signal_value = ("OPENHDEMG", "OTB", "DEMUSE", "OTB_REFSIG", "CUSTOMCSV", "CUSTOMCSV_REFSIG")
+        signal_value = ("OPENHDEMG", "DEMUSE","OTB",  "OTB_REFSIG", "DELSYS", "DELSYS_REFSIG", "CUSTOMCSV", "CUSTOMCSV_REFSIG")
         signal_entry = ttk.Combobox(
             self.left, text="Signal", width=10, textvariable=self.filetype
         )
@@ -646,12 +646,12 @@ class emgGUI:
         """
         def load_file():
             try:
-                if self.filetype.get() in ["OTB", "DEMUSE", "OPENHDEMG", "CUSTOMCSV"]:
+                if self.filetype.get() in ["OTB", "DEMUSE", "OPENHDEMG", "CUSTOMCSV", "DELSYS", "DELSYS_REFSIG"]:
                     # Check filetype for processing
                     if self.filetype.get() == "OTB":
                         # Ask user to select the decomposed file
                         file_path = filedialog.askopenfilename(
-                            title="Open OTB file", filetypes=[("MATLAB files", "*.mat")]
+                            title="Open OTB file to load", filetypes=[("MATLAB files", "*.mat")]
                         )
                         self.file_path = file_path
                         # Load file
@@ -673,7 +673,7 @@ class emgGUI:
                     elif self.filetype.get() == "DEMUSE":
                         # Ask user to select the file
                         file_path = filedialog.askopenfilename(
-                            title="Open DEMUSE file", filetypes=[("MATLAB files", "*.mat")]
+                            title="Open DEMUSE file to load", filetypes=[("MATLAB files", "*.mat")]
                         )
                         self.file_path = file_path
                         # load file
@@ -688,23 +688,47 @@ class emgGUI:
                         ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
                             column=2, row=4, sticky=(W, E)
                         )
+                    elif self.filetype.get() == "DELSYS":
+                        # Ask user to select the file
+                        file_path = filedialog.askopenfilename(
+                            title="Select a DELSYS file with raw EMG to load",
+                            filetypes=[("MATLAB files", "*.mat")]
+                        )
+                        # Ask user to open the Delsys decompostition
+                        mus_path = filedialog.askdirectory(
+                            title="Select the folder containing the DELSYS decomposition",
+                        )
+                        self.file_path = file_path
+
+                        # load DELSYS
+                        self.resdict = openhdemg.emg_from_delsys(rawemg_filepath=self.file_path,
+                                                                 mus_directory=mus_path)
+                        # Add filespecs
+                        ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E))
+                        ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
+                            column=2, row=3, sticky=(W, E)
+                        )
+                        ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
+                            column=2, row=4, sticky=(W, E)
+                        )
+
                     elif self.filetype.get() == "OPENHDEMG":
                         # Ask user to select the file
                         file_path = filedialog.askopenfilename(
-                            title="Open JSON file", filetypes=[("JSON files", "*.json")]
+                            title="Open JSON file to load", filetypes=[("JSON files", "*.json")]
                         )
                         self.file_path = file_path
                         # load OPENHDEMG (.json)
                         self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
                         # Add filespecs
                         ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E))
-                        ttk.Label(self.left, text="").grid(column=2, row=3, sticky=(W, E))
-                        ttk.Label(self.left, text="").grid(column=2, row=4, sticky=(W, E)
+                        ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W, E))
+                        ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W, E)
                         )
                     else:
                         # Ask user to select the file
                         file_path = filedialog.askopenfilename(
-                            title="Open CUSTOMCSV file",
+                            title="Open CUSTOMCSV file to load",
                             filetypes=[("CSV files", "*.csv")],
                         )
                         self.file_path = file_path
@@ -722,20 +746,32 @@ class emgGUI:
                     # Add filename to label
                     self.master.title(self.filename)
 
-                else:
-                    # Ask user to select the refsig file
+                # This sections is used for refsig loading as they required not the 
+                # the filespecs to be loaded.
+                else: 
+
                     if self.filetype.get() == "OTB_REFSIG":
                         file_path = filedialog.askopenfilename(
-                            title="Open OTB_REFSIG file",
+                            title="Open OTB_REFSIG file to load",
                             filetypes=[("MATLAB files", "*.mat")],
                         )
                         self.file_path = file_path
                         # load refsig
                         self.resdict = openhdemg.refsig_from_otb(filepath=self.file_path)
+                    
+                    elif self.filetype.get() == "DELSYS_REFSIG":
+                        # Ask user to select the file
+                        file_path = filedialog.askopenfilename(
+                            title="Select a DELSYS_REFSIG file with raw EMG to load",
+                            filetypes=[("MATLAB files", "*.mat")]
+                        )
+                        self.file_path = file_path
+                        # load DELSYS
+                        self.resdict = openhdemg.refsig_from_delsys(filepath=self.file_path)
 
                     else:  # CUSTOMCSV_REFSIG
                         file_path = filedialog.askopenfilename(
-                            title="Open CUSTOMCSV_REFSIG file",
+                            title="Open CUSTOMCSV_REFSIG file to load",
                             filetypes=[("CSV files", "*.csv")],
                         )
                         self.file_path = file_path
@@ -1091,7 +1127,7 @@ class emgGUI:
         matrix_code = ttk.Combobox(
             self.a_window, width=10, textvariable=self.mat_code_adv
         )
-        matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808", "None")
+        matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808", "Trigno Galileo Sensor", "None")
         matrix_code["state"] = "readonly"
         matrix_code.grid(row=4, column=1, sticky=(W, E))
         self.mat_code_adv.set("GR08MM1305")
@@ -1641,9 +1677,16 @@ class emgGUI:
                 titlesize=10,
             )
             start, end = points[0], points[1]
-            self.resdict, _, _ = openhdemg.resize_emgfile(
-                emgfile=self.resdict, area=[start, end]
-            )
+
+            # Delsys requires different handling for resize
+            if self.resdict["SOURCE"] == "DELSYS":
+                self.resdict, _, _ = openhdemg.resize_emgfile(
+                emgfile=self.resdict, area=[start, end], accuracy="maintain"
+                )
+            else:
+                self.resdict, _, _ = openhdemg.resize_emgfile(
+                    emgfile=self.resdict, area=[start, end]
+                )
             # Update Plot
             self.in_gui_plotting()
 
@@ -2125,7 +2168,7 @@ class emgGUI:
             ttk.Label(self.head, text="Matrix Code").grid(row=0, column=3, sticky=(W))
             self.mat_code = StringVar()
             matrix_code = ttk.Combobox(self.head, width=15, textvariable=self.mat_code)
-            matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808", "None")
+            matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808", "Trigno Galileo Sensor", "None")
             matrix_code["state"] = "readonly"
             matrix_code.grid(row=0, column=4, sticky=(W, E))
             self.mat_code.set("GR08MM1305")
@@ -2191,6 +2234,9 @@ class emgGUI:
             config_muap["state"] = "readonly"
             config_muap.grid(row=4, column=4, sticky=(W, E))
             self.muap_config.set("Configuration")
+            # Disable config for DELSYS files
+            if self.resdict["SOURCE"] == "DELSYS":
+                config_muap.config(state="disabled")
 
             # Combobox MU Number
             self.muap_munum = StringVar()
@@ -2207,6 +2253,8 @@ class emgGUI:
             timewindow["values"] = ("25", "50", "100", "200")
             timewindow.grid(row=4, column=6, sticky=(W, E))
             self.muap_time.set("Timewindow (ms)")
+            if self.resdict["SOURCE"] == "DELSYS":
+                timewindow.config(state="disabled")
 
             # Matrix Illustration Graphic
             matrix_canvas = Canvas(self.head, height=150, width=600, bg="white")
@@ -2586,11 +2634,11 @@ class emgGUI:
             )
         except UnboundLocalError:
             tk.messagebox.showerror(
-                "Information", "Enter valid Configuration and Matrx Column."
+                "Information", "Enter valid Configuration and Matrix Column."
             )
 
         except KeyError:
-            tk.messagebox.showerror("Information", "Enter valid Matrx Column.")
+            tk.messagebox.showerror("Information", "Enter valid Matrix Column.")
 
     def plot_muaps(self):
         """
@@ -2674,7 +2722,7 @@ class emgGUI:
             tk.messagebox.showerror("Information", "Enter valid Configuration.")
 
         except KeyError:
-            tk.messagebox.showerror("Information", "Enter valid Matrx Column.")
+            tk.messagebox.showerror("Information", "Enter valid Matrix Column.")
 
     # -----------------------------------------------------------------------------------------------
     # Advanced Analysis
@@ -2683,13 +2731,15 @@ class emgGUI:
         """
         Open top-level windows based on the selected advanced method.
         """
+        
 
         if self.advanced_method.get() == "Motor Unit Tracking":
             head_title = "MUs Tracking Window"
-        elif self.advanced_method.get() == "Duplicate Removal":
-            head_title = "Duplicate Removal Window"
-        else:
+        elif self.advanced_method.get() == "Conduction Velocity": 
             head_title = "Conduction Velocity Window"
+        else:
+            head_title = "Duplicate Removal Window"
+        
 
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title(head_title)
@@ -2845,7 +2895,14 @@ class emgGUI:
                             + "\nnumber of channels."
                         )
                         return
-
+                # DELSYS conduction velocity not available
+                elif self.mat_code_adv.get() == "Trigno Galileo Sensor":
+                    tk.messagebox.showerror(
+                        "Information",
+                        "MUs conduction velocity estimation is not available for this matrix."
+                        )
+                    return
+                
                 else:
                     # Sort emg file
                     sorted_rawemg = openhdemg.sort_rawemg(
