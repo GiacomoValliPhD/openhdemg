@@ -1127,7 +1127,7 @@ class emgGUI:
         matrix_code = ttk.Combobox(
             self.a_window, width=10, textvariable=self.mat_code_adv
         )
-        matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808", "None")
+        matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808", "Trigno Galileo Sensor", "None")
         matrix_code["state"] = "readonly"
         matrix_code.grid(row=4, column=1, sticky=(W, E))
         self.mat_code_adv.set("GR08MM1305")
@@ -1677,9 +1677,16 @@ class emgGUI:
                 titlesize=10,
             )
             start, end = points[0], points[1]
-            self.resdict, _, _ = openhdemg.resize_emgfile(
-                emgfile=self.resdict, area=[start, end]
-            )
+
+            # Delsys requires different handling for resize
+            if self.resdict["SOURCE"] == "DELSYS":
+                self.resdict, _, _ = openhdemg.resize_emgfile(
+                emgfile=self.resdict, area=[start, end], accuracy="maintain"
+                )
+            else:
+                self.resdict, _, _ = openhdemg.resize_emgfile(
+                    emgfile=self.resdict, area=[start, end]
+                )
             # Update Plot
             self.in_gui_plotting()
 
@@ -2161,7 +2168,7 @@ class emgGUI:
             ttk.Label(self.head, text="Matrix Code").grid(row=0, column=3, sticky=(W))
             self.mat_code = StringVar()
             matrix_code = ttk.Combobox(self.head, width=15, textvariable=self.mat_code)
-            matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808", "None")
+            matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808", "Trigno Galileo Sensor", "None")
             matrix_code["state"] = "readonly"
             matrix_code.grid(row=0, column=4, sticky=(W, E))
             self.mat_code.set("GR08MM1305")
@@ -2227,6 +2234,9 @@ class emgGUI:
             config_muap["state"] = "readonly"
             config_muap.grid(row=4, column=4, sticky=(W, E))
             self.muap_config.set("Configuration")
+            # Disable config for DELSYS files
+            if self.resdict["SOURCE"] == "DELSYS":
+                config_muap.config(state="disabled")
 
             # Combobox MU Number
             self.muap_munum = StringVar()
@@ -2243,6 +2253,8 @@ class emgGUI:
             timewindow["values"] = ("25", "50", "100", "200")
             timewindow.grid(row=4, column=6, sticky=(W, E))
             self.muap_time.set("Timewindow (ms)")
+            if self.resdict["SOURCE"] == "DELSYS":
+                timewindow.config(state="disabled")
 
             # Matrix Illustration Graphic
             matrix_canvas = Canvas(self.head, height=150, width=600, bg="white")
@@ -2622,11 +2634,11 @@ class emgGUI:
             )
         except UnboundLocalError:
             tk.messagebox.showerror(
-                "Information", "Enter valid Configuration and Matrx Column."
+                "Information", "Enter valid Configuration and Matrix Column."
             )
 
         except KeyError:
-            tk.messagebox.showerror("Information", "Enter valid Matrx Column.")
+            tk.messagebox.showerror("Information", "Enter valid Matrix Column.")
 
     def plot_muaps(self):
         """
@@ -2710,7 +2722,7 @@ class emgGUI:
             tk.messagebox.showerror("Information", "Enter valid Configuration.")
 
         except KeyError:
-            tk.messagebox.showerror("Information", "Enter valid Matrx Column.")
+            tk.messagebox.showerror("Information", "Enter valid Matrix Column.")
 
     # -----------------------------------------------------------------------------------------------
     # Advanced Analysis
@@ -2719,13 +2731,15 @@ class emgGUI:
         """
         Open top-level windows based on the selected advanced method.
         """
+        
 
         if self.advanced_method.get() == "Motor Unit Tracking":
             head_title = "MUs Tracking Window"
-        elif self.advanced_method.get() == "Duplicate Removal":
-            head_title = "Duplicate Removal Window"
-        else:
+        elif self.advanced_method.get() == "Conduction Velocity": 
             head_title = "Conduction Velocity Window"
+        else:
+            head_title = "Duplicate Removal Window"
+        
 
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title(head_title)
@@ -2881,7 +2895,14 @@ class emgGUI:
                             + "\nnumber of channels."
                         )
                         return
-
+                # DELSYS conduction velocity not available
+                elif self.mat_code_adv.get() == "Trigno Galileo Sensor":
+                    tk.messagebox.showerror(
+                        "Information",
+                        "MUs conduction velocity estimation is not available for this matrix."
+                        )
+                    return
+                
                 else:
                     # Sort emg file
                     sorted_rawemg = openhdemg.sort_rawemg(
