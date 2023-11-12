@@ -511,6 +511,11 @@ class emgGUI:
         self.right.grid(column=1, row=0, sticky=(N, S, E, W))
         self.right.columnconfigure(0, weight=1)
         self.right.columnconfigure(1, weight=1)
+        self.right.rowconfigure(0, weight=1)
+        self.right.rowconfigure(1, weight=1)
+        self.right.rowconfigure(2, weight=1)
+        self.right.rowconfigure(3, weight=1)
+        self.right.rowconfigure(4, weight=1)
 
         # Create empty figure
         self.first_fig = Figure(figsize=(20 / 2.54, 15 / 2.54))
