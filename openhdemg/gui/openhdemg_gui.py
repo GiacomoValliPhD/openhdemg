@@ -2643,67 +2643,74 @@ class emgGUI:
     def plot_muaps(self):
         """
         Instance methos to plot motor unit action potenital obtained from STA from one or
-        multiple MUs.
+        multiple MUs. Except for DELSYS files, where the STA is not comupted.
 
         There is no limit to the number of MUs and STA files that can be overplotted.
         ``Remember: the different STAs should be matched`` with same number of electrode,
         processing (i.e., differential) and computed on the same timewindow.
         """
         try:
-            if self.mat_code.get() == "None":
-                # Get rows and columns and turn into list
-                list_rcs = [int(i) for i in self.matrix_rc.get().split(",")]
+            # DELSYS requires different MUAPS plot
+            if self.resdict["SOURCE"] == "DELSYS":
+                figsize = [int(i) for i in self.size_fig.get().split(",")]
+                muaps_dict = openhdemg.extract_delsys_muaps(self.resdict)
+                openhdemg.plot_muaps(muaps_dict[int(self.muap_munum.get())], figsize=figsize)
+            
+            else:
+                if self.mat_code.get() == "None":
+                    # Get rows and columns and turn into list
+                    list_rcs = [int(i) for i in self.matrix_rc.get().split(",")]
 
-                try:
+                    try:
+                        # Sort emg file
+                        sorted_file = openhdemg.sort_rawemg(
+                            emgfile=self.resdict,
+                            code=self.mat_code.get(),
+                            orientation=int(self.mat_orientation.get()),
+                            n_rows=list_rcs[0],
+                            n_cols=list_rcs[1]
+                        )
+
+                    except ValueError:
+                        tk.messagebox.showerror(
+                                "Information",
+                                "Number of specified rows and columns must match"
+                                + "\nnumber of channels."
+                        )
+                        return
+                    
+                else:
                     # Sort emg file
                     sorted_file = openhdemg.sort_rawemg(
                         emgfile=self.resdict,
                         code=self.mat_code.get(),
                         orientation=int(self.mat_orientation.get()),
-                        n_rows=list_rcs[0],
-                        n_cols=list_rcs[1]
                     )
 
-                except ValueError:
-                    tk.messagebox.showerror(
-                            "Information",
-                            "Number of specified rows and columns must match"
-                            + "\nnumber of channels."
-                    )
-                    return
-                
-            else:
-                # Sort emg file
-                sorted_file = openhdemg.sort_rawemg(
+                # calcualte derivation
+                if self.muap_config.get() == "Single differential":
+                    diff_file = openhdemg.diff(sorted_rawemg=sorted_file)
+
+                elif self.muap_config.get() == "Double differential":
+                    diff_file = openhdemg.double_diff(sorted_rawemg=sorted_file)
+
+                elif self.muap_config.get() == "Monopolar":
+                    diff_file = sorted_file
+
+                # Calculate STA dictionary
+                # Plot deviation
+                sta_dict = openhdemg.sta(
                     emgfile=self.resdict,
-                    code=self.mat_code.get(),
-                    orientation=int(self.mat_orientation.get()),
+                    sorted_rawemg=diff_file,
+                    firings="all",
+                    timewindow=int(self.muap_time.get()),
                 )
 
-            # calcualte derivation
-            if self.muap_config.get() == "Single differential":
-                diff_file = openhdemg.diff(sorted_rawemg=sorted_file)
+                # Create list of figsize
+                figsize = [int(i) for i in self.size_fig.get().split(",")]
 
-            elif self.muap_config.get() == "Double differential":
-                diff_file = openhdemg.double_diff(sorted_rawemg=sorted_file)
-
-            elif self.muap_config.get() == "Monopolar":
-                diff_file = sorted_file
-
-            # Calculate STA dictionary
-            # Plot deviation
-            sta_dict = openhdemg.sta(
-                emgfile=self.resdict,
-                sorted_rawemg=diff_file,
-                firings="all",
-                timewindow=int(self.muap_time.get()),
-            )
-
-            # Create list of figsize
-            figsize = [int(i) for i in self.size_fig.get().split(",")]
-
-            # Plot MUAPS
-            openhdemg.plot_muaps(sta_dict[int(self.muap_munum.get())], figsize=figsize)
+                # Plot MUAPS
+                openhdemg.plot_muaps(sta_dict[int(self.muap_munum.get())], figsize=figsize)
 
         except ValueError:
             tk.messagebox.showerror(
