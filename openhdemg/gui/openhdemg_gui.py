@@ -742,7 +742,7 @@ class emgGUI:
                         # Add filespecs
                         ttk.Label(self.left, text="Custom CSV").grid(column=2, row=2, sticky=(W, E))
                         ttk.Label(self.left, text="").grid(column=2, row=3, sticky=(W, E))
-                        ttk.Label(self.left, text="").grid(olumn=2, row=4, sticky=(W, E))
+                        ttk.Label(self.left, text="").grid(column=2, row=4, sticky=(W, E))
 
                     # Get filename
                     filename = os.path.splitext(os.path.basename(file_path))[0]
