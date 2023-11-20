@@ -1316,7 +1316,7 @@ def xcc_sta(sta):
     return xcc_sta
 
 
-class MUcv_gui:
+class MUcv_gui():
     """
     Graphical user interface for the estimation of MUs conduction velocity.
 
@@ -1366,12 +1366,8 @@ class MUcv_gui:
         sorted_rawemg,
         n_firings=[0, 50],
         muaps_timewindow=50,
+        figsize=[20, 15],
     ):
-        """
-        Initialization of the master GUI window and of the necessary
-        attributes.
-        """
-
         # On start, compute the necessary information
         self.emgfile = emgfile
         self.dd = double_diff(sorted_rawemg)
@@ -1382,6 +1378,7 @@ class MUcv_gui:
             timewindow=muaps_timewindow,
         )
         self.sta_xcc = xcc_sta(self.st)
+        self.figsize = figsize
 
         # After that, set up the GUI
         self.root = tk.Tk()
@@ -1496,7 +1493,7 @@ class MUcv_gui:
         self.res_df = pd.DataFrame(
             data=0,
             index=self.all_mus,
-            columns=["CV", "RMS", "XCC"],
+            columns=["CV", "RMS", "XCC", "Column", "From_Row", "To_Row"],
         )
         self.textbox = tk.Text(self.frm, width=20)
         self.textbox.grid(row=2, column=8, sticky="ns")
@@ -1535,6 +1532,7 @@ class MUcv_gui:
             sta_dict=self.st[mu],
             xcc_sta_dict=self.sta_xcc[mu],
             showimmediately=False,
+            figsize=self.figsize,
         )
 
         # Place the figure in the GUI
@@ -1606,6 +1604,10 @@ class MUcv_gui:
         xcc_col_list = list(range(int(self.start_cb.get())+1, int(self.stop_cb.get())+1))
         xcc = self.sta_xcc[mu][self.col_cb.get()].iloc[:, xcc_col_list].mean().mean()
         self.res_df.loc[mu, "XCC"] = xcc
+
+        self.res_df.loc[mu, "Column"] = self.col_cb.get()
+        self.res_df.loc[mu, "From_Row"] = self.start_cb.get()
+        self.res_df.loc[mu, "To_Row"] = self.stop_cb.get()
 
         self.textbox.replace(
             '1.0',

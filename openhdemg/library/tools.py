@@ -230,7 +230,7 @@ def resize_emgfile(emgfile, area=None, accuracy="recalculate"):
         rs_emgfile["RAW_SIGNAL"].loc[start_:end_].reset_index(drop=True)
     )
     rs_emgfile["IPTS"] = rs_emgfile["IPTS"].loc[start_:end_].reset_index(drop=True)
-    rs_emgfile["EMG_LENGTH"] = int(len(rs_emgfile["IPTS"].index))
+    rs_emgfile["EMG_LENGTH"] = int(len(rs_emgfile["RAW_SIGNAL"].index))
     rs_emgfile["BINARY_MUS_FIRING"] = (
         rs_emgfile["BINARY_MUS_FIRING"].loc[start_:end_].reset_index(drop=True)
     )
@@ -266,7 +266,8 @@ def resize_emgfile(emgfile, area=None, accuracy="recalculate"):
                 )
 
     elif accuracy == "maintain":
-        rs_emgfile["ACCURACY"] = rs_emgfile["ACCURACY"]
+        # rs_emgfile["ACCURACY"] = rs_emgfile["ACCURACY"]
+        pass
 
     else:
         raise ValueError(

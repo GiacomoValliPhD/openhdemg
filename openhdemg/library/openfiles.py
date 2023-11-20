@@ -918,7 +918,7 @@ def emg_from_delsys(
         filename_from="mus_directory",
 ):
     """
-    Import the .mat and .csv files exportable from Delsys softwares.
+    Import the .mat and .txt files exportable from Delsys softwares.
 
     This function is used to load .mat files from the Delsys Neuromap software
     (containing the RAW EMG signal and the reference signal) and .txt files
@@ -940,7 +940,7 @@ def emg_from_delsys(
         containing accuracy data will have the string "Stats" in its name).
     emg_sensor_name : str, default "Galileo sensor"
         The name of the EMG sensor used to collect the data. We currently
-        support only the "Galileo sensor".
+        support only the "Galileo sensor" (4-pin).
     refsig_sensor_name : str, default "Trigno Load Cell"
         The name of the sensor used to record the reference signal. This is by
         default "Trigno Load Cell". However, since this can have any name (and
