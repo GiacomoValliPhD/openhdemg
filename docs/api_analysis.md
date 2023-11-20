@@ -1,7 +1,6 @@
 Description
 -----------
-This module contains all the functions used to analyse the MUs properties when
-not involving the MUs action potential shape.
+This module contains all the functions used to analyse the MUs properties when not involving the MUs action potential shape.
 
 <br/>
 

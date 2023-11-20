@@ -79,6 +79,7 @@ nav:
     - muap: api_muap.md
     - electrodes: api_electrodes.md
     - info: api_info.md
+    - compatibility: api_compatibility.md
     
 # Extensions
 markdown_extensions:
