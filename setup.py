@@ -22,10 +22,11 @@ INSTALL_REQUIRES = [
 
 PACKAGES = [
     "openhdemg",
-    "openhdemg.gui",
-    "openhdemg.gui.gui_files",
     "openhdemg.library",
     "openhdemg.library.decomposed_test_files",
+    "openhdemg.compatibility",
+    "openhdemg.gui",
+    "openhdemg.gui.gui_files",
 ]
 
 CLASSIFIERS = [
