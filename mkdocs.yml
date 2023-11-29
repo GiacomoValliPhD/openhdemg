@@ -62,6 +62,9 @@ nav:
       - Setup working environment: tutorials/setup_working_env.md
     - Basics of openhdemg:
       - Structure of the emgfile: tutorials/emgfile_structure.md
+      - Import from other software: tutorials/import_from_other_software.md
+    - Move to newer versions:
+      - Convert old .json files: tutorials/convert_old_json_files.md
   - Graphical Interface:
     - Intro: gui_intro.md
     - Basics: gui_basics.md

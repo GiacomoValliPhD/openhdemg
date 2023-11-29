@@ -67,7 +67,7 @@ Paul Ritsche:
 
 Drew-James Beauchamp:
 
-- james.beauchamp@northwestern.edu
+- jbeaucha@andrew.cmu.edu
 
 - Developer of the library.
 

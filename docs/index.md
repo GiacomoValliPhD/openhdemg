@@ -11,7 +11,7 @@
 
 *openhdemg* is an open-source framework written in Python 3 with many functionalities specifically designed for the analysis of High-Density Electromyography (HD-EMG) recordings. Some of its main features are listed below, but there is much more to discover! For a full list of available functions, please refer to the **API reference** section.
 
-1. **Load** decomposed HD-EMG files from various sources, such as .mat and .csv files. This allows to interface *openhdemg* with the commonly used softwares like OTBioLab+ or DEMUSE and potentially with any other software.
+1. **Load** decomposed HD-EMG files from various sources, such as .mat and .csv files. This allows to interface *openhdemg* with the commonly used softwares like OTBioLab+, DEMUSE, Delsys NeuroMap and potentially with any other software.
 2. **Visualise** your EMG or force/reference signal, as well as the motor units' firing times and their action potentials shape.
 3. **Edit** your file changing the reference signal offset, filtering noise, calculating differential derivations and removing unwanted motor units.
 4. **Analyse** motor units' recruitment/derecruitment thresholds, discharge rate, conduction velocity, action potentials amplitude and more...
