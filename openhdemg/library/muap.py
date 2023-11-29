@@ -238,6 +238,19 @@ def extract_delsys_muaps(emgfile):
 
     Examples
     --------
+    Visualise the MUAPs of the first MU.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="DELSYS")
+    >>> muaps = emg.extract_delsys_muaps(emgfile)
+    >>> emg.plot_muaps(muaps[0])
+
+    Visualise the MUAPs of the first 3 MUs.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="DELSYS")
+    >>> muaps = emg.extract_delsys_muaps(emgfile)
+    >>> emg.plot_muaps([muaps[0], muaps[1], muaps[2]])
     """
 
     all_muaps = emgfile["EXTRAS"]

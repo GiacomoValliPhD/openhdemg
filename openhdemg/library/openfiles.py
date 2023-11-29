@@ -925,6 +925,10 @@ def emg_from_delsys(
     from the Delsys Neuromap Explorer software (containing the decomposition
     outcome, accuracy measure and MUAPs).
 
+    We currenlty support only recordings performed with the "Galileo sensor"
+    (4-pin). Support for the 5-pin sensor will be provided in the next
+    releases.
+
     Parameters
     ----------
     rawemg_filepath : str or Path

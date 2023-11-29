@@ -237,6 +237,7 @@ class convert_json_output():
             print("Conversion completed")
 
     def load_0_1_0_b2(self, filepath):
+        """  """
         """
         Load the version 0.1.0-beta.2 emgfile and emg_refsig.
 
@@ -386,6 +387,7 @@ class convert_json_output():
         return emgfile
 
     def save_0_1_0_b3(self, emgfile, filepath, compresslevel):
+        """  """
         """
         Save the emgfile or emg_refsig compatible with openhdemg version
         0.1.0-beta.3.
