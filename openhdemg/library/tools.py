@@ -684,6 +684,10 @@ def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
     -------
     filteredrawsig : dict
         The dictionary containing the emgfile with a filtered RAW_SIGNAL.
+        Currently, the returned filteredrawsig cannot be accurately compressed
+        when using the functions ``save_json_emgfile()`` and ``asksavefile()``.
+        We therefore suggest you to save the unfiltered emgfile if you want to
+        obtain maximum compression.
 
     See also
     --------
