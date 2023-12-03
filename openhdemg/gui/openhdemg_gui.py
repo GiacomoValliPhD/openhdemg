@@ -24,7 +24,7 @@ matplotlib.use("TkAgg")
 import openhdemg.library as openhdemg
 
 
-class emgGUI:
+class emgGUI(tk.Tk):
     """
     A class representing a Tkinter TK instance.
 
@@ -331,6 +331,7 @@ class emgGUI:
         master: tk
             tk class object
         """
+        tk.Tk.__init__(self)
         # Set up GUI
         self.master = master
         self.master.title("openhdemg")
@@ -438,7 +439,7 @@ class emgGUI:
         separator2.grid(column=0, columnspan=3, row=9, sticky=(W, E))
 
         # Remove Motor Units
-        remove_mus = ttk.Button(self.left, text="Remove MUs", command=self.remove_mus)
+        remove_mus = ttk.Button(self.left, text="Remove MUs", command=self.show_removal_window)
         remove_mus.grid(column=0, row=10, sticky=W)
 
         # COMMENT: This is commented because it is not fully functional
@@ -828,7 +829,7 @@ class emgGUI:
                 # End progress
                 progress.stop()
                 progress.grid_remove()
-            
+
         # Indicate Progress
         progress = ttk.Progressbar(self.left, mode="indeterminate")
         progress.grid(row=4, column=0)
@@ -875,8 +876,6 @@ class emgGUI:
 
     def decompose_file(self):
         pass
-
-    import threading
 
     def save_emgfile(self):
         """
@@ -1256,127 +1255,10 @@ class emgGUI:
 
     # -----------------------------------------------------------------------------------------------
     # Removal of single motor units
+    def show_removal_window(self):
+        removal_window = MU_Removal_Window(parent=self, resdict=self.resdict)
 
-    def remove_mus(self):
-        """
-        Instance method to open "Motor Unit Removal Window". Further option to select and
-        remove MUs are displayed.
-
-        Executed when button "Remove MUs" in master GUI window is pressed.
-
-        Raises
-        ------
-        AttributeError
-            When no file is loaded prior to analysis.
-        """
-        if hasattr(self, "resdict"):
-            # Create new window
-            self.head = tk.Toplevel(bg="LightBlue4")
-            self.head.title("Motor Unit Removal Window")
-            self.head.iconbitmap(
-                os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
-            )
-            self.head.grab_set()
-
-            # Select Motor Unit
-            ttk.Label(self.head, text="Select MU:").grid(
-                column=1, row=0, padx=5, pady=5, sticky=W
-            )
-
-            self.mu_to_remove = StringVar()
-            removed_mu_value = [*range(0, self.resdict["NUMBER_OF_MUS"])]
-            removed_mu = ttk.Combobox(
-                self.head, width=10, textvariable=self.mu_to_remove
-            )
-            removed_mu["values"] = removed_mu_value
-            removed_mu["state"] = "readonly"
-            removed_mu.grid(column=1, row=1, columnspan=2, sticky=(W, E), padx=5, pady=5)
-
-            # Remove Motor unit
-            remove = ttk.Button(self.head, text="Remove MU", command=self.remove)
-            remove.grid(column=1, row=2, sticky=(W, E), padx=5, pady=5)
-
-            # Remove empty MUs
-            remove_empty = ttk.Button(self.head, text="Remove empty MUs", command=self.remove_empty)
-            remove_empty.grid(column=2, row=2, padx=5, pady=5)
-        else:
-            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
-
-    def remove(self):
-        """
-        Instance method that actually removes a selected motor unit based on user specification.
-
-        Executed when button "Remove MU" in Motor Unit Removal Window is pressed.
-        The emgfile and the plot are subsequently updated.
-
-        See Also
-        --------
-        delete_mus in library.
-        """
-        try:
-            # Get resdict with MU removed
-            self.resdict = openhdemg.delete_mus(
-                emgfile=self.resdict, munumber=int(self.mu_to_remove.get())
-            )
-            # Upate MU number
-            ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
-                column=2, row=3, sticky=(W, E)
-            )
-
-            # Update selection field
-            self.mu_to_remove = StringVar()
-            removed_mu_value = [*range(0, self.resdict["NUMBER_OF_MUS"])]
-            removed_mu = ttk.Combobox(
-                self.head, width=10, textvariable=self.mu_to_remove
-            )
-            removed_mu["values"] = removed_mu_value
-            removed_mu["state"] = "readonly"
-            removed_mu.grid(column=1, row=1, columnspan=2, sticky=(W, E), padx=5, pady=5)
-
-            # Update plot
-            if hasattr(self, "fig"):
-                self.in_gui_plotting()
-
-        except AttributeError:
-            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
-
-    def remove_empty(self):
-        """
-        Instance method that removes all empty MUs.
-
-        Executed when button "Remove empty MUs" in Motor Unit Removal Window is pressed.
-        The emgfile and the plot are subsequently updated.
-
-        See Also
-        --------
-        delete_empty_mus in library.
-        """
-        try:
-            # Get resdict with MU removed
-            self.resdict = openhdemg.delete_empty_mus(self.resdict)
-
-            # Upate MU number
-            ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
-                column=2, row=3, sticky=(W, E)
-            )
-
-            # Update selection field
-            self.mu_to_remove = StringVar()
-            removed_mu_value = [*range(0, self.resdict["NUMBER_OF_MUS"])]
-            removed_mu = ttk.Combobox(
-                self.head, width=10, textvariable=self.mu_to_remove
-            )
-            removed_mu["values"] = removed_mu_value
-            removed_mu["state"] = "readonly"
-            removed_mu.grid(column=1, row=1, columnspan=2, sticky=(W, E), padx=5, pady=5)
-
-            # Update plot
-            if hasattr(self, "fig"):
-                self.in_gui_plotting()
-
-        except AttributeError:
-            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
-
+    
     # -----------------------------------------------------------------------------------------------
     # Editing of single motor Units
 
@@ -3250,6 +3132,135 @@ class emgGUI:
 
         # Show results
         table.show()
+
+
+
+class MU_Removal_Window():
+    """
+    Instance method to open "Motor Unit Removal Window". Further option to select and
+    remove MUs are displayed.
+
+    Executed when button "Remove MUs" in master GUI window is pressed.
+
+    Raises
+    ------
+    AttributeError
+        When no file is loaded prior to analysis.
+    """
+
+    def __init__(self, parent, resdict):
+        super().__init__()
+        self.resdict = resdict
+        # Create new window
+        self.head = tk.Toplevel()
+        self.head.title("Motor Unit Removal Window")
+        self.head.iconbitmap(
+            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
+        )
+        self.head.grab_set()
+
+        # Select Motor Unit
+        ttk.Label(self.head, text="Select MU:").grid(
+            column=1, row=0, padx=5, pady=5, sticky=W
+        )
+
+        self.mu_to_remove = StringVar()
+        removed_mu_value = [*range(0, self.resdict["NUMBER_OF_MUS"])]
+        removed_mu = ttk.Combobox(
+            self.head, width=10, textvariable=self.mu_to_remove
+        )
+        removed_mu["values"] = removed_mu_value
+        removed_mu["state"] = "readonly"
+        removed_mu.grid(column=1, row=1, columnspan=2, sticky=(W, E), padx=5, pady=5)
+
+        # Remove Motor unit
+        remove = ttk.Button(self.head, text="Remove MU", command=self.remove)
+        remove.grid(column=1, row=2, sticky=(W, E), padx=5, pady=5)
+
+        # Remove empty MUs
+        remove_empty = ttk.Button(self.head, text="Remove empty MUs", command=self.remove_empty)
+        remove_empty.grid(column=2, row=2, padx=5, pady=5)
+
+    def remove(self):
+        """
+        Instance method that actually removes a selected motor unit based on user specification.
+
+        Executed when button "Remove MU" in Motor Unit Removal Window is pressed.
+        The emgfile and the plot are subsequently updated.
+
+        See Also
+        --------
+        delete_mus in library.
+        """
+        try:
+            # Get resdict with MU removed
+            print(self.mu_to_remove.get())
+            self.resdict = openhdemg.delete_mus(
+                emgfile=self.resdict, munumber=int(self.mu_to_remove.get())
+            )
+            # Upate MU number
+            ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
+                column=2, row=3, sticky=(W, E)
+            )
+
+            # Update selection field
+            self.mu_to_remove = StringVar()
+            removed_mu_value = [*range(0, self.resdict["NUMBER_OF_MUS"])]
+            removed_mu = ttk.Combobox(
+                self.head, width=10, textvariable=self.mu_to_remove
+            )
+            removed_mu["values"] = removed_mu_value
+            removed_mu["state"] = "readonly"
+            removed_mu.grid(column=1, row=1, columnspan=2, sticky=(W, E), padx=5, pady=5)
+
+            # Update plot
+            if hasattr(self, "fig"):
+                self.in_gui_plotting()
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
+
+    def remove_empty(self):
+        """
+        Instance method that removes all empty MUs.
+
+        Executed when button "Remove empty MUs" in Motor Unit Removal Window is pressed.
+        The emgfile and the plot are subsequently updated.
+
+        See Also
+        --------
+        delete_empty_mus in library.
+        """
+        try:
+            # Get resdict with MU removed
+            self.resdict = openhdemg.delete_empty_mus(self.resdict)
+
+            # Upate MU number
+            ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
+                column=2, row=3, sticky=(W, E)
+            )
+
+            # Update selection field
+            self.mu_to_remove = StringVar()
+            removed_mu_value = [*range(0, self.resdict["NUMBER_OF_MUS"])]
+            removed_mu = ttk.Combobox(
+                self.head, width=10, textvariable=self.mu_to_remove
+            )
+            removed_mu["values"] = removed_mu_value
+            removed_mu["state"] = "readonly"
+            removed_mu.grid(column=1, row=1, columnspan=2, sticky=(W, E), padx=5, pady=5)
+
+            # Update plot
+            if hasattr(self, "fig"):
+                self.in_gui_plotting()
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
+
+
+
+
+
 
 
 # -----------------------------------------------------------------------------------------------
