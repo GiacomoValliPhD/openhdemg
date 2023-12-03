@@ -1,11 +1,11 @@
 """Module containing the MU Removal GUI class"""
 
-import customtkinter as ctk
 from tkinter import StringVar, W, E, messagebox
 import os
+import customtkinter as ctk
 import openhdemg.library as openhdemg
 
-class MU_Removal_Window:
+class MURemovalWindow:
     """
     Instance method to open "Motor Unit Removal Window". Further option to select and
     remove MUs are displayed.
@@ -31,7 +31,7 @@ class MU_Removal_Window:
         self.head.grab_set()
 
         # Select Motor Unit
-        ctk.CTkLabel(self.head, text="Select MU:").grid(
+        ctk.CTkLabel(self.head, text="Select MU:", font=('Segoe UI',15, 'bold')).grid(
             column=1, row=0, padx=5, pady=5, sticky=W
         )
 
@@ -45,11 +45,13 @@ class MU_Removal_Window:
         removed_mu.grid(column=1, row=1, columnspan=2, sticky=(W, E), padx=5, pady=5)
 
         # Remove Motor unit
-        remove = ctk.CTkButton(self.head, text="Remove MU", command=self.remove)
+        remove = ctk.CTkButton(self.head, text="Remove MU", command=self.remove,
+                                fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         remove.grid(column=1, row=2, sticky=(W, E), padx=5, pady=5)
 
         # Remove empty MUs
-        remove_empty = ctk.CTkButton(self.head, text="Remove empty MUs", command=self.remove_empty)
+        remove_empty = ctk.CTkButton(self.head, text="Remove empty MUs", command=self.remove_empty,
+                                      fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         remove_empty.grid(column=2, row=2, padx=5, pady=5)
 
     def remove(self):
@@ -69,7 +71,7 @@ class MU_Removal_Window:
                 emgfile=self.parent.resdict, munumber=int(self.mu_to_remove.get())
             )
             # Upate MU number
-            ctk.CTkLabel(self.parent.left, text=str(self.parent.resdict["NUMBER_OF_MUS"])).grid(
+            ctk.CTkLabel(self.parent.left, text=str(self.parent.resdict["NUMBER_OF_MUS"]), font=('Segoe UI',15, 'bold')).grid(
                 column=2, row=3, sticky=(W, E)
             )
 
@@ -106,7 +108,7 @@ class MU_Removal_Window:
             self.parent.resdict = openhdemg.delete_empty_mus(self.parent.resdict)
 
             # Upate MU number
-            ctk.Label(self.parent.left, text=str(self.parent.resdict["NUMBER_OF_MUS"])).grid(
+            ctk.Label(self.parent.left, text=str(self.parent.resdict["NUMBER_OF_MUS"]), font=('Segoe UI',15, 'bold')).grid(
                 column=2, row=3, sticky=(W, E)
             )
 

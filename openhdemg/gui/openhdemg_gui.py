@@ -22,7 +22,7 @@ import pandas as pd
 matplotlib.use("TkAgg")
 
 import openhdemg.library as openhdemg
-from openhdemg.gui.gui_modules import MU_Removal_Window
+from openhdemg.gui.gui_modules import MURemovalWindow, EditRefsig, GUIHelpers
 
 
 class emgGUI():
@@ -439,7 +439,7 @@ class emgGUI():
         separator2.grid(column=0, columnspan=3, row=9, sticky=(W, E))
 
         # Remove Motor Units
-        remove_mus = ttk.Button(self.left, text="Remove MUs", command=self.show_removal_window)
+        remove_mus = ttk.Button(self.left, text="Remove MUs", command=lambda:(MURemovalWindow(parent=self, resdict=self.resdict)))
         remove_mus.grid(column=0, row=10, sticky=W)
 
         # COMMENT: This is commented because it is not fully functional
@@ -454,12 +454,12 @@ class emgGUI():
 
         # Filter Reference Signal
         reference = ttk.Button(
-            self.left, text="RefSig Editing", command=self.edit_refsig
+            self.left, text="RefSig Editing", command=lambda:(EditRefsig(parent=self))
         )
         reference.grid(column=0, row=12, sticky=W)
 
         # Resize File
-        resize = ttk.Button(self.left, text="Resize File", command=self.resize_file)
+        resize = ttk.Button(self.left, text="Resize File", command=lambda:(GUIHelpers(parent=self).resize_file()))
         resize.grid(column=1, row=12, sticky=(W, E))
         separator4 = ttk.Separator(self.left, orient="horizontal")
         separator4.grid(column=0, columnspan=3, row=13, sticky=(W, E))
@@ -1278,12 +1278,7 @@ class emgGUI():
         except KeyError:
             tk.messagebox.showerror("Information", "Sorting not possible when ≤ 1"
                                     + "\nMU is present in the File (i.e. Refsigs)")
-    # -----------------------------------------------------------------------------------------------
-    # Removal of single motor units
-    def show_removal_window(self):
-        removal_window = MU_Removal_Window(parent=self, resdict=self.resdict)
 
-    
     # -----------------------------------------------------------------------------------------------
     # Editing of single motor Units
 
@@ -1339,277 +1334,11 @@ class emgGUI():
     # -----------------------------------------------------------------------------------------------
     # Editing of Reference EMG Signal
 
-    def edit_refsig(self):
-        """
-        Instance method to open "Reference Signal Editing Window". Options for
-        refsig filtering and offset removal are displayed.
-
-        Executed when button "RefSig Editing" in master GUI window is pressed.
-        """
-        # Create new window
-        self.head = tk.Toplevel(bg="LightBlue4")
-        self.head.title("Reference Signal Editing Window")
-        self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
-        )
-        self.head.grab_set()
-
-        # Filter Refsig
-        # Define Labels
-        ttk.Label(self.head, text="Filter Order").grid(column=1, row=0, sticky=(W, E))
-        ttk.Label(self.head, text="Cutoff Freq").grid(column=2, row=0, sticky=(W, E))
-        # Fiter button
-        basic = ttk.Button(self.head, text="Filter Refsig", command=self.filter_refsig)
-        basic.grid(column=0, row=1, sticky=W)
-
-        self.filter_order = StringVar()
-        order = ttk.Entry(self.head, width=10, textvariable=self.filter_order)
-        order.grid(column=1, row=1)
-        self.filter_order.set(4)
-
-        self.cutoff_freq = StringVar()
-        cutoff = ttk.Entry(self.head, width=10, textvariable=self.cutoff_freq)
-        cutoff.grid(column=2, row=1)
-        self.cutoff_freq.set(15)
-
-        # Remove offset of reference signal
-        separator2 = ttk.Separator(self.head, orient="horizontal")
-        separator2.grid(column=0, columnspan=3, row=2, sticky=(W, E), padx=5, pady=5)
-
-        ttk.Label(self.head, text="Offset Value").grid(column=1, row=3, sticky=(W, E))
-        ttk.Label(self.head, text="Automatic Offset").grid(
-            column=2, row=3, sticky=(W, E)
-        )
-
-        # Offset removal button
-        basic2 = ttk.Button(self.head, text="Remove Offset", command=self.remove_offset)
-        basic2.grid(column=0, row=4, sticky=W)
-
-        self.offsetval = StringVar()
-        offset = ttk.Entry(self.head, width=10, textvariable=self.offsetval)
-        offset.grid(column=1, row=4)
-        self.offsetval.set(4)
-
-        self.auto_eval = StringVar()
-        auto = ttk.Entry(self.head, width=10, textvariable=self.auto_eval)
-        auto.grid(column=2, row=4)
-        self.auto_eval.set(0)
-
-        separator3 = ttk.Separator(self.head, orient="horizontal")
-        separator3.grid(column=0, columnspan=3, row=5, sticky=(W, E), padx=5, pady=5)
-
-        # Convert Reference signal
-        ttk.Label(self.head, text="Operator").grid(column=1, row=6, sticky=(W, E))
-        ttk.Label(self.head, text="Factor").grid(
-            column=2, row=6, sticky=(W, E)
-        )
-
-        self.convert = StringVar()
-        convert = ttk.Combobox(self.head, width=10, textvariable=self.convert)
-        convert["values"] = ("Multiply", "Divide")
-        convert["state"] = "readonly"
-        convert.grid(column=1, row=7)
-        self.convert.set("Multiply")
-
-        self.convert_factor = DoubleVar()
-        factor = ttk.Entry(self.head, width=10, textvariable=self.convert_factor)
-        factor.grid(column=2, row=7)
-        self.convert_factor.set(2.5)
-        
-        convert_button = ttk.Button(self.head, text="Convert", command=self.convert_refsig)
-        convert_button.grid(column=0, row=7, sticky=W)
-
-        separator3 = ttk.Separator(self.head, orient="horizontal")
-        separator3.grid(column=0, columnspan=3, row=8, sticky=(W, E), padx=5, pady=5)
-
-        # Convert to percentage
-        ttk.Label(self.head, text="MVC Value").grid(column=1, row=9, sticky=(W, E))
-        
-        percent_button = ttk.Button(self.head, text="To Percent*", command=self.to_percent)
-        percent_button.grid(column=0, row=10, sticky=W)
-
-        self.mvc_value = DoubleVar()
-        mvc = ttk.Entry(self.head, width=10, textvariable=self.mvc_value)
-        mvc.grid(column=1, row=10)
-
-
-        ttk.Label(self.head,
-                  text= "*Use this button \nonly if your Refsig \nis in absolute values!",
-                  font=("Arial", 8)).grid(
-            column=2, row=9, rowspan=2
-        )
-
-        # Add padding to all children widgets of head
-        for child in self.head.winfo_children():
-            child.grid_configure(padx=5, pady=5)
-
-    ### Define functions for Refsig editing
-
-    def filter_refsig(self):
-        """
-        Instance method that filters the refig based on user selected specs.
-
-        Executed when button "Filter Refsig" in Reference Signal Editing Window is pressed.
-        The emgfile and the GUI plot are updated.
-
-        Raises
-        ------
-        AttributeError
-            When no reference signal file is available.
-
-        See Also
-        --------
-        filter_refsig in library.
-        """
-        try:
-            # Filter refsig
-            self.resdict = openhdemg.filter_refsig(
-                emgfile=self.resdict,
-                order=int(self.filter_order.get()),
-                cutoff=int(self.cutoff_freq.get()),
-            )
-            # Plot filtered Refsig
-            self.in_gui_plotting(resdict=self.resdict, plot="refsig_fil")
-
-        except AttributeError:
-            tk.messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
-
-    def remove_offset(self):
-        """
-        Instance Method that removes user specified/selected Refsig offset.
-
-        Executed when button "Remove offset" in Reference Signal Editing Window is pressed.
-        The emgfile and the GUI plot are updated.
-
-        Raises
-        ------
-        AttributeError
-            When no reference signal file is available
-
-        See Also
-        --------
-        remove_offset in library.
-        """
-        try:
-            # Remove offset
-            self.resdict = openhdemg.remove_offset(
-                emgfile=self.resdict,
-                offsetval=int(self.offsetval.get()),
-                auto=int(self.auto_eval.get()),
-            )
-            # Update Plot
-            self.in_gui_plotting(resdict=self.resdict, plot="refsig_off")
-
-        except AttributeError:
-            tk.messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
-
-        except ValueError:
-            tk.messagebox.showerror("Information", "Make sure to specify valid filtering or offset values.")
-
-    def convert_refsig(self):
-        """
-        Instance Method that converts Refsig by multiplication or division.
-
-        Executed when button "Convert" in Reference Signal Editing Window is pressed.
-        The emgfile and the GUI plot are updated.
-
-        Raises
-        ------
-        AttributeError
-            When no reference signal file is available
-        ValueError
-            When invalid conversion factor is specified
-        
-        """
-        try:
-            if self.convert.get() == "Multiply":
-                self.resdict["REF_SIGNAL"] = self.resdict["REF_SIGNAL"] * self.convert_factor.get()
-            elif self.convert.get() == "Divide":
-                self.resdict["REF_SIGNAL"] = self.resdict["REF_SIGNAL"] / self.convert_factor.get()
-        
-            # Update Plot
-            self.in_gui_plotting(resdict=self.resdict, plot="refsig_off")
-
-        except AttributeError:
-            tk.messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
-
-        except ValueError:
-            tk.messagebox.showerror("Information", "Make sure to specify a valid conversion factor.")
-
-    def to_percent(self):
-        """
-        Instance Method that converts Refsig to a percentag value. Should only be used when the Refsig is in absolute values.
-
-        Executed when button "To Percen" in Reference Signal Editing Window is pressed.
-        The emgfile and the GUI plot are updated.
-
-        Raises
-        ------
-        AttributeError
-            When no reference signal file is available
-        ValueError
-            When invalid conversion factor is specified
-        """
-        try:
-            self.resdict["REF_SIGNAL"] = (self.resdict["REF_SIGNAL"] * 100) / self.mvc_value.get()
-        
-            # Update Plot
-            self.in_gui_plotting(resdict=self.resdict)
-
-        except AttributeError:
-            tk.messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
-
-        except ValueError:
-            tk.messagebox.showerror("Information", "Make sure to specify a valid conversion factor.")
+    
     # -----------------------------------------------------------------------------------------------
     # Resize EMG File
 
-    def resize_file(self):
-        """
-        Instance method to get resize area from user specification on plot and
-        resize emgfile.
-
-        Executed when button "Select Resize" is pressed in Resize file window.
-        The emgfile and the GUI plot are updated.
-
-        Raises
-        ------
-        AttributeError
-            When no file is loaded prior to analysis.
-
-        See Also
-        --------
-        showselect, resize_emgfile in library.
-        """
-        try:
-            # Open selection window for user
-            points = openhdemg.showselect(
-                emgfile=self.resdict,
-                title="Select the start/end area to resize by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
-                titlesize=10,
-            )
-            start, end = points[0], points[1]
-
-            # Delsys requires different handling for resize
-            if self.resdict["SOURCE"] == "DELSYS":
-                self.resdict, _, _ = openhdemg.resize_emgfile(
-                emgfile=self.resdict, area=[start, end], accuracy="maintain"
-                )
-            else:
-                self.resdict, _, _ = openhdemg.resize_emgfile(
-                    emgfile=self.resdict, area=[start, end]
-                )
-            # Update Plot
-            self.in_gui_plotting(resdict=self.resdict)
-
-            # Update filelength
-            ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
-                    column=2, row=4, sticky=(W, E)
-            ) 
-
-        except AttributeError:
-            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
-
+    
     # -----------------------------------------------------------------------------------------------
     # Analysis of Force
 
