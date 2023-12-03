@@ -18,9 +18,9 @@ You can download the sample files and the sample scripts [here](https://drive.go
 
 <br>
 
-<iframe src="openhdemg/online_pdfs/pre-proof_valli_et_al_2023_jek.pdf" width="100%" height="800px" allowfullscreen></iframe>
+<embed src="https://www.giacomovalli.com/openhdemg/online_pdfs/pre-proof_valli_et_al_2023_jek.pdf" width="100%" height="800px" allowfullscreen type="application/pdf"></iframe>
 
-<br> <!-- links in HTML start from giacomovalli.com and not from giacomovalli.com/openhdemg-->
+<br> <!-- links in HTML should be full links-->
 
 ## 2023 ISEK Workshop
 
