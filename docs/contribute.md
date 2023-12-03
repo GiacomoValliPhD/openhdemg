@@ -61,5 +61,5 @@ These guidelines should not be interpreted and must apply to all the developers.
 - Documentation style: NumPy
 - Respect PEP 8
 - Use a code checker (suggested flake8)
-- Never alter the original structure of the emgfile described in the tutorial [Structure of the emgfile](/tutorials/emgfile_structure)
+- Never alter the original structure of the emgfile described in the tutorial [Structure of the emgfile](tutorials/emgfile_structure.md)
 - Always work (i.e., Fetch/Pull request) on the current working branch. Not in the main branch.
