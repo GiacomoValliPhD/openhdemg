@@ -201,80 +201,98 @@ def resize_emgfile(emgfile, area=None, accuracy="recalculate"):
         )
         start_, end_ = points[0], points[1]
 
+    # Double check that start_, end_ are within the real range.
+    if start_ < 0:
+        start_ = 0
+    if end_ > emgfile["REF_SIGNAL"].shape[0]:
+        end_ = emgfile["REF_SIGNAL"].shape[0]
+
     # Create the object to store the resized emgfile.
     rs_emgfile = copy.deepcopy(emgfile)
-    """
-    ACCURACY should be re-computed on the new portion of the file if possible.
-    Need to be resized: ==>
-    emgfile =   {
-                "SOURCE": SOURCE,
-                ==> "RAW_SIGNAL": RAW_SIGNAL,
-                ==> "REF_SIGNAL": REF_SIGNAL,
-                ==> "ACCURACY": ACCURACY,
-                ==> "IPTS": IPTS,
-                ==> "MUPULSES": MUPULSES,
-                "FSAMP": FSAMP,
-                "IED": IED,
-                ==> "EMG_LENGTH": EMG_LENGTH,
-                "NUMBER_OF_MUS": NUMBER_OF_MUS,
-                ==> "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
-                }
-    """
 
-    # Resize the reference signal and identify the first value of the index to
-    # resize the mupulses. Then, reset the index.
-    rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
-    first_idx = rs_emgfile["REF_SIGNAL"].index[0]
-    rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].reset_index(drop=True)
-    rs_emgfile["RAW_SIGNAL"] = (
-        rs_emgfile["RAW_SIGNAL"].loc[start_:end_].reset_index(drop=True)
-    )
-    rs_emgfile["IPTS"] = rs_emgfile["IPTS"].loc[start_:end_].reset_index(drop=True)
-    rs_emgfile["EMG_LENGTH"] = int(len(rs_emgfile["RAW_SIGNAL"].index))
-    rs_emgfile["BINARY_MUS_FIRING"] = (
-        rs_emgfile["BINARY_MUS_FIRING"].loc[start_:end_].reset_index(drop=True)
-    )
+    if emgfile["SOURCE"] in ["DEMUSE", "OTB", "CUSTOMCSV", "DELSYS"]:
+        """
+        ACCURACY should be re-computed on the new portion of the file if
+        possible. Need to be resized: ==>
+        emgfile =   {
+            "SOURCE": SOURCE,
+            ==> "RAW_SIGNAL": RAW_SIGNAL,
+            ==> "REF_SIGNAL": REF_SIGNAL,
+            ==> "ACCURACY": ACCURACY,
+            ==> "IPTS": IPTS,
+            ==> "MUPULSES": MUPULSES,
+            "FSAMP": FSAMP,
+            "IED": IED,
+            ==> "EMG_LENGTH": EMG_LENGTH,
+            "NUMBER_OF_MUS": NUMBER_OF_MUS,
+            ==> "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
+        }
+        """
 
-    for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
-        # Mask the array based on a filter and return the values in an array
-        rs_emgfile["MUPULSES"][mu] = (
-            rs_emgfile["MUPULSES"][mu][
-                (rs_emgfile["MUPULSES"][mu] >= start_)
-                & (rs_emgfile["MUPULSES"][mu] < end_)
-            ]
-            - first_idx
+        # Resize the reference signal and identify the first value of the
+        # index to resize the mupulses. Then, reset the index.
+        rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
+        first_idx = rs_emgfile["REF_SIGNAL"].index[0]
+        rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].reset_index(drop=True)
+        rs_emgfile["RAW_SIGNAL"] = (
+            rs_emgfile["RAW_SIGNAL"].loc[start_:end_].reset_index(drop=True)
+        )
+        rs_emgfile["IPTS"] = rs_emgfile["IPTS"].loc[start_:end_].reset_index(drop=True)
+        rs_emgfile["EMG_LENGTH"] = int(len(rs_emgfile["RAW_SIGNAL"].index))
+        rs_emgfile["BINARY_MUS_FIRING"] = (
+            rs_emgfile["BINARY_MUS_FIRING"].loc[start_:end_].reset_index(drop=True)
         )
 
-    # Compute SIL or leave original ACCURACY
-    if accuracy == "recalculate":
-        if rs_emgfile["NUMBER_OF_MUS"] > 0:
-            if not rs_emgfile["IPTS"].empty:
-                # Calculate SIL
-                to_append = []
-                for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
-                    res = compute_sil(
-                        ipts=rs_emgfile["IPTS"][mu],
-                        mupulses=rs_emgfile["MUPULSES"][mu],
+        for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
+            # Mask the array based on a filter and return the values in an array
+            rs_emgfile["MUPULSES"][mu] = (
+                rs_emgfile["MUPULSES"][mu][
+                    (rs_emgfile["MUPULSES"][mu] >= start_)
+                    & (rs_emgfile["MUPULSES"][mu] < end_)
+                ]
+                - first_idx
+            )
+
+        # Compute SIL or leave original ACCURACY
+        if accuracy == "recalculate":
+            if rs_emgfile["NUMBER_OF_MUS"] > 0:
+                if not rs_emgfile["IPTS"].empty:
+                    # Calculate SIL
+                    to_append = []
+                    for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
+                        res = compute_sil(
+                            ipts=rs_emgfile["IPTS"][mu],
+                            mupulses=rs_emgfile["MUPULSES"][mu],
+                        )
+                        to_append.append(res)
+                    rs_emgfile["ACCURACY"] = pd.DataFrame(to_append)
+
+                else:
+                    raise ValueError(
+                        "Impossible to calculate ACCURACY (SIL). IPTS not found." +
+                        " If IPTS is not present or empty, set accuracy='maintain'"
                     )
-                    to_append.append(res)
-                rs_emgfile["ACCURACY"] = pd.DataFrame(to_append)
 
-            else:
-                raise ValueError(
-                    "Impossible to calculate ACCURACY (SIL). IPTS not found." +
-                    " If IPTS is not present or empty, set accuracy='maintain'"
-                )
+        elif accuracy == "maintain":
+            # rs_emgfile["ACCURACY"] = rs_emgfile["ACCURACY"]
+            pass
 
-    elif accuracy == "maintain":
-        # rs_emgfile["ACCURACY"] = rs_emgfile["ACCURACY"]
-        pass
+        else:
+            raise ValueError(
+                f"Accuracy can only be 'recalculate' or 'maintain'. {accuracy} was passed instead."
+            )
+
+        return rs_emgfile, start_, end_
+
+    elif emgfile["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]:
+        rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
+        first_idx = rs_emgfile["REF_SIGNAL"].index[0]
+        rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].reset_index(drop=True)
+
+        return rs_emgfile, start_, end_
 
     else:
-        raise ValueError(
-            f"Accuracy can only be 'recalculate' or 'maintain'. {accuracy} was passed instead."
-        )
-
-    return rs_emgfile, start_, end_
+        raise ValueError("\nFile source not recognised\n")
 
 
 def compute_idr(emgfile):
