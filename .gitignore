@@ -6,6 +6,6 @@ __pycache__*
 docs/.DS_Store
 dist/
 openhdemg.egg-info/
-
+openhdemg/.DS_Store
 prove.py
 prove_storage.py

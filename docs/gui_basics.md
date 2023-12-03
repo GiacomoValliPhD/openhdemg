@@ -29,7 +29,9 @@ To remove MUs included in your analysis file, you can click the `Remove MUs` but
     ```
     will result in the second MU to be deleted (Python is base 0).
 
-4. Click the `Remove MU` button to remove the MU. 
+4. Click the `Remove MU` button to remove the MU.
+
+Alternatively, you can click the `Remove empty MUs` button to delete all the MUs without discharge times. These can be present in the emgfile as the result of decomposed duplicates that have not been fully removed.
 
 ## Reference Signal Editing
 The *openhdemg* GUI also allows you to edit and filter reference signals corresponding to your analysis file (this can be either a file containing both the MUs and the reference signal or a file containing only the reference signal).

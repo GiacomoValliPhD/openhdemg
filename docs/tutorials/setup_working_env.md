@@ -26,8 +26,8 @@ To install Python 3 on Windows:
 
 1. Visit the official Python website: [https://www.python.org/downloads/](https://www.python.org/downloads/){:target="_blank"}
 2. Click on the "Downloads" tab.
-3. Scroll down to the section titled "Python Releases for Windows."
-4. Click on the "Download" button for the latest version of Python (e.g., Python 3.11.4).
+3. Scroll down to the section titled "Windows".
+4. Click on "Windows installer" under the latest compatible version of Python (i.e., Python 3.11.6). *openhdemg* is currently working with Python 3.11 or earlier versions (tested from Python 3.8.x to 3.11.x).
 5. Run the downloaded installer.
 6. On the installer, make sure to check the box "Add Python to PATH" and then click "Install Now."
 7. Python will be installed to your system (optionally, you can verify the installation by opening a command prompt and typing python --version).
@@ -47,7 +47,7 @@ To install Python 3 on Mac:
 1. Visit the official Python website: [https://www.python.org/downloads/](https://www.python.org/downloads/){:target="_blank"}
 2. Click on the "Downloads" tab.
 3. Scroll down to the section titled "Python Releases for macOS."
-4. Click on the "Download" button for the latest version of Python (e.g., Python 3.11.4).
+4. Click on "macOS 64-bit universal2 installer" under the latest compatible version of Python (i.e., Python 3.11.6). *openhdemg* is currently working with Python 3.11 or earlier versions (tested from Python 3.8.x to 3.11.x).
 5. Run the downloaded installer package.
 6. Follow the instructions on the installer to complete the installation.
 7. Python will be installed to your system. (optionally, you can verify the installation by opening a terminal and typing python3 --version).
@@ -186,6 +186,18 @@ Set-ExecutionPolicy Unrestricted -Force
 ```
 
 This should solve the issue and you should now be able to activate your Virtual environment. For additional information on this topic visit the [stackoverflow thread](https://stackoverflow.com/questions/18713086/virtualenv-wont-activate-on-windows){:target="_blank"}.
+
+### *openhdemg* Installation Issues
+
+Windows:
+
+If trying to install *openhdemg* via pip you see this (or a similar) message in the terminal:
+
+```
+ImportError: DLL load failed while importing _cext: The specified module could not be found.
+```
+
+the problem might be that you do not have the necessary Visual C++ Redistributable. This can be simply solved by visitng the [Microsoft website](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170){:target="_blank"} and dowloading and installing the latest Visual Studio 2015, 2017, 2019 and 2022 redistributable. Please note, this is a single redistributable, you don't need to perform multiple dowloads. This should solve the issue and you should now be able to pip install *openhdemg*. If that's not the case, continue reading.
 
 ## More questions?
 

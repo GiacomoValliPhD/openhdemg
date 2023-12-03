@@ -5,6 +5,7 @@ This file contains the gui functionalities of openhdemg.
 import os
 import tkinter as tk
 import customtkinter
+import threading
 import webbrowser
 from tkinter import ttk, filedialog, Canvas
 from tkinter import StringVar, Tk, N, S, W, E, DoubleVar
@@ -244,6 +245,8 @@ class emgGUI:
         Executed when button "Remove MUs" in master GUI window pressed.
     remove()
         Method used to remove single motor units.
+    remove_empty()
+        Method that removes all empty MUs.
     edit_refsig()
         Opens seperate window to edit emg reference signal.
         Executed when button "RefSig Editing" in master GUI window pressed.
@@ -334,13 +337,35 @@ class emgGUI:
         master_path = os.path.dirname(os.path.abspath(__file__))
         iconpath = master_path + "/gui_files/Icon.ico"
         self.master.iconbitmap(iconpath)
+        self.master.columnconfigure(0, weight=1)
+        self.master.rowconfigure(0, weight=1)
 
         # Create left side framing for functionalities
         self.left = ttk.Frame(self.master, padding="10 10 12 12")
-        self.left.grid(column=0, row=0, sticky=(N, S, W))
+        self.left.grid(column=0, row=0, sticky="nsew")
         self.left.columnconfigure(0, weight=1)
         self.left.columnconfigure(1, weight=1)
         self.left.columnconfigure(2, weight=1)
+        self.left.columnconfigure(3, weight=1)
+        self.left.rowconfigure(0, weight=1)
+        self.left.rowconfigure(1, weight=1)
+        self.left.rowconfigure(2, weight=1)
+        self.left.rowconfigure(3, weight=1)
+        self.left.rowconfigure(4, weight=1)
+        self.left.rowconfigure(5, weight=1)
+        self.left.rowconfigure(6, weight=1)
+        self.left.rowconfigure(7, weight=1)
+        self.left.rowconfigure(8, weight=1)
+        self.left.rowconfigure(9, weight=1)
+        self.left.rowconfigure(10, weight=1)
+        self.left.rowconfigure(11, weight=1)
+        self.left.rowconfigure(12, weight=1)
+        self.left.rowconfigure(13, weight=1)
+        self.left.rowconfigure(14, weight=1)
+        self.left.rowconfigure(15, weight=1)
+        self.left.rowconfigure(16, weight=1)
+        self.left.rowconfigure(17, weight=1)
+        self.left.rowconfigure(18, weight=1)
 
         # Style
         style = ttk.Style()
@@ -357,10 +382,10 @@ class emgGUI:
         style.configure("TEntry", font=("Lucida Sans", 12), foreground="black")
         style.configure("TCombobox", background="LightBlue4", foreground="black")
         style.configure("TLabelFrame", foreground="black", font=("Lucida Sans", 16))
-
+        style.configure("TProgressbar", foreground="#FFBF00", background="#FFBF00")
         # Specify Signal
         self.filetype = StringVar()
-        signal_value = ("OPENHDEMG", "OTB", "DEMUSE", "OTB_REFSIG", "CUSTOMCSV", "CUSTOMCSV_REFSIG")
+        signal_value = ("OPENHDEMG", "DEMUSE","OTB",  "OTB_REFSIG", "DELSYS", "DELSYS_REFSIG", "CUSTOMCSV", "CUSTOMCSV_REFSIG")
         signal_entry = ttk.Combobox(
             self.left, text="Signal", width=10, textvariable=self.filetype
         )
@@ -483,7 +508,14 @@ class emgGUI:
 
         # Create right side framing for functionalities
         self.right = ttk.Frame(self.master, padding="10 10 12 12")
-        self.right.grid(column=1, row=0, sticky=(N, S, E))
+        self.right.grid(column=1, row=0, sticky=(N, S, E, W))
+        self.right.columnconfigure(0, weight=1)
+        self.right.columnconfigure(1, weight=1)
+        self.right.rowconfigure(0, weight=1)
+        self.right.rowconfigure(1, weight=1)
+        self.right.rowconfigure(2, weight=1)
+        self.right.rowconfigure(3, weight=1)
+        self.right.rowconfigure(4, weight=1)
 
         # Create empty figure
         self.first_fig = Figure(figsize=(20 / 2.54, 15 / 2.54))
@@ -617,124 +649,250 @@ class emgGUI:
         --------
         emg_from_demuse, emg_from_otb, refsig_from_otb and emg_from_json in library.
         """
-        try:
-            if self.filetype.get() in ["OTB", "DEMUSE", "OPENHDEMG", "CUSTOMCSV"]:
-                # Check filetype for processing
-                if self.filetype.get() == "OTB":
-                    # Ask user to select the decomposed file
-                    file_path = filedialog.askopenfilename(
-                        title="Open OTB file", filetypes=[("MATLAB files", "*.mat")]
-                    )
-                    self.file_path = file_path
-                    # Load file
-                    self.resdict = openhdemg.emg_from_otb(
-                        filepath=self.file_path,
-                        ext_factor=int(self.extension_factor.get()),
-                    )
+        def load_file():
+            try:
+                if self.filetype.get() in ["OTB", "DEMUSE", "OPENHDEMG", "CUSTOMCSV", "DELSYS"]:
+                    # Check filetype for processing
+                    if self.filetype.get() == "OTB":
+                        # Ask user to select the decomposed file
+                        file_path = filedialog.askopenfilename(
+                            title="Open OTB file to load", filetypes=[("MATLAB files", "*.mat")]
+                        )
+                        self.file_path = file_path
+                        # Load file
+                        self.resdict = openhdemg.emg_from_otb(
+                            filepath=self.file_path,
+                            ext_factor=int(self.extension_factor.get()),
+                        )
+                        # Add filespecs
+                        ttk.Label(
+                            self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
+                        ).grid(column=2, row=2, sticky=(W, E))
+                        ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
+                            column=2, row=3, sticky=(W, E)
+                        )
+                        ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
+                            column=2, row=4, sticky=(W, E)
+                        )
 
-                elif self.filetype.get() == "DEMUSE":
-                    # Ask user to select the file
-                    file_path = filedialog.askopenfilename(
-                        title="Open DEMUSE file", filetypes=[("MATLAB files", "*.mat")]
-                    )
-                    self.file_path = file_path
+                    elif self.filetype.get() == "DEMUSE":
+                        # Ask user to select the file
+                        file_path = filedialog.askopenfilename(
+                            title="Open DEMUSE file to load", filetypes=[("MATLAB files", "*.mat")]
+                        )
+                        self.file_path = file_path
+                        # load file
+                        self.resdict = openhdemg.emg_from_demuse(filepath=self.file_path)
+                        # Add filespecs
+                        ttk.Label(
+                            self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
+                        ).grid(column=2, row=2, sticky=(W, E))
+                        ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
+                            column=2, row=3, sticky=(W, E)
+                        )
+                        ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
+                            column=2, row=4, sticky=(W, E)
+                        )
+                    elif self.filetype.get() == "DELSYS":
+                        # Ask user to select the file
+                        file_path = filedialog.askopenfilename(
+                            title="Select a DELSYS file with raw EMG to load",
+                            filetypes=[("MATLAB files", "*.mat")]
+                        )
+                        # Ask user to open the Delsys decompostition
+                        self.mus_path = filedialog.askdirectory(
+                            title="Select the folder containing the DELSYS decomposition",
+                        )
+                        self.file_path = file_path
 
-                    # load file
-                    self.resdict = openhdemg.emg_from_demuse(filepath=self.file_path)
+                        # load DELSYS
+                        self.resdict = openhdemg.emg_from_delsys(rawemg_filepath=self.file_path,
+                                                                 mus_directory=self.mus_path)
+                        # Add filespecs
+                        ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E))
+                        ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
+                            column=2, row=3, sticky=(W, E)
+                        )
+                        ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
+                            column=2, row=4, sticky=(W, E)
+                        )
 
-                elif self.filetype.get() == "OPENHDEMG":
-                    # Ask user to select the file
-                    file_path = filedialog.askopenfilename(
-                        title="Open JSON file", filetypes=[("JSON files", "*.json")]
-                    )
-                    self.file_path = file_path
+                    elif self.filetype.get() == "OPENHDEMG":
+                        # Ask user to select the file
+                        file_path = filedialog.askopenfilename(
+                            title="Open JSON file to load", filetypes=[("JSON files", "*.json")]
+                        )
+                        self.file_path = file_path
+                        # load OPENHDEMG (.json)
+                        self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
+                        # Add filespecs
+                        # NOTE this is not correct because when the user asks to load OPENHDEMG (.json)
+                        # files, these could contain also the reference signal only. Therefore line 2
+                        # and 3 will crash. I temporarily fixed it, please review it for next release.
+                        if self.resdict["SOURCE"] in ["DEMUSE", "OTB", "CUSTOMCSV", "DELSYS"]:
+                            ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E))
+                            ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W, E))
+                            ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W, E))
+                        else:
+                            # Reconfigure labels for refsig
+                            ttk.Label(
+                                self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))
+                            ).grid(column=2, row=2, sticky=(W, E))
+                            ttk.Label(self.left, text="NA").grid(column=2, row=3, sticky=(W, E))
+                            ttk.Label(self.left, text="        ").grid(
+                                column=2, row=4, sticky=(W, E)
+                            )
+                    else:
+                        # Ask user to select the file
+                        file_path = filedialog.askopenfilename(
+                            title="Open CUSTOMCSV file to load",
+                            filetypes=[("CSV files", "*.csv")],
+                        )
+                        self.file_path = file_path
+                        # load file
+                        self.resdict = openhdemg.emg_from_customcsv(
+                            filepath=self.file_path,
+                            fsamp=float(self.fsamp.get()),
+                        )
+                        # Add filespecs
+                        ttk.Label(self.left, text="Custom CSV").grid(column=2, row=2, sticky=(W, E))
+                        ttk.Label(self.left, text="").grid(column=2, row=3, sticky=(W, E))
+                        ttk.Label(self.left, text="").grid(column=2, row=4, sticky=(W, E))
 
-                    # load OPENHDEMG (.json)
-                    self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
+                    # Get filename
+                    filename = os.path.splitext(os.path.basename(file_path))[0]
+                    self.filename = filename
 
+                    # Add filename to label
+                    self.master.title(self.filename)
+
+                # This sections is used for refsig loading as they required not the 
+                # the filespecs to be loaded.
                 else:
-                    # Ask user to select the file
-                    file_path = filedialog.askopenfilename(
-                        title="Open CUSTOMCSV file",
-                        filetypes=[("CSV files", "*.csv")],
+                    if self.filetype.get() == "OTB_REFSIG":
+                        file_path = filedialog.askopenfilename(
+                            title="Open OTB_REFSIG file to load",
+                            filetypes=[("MATLAB files", "*.mat")],
+                        )
+                        self.file_path = file_path
+                        # load refsig
+                        self.resdict = openhdemg.refsig_from_otb(filepath=self.file_path)
+
+                    elif self.filetype.get() == "DELSYS_REFSIG":
+
+                        # Ask user to select the file
+                        file_path = filedialog.askopenfilename(
+                            title="Select a DELSYS_REFSIG file with raw EMG to load",
+                            filetypes=[("MATLAB files", "*.mat")]
+                        )
+                        self.file_path = file_path
+                        # load DELSYS
+                        self.resdict = openhdemg.refsig_from_delsys(filepath=self.file_path)
+
+                    elif self.filetype.get() == "CUSTOMCSV_REFSIG":
+                        file_path = filedialog.askopenfilename(
+                            title="Open CUSTOMCSV_REFSIG file to load",
+                            filetypes=[("CSV files", "*.csv")],
+                        )
+                        self.file_path = file_path
+                        # load refsig
+                        self.resdict = openhdemg.refsig_from_customcsv(
+                            filepath=self.file_path,
+                            fsamp=float(self.fsamp.get()),
+                        )  # NOTE please check that I used correctly self.fsamp.get() here and above.
+
+                    # Get filename
+                    filename = os.path.splitext(os.path.basename(file_path))[0]
+                    self.filename = filename
+
+                    # Add filename to label
+                    self.master.title(self.filename)
+
+                    # Reconfigure labels for refsig
+                    ttk.Label(
+                        self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))
+                    ).grid(column=2, row=2, sticky=(W, E))
+                    ttk.Label(self.left, text="NA").grid(column=2, row=3, sticky=(W, E))
+                    ttk.Label(self.left, text="        ").grid(
+                        column=2, row=4, sticky=(W, E)
                     )
-                    self.file_path = file_path
+                    
+                # End progress
+                progress.stop()
+                progress.grid_remove()
 
-                    # load file
-                    self.resdict = openhdemg.emg_from_customcsv(filepath=self.file_path)
-
-                # Get filename
-                filename = os.path.splitext(os.path.basename(file_path))[0]
-                self.filename = filename
-
-                # Add filename to label
-                self.master.title(self.filename)
-
-                # Add filespecs
-                ttk.Label(
-                    self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
-                ).grid(column=2, row=2, sticky=(W, E))
-                ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
-                    column=2, row=3, sticky=(W, E)
+            except ValueError:
+                tk.messagebox.showerror(
+                    "Information",
+                    "When an OTB file is loaded, make sure to "
+                    + "\nspecify an extension factor (number) first."
+                    + "\n"
+                    + "When a DELSYS file is loaded, make sure to "
+                    + "\nspecify the correct folder."
                 )
-                ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
-                    column=2, row=4, sticky=(W, E)
-                )   
-                """
-                # BUG with "OPENHDEMG" type we identify all files saved from openhdemg,
-                regardless of the content. This will result in an error for ttk.Label
-                self.resdict["NUMBER_OF_MUS"] and self.resdict["EMG_LENGTH"].
-                """
+                # End progress
+                progress.stop()
+                progress.grid_remove()
 
-            else:
-                # Ask user to select the refsig file
-                if self.filetype.get() == "OTB_REFSIG":
-                    file_path = filedialog.askopenfilename(
-                        title="Open OTB_REFSIG file",
-                        filetypes=[("MATLAB files", "*.mat")],
-                    )
-                    self.file_path = file_path
-                    # load refsig
-                    self.resdict = openhdemg.refsig_from_otb(filepath=self.file_path)
+            except FileNotFoundError:
+                # End progress
+                progress.stop()
+                progress.grid_remove()
 
-                else:  # CUSTOMCSV_REFSIG
-                    file_path = filedialog.askopenfilename(
-                        title="Open CUSTOMCSV_REFSIG file",
-                        filetypes=[("CSV files", "*.csv")],
-                    )
-                    self.file_path = file_path
-                    # load refsig
-                    self.resdict = openhdemg.refsig_from_customcsv(filepath=self.file_path)
-
-                # Get filename
-                filename = os.path.splitext(os.path.basename(file_path))[0]
-                self.filename = filename
-
-                # Add filename to label
-                self.master.title(self.filename)
-
-                # Reconfigure labels for refsig
-                ttk.Label(
-                    self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))
-                ).grid(column=2, row=2, sticky=(W, E))
-                ttk.Label(self.left, text="NA").grid(column=2, row=3, sticky=(W, E))
-                ttk.Label(self.left, text="        ").grid(
-                    column=2, row=4, sticky=(W, E)
+            except TypeError:
+                tk.messagebox.showerror(
+                    "Information",
+                    "Make sure to load correct file"
+                    + "\naccording to your specification.",
                 )
+                # End progress
+                progress.stop()
+                progress.grid_remove()
 
-        except ValueError:
-            tk.messagebox.showerror(
-                "Information",
-                "When an OTB file is loaded, make sure to "
-                + "\nspecify an extension factor (number) first.",
-            )
+            except KeyError:
+                tk.messagebox.showerror(
+                    "Information",
+                    "Make sure to load correct file"
+                    + "\naccording to your specification.",
+                )
+                # End progress
+                progress.stop()
+                progress.grid_remove()
+            except: 
+                # End progress
+                progress.stop()
+                progress.grid_remove()
+
+        # Indicate Progress
+        progress = ttk.Progressbar(self.left, mode="indeterminate")
+        progress.grid(row=4, column=0)
+        progress.start(1)
+
+        # Create a thread to run the load_file function
+        save_thread = threading.Thread(target=load_file)
+        save_thread.start()
 
     def on_filetype_change(self, *args):
         """
         This function is called when the value of the filetype variable is changed.
-        When the filetype is set to "OTB" it will create a second combobox on the grid at column 0 and row 2,
-        and when the filetype is set to something else it will remove the second combobox from the grid.
+        When the filetype is set to "OTB", "CUSTOMCSV", "CUSTOMCSV_REFSIG" it will
+        create a second combobox on the grid at column 0 and row 2 and when the filetype
+        is set to something else it will remove the second combobox from the grid.
         """
+        # Forget previous widget when filetype is changes
+        # NOTE I had to separate them and put them on top of the function to
+        # ensure that changing file type consecutively would not miss the
+        # previous entry or combobox.
+        if self.filetype.get() not in ["OTB"]:
+            if hasattr(self, "otb_combobox"):
+                self.otb_combobox.grid_forget()
+        if self.filetype.get() not in ["CUSTOMCSV"]:
+            if hasattr(self, "csv_entry"):
+                self.csv_entry.grid_forget()
+        if self.filetype.get() not in ["CUSTOMCSV_REFSIG"]:
+            if hasattr(self, "csv_entry"):
+                self.csv_entry.grid_forget()
+
         # Add a combobox containing the OTB extension factors
         # in case an OTB file is loaded
         if self.filetype.get() == "OTB":
@@ -759,44 +917,71 @@ class emgGUI:
             self.otb_combobox.grid(column=0, row=2, sticky=(W, E), padx=5)
             self.otb_combobox.set("Extension Factor")
 
-        # Forget widget when filetype is changes
-        else:
-            if hasattr(self, "otb_combobox"):
-                self.otb_combobox.grid_forget()
+        # NOTE I forgot to mention, but people should be able to select fsamp for .csv files.
+        # Please check if this can be done better.
+        elif self.filetype.get() in ["CUSTOMCSV", "CUSTOMCSV_REFSIG"]:
+            self.fsamp = StringVar(value="Fsamp")
+            self.csv_entry = ttk.Entry(
+                self.left,
+                width=8,
+                textvariable=self.fsamp,
+            )
+            self.csv_entry.grid(column=0, row=2, sticky=(W, E), padx=5)
 
+    # TODO remove this and any reference to it
     def decompose_file(self):
         pass
 
     def save_emgfile(self):
         """
-        Instance method to save the edited emgfile. Results are saves in .json file.
+        Instance method to save the edited emgfile. Results are saved in a .json file.
 
-        Executed when the button "Save File" in master GUI window is pressed.
+        Executed when the "Save File" button in the master GUI window is pressed.
 
         Raises
         ------
         AttributeError
-            When file was not loaded in the GUI.
+            When a file was not loaded in the GUI.
 
         See Also
         --------
         save_json_emgfile in library.
         """
-        try:
-            # Ask user to select the directory and file name
-            save_filepath = filedialog.asksaveasfilename(
-                defaultextension=".*",
-                filetypes=(("JSON files", "*.json"), ("all files", "*.*")),
-            )
+        def save_file():
+            try:
+                # Ask user to select the directory and file name
+                save_filepath = filedialog.asksaveasfilename(
+                    defaultextension=".json",
+                    filetypes=(("JSON files", "*.json"), ("all files", "*.*")),
+                )
 
-            # Get emgfile
-            save_emg = self.resdict
+                if not save_filepath:
+                    # End progress
+                    progress.stop()
+                    progress.grid_remove()
+                    return  # User canceled the file dialog
 
-            # Save json file
-            openhdemg.save_json_emgfile(emgfile=save_emg, filepath=save_filepath)
+                # Get emgfile
+                save_emg = self.resdict
 
-        except AttributeError:
-            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
+                # Save json file
+                openhdemg.save_json_emgfile(emgfile=save_emg, filepath=save_filepath)
+
+                # End progress
+                progress.stop()
+                progress.grid_remove()
+
+            except AttributeError:
+                tk.messagebox.showerror("Information", "Make sure a file is loaded.")
+
+        # Indicate Progress
+        progress = ttk.Progressbar(self.left, mode="indeterminate")
+        progress.grid(row=4, column=0)
+        progress.start(1)
+
+        # Create a thread to run the save_file function
+        save_thread = threading.Thread(target=save_file)
+        save_thread.start()
 
     def export_to_excel(self):
         """
@@ -874,7 +1059,7 @@ class emgGUI:
             # user decided to rest analysis
             try:
                 # reload original file
-                if self.filetype.get() in ["OTB", "DEMUSE", "OPENHDEMG", "CUSTOMCSV"]:
+                if self.filetype.get() in ["OTB", "DEMUSE", "OPENHDEMG", "CUSTOMCSV", "DELSYS"]:
                     if self.filetype.get() == "OTB":
                         self.resdict = openhdemg.emg_from_otb(
                             filepath=self.file_path,
@@ -893,7 +1078,9 @@ class emgGUI:
                         self.resdict = openhdemg.emg_from_customcsv(
                             filepath=self.file_path
                         )
-
+                    elif self.filetype.get() == "DELSYS":
+                        self.resdict = openhdemg.emg_from_delsys(rawemg_filepath=self.file_path,
+                                                                 mus_directory=self.mus_path)
                     # Update Filespecs
                     ttk.Label(
                         self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
@@ -949,6 +1136,15 @@ class emgGUI:
         """
         Open a window for advanced analysis tools.
         """
+        # Disable config for DELSYS files
+        if self.resdict["SOURCE"] == "DELSYS":
+            tk.messagebox.showerror(
+                "Information",
+                "Advanced Tools for Delsys are only accessible from the library.",
+            )
+            # NOTE I would show an error message
+            return
+
         # Open window
         self.a_window = tk.Toplevel(bg="LightBlue4", height=200)
         self.a_window.title("Advanced Tools Window")
@@ -1001,7 +1197,7 @@ class emgGUI:
         matrix_code = ttk.Combobox(
             self.a_window, width=10, textvariable=self.mat_code_adv
         )
-        matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808", "None")
+        matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808", "Trigno Galileo Sensor", "None")
         matrix_code["state"] = "readonly"
         matrix_code.grid(row=4, column=1, sticky=(W, E))
         self.mat_code_adv.set("GR08MM1305")
@@ -1066,8 +1262,8 @@ class emgGUI:
         --------
         plot_refsig, plot_idr in the library.
         """
-        try:
-            if self.filetype.get() in ["OTB_REFSIG", "CUSTOMCSV_REFSIG"]:
+        try:  # NOTE as I previously said, OPENHDEMG (.json) files can contain anything. better check SOURCE.
+            if self.resdict["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]:
                 self.fig = openhdemg.plot_refsig(
                     emgfile=self.resdict, showimmediately=False, tight_layout=True
                 )
@@ -1123,6 +1319,9 @@ class emgGUI:
         except AttributeError:
             tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
+        except KeyError:
+            tk.messagebox.showerror("Information", "Sorting not possible when ≤ 1"
+                                    + "\nMU is present in the File (i.e. Refsigs)")
     # -----------------------------------------------------------------------------------------------
     # Removal of single motor units
 
@@ -1149,7 +1348,7 @@ class emgGUI:
 
             # Select Motor Unit
             ttk.Label(self.head, text="Select MU:").grid(
-                column=0, row=0, padx=5, pady=5
+                column=1, row=0, padx=5, pady=5, sticky=W
             )
 
             self.mu_to_remove = StringVar()
@@ -1159,18 +1358,21 @@ class emgGUI:
             )
             removed_mu["values"] = removed_mu_value
             removed_mu["state"] = "readonly"
-            removed_mu.grid(column=1, row=0, sticky=(W, E), padx=5, pady=5)
+            removed_mu.grid(column=1, row=1, columnspan=2, sticky=(W, E), padx=5, pady=5)
 
             # Remove Motor unit
             remove = ttk.Button(self.head, text="Remove MU", command=self.remove)
-            remove.grid(column=1, row=1, sticky=(W, E), padx=5, pady=5)
+            remove.grid(column=1, row=2, sticky=(W, E), padx=5, pady=5)
 
+            # Remove empty MUs
+            remove_empty = ttk.Button(self.head, text="Remove empty MUs", command=self.remove_empty)
+            remove_empty.grid(column=2, row=2, padx=5, pady=5)
         else:
             tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
     def remove(self):
         """
-        Instance methof that actually removes a selected motor unit based on user specification.
+        Instance method that actually removes a selected motor unit based on user specification.
 
         Executed when button "Remove MU" in Motor Unit Removal Window is pressed.
         The emgfile and the plot are subsequently updated.
@@ -1197,7 +1399,44 @@ class emgGUI:
             )
             removed_mu["values"] = removed_mu_value
             removed_mu["state"] = "readonly"
-            removed_mu.grid(column=1, row=0, sticky=(W, E), padx=5, pady=5)
+            removed_mu.grid(column=1, row=1, columnspan=2, sticky=(W, E), padx=5, pady=5)
+
+            # Update plot
+            if hasattr(self, "fig"):
+                self.in_gui_plotting()
+
+        except AttributeError:
+            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
+
+    def remove_empty(self):
+        """
+        Instance method that removes all empty MUs.
+
+        Executed when button "Remove empty MUs" in Motor Unit Removal Window is pressed.
+        The emgfile and the plot are subsequently updated.
+
+        See Also
+        --------
+        delete_empty_mus in library.
+        """
+        try:
+            # Get resdict with MU removed
+            self.resdict = openhdemg.delete_empty_mus(self.resdict)
+
+            # Upate MU number
+            ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
+                column=2, row=3, sticky=(W, E)
+            )
+
+            # Update selection field
+            self.mu_to_remove = StringVar()
+            removed_mu_value = [*range(0, self.resdict["NUMBER_OF_MUS"])]
+            removed_mu = ttk.Combobox(
+                self.head, width=10, textvariable=self.mu_to_remove
+            )
+            removed_mu["values"] = removed_mu_value
+            removed_mu["state"] = "readonly"
+            removed_mu.grid(column=1, row=1, columnspan=2, sticky=(W, E), padx=5, pady=5)
 
             # Update plot
             if hasattr(self, "fig"):
@@ -1511,11 +1750,23 @@ class emgGUI:
                 titlesize=10,
             )
             start, end = points[0], points[1]
-            self.resdict, _, _ = openhdemg.resize_emgfile(
-                emgfile=self.resdict, area=[start, end]
-            )
+
+            # Delsys requires different handling for resize
+            if self.resdict["SOURCE"] == "DELSYS":
+                self.resdict, _, _ = openhdemg.resize_emgfile(
+                emgfile=self.resdict, area=[start, end], accuracy="maintain"
+                )
+            else:
+                self.resdict, _, _ = openhdemg.resize_emgfile(
+                    emgfile=self.resdict, area=[start, end]
+                )
             # Update Plot
             self.in_gui_plotting()
+
+            # Update filelength
+            ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
+                    column=2, row=4, sticky=(W, E)
+            ) 
 
         except AttributeError:
             tk.messagebox.showerror("Information", "Make sure a file is loaded.")
@@ -1990,7 +2241,7 @@ class emgGUI:
             ttk.Label(self.head, text="Matrix Code").grid(row=0, column=3, sticky=(W))
             self.mat_code = StringVar()
             matrix_code = ttk.Combobox(self.head, width=15, textvariable=self.mat_code)
-            matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808", "None")
+            matrix_code["values"] = ("GR08MM1305", "GR04MM1305", "GR10MM0808", "Trigno Galileo Sensor", "None")
             matrix_code["state"] = "readonly"
             matrix_code.grid(row=0, column=4, sticky=(W, E))
             self.mat_code.set("GR08MM1305")
@@ -2008,6 +2259,8 @@ class emgGUI:
             orientation["state"] = "readonly"
             orientation.grid(row=1, column=4, sticky=(W, E))
             self.mat_orientation.set("180")
+            if self.resdict["SOURCE"] == "DELSYS":
+                orientation.config(state="disabled")
 
             # Plot derivation
             # Button
@@ -2056,6 +2309,9 @@ class emgGUI:
             config_muap["state"] = "readonly"
             config_muap.grid(row=4, column=4, sticky=(W, E))
             self.muap_config.set("Configuration")
+            # Disable config for DELSYS files
+            if self.resdict["SOURCE"] == "DELSYS":
+                config_muap.config(state="disabled")
 
             # Combobox MU Number
             self.muap_munum = StringVar()
@@ -2072,6 +2328,8 @@ class emgGUI:
             timewindow["values"] = ("25", "50", "100", "200")
             timewindow.grid(row=4, column=6, sticky=(W, E))
             self.muap_time.set("Timewindow (ms)")
+            if self.resdict["SOURCE"] == "DELSYS":
+                timewindow.config(state="disabled")
 
             # Matrix Illustration Graphic
             matrix_canvas = Canvas(self.head, height=150, width=600, bg="white")
@@ -2215,7 +2473,9 @@ class emgGUI:
 
         # Plot reference signal
         openhdemg.plot_refsig(
-            emgfile=self.resdict, timeinseconds=self.time_sec.get(), figsize=figsize
+            emgfile=self.resdict,
+            timeinseconds=eval(self.time_sec.get()),
+            figsize=figsize,
         )
 
     def plt_mupulses(self):
@@ -2451,76 +2711,83 @@ class emgGUI:
             )
         except UnboundLocalError:
             tk.messagebox.showerror(
-                "Information", "Enter valid Configuration and Matrx Column."
+                "Information", "Enter valid Configuration and Matrix Column."
             )
 
         except KeyError:
-            tk.messagebox.showerror("Information", "Enter valid Matrx Column.")
+            tk.messagebox.showerror("Information", "Enter valid Matrix Column.")
 
     def plot_muaps(self):
         """
         Instance methos to plot motor unit action potenital obtained from STA from one or
-        multiple MUs.
+        multiple MUs. Except for DELSYS files, where the STA is not comupted.
 
         There is no limit to the number of MUs and STA files that can be overplotted.
         ``Remember: the different STAs should be matched`` with same number of electrode,
         processing (i.e., differential) and computed on the same timewindow.
         """
         try:
-            if self.mat_code.get() == "None":
-                # Get rows and columns and turn into list
-                list_rcs = [int(i) for i in self.matrix_rc.get().split(",")]
+            # DELSYS requires different MUAPS plot
+            if self.resdict["SOURCE"] == "DELSYS":
+                figsize = [int(i) for i in self.size_fig.get().split(",")]
+                muaps_dict = openhdemg.extract_delsys_muaps(self.resdict)
+                openhdemg.plot_muaps(muaps_dict[int(self.muap_munum.get())], figsize=figsize)
+            
+            else:
+                if self.mat_code.get() == "None":
+                    # Get rows and columns and turn into list
+                    list_rcs = [int(i) for i in self.matrix_rc.get().split(",")]
 
-                try:
+                    try:
+                        # Sort emg file
+                        sorted_file = openhdemg.sort_rawemg(
+                            emgfile=self.resdict,
+                            code=self.mat_code.get(),
+                            orientation=int(self.mat_orientation.get()),
+                            n_rows=list_rcs[0],
+                            n_cols=list_rcs[1]
+                        )
+
+                    except ValueError:
+                        tk.messagebox.showerror(
+                                "Information",
+                                "Number of specified rows and columns must match"
+                                + "\nnumber of channels."
+                        )
+                        return
+                    
+                else:
                     # Sort emg file
                     sorted_file = openhdemg.sort_rawemg(
                         emgfile=self.resdict,
                         code=self.mat_code.get(),
                         orientation=int(self.mat_orientation.get()),
-                        n_rows=list_rcs[0],
-                        n_cols=list_rcs[1]
                     )
 
-                except ValueError:
-                    tk.messagebox.showerror(
-                            "Information",
-                            "Number of specified rows and columns must match"
-                            + "\nnumber of channels."
-                    )
-                    return
-                
-            else:
-                # Sort emg file
-                sorted_file = openhdemg.sort_rawemg(
+                # calcualte derivation
+                if self.muap_config.get() == "Single differential":
+                    diff_file = openhdemg.diff(sorted_rawemg=sorted_file)
+
+                elif self.muap_config.get() == "Double differential":
+                    diff_file = openhdemg.double_diff(sorted_rawemg=sorted_file)
+
+                elif self.muap_config.get() == "Monopolar":
+                    diff_file = sorted_file
+
+                # Calculate STA dictionary
+                # Plot deviation
+                sta_dict = openhdemg.sta(
                     emgfile=self.resdict,
-                    code=self.mat_code.get(),
-                    orientation=int(self.mat_orientation.get()),
+                    sorted_rawemg=diff_file,
+                    firings="all",
+                    timewindow=int(self.muap_time.get()),
                 )
 
-            # calcualte derivation
-            if self.muap_config.get() == "Single differential":
-                diff_file = openhdemg.diff(sorted_rawemg=sorted_file)
+                # Create list of figsize
+                figsize = [int(i) for i in self.size_fig.get().split(",")]
 
-            elif self.muap_config.get() == "Double differential":
-                diff_file = openhdemg.double_diff(sorted_rawemg=sorted_file)
-
-            elif self.muap_config.get() == "Monopolar":
-                diff_file = sorted_file
-
-            # Calculate STA dictionary
-            # Plot deviation
-            sta_dict = openhdemg.sta(
-                emgfile=self.resdict,
-                sorted_rawemg=diff_file,
-                firings="all",
-                timewindow=int(self.muap_time.get()),
-            )
-
-            # Create list of figsize
-            figsize = [int(i) for i in self.size_fig.get().split(",")]
-
-            # Plot MUAPS
-            openhdemg.plot_muaps(sta_dict[int(self.muap_munum.get())], figsize=figsize)
+                # Plot MUAPS
+                openhdemg.plot_muaps(sta_dict[int(self.muap_munum.get())], figsize=figsize)
 
         except ValueError:
             tk.messagebox.showerror(
@@ -2539,7 +2806,7 @@ class emgGUI:
             tk.messagebox.showerror("Information", "Enter valid Configuration.")
 
         except KeyError:
-            tk.messagebox.showerror("Information", "Enter valid Matrx Column.")
+            tk.messagebox.showerror("Information", "Enter valid Matrix Column.")
 
     # -----------------------------------------------------------------------------------------------
     # Advanced Analysis
@@ -2548,13 +2815,15 @@ class emgGUI:
         """
         Open top-level windows based on the selected advanced method.
         """
+        
 
         if self.advanced_method.get() == "Motor Unit Tracking":
             head_title = "MUs Tracking Window"
-        elif self.advanced_method.get() == "Duplicate Removal":
-            head_title = "Duplicate Removal Window"
-        else:
+        elif self.advanced_method.get() == "Conduction Velocity": 
             head_title = "Conduction Velocity Window"
+        else:
+            head_title = "Duplicate Removal Window"
+        
 
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title(head_title)
@@ -2661,9 +2930,7 @@ class emgGUI:
         # Add Which widget and update the track button
         # to match functionalities required for duplicate removal
         if self.advanced_method.get() == "Duplicate Removal":
-            
-            # Update title
-            
+
             # Add Which label
             ttk.Label(self.head, text="Which").grid(column=0, row=14)
             # Combobox for Which option
@@ -2710,7 +2977,14 @@ class emgGUI:
                             + "\nnumber of channels."
                         )
                         return
-
+                # # DELSYS conduction velocity not available
+                # elif self.mat_code_adv.get() == "Trigno Galileo Sensor":
+                #     tk.messagebox.showerror(
+                #         "Information",
+                #         "MUs conduction velocity estimation is not available for this matrix."
+                #         )
+                #     return
+                
                 else:
                     # Sort emg file
                     sorted_rawemg = openhdemg.sort_rawemg(

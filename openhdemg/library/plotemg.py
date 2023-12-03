@@ -1030,8 +1030,7 @@ def plot_muaps(
                 if min_ < xmin:
                     xmin = min_
 
-        # Obtain number of columns and rows, this changes if we use
-        # differential derivations
+        # Obtain number of columns and rows
         cols = len(sta_dict[0])
         rows = len(sta_dict[0]["col0"].columns)
         fig, axs = plt.subplots(
@@ -1042,16 +1041,44 @@ def plot_muaps(
             sharex=True,
         )
 
-        for thisdict in sta_dict:
-            # Plot all the MUAPs, c means matrix columns, r rows
-            for r in range(rows):
-                for pos, c in enumerate(thisdict.keys()):
-                    axs[r, pos].plot(thisdict[c].iloc[:, r])
+        # Manage exception of arrays instead of matrices and check that they
+        # are correctly oriented.
+        if cols > 1 and rows > 1:
+            # Matrices
+            for thisdict in sta_dict:
+                # Plot all the MUAPs, c means matrix columns, r rows
+                for r in range(rows):
+                    for pos, c in enumerate(thisdict.keys()):
+                        axs[r, pos].plot(thisdict[c].iloc[:, r])
 
-                    axs[r, pos].set_ylim(xmin, xmax)
-                    axs[r, pos].xaxis.set_visible(False)
-                    axs[r, pos].set(yticklabels=[])
-                    axs[r, pos].tick_params(left=False)
+                        axs[r, pos].set_ylim(xmin, xmax)
+                        axs[r, pos].xaxis.set_visible(False)
+                        axs[r, pos].set(yticklabels=[])
+                        axs[r, pos].tick_params(left=False)
+
+        elif cols == 1 and rows > 1:
+            # Arrays
+            for thisdict in sta_dict:
+                # Plot all the MUAPs, c means matrix columns, r rows
+                for r in range(rows):
+                    for pos, c in enumerate(thisdict.keys()):
+                        axs[r].plot(thisdict[c].iloc[:, r])
+
+                        axs[r].set_ylim(xmin, xmax)
+                        axs[r].xaxis.set_visible(False)
+                        axs[r].set(yticklabels=[])
+                        axs[r].tick_params(left=False)
+
+        elif cols > 1 and rows == 1:
+            raise ValueError(
+                "Arrays should be organised as 1 column, multiple rows. " +
+                "Not as 1 row, multiple columns."
+            )
+
+        else:
+            raise ValueError(
+                "Unacceptable number of rows and columns to plot"
+            )
 
         showgoodlayout(tight_layout=False, despined=True)
         if showimmediately:
@@ -1345,7 +1372,7 @@ def plot_muaps_for_cv(
     >>> fig = emg.plot_muaps_for_cv(
     ...     sta_dict=sta[0],
     ...     xcc_sta_dict=xcc_sta[0],
-    ...     showimmediately=False,
+    ...     showimmediately=True,
     ... )
     """
 
@@ -1378,27 +1405,64 @@ def plot_muaps_for_cv(
 
     # Plot all the MUAPs, c means matrix columns, r rows
     keys = list(sta_dict.keys())
-    for r in range(rows):
-        for pos, c in enumerate(keys):
-            axs[r, pos].plot(sta_dict[c].iloc[:, r])
+    # Manage exception of arrays instead of matrices and check that they
+    # are correctly oriented.
+    if cols > 1 and rows > 1:
+        for r in range(rows):
+            for pos, c in enumerate(keys):
+                axs[r, pos].plot(sta_dict[c].iloc[:, r])
 
-            axs[r, pos].set_ylim(ymin, ymax)
-            axs[r, pos].xaxis.set_visible(False)
-            axs[r, pos].set(yticklabels=[])
-            axs[r, pos].tick_params(left=False)
+                axs[r, pos].set_ylim(ymin, ymax)
+                axs[r, pos].xaxis.set_visible(False)
+                axs[r, pos].set(yticklabels=[])
+                axs[r, pos].tick_params(left=False)
 
-            if r != 0:
-                xcc = round(xcc_sta_dict[c].iloc[:, r].iloc[0], 2)
-                title = xcc
-                color = "k" if xcc >= 0.8 else "r"
-                axs[r, pos].set_title(
-                    title, fontsize=8, color=color, loc="left", pad=3
-                )
+                if r != 0:
+                    xcc = round(xcc_sta_dict[c].iloc[:, r].iloc[0], 2)
+                    title = xcc
+                    color = "k" if xcc >= 0.8 else "r"
+                    axs[r, pos].set_title(
+                        title, fontsize=8, color=color, loc="left", pad=3
+                    )
 
-            else:
-                axs[r, pos].set_title(c, fontsize=12, pad=20)
+                else:
+                    axs[r, pos].set_title(c, fontsize=12, pad=20)
 
-            axs[r, pos].set_ylabel(r, fontsize=6, rotation=0, labelpad=0)
+                axs[r, pos].set_ylabel(r, fontsize=6, rotation=0, labelpad=0)
+
+    elif cols == 1 and rows > 1:
+        for r in range(rows):
+            for pos, c in enumerate(keys):
+                axs[r].plot(sta_dict[c].iloc[:, r])
+
+                axs[r].set_ylim(ymin, ymax)
+                axs[r].xaxis.set_visible(False)
+                axs[r].set(yticklabels=[])
+                axs[r].tick_params(left=False)
+
+                if r != 0:
+                    xcc = round(xcc_sta_dict[c].iloc[:, r].iloc[0], 2)
+                    title = xcc
+                    color = "k" if xcc >= 0.8 else "r"
+                    axs[r].set_title(
+                        title, fontsize=8, color=color, loc="left", pad=3
+                    )
+
+                else:
+                    axs[r].set_title(c, fontsize=12, pad=20)
+
+                axs[r].set_ylabel(r, fontsize=6, rotation=0, labelpad=0)
+
+    elif cols > 1 and rows == 1:
+        raise ValueError(
+            "Arrays should be organised as 1 column, multiple rows. " +
+            "Not as 1 row, multiple columns."
+        )
+
+    else:
+        raise ValueError(
+            "Unacceptable number of rows and columns to plot"
+        )
 
     showgoodlayout(tight_layout=False, despined=True)
     if showimmediately:

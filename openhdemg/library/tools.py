@@ -94,7 +94,8 @@ def create_binary_firings(emg_length, number_of_mus, mupulses):
     number_of_mus : int
         Number of MUs in the emg file.
     mupulses : list of ndarrays
-        Each ndarray should contain the times of firing of each MU.
+        Each ndarray should contain the times of firing (in samples) of each
+        MU.
 
     Returns
     -------
@@ -102,27 +103,21 @@ def create_binary_firings(emg_length, number_of_mus, mupulses):
         A pd.DataFrame containing the binary representation of MUs firing.
     """
 
-    # skip the step if I don't have the mupulses (is nan)
-    if isinstance(mupulses, list):
-        # create an empty pd.DataFrame containing zeros
-        binary_MUs_firing = pd.DataFrame(np.zeros((emg_length, number_of_mus)))
-        # Loop through the columns (MUs) and isolate the data of interest
-        for i in range(number_of_mus):
-            this_mu_binary_firing = binary_MUs_firing[i]
-            this_mu_pulses = pd.DataFrame(mupulses[i])
-
-            # Loop through the rows (time) and assign 1 if the MU is firing
-            for position in range(len(this_mu_pulses)):
-                firing_point = int(this_mu_pulses.iat[position, 0])
-                this_mu_binary_firing.iloc[firing_point] = 1
-
-            # Merge the work done with the original pd.DataFrame of zeros
-            binary_MUs_firing[i] = this_mu_binary_firing
-
-        return binary_MUs_firing
-
-    else:
+    # Skip the step if I don't have the mupulses (is nan)
+    if not isinstance(mupulses, list):
         raise ValueError("mupulses is not a list of ndarrays")
+
+    # Initialize a pd.DataFrame with zeros
+    binary_MUs_firing = pd.DataFrame(
+        np.zeros((emg_length, number_of_mus), dtype=int)
+    )
+
+    for mu in range(number_of_mus):
+        if len(mupulses[mu]) > 0:
+            firing_points = mupulses[mu].astype(int)
+            binary_MUs_firing.iloc[firing_points, mu] = 1
+
+    return binary_MUs_firing
 
 
 def mupulses_from_binary(binarymusfiring):
@@ -137,7 +132,7 @@ def mupulses_from_binary(binarymusfiring):
     Returns
     -------
     MUPULSES : list
-        A list of ndarrays containing the firing time of each MU.
+        A list of ndarrays containing the firing time (in samples) of each MU.
     """
 
     # Create empty list of lists to fill with ndarrays containing the MUPULSES
@@ -145,15 +140,14 @@ def mupulses_from_binary(binarymusfiring):
     numberofMUs = len(binarymusfiring.columns)
     MUPULSES = [[] for _ in range(numberofMUs)]
 
-    for i in binarymusfiring:  # Loop all the MUs
+    for mu in binarymusfiring:  # Loop all the MUs
         my_ndarray = []
-        for idx, x in binarymusfiring[i].items():  # Loop the MU firing times
+        for idx, x in binarymusfiring[mu].items():  # Loop the MU firing times
             if x > 0:
                 my_ndarray.append(idx)
                 # Take the firing time and add it to the ndarray
 
-        my_ndarray = np.array(my_ndarray)
-        MUPULSES[i] = my_ndarray
+        MUPULSES[mu] = np.array(my_ndarray)
 
     return MUPULSES
 
@@ -207,70 +201,98 @@ def resize_emgfile(emgfile, area=None, accuracy="recalculate"):
         )
         start_, end_ = points[0], points[1]
 
+    # Double check that start_, end_ are within the real range.
+    if start_ < 0:
+        start_ = 0
+    if end_ > emgfile["REF_SIGNAL"].shape[0]:
+        end_ = emgfile["REF_SIGNAL"].shape[0]
+
     # Create the object to store the resized emgfile.
     rs_emgfile = copy.deepcopy(emgfile)
-    """
-    ACCURACY should be re-computed on the new portion of the file if possible.
-    Need to be resized: ==>
-    emgfile =   {
-                "SOURCE": SOURCE,
-                ==> "RAW_SIGNAL": RAW_SIGNAL,
-                ==> "REF_SIGNAL": REF_SIGNAL,
-                ==> "ACCURACY": ACCURACY,
-                ==> "IPTS": IPTS,
-                ==> "MUPULSES": MUPULSES,
-                "FSAMP": FSAMP,
-                "IED": IED,
-                ==> "EMG_LENGTH": EMG_LENGTH,
-                "NUMBER_OF_MUS": NUMBER_OF_MUS,
-                ==> "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
-                }
-    """
 
-    # Resize the reference signal and identify the first value of the index to
-    # resize the mupulses. Then, reset the index.
-    rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
-    first_idx = rs_emgfile["REF_SIGNAL"].index[0]
-    rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].reset_index(drop=True)
-    rs_emgfile["RAW_SIGNAL"] = (
-        rs_emgfile["RAW_SIGNAL"].loc[start_:end_].reset_index(drop=True)
-    )
-    rs_emgfile["IPTS"] = rs_emgfile["IPTS"].loc[start_:end_].reset_index(drop=True)
-    rs_emgfile["EMG_LENGTH"] = int(len(rs_emgfile["IPTS"].index))
-    rs_emgfile["BINARY_MUS_FIRING"] = (
-        rs_emgfile["BINARY_MUS_FIRING"].loc[start_:end_].reset_index(drop=True)
-    )
+    if emgfile["SOURCE"] in ["DEMUSE", "OTB", "CUSTOMCSV", "DELSYS"]:
+        """
+        ACCURACY should be re-computed on the new portion of the file if
+        possible. Need to be resized: ==>
+        emgfile =   {
+            "SOURCE": SOURCE,
+            ==> "RAW_SIGNAL": RAW_SIGNAL,
+            ==> "REF_SIGNAL": REF_SIGNAL,
+            ==> "ACCURACY": ACCURACY,
+            ==> "IPTS": IPTS,
+            ==> "MUPULSES": MUPULSES,
+            "FSAMP": FSAMP,
+            "IED": IED,
+            ==> "EMG_LENGTH": EMG_LENGTH,
+            "NUMBER_OF_MUS": NUMBER_OF_MUS,
+            ==> "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
+        }
+        """
 
-    for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
-        # Mask the array based on a filter and return the values in an array
-        rs_emgfile["MUPULSES"][mu] = (
-            rs_emgfile["MUPULSES"][mu][
-                (rs_emgfile["MUPULSES"][mu] >= start_)
-                & (rs_emgfile["MUPULSES"][mu] < end_)
-            ]
-            - first_idx
+        # Resize the reference signal and identify the first value of the
+        # index to resize the mupulses. Then, reset the index.
+        rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
+        first_idx = rs_emgfile["REF_SIGNAL"].index[0]
+        rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].reset_index(drop=True)
+        rs_emgfile["RAW_SIGNAL"] = (
+            rs_emgfile["RAW_SIGNAL"].loc[start_:end_].reset_index(drop=True)
+        )
+        rs_emgfile["IPTS"] = rs_emgfile["IPTS"].loc[start_:end_].reset_index(drop=True)
+        rs_emgfile["EMG_LENGTH"] = int(len(rs_emgfile["RAW_SIGNAL"].index))
+        rs_emgfile["BINARY_MUS_FIRING"] = (
+            rs_emgfile["BINARY_MUS_FIRING"].loc[start_:end_].reset_index(drop=True)
         )
 
-    # Compute SIL or leave original ACCURACY
-    if accuracy == "recalculate":
-        if rs_emgfile["NUMBER_OF_MUS"] > 0:
-            if not rs_emgfile["IPTS"].empty:
-                # Calculate SIL
-                to_append = []
-                for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
-                    res = compute_sil(
-                        ipts=rs_emgfile["IPTS"][mu],
-                        mupulses=rs_emgfile["MUPULSES"][mu],
+        for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
+            # Mask the array based on a filter and return the values in an array
+            rs_emgfile["MUPULSES"][mu] = (
+                rs_emgfile["MUPULSES"][mu][
+                    (rs_emgfile["MUPULSES"][mu] >= start_)
+                    & (rs_emgfile["MUPULSES"][mu] < end_)
+                ]
+                - first_idx
+            )
+
+        # Compute SIL or leave original ACCURACY
+        if accuracy == "recalculate":
+            if rs_emgfile["NUMBER_OF_MUS"] > 0:
+                if not rs_emgfile["IPTS"].empty:
+                    # Calculate SIL
+                    to_append = []
+                    for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
+                        res = compute_sil(
+                            ipts=rs_emgfile["IPTS"][mu],
+                            mupulses=rs_emgfile["MUPULSES"][mu],
+                        )
+                        to_append.append(res)
+                    rs_emgfile["ACCURACY"] = pd.DataFrame(to_append)
+
+                else:
+                    raise ValueError(
+                        "Impossible to calculate ACCURACY (SIL). IPTS not found." +
+                        " If IPTS is not present or empty, set accuracy='maintain'"
                     )
-                    to_append.append(res)
-                rs_emgfile["ACCURACY"] = pd.DataFrame(to_append)
 
-            else:
-                raise ValueError(
-                    "Impossible to calculate ACCURACY (SIL). IPTS not found"
-                )
+        elif accuracy == "maintain":
+            # rs_emgfile["ACCURACY"] = rs_emgfile["ACCURACY"]
+            pass
 
-    return rs_emgfile, start_, end_
+        else:
+            raise ValueError(
+                f"Accuracy can only be 'recalculate' or 'maintain'. {accuracy} was passed instead."
+            )
+
+        return rs_emgfile, start_, end_
+
+    elif emgfile["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]:
+        rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
+        first_idx = rs_emgfile["REF_SIGNAL"].index[0]
+        rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].reset_index(drop=True)
+
+        return rs_emgfile, start_, end_
+
+    else:
+        raise ValueError("\nFile source not recognised\n")
 
 
 def compute_idr(emgfile):
@@ -680,6 +702,10 @@ def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
     -------
     filteredrawsig : dict
         The dictionary containing the emgfile with a filtered RAW_SIGNAL.
+        Currently, the returned filteredrawsig cannot be accurately compressed
+        when using the functions ``save_json_emgfile()`` and ``asksavefile()``.
+        We therefore suggest you to save the unfiltered emgfile if you want to
+        obtain maximum compression.
 
     See also
     --------

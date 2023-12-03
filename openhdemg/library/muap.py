@@ -210,7 +210,59 @@ def double_diff(sorted_rawemg):
     return dd
 
 
-# This function exploits parallel processing to compute the STA
+def extract_delsys_muaps(emgfile):
+    """
+    Extract MUAPs obtained from Delsys decomposition.
+
+    The extracted MUAPs will be stored in the same structure of the MUAPs
+    obtained with the ``sta`` funtion.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+
+    Returns
+    -------
+    muaps_dict : dict
+        dict containing a dict of MUAPs (pd.DataFrame) for every MUs.
+
+    See also
+    --------
+    - sta : Computes the spike-triggered average (STA) of every MUs.
+
+    Notes
+    -----
+    The returned file can be used wherever MUAPs from spike triggered
+    averaging are required.
+
+    Examples
+    --------
+    Visualise the MUAPs of the first MU.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="DELSYS")
+    >>> muaps = emg.extract_delsys_muaps(emgfile)
+    >>> emg.plot_muaps(muaps[0])
+
+    Visualise the MUAPs of the first 3 MUs.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="DELSYS")
+    >>> muaps = emg.extract_delsys_muaps(emgfile)
+    >>> emg.plot_muaps([muaps[0], muaps[1], muaps[2]])
+    """
+
+    all_muaps = emgfile["EXTRAS"]
+    muaps_dict = {mu: None for mu in range(emgfile["NUMBER_OF_MUS"])}
+    for mu in range(emgfile["NUMBER_OF_MUS"]):
+        df = pd.DataFrame(all_muaps.filter(regex=f"MU_{mu}_CH_"))
+        df.columns = range(len(df.columns))
+        muaps_dict[mu] = {"col0": df}
+
+    return muaps_dict
+
+
 def sta(
     emgfile, sorted_rawemg, firings=[0, 50], timewindow=50
 ):
@@ -325,72 +377,31 @@ def sta(
     sta_dict = {mu: {} for mu in range(emgfile["NUMBER_OF_MUS"])}
 
     # Calculate STA on sorted_rawemg for every mu and put it into sta_dict[mu]
-    # Loop all the MUs to fill sta_dict
     for mu in sta_dict.keys():
-        pass
-
-    # STA function to run in parallel
-    def parallel(mu):
         # Set firings if firings="all"
         if firings == "all":
             firings_ = [0, len(emgfile["MUPULSES"][mu])]
         else:
             firings_ = firings
 
-        # Loop the matrix columns
+        # Calculate STA for each column in sorted_rawemg
         sorted_rawemg_sta = {}
         for col in sorted_rawemg.keys():
-            # Container of STA for matrix rows
             row_dict = {}
-            # Loop the matrix rows
             for row in sorted_rawemg[col].columns:
-
-                # Find the mupulses
                 thismups = emgfile["MUPULSES"][mu][firings_[0]: firings_[1]]
-
-                # Container of ST area for averaging
-                df = {}
-                for pos, pulse in enumerate(thismups):
-                    df[pos] = (
-                        sorted_rawemg[col][row]
-                        .iloc[pulse - halftime: pulse + halftime]
-                        .reset_index(drop=True)
-                    )
-
-                # Average df columns and fill df
-                df = pd.DataFrame(df)
-                df = df.mean(axis="columns")
-
-                row_dict[row] = df
-
+                df = sorted_rawemg[col][row].to_numpy()
+                # Calculate STA using NumPy vectorized operations
+                sta_values = []
+                for pulse in thismups:
+                    sta_values.append(df[pulse - halftime: pulse + halftime])
+                row_dict[row] = np.mean(sta_values, axis=0)
             sorted_rawemg_sta[col] = pd.DataFrame(row_dict)
-
-        # Add a reference to the MU number to sort the values returned by
-        # parallel processing
-        sorted_rawemg_sta["munumber"] = mu
-
-        return sorted_rawemg_sta
-        # TODO verify built-in options to return from joblib.Parallel
-
-    # Start parallel execution
-    # Meausere running time
-    t0 = time.time()
-
-    res = Parallel(n_jobs=-1)(delayed(parallel)(mu) for mu in sta_dict.keys())
-
-    t1 = time.time()
-    print(f"\nTime of sta parallel processing: {round(t1-t0, 2)} Sec\n")
-
-    # Sort output of the parallel processing according to MU number
-    for i in res:
-        mu = i["munumber"]
-        del i["munumber"]
-        sta_dict[mu] = i
+        sta_dict[mu] = sorted_rawemg_sta
 
     return sta_dict
 
 
-# This function exploits parallel processing to compute the MUAPs
 def st_muap(emgfile, sorted_rawemg, timewindow=50):
     """
     Generate spike triggered MUAPs of every MUs.
@@ -414,7 +425,7 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
     stmuap : dict
         dict containing a dict of ST MUAPs (pd.DataFrame) for every MUs.
         The pd.DataFrames containing the ST MUAPs are organised based on matrix
-        rows (dict) and matrix channel.
+        rows (dict) and matrix channels.
         For example, the ST MUAPs of the first MU (0), in the second electrode
         of the first matrix column can be accessed as stmuap[0]["col0"][1].
 
@@ -460,64 +471,33 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
     timewindow_samples = round((timewindow / 1000) * emgfile["FSAMP"])
     halftime = round(timewindow_samples / 2)
 
-    # Container of the STA for every MUs
-    # {0: {}, 1: {}, 2: {}, 3: {}}
-    stmuap = {mu: {} for mu in range(emgfile["NUMBER_OF_MUS"])}
+    # Container of the ST for every MUs
+    # {0: {}, 1: {}, 2: {}, 3: {} ...}
+    sta_dict = {mu: {} for mu in range(emgfile["NUMBER_OF_MUS"])}
 
-    # Calculate ST MUAPs on sorted_rawemg for every mu and put it into
-    # sta_dict[mu]. Loop all the MUs to fill sta_dict.
-    # ST MUAPS function to run in parallel
-    def parallel(mu):
-        # Loop the matrix columns
-        sorted_rawemg_st = {}
+    # Calculate ST on sorted_rawemg for every mu and put it into sta_dict[mu]
+    for mu in sta_dict.keys():
+        # Container for the st of each MUs' matrix column.
+        sta_dict_cols = {}
+        # Get MUPULSES for this MU
+        thismups = emgfile["MUPULSES"][mu]
+        # Calculate ST for each channel in each column in sorted_rawemg
         for col in sorted_rawemg.keys():
-
-            # Container of ST MUAPs for matrix rows
-            row_dict = {}
-            # Loop the matrix rows
+            # Container for the st of each channel (row) in that matrix column.
+            sta_dict_crows = {}
             for row in sorted_rawemg[col].columns:
-
-                # Find the mupulses
-                thismups = emgfile["MUPULSES"][mu]
-
-                # Container of ST area for averaging
-                df = {}
+                this_emgsig = sorted_rawemg[col][row].to_numpy()
+                # Container for the pd.DataFrame with MUAPs of each channel.
+                crow_muaps = {}
+                # Calculate ST using NumPy vectorized operations
                 for pos, pulse in enumerate(thismups):
-                    df[pos] = (
-                        sorted_rawemg[col][row]
-                        .iloc[pulse - halftime: pulse + halftime]
-                        .reset_index(drop=True)
-                    )
+                    muap = this_emgsig[pulse - halftime: pulse + halftime]
+                    crow_muaps[pos] = muap
+                sta_dict_crows[row] = pd.DataFrame(crow_muaps)
+            sta_dict_cols[col] = sta_dict_crows
+        sta_dict[mu] = sta_dict_cols
 
-                # Fill df with ST MUAPs
-                df = pd.DataFrame(df)
-
-                row_dict[row] = df
-
-            sorted_rawemg_st[col] = row_dict
-
-        # Add a reference to the MU number to sort the values returned by
-        # parallel processing
-        sorted_rawemg_st["munumber"] = mu
-
-        return sorted_rawemg_st
-
-    # Start parallel execution
-    # Meausere running time
-    t0 = time.time()
-
-    res = Parallel(n_jobs=1)(delayed(parallel)(mu) for mu in stmuap.keys())
-
-    t1 = time.time()
-    print(f"\nTime of st_muap parallel processing: {round(t1-t0, 2)} Sec\n")
-
-    # Sort output of the parallel processing according to MU number
-    for i in res:
-        mu = i["munumber"]
-        del i["munumber"]
-        stmuap[mu] = i
-
-    return stmuap
+    return sta_dict
 
 
 def unpack_sta(sta_mu):
@@ -736,7 +716,6 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
 # TODO update examples for code="None"
 
 # This function exploits parallel processing:
-#   - sta: calls the emg.sta function which is executed in parallel
 #   - align and xcorr are processed in parallel
 #   - plotting is processed in parallel
 def tracking(
@@ -750,12 +729,13 @@ def tracking(
     orientation=180,
     n_rows=None,
     n_cols=None,
+    custom_muaps=None,
     exclude_belowthreshold=True,
     filter=True,
     show=False,
 ):
     """
-    Track MUs across two different files.
+    Track MUs across two files comparing the MUAPs' shape and distribution.
 
     Parameters
     ----------
@@ -779,8 +759,13 @@ def tracking(
     threshold : float, default 0.8
         The 2-dimensional cross-correlation minimum value
         to consider two MUs to be the same. Ranges 0-1.
-    matrixcode : str {"GR08MM1305", "GR04MM1305", "GR10MM0808", "None"}, default "GR08MM1305"
-        The code of the matrix used. This is necessary to sort the channels in
+    matrixcode : str, default "GR08MM1305"
+        The code of the matrix used. It can be one of:
+
+        ``GR08MM1305``
+        ``GR04MM1305``
+        ``GR10MM0808``
+        This is necessary to sort the channels in
         the correct order. If matrixcode="None", the electrodes are not sorted.
         In this case, n_rows and n_cols must be specified.
     orientation : int {0, 180}, default 180
@@ -794,6 +779,18 @@ def tracking(
         The number of columns of the matrix. This parameter is used to divide
         the channels based on the matrix shape. These are normally inferred by
         the matrix code and must be specified only if code == None.
+    custom_muaps : None or list, default None
+        With this parameter, it is possible to perform MUs tracking on MUAPs
+        computed with custom techniques. If this parameter is None (default),
+        MUs tracking is performed on the MUAPs computed via spike triggered
+        averaging. Otherwise, it is possible to pass a list of 2 dictionaries
+        containing the MUAPs of the MUs from 2 different files. These
+        dictionaries should be structured as the output of the ``sta``
+        function. If custom MUAPs are passed, all the previous parameters
+        (except for ``emgfile1`` and ``emgfile2`` can be ignored).
+        If custom MUAPs are provided, these are not aligned by the algorithm,
+        contrary to what is done for MUAPs obtained via spike triggered
+        averaging.
     exclude_belowthreshold : bool, default True
         Whether to exclude results with XCC below threshold.
     filter : bool, default True
@@ -825,8 +822,8 @@ def tracking(
     -----
     Parallel processing can improve performances by 5-10 times compared to
     serial processing. In this function, parallel processing has been
-    implemented for the tasks involving 2-dimensional cross-correlation, sta
-    and plotting.
+    implemented for the tasks involving 2-dimensional cross-correlation, and
+    plotting. This might change in future releases.
 
     Examples
     --------
@@ -839,7 +836,7 @@ def tracking(
     ...     emgfile1=emgfile1,
     ...     emgfile2=emgfile2,
     ...     firings="all",
-    ...     derivation="mono",
+    ...     derivation="sd",
     ...     timewindow=50,
     ...     threshold=0.8,
     ...     matrixcode="GR08MM1305",
@@ -864,43 +861,63 @@ def tracking(
     10        22        16  0.836356
     """
 
-    # Sort the rawemg for the STAs
-    emgfile1_sorted = sort_rawemg(
-        emgfile1,
-        code=matrixcode,
-        orientation=orientation,
-        n_rows=n_rows,
-        n_cols=n_cols,
-    )
-    emgfile2_sorted = sort_rawemg(
-        emgfile2,
-        code=matrixcode,
-        orientation=orientation,
-        n_rows=n_rows,
-        n_cols=n_cols,
-    )
+    # Obtain STAs
+    if not isinstance(custom_muaps, list):
+        # Sort the rawemg for the STAs
+        emgfile1_sorted = sort_rawemg(
+            emgfile1,
+            code=matrixcode,
+            orientation=orientation,
+            n_rows=n_rows,
+            n_cols=n_cols,
+        )
+        emgfile2_sorted = sort_rawemg(
+            emgfile2,
+            code=matrixcode,
+            orientation=orientation,
+            n_rows=n_rows,
+            n_cols=n_cols,
+        )
 
-    # Calculate the derivation if needed
-    if derivation == "mono":
-        pass
-    elif derivation == "sd":
-        emgfile1_sorted = diff(sorted_rawemg=emgfile1_sorted)
-        emgfile2_sorted = diff(sorted_rawemg=emgfile2_sorted)
-    elif derivation == "dd":
-        emgfile1_sorted = double_diff(sorted_rawemg=emgfile1_sorted)
-        emgfile2_sorted = double_diff(sorted_rawemg=emgfile2_sorted)
+        # Calculate the derivation if needed
+        if derivation == "mono":
+            pass
+        elif derivation == "sd":
+            emgfile1_sorted = diff(sorted_rawemg=emgfile1_sorted)
+            emgfile2_sorted = diff(sorted_rawemg=emgfile2_sorted)
+        elif derivation == "dd":
+            emgfile1_sorted = double_diff(sorted_rawemg=emgfile1_sorted)
+            emgfile2_sorted = double_diff(sorted_rawemg=emgfile2_sorted)
+        else:
+            raise ValueError(
+                f"derivation can be one of 'mono', 'sd', 'dd'. {derivation} was passed instead"
+                )
+
+        # Get the STAs
+        sta_emgfile1 = sta(
+            emgfile1,
+            emgfile1_sorted,
+            firings=firings,
+            timewindow=timewindow * 2,
+        )
+        sta_emgfile2 = sta(
+            emgfile2,
+            emgfile2_sorted,
+            firings=firings,
+            timewindow=timewindow * 2,
+        )
+
+    # Obtain custom MUAPs
     else:
-        raise ValueError(
-            f"derivation can be one of 'mono', 'sd', dd. {derivation} was passed instead"
-            )
-
-    # Get the STAs
-    sta_emgfile1 = sta(
-        emgfile1, emgfile1_sorted, firings=firings, timewindow=timewindow * 2,
-    )
-    sta_emgfile2 = sta(
-        emgfile2, emgfile2_sorted, firings=firings, timewindow=timewindow * 2,
-    )
+        if len(custom_muaps) == 2:
+            sta_emgfile1 = custom_muaps[0]
+            sta_emgfile2 = custom_muaps[1]
+            if not isinstance(sta_emgfile1, dict):
+                raise ValueError("custom_muaps[0] is not a dictionary")
+            if not isinstance(sta_emgfile2, dict):
+                raise ValueError("custom_muaps[1] is not a dictionary")
+        else:
+            raise ValueError("custom_muaps is not a list of two dictionaries")
 
     print("\nTracking started")
 
@@ -912,12 +929,15 @@ def tracking(
         # Compare mu_file1 against all the MUs in file2
         for mu_file2 in range(emgfile2["NUMBER_OF_MUS"]):
             # Firs, align the STAs
-            aligned_sta1, aligned_sta2 = align_by_xcorr(
-                sta_emgfile1[mu_file1],
-                sta_emgfile2[mu_file2],
-                finalduration=0.5
-            )
-            #aligned_sta1, aligned_sta2 = sta_emgfile1[mu_file1], sta_emgfile2[mu_file2]
+            if not isinstance(custom_muaps, list):
+                aligned_sta1, aligned_sta2 = align_by_xcorr(
+                    sta_emgfile1[mu_file1],
+                    sta_emgfile2[mu_file2],
+                    finalduration=0.5
+                )
+            else:
+                aligned_sta1 = sta_emgfile1[mu_file1]
+                aligned_sta2 = sta_emgfile2[mu_file2]
 
             # Second, compute 2d cross-correlation
             df1, _ = unpack_sta(aligned_sta1)
@@ -945,7 +965,7 @@ def tracking(
     # Measure running time
     t0 = time.time()
 
-    res = Parallel(n_jobs=8)(
+    res = Parallel(n_jobs=-1)(
         delayed(parallel)(mu_file1) for mu_file1 in range(emgfile1["NUMBER_OF_MUS"])
     )
 
@@ -1004,11 +1024,16 @@ def tracking(
         def parallel(ind):  # Function for the parallel execution of plotting
             if tracking_res["XCC"].loc[ind] >= threshold:
                 # Align STA
-                aligned_sta1, aligned_sta2 = align_by_xcorr(
-                    sta_emgfile1[tracking_res["MU_file1"].loc[ind]],
-                    sta_emgfile2[tracking_res["MU_file2"].loc[ind]],
-                    finalduration=0.5,
-                )
+                if not isinstance(custom_muaps, list):
+                    aligned_sta1, aligned_sta2 = align_by_xcorr(
+                        sta_emgfile1[tracking_res["MU_file1"].loc[ind]],
+                        sta_emgfile2[tracking_res["MU_file2"].loc[ind]],
+                        finalduration=0.5,
+                    )
+                else:
+                    aligned_sta1 = sta_emgfile1[tracking_res["MU_file1"].loc[ind]]
+                    aligned_sta2 = sta_emgfile2[tracking_res["MU_file2"].loc[ind]]
+
                 title = "MUAPs from MU '{}' in file 1 and MU '{}' in file 2, XCC = {}".format(
                     tracking_res["MU_file1"].loc[ind],
                     tracking_res["MU_file2"].loc[ind],
@@ -1045,6 +1070,7 @@ def remove_duplicates_between(
     orientation=180,
     n_rows=None,
     n_cols=None,
+    custom_muaps=None,
     filter=True,
     show=False,
     which="munumber",
@@ -1089,12 +1115,24 @@ def remove_duplicates_between(
         The number of columns of the matrix. This parameter is used to divide
         the channels based on the matrix shape. These are normally inferred by
         the matrix code and must be specified only if code == None.
+    custom_muaps : None or list, default None
+        With this parameter, it is possible to perform MUs tracking on MUAPs
+        computed with custom techniques. If this parameter is None (default),
+        MUs tracking is performed on the MUAPs computed via spike triggered
+        averaging. Otherwise, it is possible to pass a list of 2 dictionaries
+        containing the MUAPs of the MUs from 2 different files. These
+        dictionaries should be structured as the output of the ``sta``
+        function. If custom MUAPs are passed, all the previous parameters
+        (except for ``emgfile1`` and ``emgfile2`` can be ignored).
+        If custom MUAPs are provided, these are not aligned by the algorithm,
+        contrary to what is done for MUAPs obtained via spike triggered
+        averaging.
     filter : bool, default True
         If true, when the same MU has a match of XCC > threshold with
         multiple MUs, only the match with the highest XCC is returned.
     show : bool, default False
         Whether to plot the STA of pairs of MUs with XCC above threshold.
-    which : str {"munumber", "accuracy"}
+    which : str {"munumber", "accuracy"}, default "munumber"
         How to remove the duplicated MUs.
 
         ``munumber``
@@ -1161,6 +1199,7 @@ def remove_duplicates_between(
         orientation=orientation,
         n_rows=n_rows,
         n_cols=n_cols,
+        custom_muaps=custom_muaps,
         exclude_belowthreshold=True,
         filter=filter,
         show=show,
@@ -1290,7 +1329,7 @@ def xcc_sta(sta):
     return xcc_sta
 
 
-class MUcv_gui:
+class MUcv_gui():
     """
     Graphical user interface for the estimation of MUs conduction velocity.
 
@@ -1340,12 +1379,8 @@ class MUcv_gui:
         sorted_rawemg,
         n_firings=[0, 50],
         muaps_timewindow=50,
+        figsize=[20, 15],
     ):
-        """
-        Initialization of the master GUI window and of the necessary
-        attributes.
-        """
-
         # On start, compute the necessary information
         self.emgfile = emgfile
         self.dd = double_diff(sorted_rawemg)
@@ -1356,6 +1391,7 @@ class MUcv_gui:
             timewindow=muaps_timewindow,
         )
         self.sta_xcc = xcc_sta(self.st)
+        self.figsize = figsize
 
         # After that, set up the GUI
         self.root = tk.Tk()
@@ -1470,7 +1506,7 @@ class MUcv_gui:
         self.res_df = pd.DataFrame(
             data=0,
             index=self.all_mus,
-            columns=["CV", "RMS", "XCC"],
+            columns=["CV", "RMS", "XCC", "Column", "From_Row", "To_Row"],
         )
         self.textbox = tk.Text(self.frm, width=20)
         self.textbox.grid(row=2, column=8, sticky="ns")
@@ -1509,6 +1545,7 @@ class MUcv_gui:
             sta_dict=self.st[mu],
             xcc_sta_dict=self.sta_xcc[mu],
             showimmediately=False,
+            figsize=self.figsize,
         )
 
         # Place the figure in the GUI
@@ -1580,6 +1617,10 @@ class MUcv_gui:
         xcc_col_list = list(range(int(self.start_cb.get())+1, int(self.stop_cb.get())+1))
         xcc = self.sta_xcc[mu][self.col_cb.get()].iloc[:, xcc_col_list].mean().mean()
         self.res_df.loc[mu, "XCC"] = xcc
+
+        self.res_df.loc[mu, "Column"] = self.col_cb.get()
+        self.res_df.loc[mu, "From_Row"] = self.start_cb.get()
+        self.res_df.loc[mu, "To_Row"] = self.stop_cb.get()
 
         self.textbox.replace(
             '1.0',
