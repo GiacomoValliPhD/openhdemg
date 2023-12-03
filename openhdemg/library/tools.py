@@ -230,7 +230,7 @@ def resize_emgfile(emgfile, area=None, accuracy="recalculate"):
         rs_emgfile["RAW_SIGNAL"].loc[start_:end_].reset_index(drop=True)
     )
     rs_emgfile["IPTS"] = rs_emgfile["IPTS"].loc[start_:end_].reset_index(drop=True)
-    rs_emgfile["EMG_LENGTH"] = int(len(rs_emgfile["IPTS"].index))
+    rs_emgfile["EMG_LENGTH"] = int(len(rs_emgfile["RAW_SIGNAL"].index))
     rs_emgfile["BINARY_MUS_FIRING"] = (
         rs_emgfile["BINARY_MUS_FIRING"].loc[start_:end_].reset_index(drop=True)
     )
@@ -266,7 +266,8 @@ def resize_emgfile(emgfile, area=None, accuracy="recalculate"):
                 )
 
     elif accuracy == "maintain":
-        rs_emgfile["ACCURACY"] = rs_emgfile["ACCURACY"]
+        # rs_emgfile["ACCURACY"] = rs_emgfile["ACCURACY"]
+        pass
 
     else:
         raise ValueError(
@@ -683,6 +684,10 @@ def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
     -------
     filteredrawsig : dict
         The dictionary containing the emgfile with a filtered RAW_SIGNAL.
+        Currently, the returned filteredrawsig cannot be accurately compressed
+        when using the functions ``save_json_emgfile()`` and ``asksavefile()``.
+        We therefore suggest you to save the unfiltered emgfile if you want to
+        obtain maximum compression.
 
     See also
     --------

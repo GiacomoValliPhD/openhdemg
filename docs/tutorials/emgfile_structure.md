@@ -43,6 +43,7 @@ dict_keys(['SOURCE', 'FILENAME', 'RAW_SIGNAL', 'REF_SIGNAL', 'ACCURACY', 'IPTS',
 That means that the `emgfile` contains the following keys (or variables, in simpler terms):
 
 - "SOURCE" : source of the file (i.e., "CUSTOMCSV", "DEMUSE", "OTB", "DELSYS")
+- "FILENAME" : the name of the original file
 - "RAW_SIGNAL" : the raw EMG signal
 - "REF_SIGNAL" : the reference signal
 - "ACCURACY" : accuracy score (depending on source file type)

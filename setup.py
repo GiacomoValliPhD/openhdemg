@@ -4,26 +4,29 @@
 import openhdemg as emg
 # To read the content of the README or description file
 from pathlib import Path
+# To install required dependencies
+from setuptools import setup
 
 INSTALL_REQUIRES = [
-    "customtkinter==5.2.0",
-    "matplotlib==3.7.1",
-    "numpy==1.25.0",
+    "customtkinter==5.2.1",
+    "matplotlib==3.8.1",
+    "numpy==1.26.1",
     "openpyxl==3.1.2",
     "pandas==2.0.3",
     "pandastable==0.13.1",
     "pyperclip==1.8.2",
-    "scipy==1.11.1",
-    "seaborn==0.12.2",
-    "joblib==1.3.1",
+    "scipy==1.11.3",
+    "seaborn==0.13.0",
+    "joblib==1.3.2",
 ]
 
 PACKAGES = [
     "openhdemg",
-    "openhdemg.gui",
-    "openhdemg.gui.gui_files",
     "openhdemg.library",
     "openhdemg.library.decomposed_test_files",
+    "openhdemg.compatibility",
+    "openhdemg.gui",
+    "openhdemg.gui.gui_files",
 ]
 
 CLASSIFIERS = [
@@ -39,11 +42,6 @@ CLASSIFIERS = [
     "Operating System :: MacOS",
 ]
 
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
-
 this_directory = Path(__file__).parent
 long_descr = (this_directory / "README.md").read_text()
 
@@ -51,7 +49,7 @@ if __name__ == "__main__":
     setup(
         name="openhdemg",
         maintainer="Giacomo Valli",
-        maintainer_email="giacomo.valli@phd.unipd.it",
+        maintainer_email="giacomo.valli@unibs.it",
         description="Open-source analysis of High-Density EMG data",
         long_description=long_descr,
         long_description_content_type='text/markdown',

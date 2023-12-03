@@ -2,6 +2,8 @@
 
 This is the toturial for the `Advanced Tools` in the *openhdemg* GUI. Great that you made it this far! In the next few sections we will take a look at the more advanced functions implemented in the GUI. But first of all, you need to click the `Advanced Tools`button in the main window of the GUI to get to the respective adavanced analysis. The `Advanced Tools Window` will open.
 
+Please note, the `Advanced Tools` might not be available for all the files, as some of them might not have a sufficient number of electrodes to directly perform the advanced analyses. If you want to use the advanced tools anyway, you can still do so from the library.
+
 ![advanced_analysis](md_graphics/gui/advanced_analysis_window.png)
 
 So far, we have included three advanced analyses in the *openhdemg* GUI.
