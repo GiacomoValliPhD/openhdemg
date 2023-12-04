@@ -11,7 +11,13 @@ import warnings
 import math
 
 
-def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvc=0):
+def compute_thresholds(
+    emgfile,
+    event_="rt_dert",
+    type_="abs_rel",
+    n_firings=1,
+    mvc=0,
+):
     """
     Calculates recruitment/derecruitment thresholds.
 
@@ -39,6 +45,13 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvc=0):
             Only relative tresholds will be calculated.
         ``abs``
             Only absolute tresholds will be calculated.
+    n_firings : int, default 1
+        The number of firings used to calculate recruitment/derecruitment
+        thresholds. If n_firings = 1, the threshold is the value of the
+        reference signal at the instant in which the firing happens.
+        If n_firings > 1, the threshold is the average value of the
+        reference signal at the instants in which the n consecutive firings
+        happen.
     mvc : float, default 0
         The maximum voluntary contraction (MVC).
         if mvc is 0, the user is asked to input MVC; otherwise, the value
@@ -126,14 +139,14 @@ def compute_thresholds(emgfile, event_="rt_dert", type_="abs_rel", mvc=0):
     for mu in range(NUMBER_OF_MUS):
         # Manage the exception of empty MUs
         if len(MUPULSES[mu]) > 0:
-            # Detect the first and last firing of the MU and
-            mup_rec = MUPULSES[mu][0]
-            mup_derec = MUPULSES[mu][-1]
+            # Detect the first and last firing of the MU
+            mup_rec = MUPULSES[mu][0:n_firings]
+            mup_derec = MUPULSES[mu][-n_firings:]
             # Calculate absolute and relative RT and DERT if requested
-            abs_RT = ((float(REF_SIGNAL.at[mup_rec, 0]) * mvc) / 100)
-            abs_DERT = ((float(REF_SIGNAL.at[mup_derec, 0]) * mvc) / 100)
-            rel_RT = float(REF_SIGNAL.at[mup_rec, 0])
-            rel_DERT = float(REF_SIGNAL.at[mup_derec, 0])
+            abs_RT = ((float(REF_SIGNAL.iloc[mup_rec, 0].mean()) * mvc) / 100)
+            abs_DERT = ((float(REF_SIGNAL.iloc[mup_derec, 0].mean()) * mvc) / 100)
+            rel_RT = float(REF_SIGNAL.iloc[mup_rec, 0].mean())
+            rel_DERT = float(REF_SIGNAL.iloc[mup_derec, 0].mean())
 
         else:
             abs_RT = np.nan
@@ -362,10 +375,9 @@ def compute_dr(
         c2 = math.isnan(index_endsteady)
 
         if not c1 and not c2:
-            # # DR drstartsteady
-            # Use +1 because to work only on the steady state (here and after)
-            # because the idr is calculated on the previous firing (on the
-            # ramp).
+            # DR drstartsteady
+            # Use +1 to work only on the steady state (here and after)
+            # because the idr is calculated on the previous firing.
             selected_idr = idr[mu]["idr"].loc[
                 index_startsteady + 1: index_startsteady + n_firings_steady
             ]
@@ -427,6 +439,7 @@ def compute_dr(
 
 def basic_mus_properties(
     emgfile,
+    n_firings_rt_dert=1,
     n_firings_RecDerec=4,
     n_firings_steady=10,
     start_steady=-1,
@@ -451,6 +464,13 @@ def basic_mus_properties(
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
+    n_firings_rt_dert : int, default 1
+        The number of firings used to calculate recruitment/derecruitment
+        thresholds. If n_firings_rt_dert = 1, the threshold is the value of the
+        reference signal at the instant in which the firing happens.
+        If n_firings_rt_dert > 1, the threshold is the average value of the
+        reference signal at the instants in which the n consecutive firings
+        happen.
     n_firings_RecDerec : int, default 4
         The number of firings at recruitment and derecruitment to consider for
         the calculation of the DR.
@@ -535,6 +555,12 @@ def basic_mus_properties(
             titlesize=10,
         )
         start_steady, end_steady = points[0], points[1]
+
+    # Double check if the user selected before or after the start of the signal
+    if start_steady < 0:
+        start_steady = 0
+    if end_steady < 0:
+        end_steady = 0
 
     # Collect the information to export
     # First: create a dataframe that contains all the output
@@ -650,7 +676,11 @@ def basic_mus_properties(
         )
 
     # Calculate RT and DERT
-    mus_thresholds = compute_thresholds(emgfile=emgfile, mvc=mvc)
+    mus_thresholds = compute_thresholds(
+        emgfile=emgfile,
+        n_firings=n_firings_rt_dert,
+        mvc=mvc,
+    )
     exportable_df = pd.concat([exportable_df, mus_thresholds], axis=1)
 
     # Calculate DR at recruitment, derecruitment, all, start, end of the

@@ -2,8 +2,8 @@
 Description
 -----------
 This module contains all the functions that are necessary to open or save
-MATLAB (.mat), JSON (.json) or custom (.csv) files.
-MATLAB files are used to store data from the DEMUSE and the OTBiolab+
+MATLAB (.mat), text (.txt), JSON (.json) or custom (.csv) files.
+MATLAB files are used to store data from the DEMUSE, OTBiolab+ and Delsys
 software while JSON files are used to save and load files from this
 library.
 The choice of saving files in the open standard JSON file format was
@@ -20,11 +20,16 @@ emg_from_otb and emg_from_demuse :
     order to be compatible with this library should be exported with a
     strict structure as described in the function emg_from_otb.
     In both cases, the input file is a .mat file.
+emg_from_delsys :
+    Used to load a combination of .mat and .txt files exported by the Delsys
+    Neuromap and Neuromap explorer software containing the raw EMG signal and
+    the decomposition outcome.
 emg_from_customcsv :
     Used to load custom file formats contained in .csv files.
-refsig_from_otb and refsig_from_customcsv:
-    Used to load files from the OTBiolab+ software or from a custom .csv file
-    that contain only the REF_SIGNAL.
+refsig_from_otb, refsig_from_delsys and refsig_from_customcsv:
+    Used to load files from the OTBiolab+ (.mat) and the Delsys Neuromap
+    software (.mat) or from a custom .csv file that contain only the
+    reference signal.
 save_json_emgfile, emg_from_json :
     Used to save the working file to a .json file or to load the .json
     file.
@@ -35,12 +40,12 @@ askopenfile, asksavefile :
 Notes
 -----
 Once opened, the file is returned as a dict with keys:
-    "SOURCE" : source of the file (i.e., "CUSTOMCSV", "DEMUSE", "OTB")
+    "SOURCE" : source of the file (i.e., "CUSTOMCSV", "DEMUSE", "OTB", "DELSYS")
     "FILENAME" : the name of the opened file
     "RAW_SIGNAL" : the raw EMG signal
     "REF_SIGNAL" : the reference signal
     "ACCURACY" : accuracy score (depending on source file type)
-    "IPTS" : pulse train (decomposed source)
+    "IPTS" : pulse train (decomposed source, depending on source file type)
     "MUPULSES" : instants of firing
     "FSAMP" : sampling frequency
     "IED" : interelectrode distance
@@ -50,7 +55,7 @@ Once opened, the file is returned as a dict with keys:
     "EXTRAS" : additional custom values
 
 The only exception is when files are loaded with just the reference signal:
-    "SOURCE": source of the file (i.e., "CUSTOMCSV_REFSIG", "OTB_REFSIG")
+    "SOURCE": source of the file (i.e., "CUSTOMCSV_REFSIG", "OTB_REFSIG", "DELSYS_REFSIG")
     "FILENAME" : the name of the opened file
     "FSAMP": sampling frequency
     "REF_SIGNAL": the reference signal
@@ -63,18 +68,20 @@ the function's description.
 # Some functions contained in this file are called internally and should not
 # be exposed to the final user.
 # Functions should be exposed in the __init__ file as:
-#     from openhdemg.openfiles import (
-#         emg_from_otb,
-#         emg_from_demuse,
-#         refsig_from_otb,
-#         emg_from_customcsv,
-#         refsig_from_customcsv
-#         save_json_emgfile,
-#         emg_from_json,
-#         askopenfile,
-#         asksavefile,
-#         emg_from_samplefile,
-#     ) # TODO add emg_from_delsys here, in init, in upper description and in docs description
+#   from openhdemg.library.openfiles import (
+#       emg_from_otb,
+#       emg_from_demuse,
+#       emg_from_delsys,
+#       emg_from_customcsv,
+#       refsig_from_otb,
+#       refsig_from_delsys,
+#       refsig_from_customcsv,
+#       save_json_emgfile,
+#       emg_from_json,
+#       askopenfile,
+#       asksavefile,
+#       emg_from_samplefile,
+#   )
 
 
 from scipy.io import loadmat
@@ -89,10 +96,11 @@ import json
 import gzip
 import warnings
 import os
+import fnmatch
 
 
 # --------------------------------------------------------------------- #
-# Main function to open decomposed files coming from DEMUSE.
+# Function to open decomposed files coming from DEMUSE.
 
 def emg_from_demuse(filepath):
     """
@@ -116,6 +124,7 @@ def emg_from_demuse(filepath):
     - refsig_from_otb : import REF_SIGNAL in the .mat file exportable by
         OTBiolab+.
     - emg_from_customcsv : Import custom data from a .csv file.
+    - askopenfile : Select and open files with a GUI.
 
     Notes
     -----
@@ -531,7 +540,7 @@ def emg_from_otb(
     extras=None,
 ):
     """
-    Import the .mat file exportable by OTBiolab+.
+    Import the .mat file exportable from OTBiolab+.
 
     This function is used to import the .mat file exportable by the OTBiolab+
     software as a dictionary of Python objects (mainly pandas dataframes).
@@ -578,6 +587,7 @@ def emg_from_otb(
         OTBiolab+.
     - emg_from_demuse : import the .mat file used in DEMUSE.
     - emg_from_customcsv : Import custom data from a .csv file.
+    - askopenfile : Select and open files with a GUI.
 
     Raises
     ------
@@ -795,6 +805,7 @@ def refsig_from_otb(
     - emg_from_demuse : import the .mat file used in DEMUSE.
     - emg_from_customcsv : Import custom data from a .csv file.
     - refsig_from_customcsv : Import the reference signal from a custom .csv.
+    - askopenfile : Select and open files with a GUI.
 
     Notes
     ---------
@@ -897,6 +908,345 @@ def refsig_from_otb(
     return emg_refsig
 
 
+# --------------------------------------------------------------------- #
+# Function to open decomposed files coming from Delsys.
+def emg_from_delsys(
+        rawemg_filepath,
+        mus_directory,
+        emg_sensor_name="Galileo sensor",
+        refsig_sensor_name="Trigno Load Cell",
+        filename_from="mus_directory",
+):
+    """
+    Import the .mat and .txt files exportable from Delsys softwares.
+
+    This function is used to load .mat files from the Delsys Neuromap software
+    (containing the RAW EMG signal and the reference signal) and .txt files
+    from the Delsys Neuromap Explorer software (containing the decomposition
+    outcome, accuracy measure and MUAPs).
+
+    We currenlty support only recordings performed with the "Galileo sensor"
+    (4-pin). Support for the 5-pin sensor will be provided in the next
+    releases.
+
+    Parameters
+    ----------
+    rawemg_filepath : str or Path
+        The directory and the name of the file containing the raw EMG data to
+        load (including file extension .mat).
+        This can be a simple string, the use of Path is not necessary.
+    mus_directory : str or Path
+        The directory (path to the folder) containing .txt files with firing
+        times, MUAPs, and accuracy data.
+        This can be a simple string, the use of Path is not necessary.
+        The .txt files should all be contained in the same folder and should
+        follow the standard Deslys naming convention (e.g., the file
+        containing accuracy data will have the string "Stats" in its name).
+    emg_sensor_name : str, default "Galileo sensor"
+        The name of the EMG sensor used to collect the data. We currently
+        support only the "Galileo sensor" (4-pin).
+    refsig_sensor_name : str, default "Trigno Load Cell"
+        The name of the sensor used to record the reference signal. This is by
+        default "Trigno Load Cell". However, since this can have any name (and
+        can also be renamed by the user), here you should pass the effective
+        name (or regex pattern) by which you identify the sensor.
+        Ignore if no reference signal was recorded.
+    filename_from : str {"rawemg_file", "mus_directory"}, default "mus_directory"
+        The source by which the imported file will be named. This can either be
+        the same name of the file containing the raw EMG signal or of the
+        folder containing the decomposition outcome.
+
+    Returns
+    --------
+    emgfile : dict
+        A dictionary containing all the useful variables.
+
+    See also
+    --------
+    - refsig_from_delsys : Import the reference signal exportable from Delsys.
+    - askopenfile : Select and open files with a GUI.
+
+    Notes
+    ---------
+    The returned file is called ``emgfile`` for convention.
+
+    Structure of the returned emgfile:
+
+        emgfile = {
+            "SOURCE": SOURCE,
+            "FILENAME": FILENAME,
+            "RAW_SIGNAL": RAW_SIGNAL,
+            "REF_SIGNAL": REF_SIGNAL,
+            "ACCURACY": PROPRIETARY ACCURACY MEASURE,
+            "IPTS": IPTS,
+            "MUPULSES": MUPULSES,
+            "FSAMP": FSAMP,
+            "IED": IED,
+            "EMG_LENGTH": EMG_LENGTH,
+            "NUMBER_OF_MUS": NUMBER_OF_MUS,
+            "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
+            "EXTRAS": EXTRAS,
+        }
+
+    For Delsys files, the accuracy is the one provided after the decomposition
+    and it is not computed internally, being this a proprietary measure.
+
+    We collect the raw EMG and the reference signal from the .mat file because
+    the .csv doesn't contain the information about sampling frequency.
+    Similarly, we collect the firing times, MUAPs and accuracy from the .txt
+    files because in the .mat file, the accuracy is contained in a table,
+    which is not compatible with Python.
+
+    Examples
+    --------
+    For an extended explanation of the imported emgfile use:
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_delsys(
+    ...     rawemg_filepath="path/filename.mat",
+    ...     mus_directory="/directory",
+    ... )
+    >>> info = emg.info()
+    >>> info.data(emgfile)
+    """
+
+    # From the rawemg_filepath:
+    # Parse the .mat obtained from Delsys to see the available variables.
+    # We start from the file containing the raw EMG as this also contains the
+    # sampling frequency.
+    rawemg_file = loadmat(rawemg_filepath, simplify_cells=True)
+    """ print(
+        "\n--------------------------------\nAvailable dict keys are:\n\n{}\n".format(
+            rawemg_file.keys()
+        )
+    ) """
+
+    # Use this to know the data source and name of the file
+    SOURCE = "DELSYS"
+    if filename_from == "rawemg_file":
+        FILENAME = os.path.basename(rawemg_filepath)
+    elif filename_from == "mus_directory":
+        FILENAME = os.path.basename(mus_directory)
+    else:
+        raise ValueError(
+            "\nfilename_from not valid, it must be one of 'rawemg_file', 'mus_directory'\n"
+        )
+    FSAMP = float(rawemg_file["Fs"][0])
+    IED = float(5)
+
+    # Extract the data contained in the Data variable of the rawemg_file.
+    # This contains the raw EMG and the reference signal.
+    df = pd.DataFrame(rawemg_file["Data"].T, columns=rawemg_file["Channels"])
+
+    # Get RAW_SIGNAL
+    # Create a list of indexes where emg_sensor_name is found
+    RAW_SIGNAL = df.filter(regex=emg_sensor_name)
+    RAW_SIGNAL.columns = np.arange(len(RAW_SIGNAL.columns))
+    # Verify to have the IPTS
+    if RAW_SIGNAL.empty:
+        raise ValueError(
+            "\nRaw EMG signal not found in the .mat file\n"
+        )
+
+    # Get REF_SIGNAL
+    REF_SIGNAL = df.filter(regex=refsig_sensor_name)
+    REF_SIGNAL.columns = np.arange(len(REF_SIGNAL.columns))
+    if REF_SIGNAL.empty:
+        warnings.warn(
+            "\nReference signal not found, it might be necessary for some analyses\n"
+        )
+        REF_SIGNAL = pd.DataFrame(columns=[0])
+
+    # From the mus_directory:
+    # Obtain the name (and path) of the files containing MUPULSES, ACCURACY
+    # and EXTRAS. Automate this because it will be too boring manually.
+    # Get all file names in the directory
+    files = os.listdir(mus_directory)
+    # Define the keywords to match
+    keywords = ["Firings", "Stats", "MUAPs"]
+    # Initialize a dictionary to store the keyword-path mapping
+    keyword_paths = {}
+    # Iterate over the files and match keywords
+    for keyword in keywords:
+        for file in files:
+            if fnmatch.fnmatch(file, f"*{keyword}*"):
+                keyword_paths[keyword] = os.path.join(mus_directory, file)
+    # Check if we have found paths for all three keywords
+    if not all(keyword in keyword_paths for keyword in keywords):
+        missing_keywords = [
+            keyword for keyword in keywords if keyword not in keyword_paths
+        ]
+        raise ValueError(
+            f"Missing paths for: {', '.join(missing_keywords)}"
+        )
+    # Now, 'keyword_paths' contains the mapping of keywords to file paths:
+    # For example, keyword_paths["Firings"] contains the path to the "Firings",
+    # file and so on for the other keywords.
+
+    # Get MUPULSES
+    MUPULSES = np.genfromtxt(
+        keyword_paths["Firings"],
+        delimiter='\t',
+        skip_header=True,
+    ).T
+    # Store MUPULSES as a list of np.arrays
+    to_append = []
+    for pulse in MUPULSES:
+        # Drop nan and convert from seconds to samples
+        pulse = pulse[~np.isnan(pulse)] * FSAMP
+        # Store int samples
+        to_append.append(np.round(pulse).astype(int))
+    MUPULSES = to_append
+
+    # Get EMG_LENGTH and NUMBER_OF_MUS
+    EMG_LENGTH = len(RAW_SIGNAL)
+    NUMBER_OF_MUS = len(MUPULSES)
+
+    # Get BINARY_MUS_FIRING
+    BINARY_MUS_FIRING = create_binary_firings(
+        emg_length=EMG_LENGTH,
+        number_of_mus=NUMBER_OF_MUS,
+        mupulses=MUPULSES,
+    )
+
+    # Get IPTS
+    # Empty pd.DataFrame as we don't have this from Delsys decomposition.
+    IPTS = pd.DataFrame(columns=np.arange(NUMBER_OF_MUS))
+
+    # Get ACCURACY
+    ACCURACY = pd.read_csv(keyword_paths["Stats"], sep='\t')
+    ACCURACY = ACCURACY[["Accuracy"]]
+    ACCURACY.columns = [0]
+
+    # Get EXTRAS (MUAPs for Delsys)
+    # MUAPs from Delsys for all the MUs are all stored in the same table.
+    # We want them divided in different columns based on MU and channel.
+    EXTRAS = pd.read_csv(keyword_paths["MUAPs"], sep='\t')
+    df = {}
+    for mu in range(1, NUMBER_OF_MUS + 1):  # Named in base 1 from Delsys
+        this_mu_all_ch = EXTRAS.loc[EXTRAS["MU_Num"] == mu]
+        for ch in range(1, 5):  # Galileo has 4 recording pins, in base 1
+            col_name = f"MU_{mu-1}_CH_{ch-1}"
+            arr = this_mu_all_ch.filter(regex=str(ch)).to_numpy()
+            df[col_name] = arr[:, 0]
+    EXTRAS = pd.DataFrame(df)
+
+    emgfile = {
+        "SOURCE": SOURCE,
+        "FILENAME": FILENAME,
+        "RAW_SIGNAL": RAW_SIGNAL,
+        "REF_SIGNAL": REF_SIGNAL,
+        "ACCURACY": ACCURACY,
+        "IPTS": IPTS,
+        "MUPULSES": MUPULSES,
+        "FSAMP": FSAMP,
+        "IED": IED,
+        "EMG_LENGTH": EMG_LENGTH,
+        "NUMBER_OF_MUS": NUMBER_OF_MUS,
+        "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
+        "EXTRAS": EXTRAS,
+    }
+
+    return emgfile
+
+
+# --------------------------------------------------------------------- #
+# Function to open the reference signal from Delsys.
+def refsig_from_delsys(filepath, refsig_sensor_name="Trigno Load Cell",):
+    """
+    Import the reference signal in the .mat file exportable by Delsys Neuromap.
+
+    This function is used to import the .mat file exportable by the Delsys
+    Neuromap software as a dictionary of Python objects (mainly pandas
+    dataframes). Compared to the function emg_from_delsys, this function only
+    imports the REF_SIGNAL and, therefore, it can be used for special cases
+    where only the REF_SIGNAL is necessary. This will allow for a faster
+    execution of the script and to avoid exceptions for missing data.
+
+    Parameters
+    ----------
+    filepath : str or Path
+        The directory and the name of the file to load (including file
+        extension .mat). This can be a simple string, the use of Path is not
+        necessary.
+    refsig_sensor_name : str, default "Trigno Load Cell"
+        The name of the sensor used to record the reference signal. This is by
+        default "Trigno Load Cell". However, since this can have any name (and
+        can also be renamed by the user), here you should pass the effective
+        name (or regex pattern) by which you identify the sensor.
+
+    Returns
+    -------
+    emg_refsig : dict
+        A dictionary containing all the useful variables.
+
+    See also
+    --------
+    - emg_from_delsys : Import the Delsys decomposition outcome.
+    - askopenfile : Select and open files with a GUI.
+
+    Notes
+    ---------
+    The returned file is called ``emg_refsig`` for convention.
+
+    Structure of the returned emg_refsig:
+
+        emg_refsig = {
+            "SOURCE": SOURCE,
+            "FILENAME": FILENAME,
+            "FSAMP": FSAMP,
+            "REF_SIGNAL": REF_SIGNAL,
+            "EXTRAS": EXTRAS,
+        }
+
+    Examples
+    --------
+    For an extended explanation of the imported emgfile use:
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.refsig_from_delsys(filepath="path/filename.mat")
+    >>> info = emg.info()
+    >>> info.data(emgfile)
+    """
+    # TODO add extras option
+
+    # Parse the .mat obtained from Delsys to see the available variables.
+    # The .mat file should containing the reference signal and the sampling
+    # frequency.
+    refsig_file = loadmat(filepath, simplify_cells=True)
+    """ print(
+        "\n--------------------------------\nAvailable dict keys are:\n\n{}\n".format(
+            rawemg_file.keys()
+        )
+    ) """
+
+    # Use this to know the data source and name of the file
+    SOURCE = "DELSYS_REFSIG"
+    FILENAME = os.path.basename(filepath)
+    FSAMP = float(refsig_file["Fs"][0])
+
+    # Extract the data contained in the Data variable of the .mat file.
+    # This contains the reference signal.
+    df = pd.DataFrame(refsig_file["Data"].T, columns=refsig_file["Channels"])
+    # Get REF_SIGNAL
+    REF_SIGNAL = df.filter(regex=refsig_sensor_name)
+    REF_SIGNAL.columns = np.arange(len(REF_SIGNAL.columns))
+    if REF_SIGNAL.empty:
+        raise ValueError(
+            "\nReference signal not found\n"
+        )
+
+    emg_refsig = {
+        "SOURCE": SOURCE,
+        "FILENAME": FILENAME,
+        "FSAMP": FSAMP,
+        "REF_SIGNAL": REF_SIGNAL,
+        "EXTRAS": pd.DataFrame(columns=[0]),
+    }
+
+    return emg_refsig
+
+
 # ---------------------------------------------------------------------
 # Function to load custom CSV documents.
 def emg_from_customcsv(
@@ -971,6 +1321,7 @@ def emg_from_customcsv(
     - refsig_from_otb : import reference signal in the .mat file exportable by
         OTBiolab+.
     - refsig_from_customcsv : Import the reference signal from a custom .csv.
+    - askopenfile : Select and open files with a GUI.
 
     Notes
     -----
@@ -1179,6 +1530,11 @@ def refsig_from_customcsv(
     emg_refsig : dict
         A dictionary containing all the useful variables.
 
+    See also
+    --------
+    - emg_from_customcsv : Import the emgfile from a custom .csv file.
+    - askopenfile : Select and open files with a GUI.
+
     Notes
     ---------
     The returned file is called ``emg_refsig`` for convention.
@@ -1254,7 +1610,7 @@ def refsig_from_customcsv(
 # ---------------------------------------------------------------------
 # Functions to convert and save the emgfile to JSON.
 
-def save_json_emgfile(emgfile, filepath):
+def save_json_emgfile(emgfile, filepath, compresslevel=4):
     """
     Save the emgfile or emg_refsig as a JSON file.
 
@@ -1266,21 +1622,27 @@ def save_json_emgfile(emgfile, filepath):
         The directory and the name of the file to save (including file
         extension .json).
         This can be a simple string; The use of Path is not necessary.
+    compresslevel : int, default 4
+        An int from 0 to 9, where 0 is no compression and nine maximum
+        compression. Compressed files will take less space, but will require
+        more computation. The relationship between compression level and time
+        required for the compression is not linear. For optimised performance,
+        we suggest values between 2 and 6, with 4 providing the best balance.
     """
 
-    if emgfile["SOURCE"] in ["DEMUSE", "OTB", "CUSTOMCSV"]:
+    if emgfile["SOURCE"] in ["DEMUSE", "OTB", "CUSTOMCSV", "DELSYS"]:
         """
         We need to convert all the components of emgfile to a dictionary and
         then to json object.
         pd.DataFrame cannot be converted with json.dumps.
-        Once all the elements are converted to json objects, we create a list
+        Once all the elements are converted to json objects, we create a dict
         of json objects and dump/save it into a single json file.
         emgfile = {
             "SOURCE": SOURCE,
             "FILENAME": FILENAME,
             "RAW_SIGNAL": RAW_SIGNAL,
             "REF_SIGNAL": REF_SIGNAL,
-            "ACCURACY": ACCURACY
+            "ACCURACY": ACCURACY,
             "IPTS": IPTS,
             "MUPULSES": MUPULSES,
             "FSAMP": FSAMP,
@@ -1291,53 +1653,25 @@ def save_json_emgfile(emgfile, filepath):
             "EXTRAS": EXTRAS,
         }
         """
-        # str or int
-        # Directly convert the ditionary to a json format
-        source = {"SOURCE": emgfile["SOURCE"]}
-        filename = {"FILENAME": emgfile["FILENAME"]}
-        fsamp = {"FSAMP": emgfile["FSAMP"]}
-        ied = {"IED": emgfile["IED"]}
-        emg_length = {"EMG_LENGTH": emgfile["EMG_LENGTH"]}
-        number_of_mus = {"NUMBER_OF_MUS": emgfile["NUMBER_OF_MUS"]}
-        source = json.dumps(source)
-        filename = json.dumps(filename)
-        fsamp = json.dumps(fsamp)
-        ied = json.dumps(ied)
-        emg_length = json.dumps(emg_length)
-        number_of_mus = json.dumps(number_of_mus)
+
+        # str or float
+        # Directly convert str or float to a json format.
+        source = json.dumps(emgfile["SOURCE"])
+        filename = json.dumps(emgfile["FILENAME"])
+        fsamp = json.dumps(emgfile["FSAMP"])
+        ied = json.dumps(emgfile["IED"])
+        emg_length = json.dumps(emgfile["EMG_LENGTH"])
+        number_of_mus = json.dumps(emgfile["NUMBER_OF_MUS"])
 
         # df
-        # Extract the df from the dict, convert the df to a json, put the
-        # json in a dict, convert the dict to a json.
-        # We use dict converted to json to locate better the objects while
-        # re-importing them in python.
-        raw_signal = emgfile["RAW_SIGNAL"]
-        ref_signal = emgfile["REF_SIGNAL"]
-        accuracy = emgfile["ACCURACY"]
-        ipts = emgfile["IPTS"]
-        binary_mus_firing = emgfile["BINARY_MUS_FIRING"]
-        extras = emgfile["EXTRAS"]
-
-        raw_signal = raw_signal.to_json()
-        ref_signal = ref_signal.to_json()
-        accuracy = accuracy.to_json()
-        ipts = ipts.to_json()
-        binary_mus_firing = binary_mus_firing.to_json()
-        extras = extras.to_json()
-
-        raw_signal = {"RAW_SIGNAL": raw_signal}
-        ref_signal = {"REF_SIGNAL": ref_signal}
-        accuracy = {"ACCURACY": accuracy}
-        ipts = {"IPTS": ipts}
-        binary_mus_firing = {"BINARY_MUS_FIRING": binary_mus_firing}
-        extras = {"EXTRAS": extras}
-
-        raw_signal = json.dumps(raw_signal)
-        ref_signal = json.dumps(ref_signal)
-        accuracy = json.dumps(accuracy)
-        ipts = json.dumps(ipts)
-        binary_mus_firing = json.dumps(binary_mus_firing)
-        extras = json.dumps(extras)
+        # Access and convert the df to a json object.
+        # orient='split' is fundamental for performance.
+        raw_signal = emgfile["RAW_SIGNAL"].to_json(orient='split')
+        ref_signal = emgfile["REF_SIGNAL"].to_json(orient='split')
+        accuracy = emgfile["ACCURACY"].to_json(orient='split')
+        ipts = emgfile["IPTS"].to_json(orient='split')
+        binary_mus_firing = emgfile["BINARY_MUS_FIRING"].to_json(orient='split')
+        extras = emgfile["EXTRAS"].to_json(orient='split')
 
         # list of ndarray.
         # Every array has to be converted in a list; then, the list of lists
@@ -1347,70 +1681,79 @@ def save_json_emgfile(emgfile, filepath):
             mupulses.insert(ind, array.tolist())
         mupulses = json.dumps(mupulses)
 
-        # Convert a list of json objects to json. The result of the conversion
+        # Convert a dict of json objects to json. The result of the conversion
         # will be saved as the final json file.
-        # Don't alter this order unless you modify also the emg_from_json
-        # function.
-        list_to_save = [
-            source,
-            filename,
-            raw_signal,
-            ref_signal,
-            accuracy,
-            ipts,
-            mupulses,
-            fsamp,
-            ied,
-            emg_length,
-            number_of_mus,
-            binary_mus_firing,
-            extras,
-        ]
-        json_to_save = json.dumps(list_to_save)
+        emgfile = {
+            "SOURCE": source,
+            "FILENAME": filename,
+            "RAW_SIGNAL": raw_signal,
+            "REF_SIGNAL": ref_signal,
+            "ACCURACY": accuracy,
+            "IPTS": ipts,
+            "MUPULSES": mupulses,
+            "FSAMP": fsamp,
+            "IED": ied,
+            "EMG_LENGTH": emg_length,
+            "NUMBER_OF_MUS": number_of_mus,
+            "BINARY_MUS_FIRING": binary_mus_firing,
+            "EXTRAS": extras,
+        }
 
         # Compress and write the json file
-        # From: https://stackoverflow.com/questions/39450065/python-3-read-write-compressed-json-objects-from-to-gzip-file
-        with gzip.open(filepath, "w") as f:
+        with gzip.open(
+            filepath,
+            "wt",
+            encoding="utf-8",
+            compresslevel=compresslevel
+        ) as f:
+            json.dump(emgfile, f)
+
+        # Adapted from:
+        # https://stackoverflow.com/questions/39450065/python-3-read-write-compressed-json-objects-from-to-gzip-file
+        """ with gzip.open(filepath, "w", compresslevel=compresslevel) as f:
             # Encode json
             json_bytes = json_to_save.encode("utf-8")
             # Write to a file
-            f.write(json_bytes)
-            # To improve writing time, f.write is the bottleneck but it is
-            # hard to improve.
+            f.write(json_bytes) """
 
-    elif emgfile["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG"]:
+    elif emgfile["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]:
         """
-        refsig =   {
-                "SOURCE" : SOURCE,
-                "FILENAME": FILENAME,
-                "FSAMP" : FSAMP,
-                "REF_SIGNAL" : REF_SIGNAL,
-                "EXTRAS": EXTRAS,
-                }
+        refsig = {
+            "SOURCE": SOURCE,
+            "FILENAME": FILENAME,
+            "FSAMP": FSAMP,
+            "REF_SIGNAL": REF_SIGNAL,
+            "EXTRAS": EXTRAS,
+        }
         """
-        # str or int
-        source = {"SOURCE": emgfile["SOURCE"]}
-        filename = {"FILENAME": emgfile["FILENAME"]}
-        fsamp = {"FSAMP": emgfile["FSAMP"]}
-        source = json.dumps(source)
-        filename = json.dumps(filename)
-        fsamp = json.dumps(fsamp)
+        # str or float
+        # Directly convert str or float to a json format.
+        source = json.dumps(emgfile["SOURCE"])
+        filename = json.dumps(emgfile["FILENAME"])
+        fsamp = json.dumps(emgfile["FSAMP"])
+
         # df
-        ref_signal = emgfile["REF_SIGNAL"]
-        ref_signal = ref_signal.to_json()
-        ref_signal = {"REF_SIGNAL": ref_signal}
-        ref_signal = json.dumps(ref_signal)
-        extras = emgfile["EXTRAS"]
-        extras = extras.to_json()
-        extras = {"EXTRAS": extras}
-        extras = json.dumps(extras)
-        # Merge all the objects in one
-        list_to_save = [source, filename, fsamp, ref_signal, extras]
-        json_to_save = json.dumps(list_to_save)
+        # Access and convert the df to a json object.
+        ref_signal = emgfile["REF_SIGNAL"].to_json(orient='split')
+        extras = emgfile["EXTRAS"].to_json(orient='split')
+
+        # Merge all the objects in one dict
+        refsig = {
+            "SOURCE": source,
+            "FILENAME": filename,
+            "FSAMP": fsamp,
+            "REF_SIGNAL": ref_signal,
+            "EXTRAS": extras,
+        }
+
         # Compress and save
-        with gzip.open(filepath, "w") as f:
-            json_bytes = json_to_save.encode("utf-8")
-            f.write(json_bytes)
+        with gzip.open(
+            filepath,
+            "wt",
+            encoding="utf-8",
+            compresslevel=compresslevel
+        ) as f:
+            json.dump(refsig, f)
 
     else:
         raise ValueError("\nFile source not recognised\n")
@@ -1434,16 +1777,13 @@ def emg_from_json(filepath):
 
     See also
     --------
-    - emg_from_demuse : import the .mat file used in DEMUSE.
-    - emg_from_otb : import the .mat file exportable by OTBiolab+.
-    - refsig_from_otb : import REF_SIGNAL in the .mat file exportable by
-        OTBiolab+.
-    - emg_from_customcsv : import custom data from a .csv file.
+    - save_json_emgfile : Save the emgfile or emg_refsig as a JSON file.
+    - askopenfile : Select and open files with a GUI.
 
     Notes
     -----
     The returned file is called ``emgfile`` for convention
-    (or ``emg_refsig`` if SOURCE in ["OTB_REFSIG", "CUSTOMCSV_REFSIG"]).
+    (or ``emg_refsig`` if SOURCE in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]).
 
     Examples
     --------
@@ -1456,94 +1796,69 @@ def emg_from_json(filepath):
     """
 
     # Read and decompress json file
-    with gzip.open(filepath, "r") as fin:
-        json_bytes = fin.read()
-        # Decode json file
-        json_str = json_bytes.decode("utf-8")
-        jsonemgfile = json.loads(json_str)
+    with gzip.open(filepath, "rt", encoding="utf-8") as f:
+        jsonemgfile = json.load(f)
 
     """
     print(type(jsonemgfile))
-    <class 'list'>
-    print(len(jsonemgfile))
-    13
+    <class 'dict'>
     """
-    # Access the dictionaries and extract the data
-    # jsonemgfile[0] contains the SOURCE in a dictionary
-    source_dict = json.loads(jsonemgfile[0])
-    source = source_dict["SOURCE"]
-    # jsonemgfile[1] contains the FILENAME in all the sources
-    filename_dict = json.loads(jsonemgfile[1])
-    filename = filename_dict["FILENAME"]
 
-    if source in ["DEMUSE", "OTB", "CUSTOMCSV"]:
-        # jsonemgfile[2] contains the RAW_SIGNAL in a dictionary, it can be
-        # extracted in a new dictionary and converted into a pd.DataFrame.
+    # Access the dictionaries and extract the data.
+    source = json.loads(jsonemgfile["SOURCE"])
+    filename = json.loads(jsonemgfile["FILENAME"])
+
+    if source in ["DEMUSE", "OTB", "CUSTOMCSV", "DELSYS"]:
+        # RAW_SIGNAL
+        # df are stored in json as a dictionary, it can be directly extracted
+        # and converted into a pd.DataFrame.
         # index and columns are imported as str, we need to convert it to int.
-        raw_signal_dict = json.loads(jsonemgfile[2])
-        raw_signal_dict = json.loads(raw_signal_dict["RAW_SIGNAL"])
-        raw_signal = pd.DataFrame(raw_signal_dict)
+        raw_signal = pd.read_json(jsonemgfile["RAW_SIGNAL"], orient='split')
+        # Check dtypes for safety, little computational cost
         raw_signal.columns = raw_signal.columns.astype(int)
         raw_signal.index = raw_signal.index.astype(int)
         raw_signal.sort_index(inplace=True)
-        # jsonemgfile[3] contains the REF_SIGNAL to be treated as jsonemgfile[2]
-        ref_signal_dict = json.loads(jsonemgfile[3])
-        ref_signal_dict = json.loads(ref_signal_dict["REF_SIGNAL"])
-        ref_signal = pd.DataFrame(ref_signal_dict)
+        # REF_SIGNAL
+        ref_signal = pd.read_json(jsonemgfile["REF_SIGNAL"], orient='split')
         ref_signal.columns = ref_signal.columns.astype(int)
         ref_signal.index = ref_signal.index.astype(int)
         ref_signal.sort_index(inplace=True)
-        # jsonemgfile[4] contains the ACCURACY to be treated as jsonemgfile[2]
-        accuracy_dict = json.loads(jsonemgfile[4])
-        accuracy_dict = json.loads(accuracy_dict["ACCURACY"])
-        accuracy = pd.DataFrame(accuracy_dict)
+        # ACCURACY
+        accuracy = pd.read_json(jsonemgfile["ACCURACY"], orient='split')
         accuracy.columns = accuracy.columns.astype(int)
         accuracy.index = accuracy.index.astype(int)
         accuracy.sort_index(inplace=True)
-        # jsonemgfile[5] contains the IPTS to be treated as jsonemgfile[2]
-        ipts_dict = json.loads(jsonemgfile[5])
-        ipts_dict = json.loads(ipts_dict["IPTS"])
-        ipts = pd.DataFrame(ipts_dict)
+        # IPTS
+        ipts = pd.read_json(jsonemgfile["IPTS"], orient='split')
         ipts.columns = ipts.columns.astype(int)
         ipts.index = ipts.index.astype(int)
         ipts.sort_index(inplace=True)
-        # jsonemgfile[6] contains the MUPULSES which is a list of lists but
-        # has to be converted in a list of ndarrays.
-        mupulses = json.loads(jsonemgfile[6])
+        # MUPULSES
+        # It is s list of lists but has to be converted in a list of ndarrays.
+        mupulses = json.loads(jsonemgfile["MUPULSES"])
         for num, element in enumerate(mupulses):
             mupulses[num] = np.array(element)
-        # jsonemgfile[7] contains the FSAMP to be treated as jsonemgfile[0]
-        fsamp_dict = json.loads(jsonemgfile[7])
-        fsamp = float(fsamp_dict["FSAMP"])
-        # jsonemgfile[8] contains the IED to be treated as jsonemgfile[0]
-        ied_dict = json.loads(jsonemgfile[8])
-        ied = float(ied_dict["IED"])
-        # jsonemgfile[9] contains the EMG_LENGTH to be treated as
-        # jsonemgfile[0]
-        emg_length_dict = json.loads(jsonemgfile[9])
-        emg_length = int(emg_length_dict["EMG_LENGTH"])
-        # jsonemgfile[10] contains the NUMBER_OF_MUS to be treated as
-        # jsonemgfile[0]
-        number_of_mus_dict = json.loads(jsonemgfile[10])
-        number_of_mus = int(number_of_mus_dict["NUMBER_OF_MUS"])
-        # jsonemgfile[11] contains the BINARY_MUS_FIRING to be treated as
-        # jsonemgfile[2]
-        binary_mus_firing_dict = json.loads(jsonemgfile[11])
-        binary_mus_firing_dict = json.loads(
-            binary_mus_firing_dict["BINARY_MUS_FIRING"]
+        # FSAMP
+        # Make sure to convert it to float
+        fsamp = float(json.loads(jsonemgfile["FSAMP"]))
+        # IED
+        ied = float(json.loads(jsonemgfile["IED"]))
+        # EMG_LENGTH
+        # Make sure to convert it to int
+        emg_length = int(json.loads(jsonemgfile["EMG_LENGTH"]))
+        # NUMBER_OF_MUS
+        number_of_mus = int(json.loads(jsonemgfile["NUMBER_OF_MUS"]))
+        # BINARY_MUS_FIRING
+        binary_mus_firing = pd.read_json(
+            jsonemgfile["BINARY_MUS_FIRING"],
+            orient='split',
         )
-        binary_mus_firing = pd.DataFrame(binary_mus_firing_dict)
         binary_mus_firing.columns = binary_mus_firing.columns.astype(int)
         binary_mus_firing.index = binary_mus_firing.index.astype(int)
-        # jsonemgfile[12] contains the EXTRAS to be treated as
-        # jsonemgfile[2]
-        extras_dict = json.loads(jsonemgfile[12])
-        extras_dict = json.loads(extras_dict["EXTRAS"])
-        extras = pd.DataFrame(extras_dict)
-        # extras.columns = extras.columns.astype(int)
-        # extras.index = extras.index.astype(int)
-        # extras.sort_index(inplace=True)
-        # Don't alter extras, leave that to the user for maximum control
+        binary_mus_firing.sort_index(inplace=True)
+        # EXTRAS
+        # Don't alter index and columns as these could contain anything.
+        extras = pd.read_json(jsonemgfile["EXTRAS"], orient='split')
 
         emgfile = {
             "SOURCE": source,
@@ -1561,21 +1876,16 @@ def emg_from_json(filepath):
             "EXTRAS": extras,
         }
 
-    elif source in ["OTB_REFSIG", "CUSTOMCSV_REFSIG"]:
-        # jsonemgfile[2] contains the fsamp
-        fsamp_dict = json.loads(jsonemgfile[2])
-        fsamp = float(fsamp_dict["FSAMP"])
-        # jsonemgfile[3] contains the REF_SIGNAL
-        ref_signal_dict = json.loads(jsonemgfile[3])
-        ref_signal_dict = json.loads(ref_signal_dict["REF_SIGNAL"])
-        ref_signal = pd.DataFrame(ref_signal_dict)
+    elif source in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]:
+        # FSAMP
+        fsamp = float(json.loads(jsonemgfile["FSAMP"]))
+        # REF_SIGNAL
+        ref_signal = pd.read_json(jsonemgfile["REF_SIGNAL"], orient='split')
         ref_signal.columns = ref_signal.columns.astype(int)
         ref_signal.index = ref_signal.index.astype(int)
         ref_signal.sort_index(inplace=True)
-        # jsonemgfile[4] contains the EXTRAS
-        extras_dict = json.loads(jsonemgfile[4])
-        extras_dict = json.loads(extras_dict["EXTRAS"])
-        extras = pd.DataFrame(extras_dict)
+        # EXTRAS
+        extras = pd.read_json(jsonemgfile["EXTRAS"], orient='split')
 
         emgfile = {
             "SOURCE": source,
@@ -1603,21 +1913,27 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
     initialdir : str or Path, default "/"
         The directory of the file to load (excluding file name).
         This can be a simple string, the use of Path is not necessary.
-    filesource : str {"OPENHDEMG", "DEMUSE", "OTB", "OTB_REFSIG", "CUSTOMCSV", CUSTOMCSV_REFSIG}, default "OPENHDEMG"
+    filesource : str {"OPENHDEMG", "DEMUSE", "OTB", "DELSYS", "CUSTOMCSV", "OTB_REFSIG", "DELSYS_REFSIG", CUSTOMCSV_REFSIG}, default "OPENHDEMG"
         The source of the file. See notes for how files should be exported
-        from OTB.
+        from other softwares or platforms.
 
         ``OPENHDEMG``
             File saved from openhdemg (.json).
         ``DEMUSE``
             File saved from DEMUSE (.mat).
         ``OTB``
-            File exported from OTB with decomposition and reference signal
+            File exported from OTB with decomposition and EMG signal.
             (.mat).
+        ``DELSYS``
+            Files exported from Delsys Neuromap and Neuromap explorer with
+            decomposition and EMG signal (.mat + .txt).
+        ``CUSTOMCSV``
+            Custom file format (.csv) with decomposition and EMG signal.
         ``OTB_REFSIG``
             File exported from OTB with only the reference signal (.mat).
-        ``CUSTOMCSV``
-            Custom file format (.csv).
+        ``DELSYS_REFSIG``
+            File exported from DELSYS Neuromap with the reference signal
+            (.mat).
         ``CUSTOMCSV_REFSIG``
             Custom file format (.csv) containing only the reference signal.
     otb_ext_factor : int, default 8
@@ -1643,6 +1959,21 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
         If your specific version is not available in the tested versions,
         trying with the closer one usually works, but please double check the
         results. Ignore if loading other files.
+    delsys_emg_sensor_name : str, default "Galileo sensor"
+        The name of the EMG sensor used to collect the data. We currently
+        support only the "Galileo sensor".
+        Ignore if loading other files or only the reference signal.
+    delsys_refsig_sensor_name : str, default "Trigno Load Cell"
+        The name of the sensor used to record the reference signal. This is by
+        default "Trigno Load Cell". However, since this can have any name (and
+        can also be renamed by the user), here you should pass the effective
+        name (or regex pattern) by which you identify the sensor.
+        Ignore if loading other files or if no reference signal was recorded.
+    delsys_filename_from : str {"rawemg_file", "mus_directory"}, default "mus_directory"
+        The source by which the imported file will be named. This can either be
+        the same name of the file containing the raw EMG signal or of the
+        folder containing the decomposition outcome.
+        Ignore if loading other files or only the reference signal.
     custom_ref_signal : str, default 'REF_SIGNAL'
         Label of the column(s) containing the reference signal of the custom
         file.
@@ -1689,7 +2020,7 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
     Notes
     -----
     The returned file is called ``emgfile`` for convention (or ``emg_refsig``
-    if SOURCE in ["OTB_REFSIG", CUSTOMCSV_REFSIG]).
+    if SOURCE in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]).
 
     The input .mat file exported from the OTBiolab+ software should have a
     specific content:
@@ -1707,6 +2038,15 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
         before exporting the .mat file.
     - NO OTHER ELEMENTS SHOULD BE PRESENT! unless an appropriate regex pattern
     is passed to 'extras='!
+
+    For Delsys files:
+    We collect the raw EMG and the reference signal from the .mat file
+    exported from the Delsys Neuromap software because the .csv doesn't
+    contain the information about sampling frequency.
+    Similarly, we collect the firing times, MUAPs and accuracy from the .txt
+    files exported from the Delsys Neuromap Explorer software because in the
+    .mat file, the accuracy is contained in a table, which is not compatible
+    with Python.
 
     For custom .csv files:
     The variables of interest should be contained in columns. The name of the
@@ -1733,7 +2073,7 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
             "RAW_SIGNAL": RAW_SIGNAL,
             "REF_SIGNAL": REF_SIGNAL,
             "ACCURACY": accuracy score (depending on source file type),
-            "IPTS": IPTS,
+            "IPTS": IPTS (depending on source file type),
             "MUPULSES": MUPULSES,
             "FSAMP": FSAMP,
             "IED": IED,
@@ -1774,11 +2114,21 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
     root = Tk()
     root.withdraw()
 
-    if filesource in ["DEMUSE", "OTB", "OTB_REFSIG"]:
+    if filesource in ["DEMUSE", "OTB", "OTB_REFSIG", "DELSYS_REFSIG"]:
         file_toOpen = filedialog.askopenfilename(
             initialdir=initialdir,
             title=f"Select a {filesource} file to load",
             filetypes=[("MATLAB files", "*.mat")],
+        )
+    elif filesource == "DELSYS":
+        emg_file_toOpen = filedialog.askopenfilename(
+            initialdir=initialdir,
+            title="Select a DELSYS file with raw EMG to load",
+            filetypes=[("MATLAB files", "*.mat")],
+        )
+        mus_file_toOpen = filedialog.askdirectory(
+            initialdir=initialdir,
+            title="Select the folder containing the DELSYS decomposition",
         )
     elif filesource == "OPENHDEMG":
         file_toOpen = filedialog.askopenfilename(
@@ -1789,12 +2139,14 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
     elif filesource in ["CUSTOMCSV", "CUSTOMCSV_REFSIG"]:
         file_toOpen = filedialog.askopenfilename(
             initialdir=initialdir,
-            title="Select a custom file to load",
+            title=f"Select a {filesource} file to load",
             filetypes=[("CSV files", "*.csv")],
         )
     else:
-        raise Exception(
-            "\nfilesource not valid, it must be one of 'DEMUSE', 'OTB', 'OTB_REFSIG', 'OPENHDEMG', 'CUSTOMCSV', 'CUSTOMCSV_REFSIG'\n"
+        raise ValueError(
+            "\nfilesource not valid, it must be one of " +
+            "'DEMUSE', 'OTB', 'DELSYS', 'OTB_REFSIG', 'DELSYS_REFSIG', " +
+            "'OPENHDEMG', 'CUSTOMCSV', 'CUSTOMCSV_REFSIG'\n"
         )
 
     # Destroy the root since it is no longer necessary
@@ -1816,6 +2168,27 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
             filepath=file_toOpen,
             refsig=ref[1],
             version=kwargs.get("otb_version", "1.5.9.3"),
+        )
+    elif filesource == "DELSYS":
+        emgfile = emg_from_delsys(
+            rawemg_filepath=emg_file_toOpen,
+            mus_directory=mus_file_toOpen,
+            emg_sensor_name=kwargs.get(
+                "delsys_emg_sensor_name", "Galileo sensor"
+            ),
+            refsig_sensor_name=kwargs.get(
+                "delsys_refsig_sensor_name", "Trigno Load Cell"
+            ),
+            filename_from=kwargs.get(
+                "delsys_filename_from", "mus_directory"
+            ),
+        )
+    elif filesource == "DELSYS_REFSIG":
+        emgfile = refsig_from_delsys(
+            filepath=file_toOpen,
+            refsig_sensor_name=kwargs.get(
+                "delsys_refsig_sensor_name", "Trigno Load Cell"
+            ),
         )
     elif filesource == "OPENHDEMG":
         emgfile = emg_from_json(filepath=file_toOpen)
@@ -1848,7 +2221,7 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
     return emgfile
 
 
-def asksavefile(emgfile):
+def asksavefile(emgfile, compresslevel=4):
     """
     Select where to save files with a GUI.
 
@@ -1856,6 +2229,12 @@ def asksavefile(emgfile):
     ----------
     emgfile : dict
         The dictionary containing the emgfile to save.
+    compresslevel : int, default 4
+        An int from 0 to 9, where 0 is no compression and nine maximum
+        compression. Compressed files will take less space, but will require
+        more computation. The relationship between compression level and time
+        required for the compression is not linear. For optimised performance,
+        we suggest values between 2 and 6, with 4 providing the best balance.
 
     See also
     --------
@@ -1878,7 +2257,7 @@ def asksavefile(emgfile):
 
     print("\n-----------\nSaving file\n")
 
-    save_json_emgfile(emgfile, filepath)
+    save_json_emgfile(emgfile, filepath, compresslevel)
 
     print("File saved\n-----------\n")
 

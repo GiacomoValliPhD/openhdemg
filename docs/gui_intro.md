@@ -24,10 +24,12 @@ This is your starting point for every analysis. On the left hand side you can fi
 
 1. In order to load file into the GUI, you first need to select something in the **Type of file** dropdown box at the top left corner. The available filetypes are:
 
-    - `OTB` (.mat file exportable by OTBiolab+)
-    - `DEMUSE` (.mat file used in DEMUSE)
-    - `OTB_REFSIG` (Reference signal in the .mat file exportable by OTBiolab+)
     - `OPENHDEMG` (emgfile or reference signal stored in .json format)
+    - `DEMUSE` (.mat file used in DEMUSE)
+    - `OTB` (.mat file exportable by OTBiolab+)
+    - `OTB_REFSIG` (Reference signal in the .mat file exportable by OTBiolab+)
+    - `DELSYS` (.mat and .txt files exportable by Delsys software)
+    - `DELSYS_REFSIG` (.mat file exportable by Delsys software)
     - `CUSTOMCSV` (custom data from a .csv file)
     - `CUSTOMCSV_REFSIG` (Reference signal in a custom .csv file)
 

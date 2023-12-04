@@ -1,4 +1,15 @@
 # Welcome to openhdemg
+<p align="left">
+    <a href="https://pypi.python.org/pypi/openhdemg/" alt="openhdemg version" target="_blank">
+        <img alt="PyPI" src="https://img.shields.io/pypi/v/openhdemg?label=pip&logo=PyPI&logoColor=gold&color=blue"></a>
+    <a href="https://pypi.org/project/openhdemg" alt="Python version" target="_blank">
+        <img alt="PyPI" src="https://img.shields.io/pypi/pyversions/openhdemg?logo=Python&logoColor=gold&color=blue"></a>
+    <a href="https://www.youtube.com/@openhdemg" alt="YouTube" target="_blank">
+        <img src="https://img.shields.io/badge/youtube-Watch_videos-red.svg?color=blue&logoColor=gold&logo=youtube" /></a>
+    <a href="https://twitter.com/openhdemg" alt="Twitter" target="_blank">
+        <img src="https://img.shields.io/badge/twitter-Follow_us-red.svg?color=blue&logoColor=gold&logo=twitter" /></a>
+</p>
+
 <br/>
 
 <p align="center">
@@ -14,7 +25,7 @@
 *openhdemg* is an open-source framework written in Python 3 with many functionalities specifically designed for the analysis of High-Density
 Electromyography (HD-EMG) recordings. Some of its main features are listed below, but there is much more to discover! For a full list of available functions, please refer to the **API reference** section at [www.giacomovalli.com/openhdemg](https://www.giacomovalli.com/openhdemg/).
 
-1. **Load** decomposed HD-EMG files from various sources, such as .mat and .csv files. This allows to interface *openhdemg* with the commonly used softwares like OTBioLab+ or DEMUSE and potentially with any other software.
+1. **Load** decomposed HD-EMG files from various sources, such as .mat and .csv files. This allows to interface *openhdemg* with the commonly used softwares like OTBioLab+, DEMUSE, Delsys NeuroMap and potentially with any other software.
 2. **Visualise** your EMG or force/reference signal, as well as the motor units' firing times and their action potentials shape.
 3. **Edit** your file changing the reference signal offset, filtering noise, calculating differential derivations and removing unwanted motor units.
 4. **Analyse** motor units' recruitment/derecruitment thresholds, discharge rate, conduction velocity, action potentials amplitude and more...

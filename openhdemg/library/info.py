@@ -69,7 +69,7 @@ class info:
         .
         """
 
-        if emgfile["SOURCE"] in ["DEMUSE", "OTB", "CUSTOM"]:
+        if emgfile["SOURCE"] in ["DEMUSE", "OTB", "CUSTOMCSV", "DELSYS"]:
             print("\nData structure of the emgfile")
             print("-----------------------------\n")
             print(f"emgfile type is:\n{type(emgfile)}\n")
@@ -93,7 +93,7 @@ class info:
             print(f"emgfile['BINARY_MUS_FIRING'] is a {type(emgfile['BINARY_MUS_FIRING'])} of value:\n{emgfile['BINARY_MUS_FIRING']}\n")
             print(f"emgfile['EXTRAS'] is a {type(emgfile['EXTRAS'])} of value:\n{emgfile['EXTRAS']}\n")
 
-        elif emgfile["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG"]:
+        elif emgfile["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]:
             print("\nData structure of the emgfile")
             print("-----------------------------\n")
             print(f"emgfile type is:\n{type(emgfile)}\n")
@@ -218,33 +218,7 @@ class info:
         Us
         --
 
-        The developers of this project are:
-
-        Mr. Giacomo Valli:
-            The creator of the project and the developer of the library.
-            \x1B[3m
-            Mr. Giacomo Valli obtained a master degree in Sports Science and a
-            research fellowship in molecular biology of exercise at the
-            University of Urbino (IT).
-            He is currently a PhD student at the University of Padova (IT) in
-            neuromuscular physiology.
-            He is investigating the electrophysiological modifications
-            happening during disuse, disease and aging and linking this
-            information to the molecular alterations of the muscle.
-            \x1B[0m
-        Mr. Paul Ritsche:
-            The developer of the GUI.
-            \x1B[3m
-            Mr. Paul Ritsche obtained a master degree in Sports Science at the
-            University of Basel (CH).
-            He is currently a research associate at the University of Basel
-            (CH) focusing on muscle ultrasonography.
-            He is investigating automatic ultrasonography image analysis
-            methods to evaluate muscle morphological as well architectural
-            parameters.
-            \x1B[0m
-
-        For the full list of contributors visit:
+        For the full list of contributors and developers visit:
         https://www.giacomovalli.com/openhdemg/about-us/
         """
 
@@ -271,14 +245,14 @@ class info:
         "Primary contact": "openhdemg@gmail.com",
         "Twitter": "@openhdemg",
         "Maintainer": "Giacomo Valli",
-        "Maintainer Email": "giacomo.valli@phd.unipd.it",
+        "Maintainer Email": "giacomo.valli@unibs.it",
         """
 
         contact = {
             "Primary contact": "openhdemg@gmail.com",
             "Twitter": "@openhdemg",
             "Maintainer": "Giacomo Valli",
-            "Maintainer Email": "giacomo.valli@phd.unipd.it",
+            "Maintainer Email": "giacomo.valli@unibs.it",
         }
 
         # Pretty dict printing

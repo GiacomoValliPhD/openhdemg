@@ -19,6 +19,13 @@ This module contains functions to produce and analyse MUs anction potentials
 
 <br/>
 
+::: openhdemg.library.muap.extract_delsys_muaps
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
 ::: openhdemg.library.muap.sta
     options:
         show_root_full_path: False
