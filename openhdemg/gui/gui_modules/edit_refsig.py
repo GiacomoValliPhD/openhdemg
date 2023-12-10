@@ -3,6 +3,7 @@
 import os
 from tkinter import ttk, W, E, StringVar, DoubleVar, messagebox
 import customtkinter as ctk
+from CTkMessagebox import CTkMessagebox
 
 import openhdemg.library as openhdemg
 
@@ -145,7 +146,10 @@ class EditRefsig:
             self.parent.in_gui_plotting(resdict=self.parent.resdict, plot="refsig_fil")
 
         except AttributeError:
-            messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
+            CTkMessagebox(title="Info", message="Make sure a Refsig file is loaded.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
 
     def remove_offset(self):
         """
@@ -174,10 +178,16 @@ class EditRefsig:
             self.parent.in_gui_plotting(resdict=self.parent.resdict, plot="refsig_off")
 
         except AttributeError:
-            messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
-
+            CTkMessagebox(title="Info", message="Make sure a Refsig file is loaded.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+            
         except ValueError:
-            messagebox.showerror("Information", "Make sure to specify valid filtering or offset values.")
+            CTkMessagebox(title="Info", message="Make sure to specify valid filtering or offset values.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
 
     def convert_refsig(self):
         """
@@ -204,10 +214,16 @@ class EditRefsig:
             self.parent.in_gui_plotting(resdict=self.parent.resdict, plot="refsig_off")
 
         except AttributeError:
-            messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
+            CTkMessagebox(title="Info", message="Make sure a Refsig file is loaded.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
 
         except ValueError:
-            messagebox.showerror("Information", "Make sure to specify a valid conversion factor.")
+            CTkMessagebox(title="Info", message="Make sure to specify valid conversion factor.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
 
     def to_percent(self):
         """
@@ -230,7 +246,13 @@ class EditRefsig:
             self.parent.in_gui_plotting(resdict=self.parent.resdict)
 
         except AttributeError:
-            messagebox.showerror("Information", "Make sure a Refsig file is loaded.")
+            CTkMessagebox(title="Info", message="Make sure a Refsig file is loaded.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
 
         except ValueError:
-            messagebox.showerror("Information", "Make sure to specify a valid conversion factor.")
+            CTkMessagebox(title="Info", message="Make sure to specify valid conversion factor.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")

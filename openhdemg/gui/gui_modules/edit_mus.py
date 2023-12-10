@@ -1,8 +1,9 @@
 """Module containing the MU Removal GUI class"""
 
-from tkinter import StringVar, W, E, messagebox
+from tkinter import StringVar, W, E
 import os
 import customtkinter as ctk
+from CTkMessagebox import CTkMessagebox
 import openhdemg.library as openhdemg
 
 class MURemovalWindow:
@@ -39,9 +40,8 @@ class MURemovalWindow:
         removed_mu_value = [*range(0, self.parent.resdict["NUMBER_OF_MUS"])]
         removed_mu_value = list(map(str, removed_mu_value))
         removed_mu = ctk.CTkComboBox(
-            self.head, width=10, variable=self.mu_to_remove, values=removed_mu_value
+            self.head, width=10, variable=self.mu_to_remove, values=removed_mu_value, state="readonly"
         )
-        removed_mu.configure(state="readonly")
         removed_mu.grid(column=1, row=1, columnspan=2, sticky=(W, E), padx=5, pady=5)
 
         # Remove Motor unit
@@ -90,8 +90,11 @@ class MURemovalWindow:
                 self.parent.in_gui_plotting(resdict=self.parent.resdict)
 
         except AttributeError:
-            messagebox.showerror("Information", "Make sure a file is loaded.")
-
+            CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+            
     def remove_empty(self):
         """
         Instance method that removes all empty MUs.
@@ -127,4 +130,7 @@ class MURemovalWindow:
                 self.parent.in_gui_plotting(resdict=self.parent.resdict)
 
         except AttributeError:
-            messagebox.showerror("Information", "Make sure a file is loaded.")
+            CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")

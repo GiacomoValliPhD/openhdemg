@@ -1,8 +1,8 @@
 """Module that contains all helper functions for the GUI"""
 
-import os
-from tkinter import ttk, W, E, messagebox
+from tkinter import W, E
 import customtkinter as ctk
+from CTkMessagebox import CTkMessagebox
 
 import openhdemg.library as openhdemg
 
@@ -56,4 +56,7 @@ class GUIHelpers:
             )
 
         except AttributeError:
-            messagebox.showerror("Information", "Make sure a file is loaded.")
+            CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
