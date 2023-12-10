@@ -409,13 +409,6 @@ class emgGUI():
         separator0 = ttk.Separator(self.left, orient="horizontal")
         separator0.grid(column=0, columnspan=3, row=5, sticky=(W, E))
 
-        # COMMENT: This is commented out because it is not yet functional.
-        # Decompose file
-        # decompose = ttk.Button(self.left,
-        #                        text="Decompose",
-        #                        command=self.decompose_file)
-        # decompose.grid(row=3, column=0, sticky=W)
-
         # Save File
         save = ttk.Button(self.left, text="Save File", command=self.save_emgfile)
         save.grid(column=0, row=6, sticky=W)
@@ -441,13 +434,6 @@ class emgGUI():
         # Remove Motor Units
         remove_mus = ttk.Button(self.left, text="Remove MUs", command=lambda:(MURemovalWindow(parent=self, resdict=self.resdict)))
         remove_mus.grid(column=0, row=10, sticky=W)
-
-        # COMMENT: This is commented because it is not fully functional
-        # Edit Motor Units
-        # edit_mus = ttk.Button(self.left,
-        #                      text="Edit MUs",
-        #                      command=self.editing_mus)
-        # edit_mus.grid(column=1, row=10, sticky=W)
 
         separator3 = ttk.Separator(self.left, orient="horizontal")
         separator3.grid(column=0, columnspan=3, row=11, sticky=(W, E))
@@ -1279,66 +1265,15 @@ class emgGUI():
             tk.messagebox.showerror("Information", "Sorting not possible when ≤ 1"
                                     + "\nMU is present in the File (i.e. Refsigs)")
 
-    # -----------------------------------------------------------------------------------------------
-    # Editing of single motor Units
-
-    # def editing_mus(self):
-    #     """
-    #     Instance method to edit sindle motor units. For now, this contains only plotting single MUs.
-    #     More options will be added.
-
-    #     THIS PART IS NOT YET INTEGRATED IN THE GUI.
-    #     """
-
-    #     # Create new window
-    #     self.head = tk.Toplevel(bg='LightBlue4')
-    #     self.head.title("Motor Unit Eiditing Window")
-    #     self.head.grab_set()
-
-    #     # Select Motor Unit
-    #     ttk.Label(self.head, text="Select MU:").grid(column=0, row=0, sticky=W, padx=5, pady=5)
-
-    #     self.mu_to_edit = StringVar()
-    #     edit_mu_value = [*range(0, self.resdict["NUMBER_OF_MUS"])]
-    #     edit_mu = ttk.Combobox(self.head, width=10, textvariable=self.mu_to_edit)
-    #     edit_mu["values"] = edit_mu_value
-    #     edit_mu["state"] = "readonly"
-    #     edit_mu.grid(column=1, row=0, sticky=(W,E), padx=5, pady=5)
-
-    #     # Button to plot MU
-    #     single_mu = ttk.Button(self.head,
-    #                           text="View single MU",
-    #                           command=self.view_single_mu)
-    #     single_mu.grid(column=1, row=1, sticky=(W,E), padx=5, pady=5)
-
-    # def view_single_mu(self):
-    #     """
-    #     Instance method that plots single selected MU.
-
-    #     THIS PART IS NOT YET INTEGRATED IN THE GUI.
-    #     """
-    #     # Make figure
-    #     fig = openhdemg.plot_idr(emgfile=self.resdict,
-    #                              munumber=int(self.mu_to_edit.get()),
-    #                              showimmediately=False)
-    #     # Create canvas and plot
-    #     canvas = FigureCanvasTkAgg(fig, master=self.head)
-    #     canvas_plot = canvas.get_tk_widget()
-    #     canvas_plot.grid(column=1, row=2, sticky=(W,E))
-    #     # Place matplotlib toolbar
-    #     toolbar = NavigationToolbar2Tk(canvas, self.head, pack_toolbar=False)
-    #     toolbar.grid(row=3, column=1)
-    #     # terminate matplotlib to ensure GUI shutdown when closed
-    #     plt.close()
 
     # -----------------------------------------------------------------------------------------------
     # Editing of Reference EMG Signal
 
-    
+
     # -----------------------------------------------------------------------------------------------
     # Resize EMG File
 
-    
+
     # -----------------------------------------------------------------------------------------------
     # Analysis of Force
 
