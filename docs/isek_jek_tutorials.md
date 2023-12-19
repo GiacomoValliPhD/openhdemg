@@ -26,7 +26,7 @@ You can download the sample files and the sample scripts [here](https://drive.go
 
 **Workshop: Simplified analysis of motor unit properties with *openhdemg*.**
 
-On the 26th of June 2024, we will present the *openhdemg* framework at the ISEK congress, which will be held in Nagoya, Japan.
+On the 26th of June 2024, we will present the *openhdemg* framework at the [ISEK congress](https://isek.org/workshops/){:target="_blank"}, which will be held in Nagoya, Japan.
 
 Below, you can find a preliminary design of the workshop and the fantastic speakers who will participate. We look forward to seeing you there!
 
