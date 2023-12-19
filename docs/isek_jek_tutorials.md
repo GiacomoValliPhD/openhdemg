@@ -18,7 +18,7 @@ You can download the sample files and the sample scripts [here](https://drive.go
 
 <br>
 
-<embed src="https://www.giacomovalli.com/openhdemg/online_pdfs/pre-proof_valli_et_al_2023_jek.pdf" width="100%" height="800px" allowfullscreen type="application/pdf"></iframe>
+<embed src="https://www.giacomovalli.com/openhdemg/online_pdfs/valli_et_al_2023_tutorial_jek.pdf" width="100%" height="800px" allowfullscreen type="application/pdf"></iframe>
 
 <br> <!-- links in HTML should be full links-->
 
