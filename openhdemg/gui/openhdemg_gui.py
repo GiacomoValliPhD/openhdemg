@@ -713,10 +713,22 @@ class emgGUI():
                         # load OPENHDEMG (.json)
                         self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
                         # Add filespecs
-                        ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E))
-                        ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W, E))
-                        ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W, E)
-                        )
+                        # NOTE this is not correct because when the user asks to load OPENHDEMG (.json)
+                        # files, these could contain also the reference signal only. Therefore line 2
+                        # and 3 will crash. I temporarily fixed it, please review it for next release.
+                        if self.resdict["SOURCE"] in ["DEMUSE", "OTB", "CUSTOMCSV", "DELSYS"]:
+                            ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E))
+                            ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W, E))
+                            ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W, E))
+                        else:
+                            # Reconfigure labels for refsig
+                            ttk.Label(
+                                self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))
+                            ).grid(column=2, row=2, sticky=(W, E))
+                            ttk.Label(self.left, text="NA").grid(column=2, row=3, sticky=(W, E))
+                            ttk.Label(self.left, text="        ").grid(
+                                column=2, row=4, sticky=(W, E)
+                            )
                     else:
                         # Ask user to select the file
                         file_path = filedialog.askopenfilename(
@@ -725,7 +737,10 @@ class emgGUI():
                         )
                         self.file_path = file_path
                         # load file
-                        self.resdict = openhdemg.emg_from_customcsv(filepath=self.file_path)
+                        self.resdict = openhdemg.emg_from_customcsv(
+                            filepath=self.file_path,
+                            fsamp=float(self.fsamp.get()),
+                        )
                         # Add filespecs
                         ttk.Label(self.left, text="Custom CSV").grid(column=2, row=2, sticky=(W, E))
                         ttk.Label(self.left, text="").grid(column=2, row=3, sticky=(W, E))
@@ -768,7 +783,10 @@ class emgGUI():
                         )
                         self.file_path = file_path
                         # load refsig
-                        self.resdict = openhdemg.refsig_from_customcsv(filepath=self.file_path)
+                        self.resdict = openhdemg.refsig_from_customcsv(
+                            filepath=self.file_path,
+                            fsamp=float(self.fsamp.get()),
+                        )  # NOTE please check that I used correctly self.fsamp.get() here and above.
 
                     # Get filename
                     filename = os.path.splitext(os.path.basename(file_path))[0]
@@ -844,9 +862,24 @@ class emgGUI():
     def on_filetype_change(self, *args):
         """
         This function is called when the value of the filetype variable is changed.
-        When the filetype is set to "OTB" it will create a second combobox on the grid at column 0 and row 2,
-        and when the filetype is set to something else it will remove the second combobox from the grid.
+        When the filetype is set to "OTB", "CUSTOMCSV", "CUSTOMCSV_REFSIG" it will
+        create a second combobox on the grid at column 0 and row 2 and when the filetype
+        is set to something else it will remove the second combobox from the grid.
         """
+        # Forget previous widget when filetype is changes
+        # NOTE I had to separate them and put them on top of the function to
+        # ensure that changing file type consecutively would not miss the
+        # previous entry or combobox.
+        if self.filetype.get() not in ["OTB"]:
+            if hasattr(self, "otb_combobox"):
+                self.otb_combobox.grid_forget()
+        if self.filetype.get() not in ["CUSTOMCSV"]:
+            if hasattr(self, "csv_entry"):
+                self.csv_entry.grid_forget()
+        if self.filetype.get() not in ["CUSTOMCSV_REFSIG"]:
+            if hasattr(self, "csv_entry"):
+                self.csv_entry.grid_forget()
+
         # Add a combobox containing the OTB extension factors
         # in case an OTB file is loaded
         if self.filetype.get() == "OTB":
@@ -871,11 +904,18 @@ class emgGUI():
             self.otb_combobox.grid(column=0, row=2, sticky=(W, E), padx=5)
             self.otb_combobox.set("Extension Factor")
 
-        # Forget widget when filetype is changes
-        else:
-            if hasattr(self, "otb_combobox"):
-                self.otb_combobox.grid_forget()
+        # NOTE I forgot to mention, but people should be able to select fsamp for .csv files.
+        # Please check if this can be done better.
+        elif self.filetype.get() in ["CUSTOMCSV", "CUSTOMCSV_REFSIG"]:
+            self.fsamp = StringVar(value="Fsamp")
+            self.csv_entry = ttk.Entry(
+                self.left,
+                width=8,
+                textvariable=self.fsamp,
+            )
+            self.csv_entry.grid(column=0, row=2, sticky=(W, E), padx=5)
 
+    # TODO remove this and any reference to it
     def decompose_file(self):
         pass
 
@@ -1085,6 +1125,11 @@ class emgGUI():
         """
         # Disable config for DELSYS files
         if self.resdict["SOURCE"] == "DELSYS":
+            tk.messagebox.showerror(
+                "Information",
+                "Advanced Tools for Delsys are only accessible from the library.",
+            )
+            # NOTE I would show an error message
             return
 
         # Open window
@@ -1204,8 +1249,8 @@ class emgGUI():
         --------
         plot_refsig, plot_idr in the library.
         """
-        try:
-            if self.filetype.get() in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]:
+        try:  # NOTE as I previously said, OPENHDEMG (.json) files can contain anything. better check SOURCE.
+            if self.resdict["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]:
                 self.fig = openhdemg.plot_refsig(
                     emgfile=resdict, showimmediately=False, tight_layout=True
                 )
@@ -1636,7 +1681,9 @@ class emgGUI():
 
         # Plot reference signal
         openhdemg.plot_refsig(
-            emgfile=self.resdict, timeinseconds=self.time_sec.get(), figsize=figsize
+            emgfile=self.resdict,
+            timeinseconds=eval(self.time_sec.get()),
+            figsize=figsize,
         )
 
     def plt_mupulses(self):

@@ -18,15 +18,15 @@ You can download the sample files and the sample scripts [here](https://drive.go
 
 <br>
 
-<iframe src="/online_pdfs/pre-proof_valli_et_al_2023_jek.pdf" width="100%" height="800px" allowfullscreen></iframe>
+<embed src="https://www.giacomovalli.com/openhdemg/online_pdfs/valli_et_al_2023_tutorial_jek.pdf" width="100%" height="800px" allowfullscreen type="application/pdf"></iframe>
 
-<br>
+<br> <!-- links in HTML should be full links-->
 
 ## 2023 ISEK Workshop
 
 **Workshop: Simplified analysis of motor unit properties with *openhdemg*.**
 
-On the 26th of June 2024, we will present the *openhdemg* framework at the ISEK congress, which will be held in Nagoya, Japan.
+On the 26th of June 2024, we will present the *openhdemg* framework at the [ISEK congress](https://isek.org/workshops/){:target="_blank"}, which will be held in Nagoya, Japan.
 
 Below, you can find a preliminary design of the workshop and the fantastic speakers who will participate. We look forward to seeing you there!
 

@@ -556,6 +556,12 @@ def basic_mus_properties(
         )
         start_steady, end_steady = points[0], points[1]
 
+    # Double check if the user selected before or after the start of the signal
+    if start_steady < 0:
+        start_steady = 0
+    if end_steady < 0:
+        end_steady = 0
+
     # Collect the information to export
     # First: create a dataframe that contains all the output
     exportable_df = []

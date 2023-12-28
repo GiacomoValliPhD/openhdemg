@@ -42,12 +42,6 @@ If you already know how to use Python, that's the way to go! Otherwise, have a l
 pip install openhdemg
 ```
 
-or conda:
-
-```shell
-conda install -c conda-forge openhdemg
-```
-
 If you want an overview of what you can do with the *openhdemg* library, have a look at the [Quick Start section](https://www.giacomovalli.com/openhdemg/quick-start/).
 
 ## Good to know

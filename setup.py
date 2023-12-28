@@ -9,6 +9,7 @@ from setuptools import setup
 
 INSTALL_REQUIRES = [
     "customtkinter==5.2.1",
+    "CTkMessagebox==2.5"
     "matplotlib==3.8.1",
     "numpy==1.26.1",
     "openpyxl==3.1.2",
@@ -27,6 +28,7 @@ PACKAGES = [
     "openhdemg.compatibility",
     "openhdemg.gui",
     "openhdemg.gui.gui_files",
+    "openhdemg.gui.gui_helpers"
 ]
 
 CLASSIFIERS = [
