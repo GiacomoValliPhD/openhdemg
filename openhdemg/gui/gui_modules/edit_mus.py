@@ -26,9 +26,7 @@ class MURemovalWindow:
         self.head = ctk.CTkToplevel(fg_color="LightBlue4")
         # Set the background color of the top-level window
         self.head.title("Motor Unit Removal Window")
-        self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
-        )
+        self.head.wm_iconbitmap()
         self.head.grab_set()
 
         # Select Motor Unit

@@ -1,7 +1,7 @@
 """Module containing the Resif editing class"""
 
 import os
-from tkinter import ttk, W, E, StringVar, DoubleVar, messagebox
+from tkinter import ttk, W, E, StringVar, DoubleVar
 import customtkinter as ctk
 from CTkMessagebox import CTkMessagebox
 
@@ -20,9 +20,7 @@ class EditRefsig:
         # Create new window
         self.head = ctk.CTkToplevel(fg_color="LightBlue4")
         self.head.title("Reference Signal Editing Window")
-        self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
-        )
+        self.head.wm_iconbitmap()
         self.head.grab_set()
         self.head.resizable(width=True, height=True)
 

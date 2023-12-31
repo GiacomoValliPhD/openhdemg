@@ -1,13 +1,9 @@
 """Module containing MU propterty analysis"""
 
-import customtkinter as ctk
-import os
 from tkinter import ttk, W, E, StringVar
 import customtkinter as ctk
 from CTkMessagebox import CTkMessagebox
-import pandas as pd
 import openhdemg.library as openhdemg
-
 
 class MuAnalysis:
     """
@@ -22,9 +18,7 @@ class MuAnalysis:
         self.parent = parent
         self.head = ctk.CTkToplevel(fg_color="LightBlue4")
         self.head.title("Motor Unit Properties Window")
-        self.head.iconbitmap(
-            os.path.dirname(os.path.abspath(__file__)) + "/gui_files/Icon.ico"
-        )
+        self.head.wm_iconbitmap()
         self.head.grab_set()
 
         # MVC Entry
@@ -148,23 +142,30 @@ class MuAnalysis:
         """
         try:
             # Compute thresholds
-            self.mu_thresholds = openhdemg.compute_thresholds(
-                emgfile=self.resdict,
+            mu_thresholds = openhdemg.compute_thresholds(
+                emgfile=self.parent.resdict,
                 event_=self.ct_event.get(),
                 type_=self.ct_type.get(),
                 mvc=float(self.mvc_value.get()),
             )
             # Display results
-            self.display_results(self.mu_thresholds)
+            self.parent.display_results(mu_thresholds)
 
         except AttributeError:
-            tk.messagebox.showerror("Information", "Load file prior to computation.")
-
+            CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
         except ValueError:
-            tk.messagebox.showerror("Information", "Enter valid MVC.")
-
+            CTkMessagebox(title="Info", message="Enter valid MVC.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
         except AssertionError:
-            tk.messagebox.showerror("Information", "Specify Event and/or Type.")
+            CTkMessagebox(title="Info", message="Specify Event and/or Type.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
 
     def compute_mu_dr(self):
         """
@@ -189,26 +190,30 @@ class MuAnalysis:
         """
         try:
             # Compute discharge rates
-            self.mus_dr = openhdemg.compute_dr(
-                emgfile=self.resdict,
+            mus_dr = openhdemg.compute_dr(
+                emgfile=self.parent.resdict,
                 n_firings_RecDerec=int(self.firings_rec.get()),
                 n_firings_steady=int(self.firings_ste.get()),
                 event_=self.dr_event.get(),
             )
             # Display results
-            self.display_results(self.mus_dr)
+            self.parent.display_results(mus_dr)
 
         except AttributeError:
-            tk.messagebox.showerror("Information", "Load file prior to computation.")
-
+            CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
         except ValueError:
-            tk.messagebox.showerror(
-                "Information",
-                "Enter valid Firings value or select a correct number of points."
-            )
-
+            CTkMessagebox(title="Info", message="Enter valid Firings value or select a correct number of points.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
         except AssertionError:
-            tk.messagebox.showerror("Information", "Specify Event and/or Type.")
+            CTkMessagebox(title="Info", message="Specify Event and/or Type.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
 
     def basic_mus_properties(self):
         """
@@ -235,26 +240,32 @@ class MuAnalysis:
         """
         try:
             # Calculate properties
-            self.exportable_df = openhdemg.basic_mus_properties(
-                emgfile=self.resdict,
+            exportable_df = openhdemg.basic_mus_properties(
+                emgfile=self.parent.resdict,
                 n_firings_RecDerec=int(self.b_firings_rec.get()),
                 n_firings_steady=int(self.b_firings_ste.get()),
                 mvc=float(self.mvc_value.get()),
             )
             # Display results
-            self.display_results(self.exportable_df)
+            self.parent.display_results(exportable_df)
 
         except AttributeError:
-            tk.messagebox.showerror("Information", "Load file prior to computation.")
-
+            CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
         except ValueError:
-            tk.messagebox.showerror(
-                "Information",
-                "Enter valid MVC or select a correct number of points."
-            )
-
+            CTkMessagebox(title="Info", message="Enter valid MVC value or select a correct number of points.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
         except AssertionError:
-            tk.messagebox.showerror("Information", "Specify Event and/or Type.")
-
+            CTkMessagebox(title="Info", message="Specify Event and/or Type.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
         except UnboundLocalError:
-            tk.messagebox.showerror("Information", "Select start/end area again.")
+            CTkMessagebox(title="Info", message="Select start/end area again.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
