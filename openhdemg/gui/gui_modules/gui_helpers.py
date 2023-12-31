@@ -1,8 +1,9 @@
 """Module that contains all helper functions for the GUI"""
 
-from tkinter import W, E
+from tkinter import W, E, filedialog
 import customtkinter as ctk
 from CTkMessagebox import CTkMessagebox
+import pandas as pd
 
 import openhdemg.library as openhdemg
 
@@ -26,6 +27,10 @@ class GUIHelpers:
         Initialize a new instance of the GUIHelpers class.
     resize_file(self)
         Resize the EMG file based on user-defined areas selected in the GUI plot.
+    export_to_excel(self)
+        Save an analaysis dataframe to a csv file. 
+    sort_mus(self)
+        Sort motor units according to recriuitement order.
     
     Examples
     --------
@@ -111,3 +116,98 @@ class GUIHelpers:
                           bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
                           button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
                           font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+
+    def export_to_excel(self):
+        """
+        Instnace method to export any prior analysis results. Results are saved in an excel sheet
+        in a directory specified by the user.
+
+        Executed when button "Save Results" in master GUI window is pressed.
+
+        Raises
+        ------
+        IndexError
+            When no analysis has been performed prior to attempted savig.
+        AttributeError
+            When no file was loaded in the GUI.
+        """
+        try:
+            # Ask user to select the directory
+            path = filedialog.askdirectory()
+
+            # Define excel writer
+            writer = pd.ExcelWriter(path + "/Results_" + self.parent.filename + ".xlsx")
+
+            # Check for attributes and write sheets
+            if hasattr(self.parent, "mvc_df"):
+                self.parent.mvc_df.to_excel(writer, sheet_name="MVC")
+
+            if hasattr(self.parent, "rfd"): 
+                self.parent.rfd.to_excel(writer, sheet_name="RFD")
+
+            if hasattr(self.parent, "exportable_df"):
+                self.parent.mu_prop_df.to_excel(writer, sheet_name="Basic MU Properties")
+
+            if hasattr(self.parent, "mus_dr"):
+                self.parent.mus_dr.to_excel(writer, sheet_name="MU Discharge Rate")
+
+            if hasattr(self.parent, "mu_thresholds"):
+                self.mu_thresholds.to_excel(writer, sheet_name="MU Thresholds")
+
+            writer.close()
+
+        except IndexError:
+            CTkMessagebox(title="Info", message="Please conduct at least one analysis before saving.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+
+        except AttributeError:
+            CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
+                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+
+        except PermissionError:
+            CTkMessagebox(title="Info", message="If /Results.xlsx already opened, please close."
+                + "\nOtherwise ignore as you propably canceled the saving progress.", icon="info",
+                bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+
+    def sort_mus(self):
+        """
+        Instance method to sort motor units ascending according to recruitement order.
+
+        Executed when button "Sort MUs" in master GUI window is pressed. The plot of the MUs
+        and the emgfile are subsequently updated.
+
+        Raises
+        ------
+        AttributeError
+            When no file was loaded in the GUI.
+
+        See Also
+        --------
+        sort_mus in library.
+        """
+        try:
+            # Sort emgfile
+            self.parent.resdict = openhdemg.sort_mus(emgfile=self.parent.resdict)
+
+            # Update plot
+            if hasattr(self.parent, "fig"):
+                self.parent.in_gui_plotting(resdict=self.parent.resdict)
+
+        except AttributeError:
+            CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
+                bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+
+        except KeyError:
+            CTkMessagebox(title="Info", message="Sorting not possible when ≤ 1"
+                                    + "\nMU is present in the File (i.e. Refsigs)", icon="info",
+                bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")

@@ -215,14 +215,14 @@ class MuAnalysis:
         """
         try:
             # Compute thresholds
-            mu_thresholds = openhdemg.compute_thresholds(
+            self.parent.mu_thresholds = openhdemg.compute_thresholds(
                 emgfile=self.parent.resdict,
                 event_=self.ct_event.get(),
                 type_=self.ct_type.get(),
                 mvc=float(self.mvc_value.get()),
             )
             # Display results
-            self.parent.display_results(mu_thresholds)
+            self.parent.display_results(self.parent.mu_thresholds)
 
         except AttributeError:
             CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
@@ -263,14 +263,14 @@ class MuAnalysis:
         """
         try:
             # Compute discharge rates
-            mus_dr = openhdemg.compute_dr(
+            self.parent.mus_dr = openhdemg.compute_dr(
                 emgfile=self.parent.resdict,
                 n_firings_RecDerec=int(self.firings_rec.get()),
                 n_firings_steady=int(self.firings_ste.get()),
                 event_=self.dr_event.get(),
             )
             # Display results
-            self.parent.display_results(mus_dr)
+            self.parent.display_results(self.parent.mus_dr)
 
         except AttributeError:
             CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
@@ -313,14 +313,14 @@ class MuAnalysis:
         """
         try:
             # Calculate properties
-            exportable_df = openhdemg.basic_mus_properties(
+            self.parent.mu_prop_df = openhdemg.basic_mus_properties(
                 emgfile=self.parent.resdict,
                 n_firings_RecDerec=int(self.b_firings_rec.get()),
                 n_firings_steady=int(self.b_firings_ste.get()),
                 mvc=float(self.mvc_value.get()),
             )
             # Display results
-            self.parent.display_results(exportable_df)
+            self.parent.display_results(self.parent.mu_prop_df)
 
         except AttributeError:
             CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",

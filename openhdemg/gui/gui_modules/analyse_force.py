@@ -119,9 +119,9 @@ class AnalyseForce:
             mvc = openhdemg.get_mvc(emgfile=self.parent.resdict)
             # Define dictionary for pandas
             mvc_dic = {"MVC": [mvc]}
-            mvc_df = pd.DataFrame(data=mvc_dic)
+            self.parent.mvc_df = pd.DataFrame(data=mvc_dic)
             # Display results
-            self.parent.display_results(input_df=mvc_df)
+            self.parent.display_results(input_df=self.parent.mvc_df)
 
         except AttributeError:
             CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
@@ -153,9 +153,9 @@ class AnalyseForce:
             # Use comprehension to iterate through
             ms_list = [int(i) for i in ms_list]
             # Calculate rfd
-            rfd = openhdemg.compute_rfd(emgfile=self.parent.resdict, ms=ms_list)
+            self.parent.rfd = openhdemg.compute_rfd(emgfile=self.parent.resdict, ms=ms_list)
             # Display results
-            self.parent.display_results(input_df=rfd)
+            self.parent.display_results(input_df=self.parent.rfd)
 
         except AttributeError:
             CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",

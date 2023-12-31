@@ -229,18 +229,12 @@ class emgGUI():
     save_emgfile()
         Saves the edited emgfile dictionary to a .json file.
         Executed when button "Save File" in master GUI window pressed.
-    export_to_excel()
-        Saves the analysis results to a .xlsx file.
-        Executed when button "Save Results" in master GUI window pressed.
-    reset_analysis()
+   reset_analysis()
         Resets the whole analysis, restores the original input file and the graph.
         Executed when button "Reset analysis" in master GUI window pressed.
     in_gui_plotting()
         Method used for creating plot inside the GUI (on the GUI canvas).
         Executed when button "View MUs" in master GUI window pressed.
-    sort_mus()
-        Method used to sort motor units in Plot according to recruitement order.
-        Executed when button "Sort MUs" in master GUI window pressed.
     remove_mus()
         Opens seperate window to select motor units to be removed.
         Executed when button "Remove MUs" in master GUI window pressed.
@@ -417,7 +411,7 @@ class emgGUI():
 
         # Export to Excel
         export = ttk.Button(
-            self.left, text="Save Results", command=self.export_to_excel
+            self.left, text="Save Results", command=lambda: (GUIHelpers(parent=self).export_to_excel())
         )
         export.grid(column=1, row=6, sticky=(W, E))
 
@@ -426,7 +420,7 @@ class emgGUI():
         firings.grid(column=0, row=8, sticky=W)
 
         # Sort Motor Units
-        sorting = ttk.Button(self.left, text="Sort MUs", command=self.sort_mus)
+        sorting = ttk.Button(self.left, text="Sort MUs", command=lambda: (GUIHelpers(parent=self).sort_mus()))
         sorting.grid(column=1, row=8, sticky=(W, E))
         separator2 = ttk.Separator(self.left, orient="horizontal")
         separator2.grid(column=0, columnspan=3, row=9, sticky=(W, E))
@@ -967,59 +961,7 @@ class emgGUI():
         save_thread = threading.Thread(target=save_file)
         save_thread.start()
 
-    def export_to_excel(self):
-        """
-        Instnace method to export any prior analysis results. Results are saved in an excel sheet
-        in a directory specified by the user.
-
-        Executed when button "Save Results" in master GUI window is pressed.
-
-        Raises
-        ------
-        IndexError
-            When no analysis has been performed prior to attempted savig.
-        AttributeError
-            When no file was loaded in the GUI.
-        """
-        try:
-            # Ask user to select the directory
-            path = filedialog.askdirectory()
-
-            # Define excel writer
-            writer = pd.ExcelWriter(path + "/Results_" + self.filename + ".xlsx")
-
-            # Check for attributes and write sheets
-            if hasattr(self, "mvc_df"):
-                self.mvc_df.to_excel(writer, sheet_name="MVC")
-
-            if hasattr(self, "rfd"):
-                self.rfd.to_excel(writer, sheet_name="RFD")
-
-            if hasattr(self, "exportable_df"):
-                self.exportable_df.to_excel(writer, sheet_name="Basic MU Properties")
-
-            if hasattr(self, "mus_dr"):
-                self.mus_dr.to_excel(writer, sheet_name="MU Discharge Rate")
-
-            if hasattr(self, "mu_thresholds"):
-                self.mu_thresholds.to_excel(writer, sheet_name="MU Thresholds")
-
-            writer.close()
-
-        except IndexError:
-            tk.messagebox.showerror(
-                "Information", "Please conduct at least one analysis before saving"
-            )
-
-        except AttributeError:
-            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
-
-        except PermissionError:
-            tk.messagebox.showerror(
-                "Information",
-                "If /Results.xlsx already opened, please close."
-                + "\nOtherwise ignore as you propably canceled the saving progress.",
-            )
+    
 
     def reset_analysis(self):
         """
@@ -1126,7 +1068,6 @@ class emgGUI():
                 "Information",
                 "Advanced Tools for Delsys are only accessible from the library.",
             )
-            # NOTE I would show an error message
             return
 
         # Open window
@@ -1276,37 +1217,7 @@ class emgGUI():
     # -----------------------------------------------------------------------------------------------
     # Sorting of motor units
 
-    def sort_mus(self):
-        """
-        Instance method to sort motor units ascending according to recruitement order.
-
-        Executed when button "Sort MUs" in master GUI window is pressed. The plot of the MUs
-        and the emgfile are subsequently updated.
-
-        Raises
-        ------
-        AttributeError
-            When no file was loaded in the GUI.
-
-        See Also
-        --------
-        sort_mus in library.
-        """
-        try:
-            # Sort emgfile
-            self.resdict = openhdemg.sort_mus(emgfile=self.resdict)
-
-            # Update plot
-            if hasattr(self, "fig"):
-                self.in_gui_plotting(resdict=self.resdict)
-
-        except AttributeError:
-            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
-
-        except KeyError:
-            tk.messagebox.showerror("Information", "Sorting not possible when ≤ 1"
-                                    + "\nMU is present in the File (i.e. Refsigs)")
-
+    
     # -----------------------------------------------------------------------------------------------
     # Advanced Analysis
 
