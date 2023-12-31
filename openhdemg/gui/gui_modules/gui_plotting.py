@@ -11,14 +11,107 @@ import openhdemg.library as openhdemg
 
 class PlotEmg:
     """
-    Instance method to open "Plot Window". Options to create
-    several plots from the emgfile are displayed.
+    A class to manage and display EMG (Electromyography) signal plots in a GUI application.
 
-    Executed when button "Plot EMG" in master GUI window is pressed.
-    The plots are displayed in seperate windows.
+    This class creates a plotting window with various options to create and display plots 
+    from an EMG file. It provides functionalities to plot EMG signals, reference signals, 
+    motor unit pulses, and more, with customizable settings.
+
+    Attributes
+    ----------
+    parent : object
+        The parent widget, typically the main application window that this PlotEmg instance belongs to.
+    head : CTkToplevel
+        The top-level widget for the plotting window.
+    matrix_rc : StringVar
+        Tkinter StringVar for storing matrix rows and columns information.
+    mat_label : ttk.Label
+        Label widget for displaying matrix rows and columns information.
+    row_cols_entry : ttk.Entry
+        Entry widget for inputting matrix rows and columns.
+    ref_but : StringVar
+        Variable to track the state of the reference signal checkbox.
+    time_sec : StringVar
+        Variable to track the time selection for the plot.
+    size_fig : StringVar
+        Variable to store the specified figure size.
+    channels : StringVar
+        Variable to store the selected EMG channels.
+    linewidth : StringVar
+        Variable to store the selected line width for plotting.
+    mu_numb : StringVar
+        Variable to store the selected motor unit number.
+    mat_code : StringVar
+        Variable to store the selected matrix code.
+    mat_orientation : StringVar
+        Variable to store the orientation of the matrix.
+    deriv_config : StringVar
+        Variable to store the configuration for the derivation plot.
+    deriv_matrix : StringVar
+        Variable to store the selected matrix column for derivation.
+    muap_config : StringVar
+        Variable to store the configuration for the MUAP plot.
+    muap_munum : StringVar
+        Variable to store the selected motor unit number for MUAP plot.
+    muap_time : StringVar
+        Variable to store the time window for MUAP plot.
+    matrix : PhotoImage
+        Image variable to store and display the matrix illustration graphic.
+    info : CTkImage
+        Image variable for the information button.
+
+    Methods
+    -------
+    __init__(self, parent)
+        Initialize a new instance of the PlotEmg class.
+    plt_emgsignal(self)
+        Plot the EMG signal based on the current settings.
+    plt_refsignal(self)
+        Plot the reference signal.
+    plt_mupulses(self)
+        Plot motor unit pulses.
+    plt_ipts(self)
+        Plot the impulse train.
+    plt_idr(self)
+        Plot the instantaneous discharge rate.
+    plot_derivation(self)
+        Plot the derivation based on the selected configuration.
+    plot_muaps(self)
+        Plot the motor unit action potentials.
+    on_matrix_none(self, *args)
+        Handle changes in the matrix code selection.
+    
+    Examples
+    --------
+    >>> main_window = Tk()
+    >>> plot_emg = PlotEmg(main_window)
+    >>> plot_emg.head.mainloop()
+
+    Notes
+    -----
+    This class is dependent on the `ctk` and `ttk` modules from the `tkinter` library.
+    Some attributes and methods are conditional based on the `parent`'s properties.
+
     """
     def __init__(self, parent):
+        """
+        Initialize a new instance of the PlotEmg class.
 
+        This method sets up the GUI components of the PlotEmg window, including labels, 
+        entries, checkboxes, and buttons for various plot settings and options.
+
+        Parameters
+        ----------
+        parent : object
+            The parent widget, typically the main application window, to which this PlotEmg instance belongs.
+
+        Raises
+        ------
+        AttributeError
+            If certain widgets are not properly instantiated due to missing parent resdict.
+
+        """
+        # Try is block is necessary as some widgets depend on parent resdict
         try:
             self.parent = parent
             self.head = ctk.CTkToplevel(fg_color="LightBlue4")
@@ -310,13 +403,12 @@ class PlotEmg:
 
         Raises
         ------
-        AttributeError
-            When no file is loaded prior to calculation.
         ValueError
             When entered channel number is not valid (inexistent).
         KeyError
             When entered channel number is out of bounds.
-
+        IndexError
+            When negative figure size is specified.
         See Also
         --------
         plot_emgsignal in library.
@@ -373,11 +465,6 @@ class PlotEmg:
 
         Executed when button "Plot REFsig" in Plot Window is pressed.
 
-        Raises
-        ------
-        AttributeError
-            When no file is loaded prior to calculation.
-
         See Also
         --------
         plot_refsig in library.
@@ -402,8 +489,6 @@ class PlotEmg:
 
         Raises
         ------
-        AttributeError
-            When no file is loaded prior to calculation.
         ValueError
             When entered channel number is not valid (inexistent).
 
@@ -440,8 +525,6 @@ class PlotEmg:
 
         Raises
         ------
-        AttributeError
-            When no file is loaded prior to calculation.
         ValueError
             When entered motor unit number is not valid (inexistent).
         KeyError
@@ -512,8 +595,6 @@ class PlotEmg:
 
         Raises
         ------
-        AttributeError
-            When no file is loaded prior to calculation.
         ValueError
             When entered channel number is not valid (inexistent).
         KeyError
@@ -577,6 +658,19 @@ class PlotEmg:
 
         Both the single and the double differencials can be plotted.
         This function is used to plot also the sorted RAW_SIGNAL.
+        
+        Raises
+        ------
+        ValueError
+            When entered channel number is not valid (inexistent).
+        UnboundLocalError
+            When matrix configuration and / or column number are invalid.
+        KeyError
+            When entered channel number is out of bounds.
+
+        See Also
+        --------
+        plot_differentials in library.
         """
         try:
             if self.mat_code.get() == "None":
@@ -658,6 +752,20 @@ class PlotEmg:
         There is no limit to the number of MUs and STA files that can be overplotted.
         ``Remember: the different STAs should be matched`` with same number of electrode,
         processing (i.e., differential) and computed on the same timewindow.
+
+        Raises
+        ------
+        ValueError
+            When entered channel number is not valid (inexistent).
+        UnboundLocalError
+            When matrix configuration and / or column number are invalid.
+        KeyError
+            When entered channel number is out of bounds.
+
+        See Also
+        --------
+        plot_muaps in library.
+
         """
         try:
             # DELSYS requires different MUAPS plot

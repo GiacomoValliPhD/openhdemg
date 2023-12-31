@@ -8,18 +8,67 @@ import openhdemg.library as openhdemg
 
 class AnalyseForce:
     """
-    Class containing the force analysis window for openhdemg
-    
-    Instance method to open "Force analysis Window".
-        Options to analyse force singal are displayed.
+    A class for conducting force analysis in an openhdemg GUI application.
 
-        Executed when "Analyse Force" button in master GUI window is pressed.
+    This class provides a window for analyzing force signals. It includes functionalities 
+    for calculating Maximum Voluntary Contraction (MVC) and Rate of Force Development (RFD). 
+    The class is activated through the "Analyse Force" button in the main GUI window.
+
+    Attributes
+    ----------
+    parent : object
+        The parent widget, typically the main application window, to which this AnalyseForce 
+        instance belongs.
+    head : CTkToplevel
+        The top-level widget for the Force Analysis window.
+    rfdms : StringVar
+        Tkinter StringVar to store the milliseconds value for Rate of Force Development (RFD) analysis.
+
+    Methods
+    -------
+    __init__(self, parent)
+        Initialize a new instance of the AnalyseForce class.
+    get_mvc(self)
+        Calculate and display the Maximum Voluntary Contraction (MVC).
+    get_rfd(self)
+        Calculate and display the Rate of Force Development (RFD) over specified milliseconds.
+    
+    Examples
+    --------
+    >>> main_window = Tk()
+    >>> force_analysis = AnalyseForce(main_window)
+    >>> force_analysis.head.mainloop()
+
+    Notes
+    -----
+    The class is designed to be a part of a larger GUI application and interacts with force 
+    signal data accessible via the `parent` widget.
     """
 
     def __init__(self, parent):
-        self.parent = parent
+        """
+        Initialize a new instance of the AnalyseForce class.
 
+        This method sets up the GUI components for the Force Analysis Window. It includes buttons 
+        for calculating MVC and RFD, and an entry field for specifying RFD milliseconds. The method 
+        configures and places various widgets such as labels, buttons, and entry fields in a grid 
+        layout for user interaction.
+
+        Parameters
+        ----------
+        parent : object
+            The parent widget, typically the main application window, to which this AnalyseForce 
+            instance belongs. The parent is used for accessing shared resources and data.
+
+        Raises
+        ------
+        AttributeError
+            If certain widgets or properties are not properly instantiated due to missing 
+            parent configurations or resources.
+
+        """
         # Create new window
+        self.parent = parent
         self.head = ctk.CTkToplevel(fg_color="LightBlue4")
         self.head.title("Force Analysis Window")
         self.head.wm_iconbitmap()

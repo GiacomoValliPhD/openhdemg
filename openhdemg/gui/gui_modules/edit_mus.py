@@ -8,18 +8,76 @@ import openhdemg.library as openhdemg
 
 class MURemovalWindow:
     """
-    Instance method to open "Motor Unit Removal Window". Further option to select and
-    remove MUs are displayed.
+    A class for managing the removal of motor units (MUs) in a GUI application.
 
-    Executed when button "Remove MUs" in master GUI window is pressed.
+    This class creates a window that offers options to select and remove specific MUs. 
+    It is activated from the main GUI window and is intended to provide functionalities 
+    for manipulating motor unit data. The class raises an AttributeError if it is instantiated 
+    without a loaded file for analysis.
+
+    Attributes
+    ----------
+    parent : object
+        The parent widget, typically the main application window, to which this MURemovalWindow 
+        instance belongs.
+    resdict : dict
+        A dictionary containing relevant data and settings, including the number of MUs.
+    head : CTkToplevel
+        The top-level widget for the Motor Unit Removal window.
+    mu_to_remove : StringVar
+        Tkinter StringVar to store the ID of the motor unit selected for removal.
+
+    Methods
+    -------
+    __init__(self, parent, resdict)
+        Initialize a new instance of the MURemovalWindow class.
+    remove(self)
+        Remove the selected motor unit from the analysis.
+    remove_empty(self)
+        Remove all motor units that are empty or have no data.
+    
+    Examples
+    --------
+    >>> main_window = Tk()
+    >>> resdict = {"NUMBER_OF_MUS": 10}  # Example resdict
+    >>> mu_removal_window = MURemovalWindow(main_window, resdict)
+    >>> mu_removal_window.head.mainloop()
 
     Raises
     ------
     AttributeError
         When no file is loaded prior to analysis.
-    """
 
+    Notes
+    -----
+    The class is designed to interact with the data structure provided by the `resdict` 
+    attribute, which is expected to contain specific keys and values relevant to the MU analysis.
+
+    """
     def __init__(self, parent, resdict):
+        """
+        Initialize a new instance of the MURemovalWindow class.
+
+        This method sets up the GUI components for the Motor Unit Removal Window. It includes 
+        a dropdown menu to select a motor unit (MU) for removal and buttons to remove either 
+        the selected MU or all empty MUs. The method configures and places various widgets such 
+        as labels, comboboxes, and buttons in a grid layout for user interaction.
+
+        Parameters
+        ----------
+        parent : object
+            The parent widget, typically the main application window, to which this MURemovalWindow 
+            instance belongs. The parent is used for accessing shared resources and data.
+        resdict : dict
+            A dictionary containing relevant data and settings for the motor unit analysis, 
+            including the number of MUs.
+
+        Raises
+        ------
+        AttributeError
+            If certain widgets or properties are not properly instantiated due to missing 
+            parent configurations or resources.
+        """
         self.parent = parent
         self.resdict = resdict
         # Create new window

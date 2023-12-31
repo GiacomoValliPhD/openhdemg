@@ -8,9 +8,60 @@ import openhdemg.library as openhdemg
 
 class GUIHelpers:
     """
+    A utility class to provide additional functionalities in an openhdemg GUI application.
+
+    This class includes helper functions to enhance user interaction with the application, 
+    such as resizing files based on user input. It is designed to work in conjunction with 
+    the main GUI components and relies on the parent widget for accessing shared data and resources.
+
+    Attributes
+    ----------
+    parent : object
+        The parent widget, typically the main application window, to which this GUIHelpers 
+        instance belongs.
+
+    Methods
+    -------
+    __init__(self, parent)
+        Initialize a new instance of the GUIHelpers class.
+    resize_file(self)
+        Resize the EMG file based on user-defined areas selected in the GUI plot.
+    
+    Examples
+    --------
+    >>> main_window = Tk()
+    >>> gui_helpers = GUIHelpers(main_window)
+    # Usage of gui_helpers methods as required
+
+    Raises
+    ------
+    AttributeError
+        When no file is loaded prior to analysis or certain operations are attempted 
+        without the necessary context or data.
+
+    Notes
+    -----
+    The class's methods interact with other components of the openhdemg application, 
+    such as file handling and plotting utilities, and are dependent on the state of the 
+    parent widget.
+
     """
+    
     def __init__(self, parent):
-        self.parent=parent
+        """
+        Initialize a new instance of the GUIHelpers class.
+
+        Sets up a reference to the parent widget, which is used for accessing shared 
+        resources and functionalities within the application.
+
+        Parameters
+        ----------
+        parent : object
+            The parent widget, usually the main application window, which provides 
+            necessary context and data for the helper functions.
+
+        """
+        self.parent = parent
 
     def resize_file(self):
         """

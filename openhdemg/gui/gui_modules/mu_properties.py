@@ -7,13 +7,86 @@ import openhdemg.library as openhdemg
 
 class MuAnalysis:
     """
-    Instance method to open "Motor Unit Properties Window". Options to analyse motor
-    unit properties such as recruitement threshold, discharge rate or
-    basic properties computing are displayed.
+    A class for analyzing motor unit (MU) properties within a GUI application.
 
-    Executed when button "MU Properties" button in master GUI window is pressed.
+    This class creates a window for analyzing various MU properties such as recruitment 
+    threshold, discharge rate, and other basic properties. It is activated from the main 
+    GUI window and allows for input and computation of MU-related metrics.
+
+    Attributes
+    ----------
+    parent : object
+        The parent widget, typically the main application window that this MuAnalysis instance belongs to.
+    head : CTkToplevel
+        The top-level widget for the MU properties analysis window.
+    mvc_value : StringVar
+        Tkinter StringVar for storing the Maximum Voluntary Contraction (MVC) value.
+    ct_event : StringVar
+        Variable to store the chosen event type for computing MU thresholds.
+    ct_type : StringVar
+        Variable to store the type of computation (absolute, relative, or both) for MU thresholds.
+    firings_rec : StringVar
+        Variable to store the number of firings at recruitment.
+    firings_ste : StringVar
+        Variable to store the number of firings at the start/end of steady phase.
+    dr_event : StringVar
+        Variable to store the chosen event type for computing MU discharge rate.
+    b_firings_rec : StringVar
+        Variable to store the number of firings at recruitment for basic MU properties computation.
+    b_firings_ste : StringVar
+        Variable to store the number of firings at the start/end of steady phase for basic MU properties computation.
+
+    Methods
+    -------
+    __init__(self, parent)
+        Initialize a new instance of the MuAnalysis class.
+    compute_mu_threshold(self)
+        Compute the motor unit recruitment/derecruitment threshold.
+    compute_mu_dr(self)
+        Compute the motor unit discharge rate.
+    basic_mus_properties(self)
+        Compute basic motor unit properties.
+    
+    Examples
+    --------
+    >>> main_window = Tk()
+    >>> mu_analysis = MuAnalysis(main_window)
+    >>> mu_analysis.head.mainloop()
+
+    Notes
+    -----
+    This class is dependent on the `ctk` and `ttk` modules from the `tkinter` library.
+    Some attributes and methods are conditional based on the `parent`'s properties.
+
     """
     def __init__(self, parent):
+        """
+        Initialize a new instance of the MuAnalysis class.
+
+        This method sets up the GUI components of the Motor Unit Properties window. It includes 
+        input fields for MVC (Maximum Voluntary Contraction) value, buttons and dropdown menus 
+        to compute MU thresholds, discharge rates, and basic MU properties. Each component is 
+        configured and placed in the window grid.
+
+        Parameters
+        ----------
+        parent : object
+            The parent widget, typically the main application window, to which this MuAnalysis 
+            instance belongs. The parent is used for accessing shared resources and data.
+
+        Raises
+        ------
+        AttributeError
+            If certain widgets or properties are not properly instantiated due to missing 
+            parent configurations or resources.
+
+        Notes
+        -----
+        The creation of the GUI components involves setting up various Tkinter and custom widgets 
+        (like CTkLabel, CTkEntry, CTkButton, CTkComboBox). Each widget is configured with specific 
+        properties like size, color, and variable bindings and placed in a grid layout.
+
+        """
         # Create new window
         self.parent = parent
         self.head = ctk.CTkToplevel(fg_color="LightBlue4")

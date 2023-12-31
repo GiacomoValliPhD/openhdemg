@@ -1,6 +1,5 @@
 """Module containing the Resif editing class"""
 
-import os
 from tkinter import ttk, W, E, StringVar, DoubleVar
 import customtkinter as ctk
 from CTkMessagebox import CTkMessagebox
@@ -9,16 +8,85 @@ import openhdemg.library as openhdemg
 
 class EditRefsig:
     """
-    Instance method to open "Reference Signal Editing Window". Options for
-    refsig filtering and offset removal are displayed.
+    A class to manage editing of the reference signal in a GUI application.
 
-    Executed when button "RefSig Editing" in master GUI window is pressed.
+    This class creates a window that offers various options for editing the reference signal. 
+    It includes functionalities for filtering the signal, removing offset, converting the signal, 
+    and transforming it to a percentage value. The class is instantiated when the "RefSig Editing" 
+    button in the master GUI window is pressed.
+
+    Attributes
+    ----------
+    parent : object
+        The parent widget, typically the main application window, to which this EditRefsig 
+        instance belongs.
+    head : CTkToplevel
+        The top-level widget for the Reference Signal Editing window.
+    filter_order : StringVar
+        Tkinter StringVar to store the filter order for reference signal filtering.
+    cutoff_freq : StringVar
+        Tkinter StringVar to store the cutoff frequency for reference signal filtering.
+    offsetval : StringVar
+        Tkinter StringVar to store the offset value to be removed from the reference signal.
+    auto_eval : StringVar
+        Tkinter StringVar to store the value for automatic offset evaluation.
+    convert : StringVar
+        Tkinter StringVar to store the operation (Multiply/Divide) for reference signal conversion.
+    convert_factor : DoubleVar
+        Tkinter DoubleVar to store the factor for reference signal conversion.
+    mvc_value : DoubleVar
+        Tkinter DoubleVar to store the MVC (Maximum Voluntary Contraction) value for percentage conversion.
+
+    Methods
+    -------
+    __init__(self, parent)
+        Initialize a new instance of the EditRefsig class.
+    filter_refsig(self)
+        Apply filtering to the reference signal based on the specified order and cutoff frequency.
+    remove_offset(self)
+        Remove or adjust the offset of the reference signal based on the specified value or automatic evaluation.
+    convert_refsig(self)
+        Convert the reference signal using the specified operation (Multiply/Divide) and factor.
+    to_percent(self)
+        Convert the reference signal to a percentage value based on the specified MVC value.
+    
+    Examples
+    --------
+    >>> main_window = Tk()
+    >>> edit_refsig = EditRefsig(main_window)
+    >>> edit_refsig.head.mainloop()
+
+    Notes
+    -----
+    This class relies on the `ctk` and `ttk` modules from the `tkinter` library. The class is designed 
+    to be instantiated from within a larger GUI application and operates on the reference signal data 
+    that is accessible via the `parent` widget.
+
     """
     def __init__(self, parent):
-        self.parent = parent
-        
+        """
+        Initialize a new instance of the EditRefsig class.
+
+        This method sets up the GUI components for the Reference Signal Editing Window. It includes 
+        controls for filtering the reference signal, removing its offset, converting it, and 
+        transforming it to a percentage value. The method configures and places various widgets 
+        such as labels, entries, buttons, and combo boxes in a grid layout for user interaction.
+
+        Parameters
+        ----------
+        parent : object
+            The parent widget, typically the main application window, to which this EditRefsig 
+            instance belongs. The parent is used for accessing shared resources and data.
+
+        Raises
+        ------
+        AttributeError
+            If certain widgets or properties are not properly instantiated due to missing 
+            parent configurations or resources.
+        """
         # Create new window
         self.head = ctk.CTkToplevel(fg_color="LightBlue4")
+        self.parent = parent
         self.head.title("Reference Signal Editing Window")
         self.head.wm_iconbitmap()
         self.head.grab_set()

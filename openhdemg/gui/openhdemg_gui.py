@@ -1306,11 +1306,7 @@ class emgGUI():
         except KeyError:
             tk.messagebox.showerror("Information", "Sorting not possible when ≤ 1"
                                     + "\nMU is present in the File (i.e. Refsigs)")
-   
-    # -----------------------------------------------------------------------------------------------
-    # Plot EMG
 
-    
     # -----------------------------------------------------------------------------------------------
     # Advanced Analysis
 
@@ -1318,7 +1314,6 @@ class emgGUI():
         """
         Open top-level windows based on the selected advanced method.
         """
-        
 
         if self.advanced_method.get() == "Motor Unit Tracking":
             head_title = "MUs Tracking Window"
@@ -1326,7 +1321,6 @@ class emgGUI():
             head_title = "Conduction Velocity Window"
         else:
             head_title = "Duplicate Removal Window"
-        
 
         self.head = tk.Toplevel(bg="LightBlue4")
         self.head.title(head_title)
