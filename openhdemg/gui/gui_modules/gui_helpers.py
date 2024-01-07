@@ -51,7 +51,7 @@ class GUIHelpers:
     parent widget.
 
     """
-    
+
     def __init__(self, parent):
         """
         Initialize a new instance of the GUIHelpers class.
