@@ -153,7 +153,7 @@ class EditRefsig:
         factor = ctk.CTkEntry(self.head, width=100, textvariable=self.convert_factor)
         factor.grid(column=2, row=7)
         self.convert_factor.set(2.5)
-        
+
         convert_button = ctk.CTkButton(self.head, text="Convert", command=self.convert_refsig,
                                        fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         convert_button.grid(column=0, row=7, sticky=W)

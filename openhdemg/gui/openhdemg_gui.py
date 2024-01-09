@@ -3,13 +3,13 @@ This file contains the gui functionalities of openhdemg.
 """
 
 import os
+import customtkinter as ctk
 import tkinter as tk
-import customtkinter
 import threading
 import webbrowser
-from tkinter import ttk, filedialog, Canvas
-from tkinter import StringVar, Tk, N, S, W, E
+from tkinter import ttk, filedialog, Canvas, StringVar, Tk, N, S, W, E
 from pandastable import Table, config
+import customtkinter
 
 from PIL import Image
 
@@ -18,12 +18,10 @@ import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 
-matplotlib.use("TkAgg")
-
 import openhdemg.library as openhdemg
 from openhdemg.gui.gui_modules import (MURemovalWindow, EditRefsig, GUIHelpers,
                                        AnalyseForce, MuAnalysis, PlotEmg, AdvancedAnalysis)
-
+matplotlib.use("TkAgg")
 
 class emgGUI():
     """
@@ -34,44 +32,12 @@ class emgGUI():
 
     Attributes
     ----------
-    self.auto_eval : int, default 0
-        If auto > 0, the script automatically removes the offset based on the number
-        of samples passed in input.
-    self.b_firings_rec : int, default 4
-        The number of firings at recruitment and derecruitment to consider for the
-        calculation of the DR.
-    self.b_firings_ste : int, default 10
-        The number of firings to consider for the calculation of the DR at the start and at the end
-        of the steady-state phase.
     self.canvas : matplotlib.backends.backend_tkagg
         Canvas for plotting figures inside the GUI.
     self.channels : int or list
         The channel (int) or channels (list of int) to plot.
         The list can be passed as a manually-written with: "0,1,2,3,4,5...,n",
         channels is expected to be with base 0.
-    self.convert : str, default Multiply
-        The kind of conversion applied to the Refsig during Refsig conversion. Can be "Multiply" or "Divide".
-    self.convert_factor : float, default 2.5
-        Factore used during Refsig converison when multiplication or division is applied.
-    self.cutoff_freq : int, default 20
-        The cut-off frequency in Hz.
-    self.ct_event : str, default "rt_dert"
-        When to calculate the thresholds. Input parameters for event_ are:
-            "rt_dert" means that both recruitment and derecruitment tresholds will be calculated.
-            "rt" means that only recruitment tresholds will be calculated.
-            "dert" means that only derecruitment tresholds will be calculated.
-    self.dr_event : str, default "rec_derec_steady"
-        When to calculate the DR. Input parameters for event_ are:
-            "rec_derec_steady" means that the DR is calculated at recruitment, derecruitment and
-            during the steady-state phase.
-            "rec" means that the DR is calculated at recruitment.
-            "derec" means that the DR is calculated at derecruitment.
-            "rec_derec" means that the DR is calculated at recruitment and derecruitment.
-            "steady" means that the DR is calculated during the steady-state phase.
-    self.end_area, self.start_area : int
-        The start and end of the selection for file resizing (can be used for code automation).
-    self.exportable_df : pd.DataFrame
-        A pd.DataFrame containing the results of the analysis.
     self.fig : matplotlib.figure
         Figure to be plotted on Canvas.
     self.filename : str
@@ -81,96 +47,20 @@ class emgGUI():
     self.filetype : str
         String containing the filetype of import EMG file.
         Filetype can be "OPENHDEMG", "OTB", "DEMUSE", "OTB_REFSIG", "CUSTOMCSV", "CUSTOMCSV_REFSIG".
-    self.filter_order : int, default 4
-        The filter order.
-    self.firings_rec : int, default 4
-        The number of firings at recruitment and derecruitment to consider for the calculation
-        of the DR.
-    self.firings_ste : int, default 10
-        The number of firings to consider for the calculation of the DR at the start and at the end
-        of the steady-state phase.
-    self.first_fig : matplotlib.figure
-        Figure frame determinining size of all figures that are plotted on canvas.
-    self.head : tk.toplevel
-        New tk.toplevel instance created everytime upon opnening a new window. This is needed
-        for having a seperate window open.
     self.left : tk.frame
         Left frame inside of master that contains all buttons and filespecs.
-    self.linewidth : float, default 0.5
-        The width of the vertical lines representing the MU firing.
-    self.logo :
+   self.logo :
         String containing the path to image file containing logo of openhdemg.
     self.logo_canvas : tk.canvas
         Canvas to display logo of Open_HG-EMG when openend.
     self.master: tk
         TK master window containing all widget children for this GUI.
-    self.mus_dr: pd.DataFrame
-        A pd.DataFrame containing the requested DR.
-    self.mu_numb : int or list, default "all"
-        By default, IPTS of all the MUs is plotted.
-        Otherwise, a single MU (int) or multiple MUs (list of int) can be specified.
-        The list can be passed as a manually-written list: "0,1,2,3,4,5,...,n",
-        self.m_numb is expected to be with base 0 (i.e., the first MU in the file is the number 0).
-    self.mu_numb_idr : int or list, default "all"
-        By default, IDR of all the MUs is plotted.
-        Otherwise, a single MU (int) or multiple MUs (list of int) can be specified.
-        The list can be passed as a manually-written list: "0,1,2,3,4,5,...,n",
-        self.m_numb_idr is expected to be with base 0 (i.e., the first MU in the
-        file is the number 0).
-    self.mu_to_remove : int
-        The MUs to remove. If a single MU has to be removed, this should be an
-        int (number of the MU).
-        self.mu_to_remove is expected to be with base 0
-        (i.e., the first MU in the file is the number 0).
-    self.mu_to_edit : int
-        The MUs to edit singularly. If a single MU has to be edited, this should be an
-        int (number of the MU).
-        self.mu_to_edit is expected to be with base 0
-        (i.e., the first MU in the file is the number 0).
-    self.mu_thresholds : pd.DataFrame
-        A DataFrame containing the requested thresholds.
-    self.mvc : float
-        The MVC value in the original unit of measurement.
-    self.mvc_df : pd.DataFrame
-        A Dataframe containing the detected MVC value.
-    self.mvc_value : float
-        The MVC value specified during Refsig conversion.
-    self.offsetval: float, default 0
-        Value of the offset. If offsetval is 0 (default), the user will be asked to manually
-        select an aerea to compute the offset value.
-        Otherwise, the value passed to offsetval will be used. Negative offsetval can be passed.
     self.resdict : dict
         Dictionary derived from input EMG file for further analysis.
-    self.rfd_df : pd.DataFrame
-        A Dataframe containing the calculated RFD values.
-    self.rfdms : list, default [50, 100, 150, 200]
-        Milliseconds (ms). A list containing the ranges in ms to calculate the RFD.
     self.right : tk.frame
         Left frame inside of master that contains plotting canvas.
     self.terminal : ttk.Labelframe
         Tkinter labelframe that is used to display the results table in the GUI.
-    self.mat_code : str
-        The code containing the matrix identification number.
-    self.mat_orientation : int
-        The orientation of the matrix in degrees. Can be 0, 180.
-    self.deriv_config : str
-        The Method used to calculate the MUs deviation.
-    self.muap_config : str
-        The Method used to calculate the MUs deviation.
-    self.deriv_matrix : str
-        Column of the matrix to be plotted.
-    self.size_fig : str, default [20,15]
-        Size of the figure to be plotted in centimeter.
-    self.ref_but : str, default "False"
-        String value used to determine if reference signal should be
-        added to the plot.
-    self.time_but : str, default "False"
-        String value used to determine if time in seconds should be used
-        in x-axis of plotting.
-    muap_munum : int
-        Number of motor unit to be plotted.
-    muap_time : int
-        Time window to be plotted.
     self.info : tk.PhotoImage
         Information Icon displayed in GUI.
     self.online : tk.Photoimage
@@ -188,36 +78,6 @@ class emgGUI():
         Stringvariable containing the
     self.extension_factor : tk.StringVar()
         Stringvariable containing the OTB extension factor value.
-    self.advanced_method : tk.Stringvar()
-        Stringvariable containing the selected method of advanced
-        analysis.
-    self.matrix_rc : tk.StringVar()
-        String containing the channel number of emgfile when
-        matri codes are bypassed. Used in plot window.
-    self.matrix_rc_adv : tk.StringVar()
-        String containing the channel number of emgfile when
-        matri codes are bypassed. Used in advanced window.
-    self.emgfile1 : pd.Dataframe
-        Dataframe object containing the loaded first emgfile used
-        for MU tracking.
-    self.emgfile2 : pd.Dataframe
-        Dataframe object containing the loaded first emgfile used
-        for MU tracking.
-    self.thresh_adv : tk.Stringvar()
-        Stringvariable containing the selected threshold for MU tracking.
-    self.filter_adv : tk.Boolenvar()
-        Boolean determining whether filtering should be applied during MU
-        tracking.
-    self.show_adv : tk.Boolenvar()
-        Boolean determining whether results of MU tracking should be plotted.
-    self.exclude_thres : tk.Boolenvar()
-        Boolean determining whether values below treshold should be excluded
-        during MU tracking.
-    self.which_adv : tk.Stringvar()
-        Stringvariable determining how MU duplicates are removed.
-    self.time_window : tk.Stringvar()
-        Stringvariable determining the time window for duplicate removal
-        and tracking.
 
     Methods
     -------
@@ -229,82 +89,18 @@ class emgGUI():
     save_emgfile()
         Saves the edited emgfile dictionary to a .json file.
         Executed when button "Save File" in master GUI window pressed.
-   reset_analysis()
+    reset_analysis()
         Resets the whole analysis, restores the original input file and the graph.
         Executed when button "Reset analysis" in master GUI window pressed.
     in_gui_plotting()
         Method used for creating plot inside the GUI (on the GUI canvas).
         Executed when button "View MUs" in master GUI window pressed.
-    remove_mus()
-        Opens seperate window to select motor units to be removed.
-        Executed when button "Remove MUs" in master GUI window pressed.
-    remove()
-        Method used to remove single motor units.
-    remove_empty()
-        Method that removes all empty MUs.
-    edit_refsig()
-        Opens seperate window to edit emg reference signal.
-        Executed when button "RefSig Editing" in master GUI window pressed.
-    filter_refsig()
-        Method used to filter the emg reference signal.
-    remove_offset()
-        Method used to remove offset of emg reference signal.
-    resize_file()
-        Opens seperate window to resize emg file / reference signal.
-        Executed when button "Resize File" in master GUI window pressed.
-    analyze_force()
-        Opens seperate window to analyze force signal/values.
-        Executed when button "Analyze force" in master GUI window pressed.
-    get_mvc()
-        Method used to calculate/select MVC.
-    det_rfd()
-        Method used to calculated RFD based on selected startpoint.
     mu_analysis()
         Opens seperate window to calculated specific motor unit properties.
         Executed when button "MU properties" in master GUI window pressed.
-    compute_mu_threshold()
-        Method used to calculate motor unit recruitement thresholds.
-    compute_mu_dr()
-       Method used to calculate motor unit discharge rate.
-    basic_mus_analysis()
-        Method used to calculate basic motor unit properties.
-    plot_emg()
-        Opens seperate window to plot emgsignal/motor unit properties.
-        Executed when button "Plot EMG" in master GUI window pressed.
-    plt_emgsignal()
-        Method used to plot emgsignal.
-    plt_idr()
-        Method used to plot instanteous discharge rate.
-    plt_ipts()
-        Method used to plot the motor unit puls train (i.e., non-binary firing)
-    plt_refsignal()
-        Method used to plot the motor unit reference signal.
-    plt_mupulses()
-        Method used to plot the motor unit pulses.
-    plot_derivation()
-        Method to plot the differential derivation of the RAW_SIGNAL
-        by matrix column.
-    plot_muaps()
-        Method to plot motor unit action potenital obtained from STA
-        from one or multiple MUs.
-    advanced_analysis()
-        Method to open top-level windows based on the selected advanced method.
-    on_filetype_change()
-        Method do display extension factor combobx when filetype loaded is
-        OTB.
-    open_emgfile1()
-        Method to open EMG file based on the selected file type and extension factor.
-    open_emgfile2()
-        Method to open EMG file based on the selected file type and extension factor.
-    track_mus()
-        Method to perform MUs tracking on the loaded EMG files.
     display_results()
         Method used to display result table containing analysis results.
-    to_percent()
-        Method that converts Refsig to a percentag value. Should only be used when the Refsig is in absolute values.
-    convert_refsig()
-        Method that converts Refsig by multiplication or division.
-
+    
     Notes
     -----
     Please note that altough we created a GUI class, the included methods/
@@ -316,7 +112,6 @@ class emgGUI():
     the library. In the section "See Also" at each instance method, the reader is
     referred to the corresponding function and extensive documentation in the library.
     """
-
     def __init__(self, master):
         """
         Initialization of master GUI window upon calling.
@@ -332,176 +127,134 @@ class emgGUI():
         master_path = os.path.dirname(os.path.abspath(__file__))
         iconpath = master_path + "/gui_files/Icon.ico"
         self.master.iconbitmap(iconpath)
+
+        # Necessary for resizing
         self.master.columnconfigure(0, weight=1)
         self.master.rowconfigure(0, weight=1)
 
         # Create left side framing for functionalities
-        self.left = ttk.Frame(self.master, padding="10 10 12 12")
+        self.left = ctk.CTkFrame(self.master, fg_color="LightBlue4", corner_radius=0)
         self.left.grid(column=0, row=0, sticky="nsew")
 
-        # Columnconfigure allows resizable frames
-        self.left.columnconfigure(0, weight=1)
-        self.left.columnconfigure(1, weight=1)
-        self.left.columnconfigure(2, weight=1)
-        self.left.columnconfigure(3, weight=1)
-        self.left.rowconfigure(0, weight=1)
-        self.left.rowconfigure(1, weight=1)
-        self.left.rowconfigure(2, weight=1)
-        self.left.rowconfigure(3, weight=1)
-        self.left.rowconfigure(4, weight=1)
-        self.left.rowconfigure(5, weight=1)
-        self.left.rowconfigure(6, weight=1)
-        self.left.rowconfigure(7, weight=1)
-        self.left.rowconfigure(8, weight=1)
-        self.left.rowconfigure(9, weight=1)
-        self.left.rowconfigure(10, weight=1)
-        self.left.rowconfigure(11, weight=1)
-        self.left.rowconfigure(12, weight=1)
-        self.left.rowconfigure(13, weight=1)
-        self.left.rowconfigure(14, weight=1)
-        self.left.rowconfigure(15, weight=1)
-        self.left.rowconfigure(16, weight=1)
-        self.left.rowconfigure(17, weight=1)
-        self.left.rowconfigure(18, weight=1)
+        # Configure columns with a loop
+        for col in range(4):
+            self.left.columnconfigure(col, weight=1)
 
-        # Style
-        style = ttk.Style()
-        style.theme_use("clam")
-        style.configure("TToplevel", background="LightBlue4")
-        style.configure("TFrame", background="LightBlue4")
-        style.configure(
-            "TLabel",
-            font=("Lucida Sans", 12),
-            foreground="black",
-            background="LightBlue4",
-        )
-        style.configure("TButton", foreground="black", font=("Lucida Sans", 11))
-        style.configure("TEntry", font=("Lucida Sans", 12), foreground="black")
-        style.configure("TCombobox", background="LightBlue4", foreground="black")
-        style.configure("TLabelFrame", foreground="black", font=("Lucida Sans", 16))
-        style.configure("TProgressbar", foreground="#FFBF00", background="#FFBF00")
-        # Specify Signal
+        # Configure rows with a loop
+        for row in range(19):
+            self.left.rowconfigure(row, weight=1)
+
+        # Specify filetype
         self.filetype = StringVar()
-        signal_value = ("OPENHDEMG", "DEMUSE","OTB",  "OTB_REFSIG", "DELSYS", "DELSYS_REFSIG", "CUSTOMCSV", "CUSTOMCSV_REFSIG")
-        signal_entry = ttk.Combobox(
-            self.left, text="Signal", width=10, textvariable=self.filetype
-        )
-        signal_entry["values"] = signal_value
-        signal_entry["state"] = "readonly"
-        signal_entry.grid(column=0, row=1, sticky=(W, E))
+        signal_value = ["OPENHDEMG", "DEMUSE", "OTB", "OTB_REFSIG", "DELSYS", "DELSYS_REFSIG", "CUSTOMCSV", "CUSTOMCSV_REFSIG"]
+        signal_entry = ctk.CTkComboBox(self.left, width=150, variable=self.filetype, values=signal_value, state="readonly")
+        signal_entry.grid(column=0, row=1, sticky=(ctk.W, ctk.E))
         self.filetype.set("Type of file")
         # Trace filetype to apply function when changeing
         self.filetype.trace_add("write", self.on_filetype_change)
 
         # Load file
-        load = ttk.Button(self.left, text="Load File", command=self.get_file_input)
-        load.grid(column=0, row=3, sticky=W)
+        load = ctk.CTkButton(self.left, text="Load File", command=self.get_file_input,
+                             fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+        load.grid(column=0, row=3, sticky=ctk.W)
 
         # File specifications
-        ttk.Label(self.left, text="Filespecs:").grid(column=1, row=1, sticky=(W, E))
-        ttk.Label(self.left, text="N Channels:").grid(column=1, row=2, sticky=(W, E))
-        ttk.Label(self.left, text="N of MUs:").grid(column=1, row=3, sticky=(W, E))
-        ttk.Label(self.left, text="File length:").grid(column=1, row=4, sticky=(W, E))
+        ctk.CTkLabel(self.left, text="Filespecs:", font=('Segoe UI',15, 'bold')).grid(column=1, row=1, sticky=(W))
+        ctk.CTkLabel(self.left, text="N Channels:", font=('Segoe UI',15, 'bold')).grid(column=1, row=2, sticky=(W))
+        ctk.CTkLabel(self.left, text="N of MUs:", font=('Segoe UI',15, 'bold')).grid(column=1, row=3, sticky=(W))
+        ctk.CTkLabel(self.left, text="File length:", font=('Segoe UI',15, 'bold')).grid(column=1, row=4, sticky=(W))
         separator0 = ttk.Separator(self.left, orient="horizontal")
         separator0.grid(column=0, columnspan=3, row=5, sticky=(W, E))
 
         # Save File
-        save = ttk.Button(self.left, text="Save File", command=self.save_emgfile)
+        save = ctk.CTkButton(self.left, text="Save File", command=self.save_emgfile,
+                             fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         save.grid(column=0, row=6, sticky=W)
         separator1 = ttk.Separator(self.left, orient="horizontal")
         separator1.grid(column=0, columnspan=3, row=7, sticky=(W, E))
 
         # Export to Excel
-        export = ttk.Button(
-            self.left, text="Save Results", command=lambda: (GUIHelpers(parent=self).export_to_excel())
-        )
+        export = ctk.CTkButton(self.left, text="Save Results", command=lambda: (GUIHelpers(parent=self).export_to_excel()),
+                               fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         export.grid(column=1, row=6, sticky=(W, E))
 
         # View Motor Unit Firings
-        firings = ttk.Button(self.left, text="View MUs", command=lambda: (self.in_gui_plotting(resdict=self.resdict)))
+        firings = ctk.CTkButton(self.left, text="View MUs", command=lambda: (self.in_gui_plotting(resdict=self.resdict)),
+                                fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         firings.grid(column=0, row=8, sticky=W)
 
         # Sort Motor Units
-        sorting = ttk.Button(self.left, text="Sort MUs", command=lambda: (GUIHelpers(parent=self).sort_mus()))
+        sorting = ctk.CTkButton(self.left, text="Sort MUs", command=lambda: (GUIHelpers(parent=self).sort_mus()),
+                                fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         sorting.grid(column=1, row=8, sticky=(W, E))
         separator2 = ttk.Separator(self.left, orient="horizontal")
         separator2.grid(column=0, columnspan=3, row=9, sticky=(W, E))
 
         # Remove Motor Units
-        remove_mus = ttk.Button(self.left, text="Remove MUs", command=lambda:(MURemovalWindow(parent=self, resdict=self.resdict)))
+        remove_mus = ctk.CTkButton(self.left, text="Remove MUs", command=lambda:(MURemovalWindow(parent=self, resdict=self.resdict)),
+                                   fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         remove_mus.grid(column=0, row=10, sticky=W)
 
         separator3 = ttk.Separator(self.left, orient="horizontal")
         separator3.grid(column=0, columnspan=3, row=11, sticky=(W, E))
 
         # Filter Reference Signal
-        reference = ttk.Button(
-            self.left, text="RefSig Editing", command=lambda:(EditRefsig(parent=self))
-        )
+        reference = ctk.CTkButton(self.left, text="RefSig Editing", command=lambda:(EditRefsig(parent=self)),
+                                  fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         reference.grid(column=0, row=12, sticky=W)
 
         # Resize File
-        resize = ttk.Button(self.left, text="Resize File", command=lambda:(GUIHelpers(parent=self).resize_file()))
+        resize = ctk.CTkButton(self.left, text="Resize File", command=lambda:(GUIHelpers(parent=self).resize_file()),
+                               fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         resize.grid(column=1, row=12, sticky=(W, E))
         separator4 = ttk.Separator(self.left, orient="horizontal")
         separator4.grid(column=0, columnspan=3, row=13, sticky=(W, E))
 
         # Force Analysis
-        force = ttk.Button(self.left, text="Analyse Force", command=lambda:(AnalyseForce(parent=self)))
+        force = ctk.CTkButton(self.left, text="Analyse Force", command=lambda:(AnalyseForce(parent=self)),
+                              fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         force.grid(column=0, row=14, sticky=W)
         separator5 = ttk.Separator(self.left, orient="horizontal")
         separator5.grid(column=0, columnspan=3, row=15, sticky=(W, E))
 
         # Motor Unit properties
-        mus = ttk.Button(self.left, text="MU Properties", command=lambda:(MuAnalysis(parent=self)))
+        mus = ctk.CTkButton(self.left, text="MU Properties", command=lambda:(MuAnalysis(parent=self)),
+                            fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         mus.grid(column=1, row=14, sticky=W)
         separator6 = ttk.Separator(self.left, orient="horizontal")
         separator6.grid(column=0, columnspan=3, row=17, sticky=(W, E))
 
         # Plot EMG
-        plots = ttk.Button(self.left, text="Plot EMG", command=lambda:(PlotEmg(parent=self)))
+        plots = ctk.CTkButton(self.left, text="Plot EMG", command=lambda:(PlotEmg(parent=self)),
+                              fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         plots.grid(column=0, row=16, sticky=W)
         separator7 = ttk.Separator(self.left, orient="horizontal")
         separator7.grid(column=0, columnspan=3, row=19, sticky=(W, E))
 
         # Reset Analysis
-        reset = ttk.Button(
-            self.left, text="Reset Analysis", command=self.reset_analysis
-        )
+        reset = ctk.CTkButton(self.left, text="Reset Analysis", command=self.reset_analysis,
+                              fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         reset.grid(column=1, row=18, sticky=(W, E))
 
         # Advanced tools
-        # Create seperate style for this button
-        advanced_button_style = ttk.Style()
-        advanced_button_style.theme_use("clam")
-        advanced_button_style.configure(
-            "B.TButton",
-            foreground="white",
-            background="black",
-            font=("Lucida Sans", 11),
-        )
-
-        advanced = ttk.Button(
-            self.left,
-            command=lambda:(AdvancedAnalysis(self)),
-            text="Advanced Tools",
-            style="B.TButton",
-        )
+        advanced = ctk.CTkButton(self.left, text="Advanced Tools", command=lambda:(AdvancedAnalysis(self)),
+                              fg_color="#000000", text_color="white", border_color="white", border_width=1,
+                              hover_color="#FFBF00")
         advanced.grid(row=20, column=0, columnspan=2, sticky=(W, E))
 
         # Create right side framing for functionalities
-        self.right = ttk.Frame(self.master, padding="10 10 12 12")
+        self.right = ctk.CTkFrame(self.master, fg_color="LightBlue4", corner_radius=0)
         self.right.grid(column=1, row=0, sticky=(N, S, E, W))
-        self.right.columnconfigure(0, weight=1)
-        self.right.columnconfigure(1, weight=1)
-        self.right.rowconfigure(0, weight=1)
-        self.right.rowconfigure(1, weight=1)
-        self.right.rowconfigure(2, weight=1)
-        self.right.rowconfigure(3, weight=1)
-        self.right.rowconfigure(4, weight=1)
+         # Configure columns with a loop
+        for col in range(2):
+            self.right.columnconfigure(col, weight=1)
+
+        # Configure rows with a loop
+        for row in range(5):
+            self.right.rowconfigure(row, weight=1)
 
         # Create empty figure
-        self.first_fig = Figure(figsize=(20 / 2.54, 15 / 2.54))
+        self.first_fig = Figure(figsize=(20 / 2.54, 15 / 2.54), frameon=False)
         self.canvas = FigureCanvasTkAgg(self.first_fig, master=self.right)
         self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=5)
 
@@ -529,10 +282,7 @@ class emgGUI():
             bg_color="LightBlue4",
             fg_color="LightBlue4",
             command=lambda: (
-                (
-                    webbrowser.open("https://www.giacomovalli.com/openhdemg/gui_intro/")
-                ),
-            ),
+                (webbrowser.open("https://www.giacomovalli.com/openhdemg/gui_intro/"))),
         )
         info_button.grid(row=0, column=1, sticky=E)
 
@@ -549,10 +299,7 @@ class emgGUI():
             bg_color="LightBlue4",
             fg_color="LightBlue4",
             command=lambda: (
-                (
-                    webbrowser.open("https://www.giacomovalli.com/openhdemg/tutorials/setup_working_env/")
-                ),
-            ),
+                (webbrowser.open("https://www.giacomovalli.com/openhdemg/tutorials/setup_working_env/"))),
         )
         online_button.grid(row=1, column=1, sticky=E)
 
@@ -568,11 +315,7 @@ class emgGUI():
             height=30,
             bg_color="LightBlue4",
             fg_color="LightBlue4",
-            command=lambda: (
-                (
-                    webbrowser.open("https://www.giacomovalli.com/openhdemg/about-us/#meet-the-developers")
-                ),
-            ),
+            command=lambda: ((webbrowser.open("https://www.giacomovalli.com/openhdemg/about-us/#meet-the-developers"))),
         )
         redirect_button.grid(row=2, column=1, sticky=E)
 
@@ -588,11 +331,7 @@ class emgGUI():
             height=30,
             bg_color="LightBlue4",
             fg_color="LightBlue4",
-            command=lambda: (
-                (
-                    webbrowser.open("https://www.giacomovalli.com/openhdemg/contacts/")
-                ),
-            ),
+            command=lambda: ((webbrowser.open("https://www.giacomovalli.com/openhdemg/contacts/"))),
         )
         contact_button.grid(row=3, column=1, sticky=E)
 
@@ -608,12 +347,7 @@ class emgGUI():
             height=30,
             bg_color="LightBlue4",
             fg_color="LightBlue4",
-            command=lambda: (
-                # Check user OS for pdf opening
-                (
-                    webbrowser.open("https://www.giacomovalli.com/openhdemg/cite-us/")
-                ),
-            ),
+            command=lambda: ((webbrowser.open("https://www.giacomovalli.com/openhdemg/cite-us/"))),
         )
         cite_button.grid(row=4, column=1, sticky=E)
 
@@ -648,13 +382,13 @@ class emgGUI():
                             ext_factor=int(self.extension_factor.get()),
                         )
                         # Add filespecs
-                        ttk.Label(
+                        ctk.CTkLabel(
                             self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
                         ).grid(column=2, row=2, sticky=(W, E))
-                        ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
+                        ctk.CTkLabel(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
                             column=2, row=3, sticky=(W, E)
                         )
-                        ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
+                        ctk.CTkLabel(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
                             column=2, row=4, sticky=(W, E)
                         )
 
@@ -667,13 +401,13 @@ class emgGUI():
                         # load file
                         self.resdict = openhdemg.emg_from_demuse(filepath=self.file_path)
                         # Add filespecs
-                        ttk.Label(
+                        ctk.CTkLabel(
                             self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
                         ).grid(column=2, row=2, sticky=(W, E))
-                        ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
+                        ctk.CTkLabel(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
                             column=2, row=3, sticky=(W, E)
                         )
-                        ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
+                        ctk.CTkLabel(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
                             column=2, row=4, sticky=(W, E)
                         )
                     elif self.filetype.get() == "DELSYS":
@@ -692,11 +426,11 @@ class emgGUI():
                         self.resdict = openhdemg.emg_from_delsys(rawemg_filepath=self.file_path,
                                                                  mus_directory=self.mus_path)
                         # Add filespecs
-                        ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E))
-                        ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
+                        ctk.CTkLabel(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E))
+                        ctk.CTkLabel(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
                             column=2, row=3, sticky=(W, E)
                         )
-                        ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
+                        ctk.CTkLabel(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
                             column=2, row=4, sticky=(W, E)
                         )
 
@@ -713,16 +447,16 @@ class emgGUI():
                         # files, these could contain also the reference signal only. Therefore line 2
                         # and 3 will crash. I temporarily fixed it, please review it for next release.
                         if self.resdict["SOURCE"] in ["DEMUSE", "OTB", "CUSTOMCSV", "DELSYS"]:
-                            ttk.Label(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E))
-                            ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W, E))
-                            ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W, E))
+                            ctk.CTkLabel(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E))
+                            ctk.CTkLabel(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W, E))
+                            ctk.CTkLabel(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W, E))
                         else:
                             # Reconfigure labels for refsig
-                            ttk.Label(
+                            ctk.CTkLabel(
                                 self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))
                             ).grid(column=2, row=2, sticky=(W, E))
-                            ttk.Label(self.left, text="NA").grid(column=2, row=3, sticky=(W, E))
-                            ttk.Label(self.left, text="        ").grid(
+                            ctk.CTkLabel(self.left, text="NA").grid(column=2, row=3, sticky=(W, E))
+                            ctk.CTkLabel(self.left, text="        ").grid(
                                 column=2, row=4, sticky=(W, E)
                             )
                     else:
@@ -738,9 +472,9 @@ class emgGUI():
                             fsamp=float(self.fsamp.get()),
                         )
                         # Add filespecs
-                        ttk.Label(self.left, text="Custom CSV").grid(column=2, row=2, sticky=(W, E))
-                        ttk.Label(self.left, text="").grid(column=2, row=3, sticky=(W, E))
-                        ttk.Label(self.left, text="").grid(column=2, row=4, sticky=(W, E))
+                        ctk.CTkLabel(self.left, text="Custom CSV").grid(column=2, row=2, sticky=(W, E))
+                        ctk.CTkLabel(self.left, text="").grid(column=2, row=3, sticky=(W, E))
+                        ctk.CTkLabel(self.left, text="").grid(column=2, row=4, sticky=(W, E))
 
                     # Get filename
                     filename = os.path.splitext(os.path.basename(file_path))[0]
@@ -792,11 +526,11 @@ class emgGUI():
                     self.master.title(self.filename)
 
                     # Reconfigure labels for refsig
-                    ttk.Label(
+                    ctk.CTkLabel(
                         self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))
                     ).grid(column=2, row=2, sticky=(W, E))
-                    ttk.Label(self.left, text="NA").grid(column=2, row=3, sticky=(W, E))
-                    ttk.Label(self.left, text="        ").grid(
+                    ctk.CTkLabel(self.left, text="NA").grid(column=2, row=3, sticky=(W, E))
+                    ctk.CTkLabel(self.left, text="        ").grid(
                         column=2, row=4, sticky=(W, E)
                     )
                     
@@ -847,9 +581,10 @@ class emgGUI():
                 progress.grid_remove()
 
         # Indicate Progress
-        progress = ttk.Progressbar(self.left, mode="indeterminate")
+        progress = ctk.CTkProgressBar(self.left, mode="indeterminate", fg_color="#585858",
+                                      width=100, progress_color="#FFBF00")
         progress.grid(row=4, column=0)
-        progress.start(1)
+        progress.start()
 
         # Create a thread to run the load_file function
         save_thread = threading.Thread(target=load_file)
@@ -880,7 +615,7 @@ class emgGUI():
         # in case an OTB file is loaded
         if self.filetype.get() == "OTB":
             self.extension_factor = StringVar()
-            self.otb_combobox = ttk.Combobox(
+            self.otb_combobox = ctk.CTkComboBox(
                 self.left,
                 values=[
                     "8",
@@ -894,7 +629,7 @@ class emgGUI():
                     "16",
                 ],
                 width=8,
-                textvariable=self.extension_factor,
+                variable=self.extension_factor,
                 state="readonly",
             )
             self.otb_combobox.grid(column=0, row=2, sticky=(W, E), padx=5)
@@ -904,7 +639,7 @@ class emgGUI():
         # Please check if this can be done better.
         elif self.filetype.get() in ["CUSTOMCSV", "CUSTOMCSV_REFSIG"]:
             self.fsamp = StringVar(value="Fsamp")
-            self.csv_entry = ttk.Entry(
+            self.csv_entry = ctk.CTkEntry(
                 self.left,
                 width=8,
                 textvariable=self.fsamp,
@@ -955,15 +690,13 @@ class emgGUI():
                 tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
         # Indicate Progress
-        progress = ttk.Progressbar(self.left, mode="indeterminate")
+        progress = ctk.CTkProgressbar(self.left, mode="indeterminate")
         progress.grid(row=4, column=0)
         progress.start(1)
 
         # Create a thread to run the save_file function
         save_thread = threading.Thread(target=save_file)
         save_thread.start()
-
-    
 
     def reset_analysis(self):
         """
@@ -1010,13 +743,13 @@ class emgGUI():
                         self.resdict = openhdemg.emg_from_delsys(rawemg_filepath=self.file_path,
                                                                  mus_directory=self.mus_path)
                     # Update Filespecs
-                    ttk.Label(
+                    ctk.CTkLabel(
                         self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
                     ).grid(column=2, row=2, sticky=(W, E))
-                    ttk.Label(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
+                    ctk.CTkLabel(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
                         column=2, row=3, sticky=(W, E)
                     )
-                    ttk.Label(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
+                    ctk.CTkLabel(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
                         column=2, row=4, sticky=(W, E)
                     )
 
@@ -1028,11 +761,11 @@ class emgGUI():
                         self.resdict = openhdemg.refsig_from_customcsv(filepath=self.file_path)
 
                     # Recondifgure labels for refsig
-                    ttk.Label(
+                    ctk.CTkLabel(
                         self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))
                     ).grid(column=2, row=2, sticky=(W, E))
-                    ttk.Label(self.left, text="NA").grid(column=2, row=3, sticky=(W, E))
-                    ttk.Label(self.left, text="        ").grid(
+                    ctk.CTkLabel(self.left, text="NA").grid(column=2, row=3, sticky=(W, E))
+                    ctk.CTkLabel(self.left, text="        ").grid(
                         column=2, row=4, sticky=(W, E)
                     )
 
@@ -1060,9 +793,6 @@ class emgGUI():
             except FileNotFoundError:
                 tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
-    
-
-    
     # -----------------------------------------------------------------------------------------------
     # Plotting inside of GUI
 
@@ -1111,14 +841,6 @@ class emgGUI():
             tk.messagebox.showerror("Information", "Make sure a file is loaded.")
 
     # -----------------------------------------------------------------------------------------------
-    # Sorting of motor units
-
-    
-   
-    
-    
-
-    # -----------------------------------------------------------------------------------------------
     # Analysis results display
 
     def display_results(self, input_df):
@@ -1135,7 +857,7 @@ class emgGUI():
         """
         # Create frame for output
         self.terminal = ttk.LabelFrame(
-            root, text="Result Output", height=100, relief="ridge"
+            self.master, text="Result Output", height=100, relief="ridge",
         )
         self.terminal.grid(
             column=0, row=21, columnspan=2, pady=8, padx=10, sticky=(N, S, W, E)

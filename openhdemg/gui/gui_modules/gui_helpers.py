@@ -211,3 +211,5 @@ class GUIHelpers:
                 bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
                 button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
                 font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+
+    
