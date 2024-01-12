@@ -3,13 +3,13 @@ This file contains the gui functionalities of openhdemg.
 """
 
 import os
-import customtkinter as ctk
 import tkinter as tk
 import threading
 import webbrowser
 from tkinter import ttk, filedialog, Canvas, StringVar, Tk, N, S, W, E
+import customtkinter as ctk
+from CTkMessagebox import CTkMessagebox
 from pandastable import Table, config
-import customtkinter
 
 from PIL import Image
 
@@ -25,10 +25,12 @@ matplotlib.use("TkAgg")
 
 class emgGUI():
     """
-    A class representing a Tkinter TK instance.
-
     This class is used to create a graphical user interface for
     the openhdemg library.
+
+    Within this class and corresponding childs, most functionalities
+    of the ophdemg library are packed in a GUI. Howebver, the library is more
+    comprehensive and much more adaptable to the users needs.
 
     Attributes
     ----------
@@ -155,7 +157,7 @@ class emgGUI():
 
         # Load file
         load = ctk.CTkButton(self.left, text="Load File", command=self.get_file_input,
-                             fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+                            fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         load.grid(column=0, row=3, sticky=ctk.W)
 
         # File specifications
@@ -168,14 +170,14 @@ class emgGUI():
 
         # Save File
         save = ctk.CTkButton(self.left, text="Save File", command=self.save_emgfile,
-                             fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+                            fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         save.grid(column=0, row=6, sticky=W)
         separator1 = ttk.Separator(self.left, orient="horizontal")
         separator1.grid(column=0, columnspan=3, row=7, sticky=(W, E))
 
         # Export to Excel
         export = ctk.CTkButton(self.left, text="Save Results", command=lambda: (GUIHelpers(parent=self).export_to_excel()),
-                               fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+                            fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         export.grid(column=1, row=6, sticky=(W, E))
 
         # View Motor Unit Firings
@@ -192,7 +194,7 @@ class emgGUI():
 
         # Remove Motor Units
         remove_mus = ctk.CTkButton(self.left, text="Remove MUs", command=lambda:(MURemovalWindow(parent=self, resdict=self.resdict)),
-                                   fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+                                fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         remove_mus.grid(column=0, row=10, sticky=W)
 
         separator3 = ttk.Separator(self.left, orient="horizontal")
@@ -200,19 +202,19 @@ class emgGUI():
 
         # Filter Reference Signal
         reference = ctk.CTkButton(self.left, text="RefSig Editing", command=lambda:(EditRefsig(parent=self)),
-                                  fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+                                fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         reference.grid(column=0, row=12, sticky=W)
 
         # Resize File
         resize = ctk.CTkButton(self.left, text="Resize File", command=lambda:(GUIHelpers(parent=self).resize_file()),
-                               fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+                            fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         resize.grid(column=1, row=12, sticky=(W, E))
         separator4 = ttk.Separator(self.left, orient="horizontal")
         separator4.grid(column=0, columnspan=3, row=13, sticky=(W, E))
 
         # Force Analysis
         force = ctk.CTkButton(self.left, text="Analyse Force", command=lambda:(AnalyseForce(parent=self)),
-                              fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+                            fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         force.grid(column=0, row=14, sticky=W)
         separator5 = ttk.Separator(self.left, orient="horizontal")
         separator5.grid(column=0, columnspan=3, row=15, sticky=(W, E))
@@ -226,26 +228,26 @@ class emgGUI():
 
         # Plot EMG
         plots = ctk.CTkButton(self.left, text="Plot EMG", command=lambda:(PlotEmg(parent=self)),
-                              fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+                            fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         plots.grid(column=0, row=16, sticky=W)
         separator7 = ttk.Separator(self.left, orient="horizontal")
         separator7.grid(column=0, columnspan=3, row=19, sticky=(W, E))
 
         # Reset Analysis
         reset = ctk.CTkButton(self.left, text="Reset Analysis", command=self.reset_analysis,
-                              fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+                            fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         reset.grid(column=1, row=18, sticky=(W, E))
 
         # Advanced tools
         advanced = ctk.CTkButton(self.left, text="Advanced Tools", command=lambda:(AdvancedAnalysis(self)),
-                              fg_color="#000000", text_color="white", border_color="white", border_width=1,
-                              hover_color="#FFBF00")
+                            fg_color="#000000", text_color="white", border_color="white", border_width=1,
+                            hover_color="#FFBF00")
         advanced.grid(row=20, column=0, columnspan=2, sticky=(W, E))
 
         # Create right side framing for functionalities
         self.right = ctk.CTkFrame(self.master, fg_color="LightBlue4", corner_radius=0)
         self.right.grid(column=1, row=0, sticky=(N, S, E, W))
-         # Configure columns with a loop
+        # Configure columns with a loop
         for col in range(2):
             self.right.columnconfigure(col, weight=1)
 
@@ -271,9 +273,9 @@ class emgGUI():
         # Create info button
         # Information Button
         info_path = master_path + "/gui_files/Info.png"  # Get infor button path
-        self.info = customtkinter.CTkImage(light_image=Image.open(info_path),
-                                             size=(30,30))
-        info_button = customtkinter.CTkButton(
+        self.info = ctk.CTkImage(light_image=Image.open(info_path),
+                                            size=(30,30))
+        info_button = ctk.CTkButton(
             self.right,
             image=self.info,
             text="",
@@ -288,9 +290,9 @@ class emgGUI():
 
         # Button for online tutorials
         online_path = master_path + "/gui_files/Online.png"
-        self.online = customtkinter.CTkImage(light_image=Image.open(online_path),
-                                             size=(30,30))
-        online_button = customtkinter.CTkButton(
+        self.online = ctk.CTkImage(light_image=Image.open(online_path),
+                                            size=(30,30))
+        online_button = ctk.CTkButton(
             self.right,
             image=self.online,
             text="",
@@ -305,9 +307,9 @@ class emgGUI():
 
         # Button for dev information
         redirect_path = master_path + "/gui_files/Redirect.png"
-        self.redirect = customtkinter.CTkImage(light_image=Image.open(redirect_path),
-                                             size=(30,30))
-        redirect_button = customtkinter.CTkButton(
+        self.redirect = ctk.CTkImage(light_image=Image.open(redirect_path),
+                                            size=(30,30))
+        redirect_button = ctk.CTkButton(
             self.right,
             image=self.redirect,
             text="",
@@ -321,9 +323,9 @@ class emgGUI():
 
         # Button for contact information
         contact_path = master_path + "/gui_files/Contact.png"
-        self.contact = customtkinter.CTkImage(light_image=Image.open(contact_path),
-                                             size=(30,30))
-        contact_button = customtkinter.CTkButton(
+        self.contact = ctk.CTkImage(light_image=Image.open(contact_path),
+                                            size=(30,30))
+        contact_button = ctk.CTkButton(
             self.right,
             image=self.contact,
             text="",
@@ -337,9 +339,9 @@ class emgGUI():
 
         # Button for citatoin information
         cite_path = master_path + "/gui_files/Cite.png"
-        self.cite = customtkinter.CTkImage(light_image=Image.open(cite_path),
-                                             size=(30,30))
-        cite_button = customtkinter.CTkButton(
+        self.cite = ctk.CTkImage(light_image=Image.open(cite_path),
+                                            size=(30,30))
+        cite_button = ctk.CTkButton(
             self.right,
             image=self.cite,
             text="",
@@ -539,14 +541,14 @@ class emgGUI():
                 progress.grid_remove()
 
             except ValueError:
-                tk.messagebox.showerror(
-                    "Information",
-                    "When an OTB file is loaded, make sure to "
+                CTkMessagebox(title="Info", message= "When an OTB file is loaded, make sure to "
                     + "\nspecify an extension factor (number) first."
-                    + "\n"
-                    + "When a DELSYS file is loaded, make sure to "
-                    + "\nspecify the correct folder."
-                )
+                    + "\nWhen a DELSYS file is loaded, make sure to "
+                    + "\nspecify the correct folder.",
+                    icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                    button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                    font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+
                 # End progress
                 progress.stop()
                 progress.grid_remove()
@@ -557,21 +559,23 @@ class emgGUI():
                 progress.grid_remove()
 
             except TypeError:
-                tk.messagebox.showerror(
-                    "Information",
-                    "Make sure to load correct file"
+                CTkMessagebox(title="Info", message="Make sure to load correct file"
                     + "\naccording to your specification.",
-                )
+                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+                
                 # End progress
                 progress.stop()
                 progress.grid_remove()
 
             except KeyError:
-                tk.messagebox.showerror(
-                    "Information",
-                    "Make sure to load correct file"
+                CTkMessagebox(title="Info", message="Make sure to load correct file"
                     + "\naccording to your specification.",
-                )
+                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+                
                 # End progress
                 progress.stop()
                 progress.grid_remove()
@@ -687,12 +691,15 @@ class emgGUI():
                 progress.grid_remove()
 
             except AttributeError:
-                tk.messagebox.showerror("Information", "Make sure a file is loaded.")
+                CTkMessagebox(title="Info", message="Make sure a file is loaded.",
+                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
 
         # Indicate Progress
-        progress = ctk.CTkProgressbar(self.left, mode="indeterminate")
+        progress = ctk.CTkProgressBar(self.left, mode="indeterminate")
         progress.grid(row=4, column=0)
-        progress.start(1)
+        progress.start()
 
         # Create a thread to run the save_file function
         save_thread = threading.Thread(target=save_file)
@@ -714,8 +721,11 @@ class emgGUI():
             When no file was loaded in the GUI.
         """
         # Get user input and check whether analysis wants to be truly resetted
-        if tk.messagebox.askokcancel(
-            "Attention", "Do you really want to reset the analysis?"
+        if CTkMessagebox(
+            title="Attention",message="Do you really want to reset the analysis?",
+            icon="warning", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF"
         ):
             # user decided to rest analysis
             try:
@@ -788,11 +798,16 @@ class emgGUI():
                     )
 
             except AttributeError:
-                tk.messagebox.showerror("Information", "Make sure a file is loaded.")
+                CTkMessagebox(title="Info", message="Make sure a file is loaded.",
+                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
 
             except FileNotFoundError:
-                tk.messagebox.showerror("Information", "Make sure a file is loaded.")
-
+                CTkMessagebox(title="Info", message="Make sure a file is loaded.",
+                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
     # -----------------------------------------------------------------------------------------------
     # Plotting inside of GUI
 
@@ -838,7 +853,10 @@ class emgGUI():
             plt.close()
 
         except AttributeError:
-            tk.messagebox.showerror("Information", "Make sure a file is loaded.")
+            CTkMessagebox(title="Info", message="Make sure a file is loaded.",
+                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
+                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
+                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
 
     # -----------------------------------------------------------------------------------------------
     # Analysis results display

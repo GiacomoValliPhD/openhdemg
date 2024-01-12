@@ -504,7 +504,7 @@ class AdvancedAnalysis:
 
             # Add filename to GUI
             ctk.CTkLabel(self.head, text="File 2 loaded", font=('Segoe UI',15, 'bold')).grid(column=1, row=3)
-        
+
         except ValueError:
             CTkMessagebox(title="Info", message="Make sure to specify a valid filetype or extension factor.",
                           icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
