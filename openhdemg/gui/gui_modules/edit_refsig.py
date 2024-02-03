@@ -2,9 +2,10 @@
 
 from tkinter import ttk, W, E, StringVar, DoubleVar
 import customtkinter as ctk
-from CTkMessagebox import CTkMessagebox
 
 import openhdemg.library as openhdemg
+from openhdemg.gui.gui_modules.error_handler import show_error_dialog
+
 
 class EditRefsig:
     """
@@ -211,11 +212,8 @@ class EditRefsig:
             # Plot filtered Refsig
             self.parent.in_gui_plotting(resdict=self.parent.resdict, plot="refsig_fil")
 
-        except AttributeError:
-            CTkMessagebox(title="Info", message="Make sure a Refsig file is loaded.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except AttributeError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure a Refsig file is loaded."))
 
     def remove_offset(self):
         """
@@ -243,17 +241,11 @@ class EditRefsig:
             # Update Plot
             self.parent.in_gui_plotting(resdict=self.parent.resdict, plot="refsig_off")
 
-        except AttributeError:
-            CTkMessagebox(title="Info", message="Make sure a Refsig file is loaded.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-            
-        except ValueError:
-            CTkMessagebox(title="Info", message="Make sure to specify valid filtering or offset values.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except AttributeError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure a Refsig file is loaded."))
+
+        except ValueError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure to specify valid filtering or offset values."))
 
     def convert_refsig(self):
         """
@@ -275,21 +267,15 @@ class EditRefsig:
                 self.parent.resdict["REF_SIGNAL"] = self.parent.resdict["REF_SIGNAL"] * self.convert_factor.get()
             elif self.convert.get() == "Divide":
                 self.parent.resdict["REF_SIGNAL"] = self.parent.resdict["REF_SIGNAL"] / self.convert_factor.get()
-        
+
             # Update Plot
             self.parent.in_gui_plotting(resdict=self.parent.resdict, plot="refsig_off")
 
-        except AttributeError:
-            CTkMessagebox(title="Info", message="Make sure a Refsig file is loaded.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except AttributeError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure a Refsig file is loaded."))
 
-        except ValueError:
-            CTkMessagebox(title="Info", message="Make sure to specify valid conversion factor.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except ValueError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure to specify valid conversion factor."))
 
     def to_percent(self):
         """
@@ -307,18 +293,11 @@ class EditRefsig:
         """
         try:
             self.parent.resdict["REF_SIGNAL"] = (self.parent.resdict["REF_SIGNAL"] * 100) / self.mvc_value.get()
-        
             # Update Plot
             self.parent.in_gui_plotting(resdict=self.parent.resdict)
 
-        except AttributeError:
-            CTkMessagebox(title="Info", message="Make sure a Refsig file is loaded.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except AttributeError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure a Refsig file is loaded."))
 
-        except ValueError:
-            CTkMessagebox(title="Info", message="Make sure to specify valid conversion factor.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except ValueError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure to specify valid conversion factor."))

@@ -3,6 +3,10 @@ This file contains the gui functionalities of openhdemg.
 """
 
 import os
+import sys
+import subprocess
+import importlib
+
 import tkinter as tk
 import threading
 import webbrowser
@@ -20,7 +24,11 @@ from matplotlib.figure import Figure
 
 import openhdemg.library as openhdemg
 from openhdemg.gui.gui_modules import (MURemovalWindow, EditRefsig, GUIHelpers,
-                                       AnalyseForce, MuAnalysis, PlotEmg, AdvancedAnalysis)
+                                       AnalyseForce, MuAnalysis, PlotEmg, AdvancedAnalysis,
+                                       show_error_dialog)
+# This loads the settings file directly 
+import settings
+
 matplotlib.use("TkAgg")
 
 class emgGUI():
@@ -123,6 +131,9 @@ class emgGUI():
         master: tk
             tk class object
         """
+        # Load settings
+        self.load_settings()
+
         # Set up GUI
         self.master = master
         self.master.title("openhdemg")
@@ -135,7 +146,7 @@ class emgGUI():
         self.master.rowconfigure(0, weight=1)
 
         # Create left side framing for functionalities
-        self.left = ctk.CTkFrame(self.master, fg_color="LightBlue4", corner_radius=0)
+        self.left = ctk.CTkFrame(self.master, fg_color=self.settings['background_color'], corner_radius=0)
         self.left.grid(column=0, row=0, sticky="nsew")
 
         # Configure columns with a loop
@@ -167,7 +178,7 @@ class emgGUI():
         ctk.CTkLabel(self.left, text="File length:", font=('Segoe UI',15, 'bold')).grid(column=1, row=4, sticky=(W))
         separator0 = ttk.Separator(self.left, orient="horizontal")
         separator0.grid(column=0, columnspan=3, row=5, sticky=(W, E))
-
+        
         # Save File
         save = ctk.CTkButton(self.left, text="Save File", command=self.save_emgfile,
                             fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
@@ -193,7 +204,7 @@ class emgGUI():
         separator2.grid(column=0, columnspan=3, row=9, sticky=(W, E))
 
         # Remove Motor Units
-        remove_mus = ctk.CTkButton(self.left, text="Remove MUs", command=lambda:(MURemovalWindow(parent=self, resdict=self.resdict)),
+        remove_mus = ctk.CTkButton(self.left, text="Remove MUs", command=lambda:(MURemovalWindow(parent=self)),
                                 fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
         remove_mus.grid(column=0, row=10, sticky=W)
 
@@ -258,11 +269,11 @@ class emgGUI():
         # Create empty figure
         self.first_fig = Figure(figsize=(20 / 2.54, 15 / 2.54), frameon=False)
         self.canvas = FigureCanvasTkAgg(self.first_fig, master=self.right)
-        self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=5)
+        self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=6)
 
         # Create logo figure
         self.logo_canvas = Canvas(self.right, height=590, width=800, bg="white")
-        self.logo_canvas.grid(row=0, column=0, rowspan=5)
+        self.logo_canvas.grid(row=0, column=0, rowspan=6)
 
         logo_path = master_path + "/gui_files/logo.png"  # Get logo path
         self.logo = tk.PhotoImage(file=logo_path)
@@ -270,7 +281,20 @@ class emgGUI():
         # self.matrix = tk.PhotoImage(file="Matrix_illustration.png")
         self.logo_canvas.create_image(400, 300, anchor="center", image=self.logo)
 
-        # Create info button
+        # Create info buttons
+        # Settings button
+        gear_path = master_path + "/gui_files/gear.png"
+        self.gear = ctk.CTkImage(light_image=Image.open(gear_path),
+                                  size=(30,30))
+
+        settings_b = ctk.CTkButton(self.right, text="", image=self.gear,
+                                 command=self.open_settings,
+                                width=30,
+                                height=30,
+                                bg_color="LightBlue4",
+                                fg_color="LightBlue4")
+        settings_b.grid(column=1, row=0, sticky=E)
+
         # Information Button
         info_path = master_path + "/gui_files/Info.png"  # Get infor button path
         self.info = ctk.CTkImage(light_image=Image.open(info_path),
@@ -286,7 +310,7 @@ class emgGUI():
             command=lambda: (
                 (webbrowser.open("https://www.giacomovalli.com/openhdemg/gui_intro/"))),
         )
-        info_button.grid(row=0, column=1, sticky=E)
+        info_button.grid(row=1, column=1, sticky=E)
 
         # Button for online tutorials
         online_path = master_path + "/gui_files/Online.png"
@@ -303,7 +327,7 @@ class emgGUI():
             command=lambda: (
                 (webbrowser.open("https://www.giacomovalli.com/openhdemg/tutorials/setup_working_env/"))),
         )
-        online_button.grid(row=1, column=1, sticky=E)
+        online_button.grid(row=2, column=1, sticky=E)
 
         # Button for dev information
         redirect_path = master_path + "/gui_files/Redirect.png"
@@ -319,7 +343,7 @@ class emgGUI():
             fg_color="LightBlue4",
             command=lambda: ((webbrowser.open("https://www.giacomovalli.com/openhdemg/about-us/#meet-the-developers"))),
         )
-        redirect_button.grid(row=2, column=1, sticky=E)
+        redirect_button.grid(row=3, column=1, sticky=E)
 
         # Button for contact information
         contact_path = master_path + "/gui_files/Contact.png"
@@ -335,7 +359,7 @@ class emgGUI():
             fg_color="LightBlue4",
             command=lambda: ((webbrowser.open("https://www.giacomovalli.com/openhdemg/contacts/"))),
         )
-        contact_button.grid(row=3, column=1, sticky=E)
+        contact_button.grid(row=4, column=1, sticky=E)
 
         # Button for citatoin information
         cite_path = master_path + "/gui_files/Cite.png"
@@ -351,12 +375,46 @@ class emgGUI():
             fg_color="LightBlue4",
             command=lambda: ((webbrowser.open("https://www.giacomovalli.com/openhdemg/cite-us/"))),
         )
-        cite_button.grid(row=4, column=1, sticky=E)
+        cite_button.grid(row=5, column=1, sticky=E, pady=0)
 
         for child in self.left.winfo_children():
             child.grid_configure(padx=5, pady=5)
 
     ## Define functionalities for buttons used in GUI master window
+    def load_settings(self):
+        
+        # Load settings file
+        importlib.reload(settings)
+        self.settings = settings.settings
+        self.update_gui_variables()
+
+    def open_settings(self):
+        """
+        Instance Method to load the setting file for.
+
+        Executed when the button "Settings" in master GUI window is pressed.
+        A python file is openend containing a dictionary with relevant variables
+        that users should be able to customize.
+        """
+        # Determine relative filepath
+        file_path = "settings.py"
+
+        # Check for operating system and open in default editor
+        if sys.platform.startswith('darwin'):  # macOS
+            subprocess.run(['open', file_path])
+        elif sys.platform.startswith('win32'):  # Windows
+            os.startfile(file_path)
+        else:  # Linux or other
+            subprocess.run(['xdg-open', file_path])
+
+    
+    # Unused (yet)
+    def update_gui_variables(self):
+        """
+        Method to update variables changes in the settings file
+        """
+        pass
+
 
     def get_file_input(self):
         """
@@ -540,45 +598,36 @@ class emgGUI():
                 progress.stop()
                 progress.grid_remove()
 
-            except ValueError:
-                CTkMessagebox(title="Info", message= "When an OTB file is loaded, make sure to "
-                    + "\nspecify an extension factor (number) first."
-                    + "\nWhen a DELSYS file is loaded, make sure to "
-                    + "\nspecify the correct folder.",
-                    icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                    button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                    font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-
+            except ValueError as e:
+                show_error_dialog(parent=self, error=e, solution=str("When an OTB file is loaded, make sure to "
+                    + "specify an extension factor (number) first."
+                     + "\nWhen a DELSYS file is loaded, make sure to "
+                     + "specify the correct folder."))
                 # End progress
                 progress.stop()
                 progress.grid_remove()
 
-            except FileNotFoundError:
+            except FileNotFoundError as e:
+                show_error_dialog(parent=self, error=e, solution=str("Make sure to load correct file"
+                    + "according to your specification."))
                 # End progress
                 progress.stop()
                 progress.grid_remove()
 
-            except TypeError:
-                CTkMessagebox(title="Info", message="Make sure to load correct file"
-                    + "\naccording to your specification.",
-                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-                
+            except TypeError as e:
+                show_error_dialog(parent=self, error=e, solution=str("Make sure to load correct file"
+                    + "according to your specification."))
                 # End progress
                 progress.stop()
                 progress.grid_remove()
 
-            except KeyError:
-                CTkMessagebox(title="Info", message="Make sure to load correct file"
-                    + "\naccording to your specification.",
-                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-                
+            except KeyError as e:
+                show_error_dialog(parent=self, error=e, solution=str("Make sure to load correct file"
+                    + "according to your specification."))
                 # End progress
                 progress.stop()
                 progress.grid_remove()
+
             except: 
                 # End progress
                 progress.stop()
@@ -601,10 +650,6 @@ class emgGUI():
         create a second combobox on the grid at column 0 and row 2 and when the filetype
         is set to something else it will remove the second combobox from the grid.
         """
-        # Forget previous widget when filetype is changes
-        # NOTE I had to separate them and put them on top of the function to
-        # ensure that changing file type consecutively would not miss the
-        # previous entry or combobox.
         if self.filetype.get() not in ["OTB"]:
             if hasattr(self, "otb_combobox"):
                 self.otb_combobox.grid_forget()
@@ -639,8 +684,6 @@ class emgGUI():
             self.otb_combobox.grid(column=0, row=2, sticky=(W, E), padx=5)
             self.otb_combobox.set("Extension Factor")
 
-        # NOTE I forgot to mention, but people should be able to select fsamp for .csv files.
-        # Please check if this can be done better.
         elif self.filetype.get() in ["CUSTOMCSV", "CUSTOMCSV_REFSIG"]:
             self.fsamp = StringVar(value="Fsamp")
             self.csv_entry = ctk.CTkEntry(
@@ -690,7 +733,8 @@ class emgGUI():
                 progress.stop()
                 progress.grid_remove()
 
-            except AttributeError:
+            except AttributeError as e:
+                show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))
                 CTkMessagebox(title="Info", message="Make sure a file is loaded.",
                           icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
                           button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
@@ -797,17 +841,11 @@ class emgGUI():
                         sticky=(N, S, W, E),
                     )
 
-            except AttributeError:
-                CTkMessagebox(title="Info", message="Make sure a file is loaded.",
-                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+            except AttributeError as e:
+                show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))
 
-            except FileNotFoundError:
-                CTkMessagebox(title="Info", message="Make sure a file is loaded.",
-                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+            except FileNotFoundError as e:
+                show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))
     # -----------------------------------------------------------------------------------------------
     # Plotting inside of GUI
 
@@ -852,11 +890,8 @@ class emgGUI():
             toolbar.grid(row=5, column=0)
             plt.close()
 
-        except AttributeError:
-            CTkMessagebox(title="Info", message="Make sure a file is loaded.",
-                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except AttributeError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))
 
     # -----------------------------------------------------------------------------------------------
     # Analysis results display

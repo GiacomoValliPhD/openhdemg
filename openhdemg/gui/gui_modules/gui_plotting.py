@@ -6,8 +6,9 @@ from tkinter import ttk, W, E, StringVar, PhotoImage
 from PIL import Image
 
 import customtkinter as ctk
-from CTkMessagebox import CTkMessagebox
 import openhdemg.library as openhdemg
+from openhdemg.gui.gui_modules.error_handler import show_error_dialog
+
 
 class PlotEmg:
     """
@@ -359,11 +360,8 @@ class PlotEmg:
             for child in self.head.winfo_children():
                 child.grid_configure(padx=5, pady=5)
 
-        except AttributeError:
-            CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except AttributeError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))
             self.head.destroy()
 
     ### Define functions for motor unit plotting
@@ -442,21 +440,14 @@ class PlotEmg:
                     figsize=figsize,
                 )
 
-        except ValueError:
-            CTkMessagebox(title="Info", message="Enter valid channel number or non-negative figure size.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-        except KeyError:
-            CTkMessagebox(title="Info", message="Enter valid channel number.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-        except IndexError:
-            CTkMessagebox(title="Info", message="Enter valid figure size. Must be non negative and tuple of (heigth, width).",
-                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except ValueError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Enter valid channel number or non-negative figure size."))
+
+        except KeyError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Enter valid channel number."))
+
+        except IndexError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Enter valid figure size. Must be non negative and tuple of (heigth, width)."))
 
     def plt_refsignal(self):
         """
@@ -509,11 +500,8 @@ class PlotEmg:
                 figsize=figsize,
             )
 
-        except ValueError:
-            CTkMessagebox(title="Info", message="Enter valid linewidth number.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except ValueError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Enter valid linewidth number."))
 
     def plt_ipts(self):
         """
@@ -573,17 +561,11 @@ class PlotEmg:
                     figsize=figsize,
                 )
 
-        except ValueError:
-            CTkMessagebox(title="Info", message="Enter valid motor unit number.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except ValueError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Enter valid motor unit number."))
 
-        except KeyError:
-            CTkMessagebox(title="Info", message="Enter valid motor unit number.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except KeyError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Enter valid motor unit number."))
 
     def plt_idr(self):
         """
@@ -640,17 +622,11 @@ class PlotEmg:
                     figsize=figsize,
                 )
 
-        except ValueError:
-            CTkMessagebox(title="Info", message="Enter valid motor unit number.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except ValueError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Enter valid motor unit number."))
 
-        except KeyError:
-            CTkMessagebox(title="Info", message="Enter valid motor unit number.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except KeyError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Enter valid motor unit number."))
 
     def plot_derivation(self):
         """
@@ -687,13 +663,8 @@ class PlotEmg:
                         n_cols=list_rcs[1]
                     )
 
-                except ValueError:
-                    CTkMessagebox(title="Info", message="Number of specified rows and columns must match" +
-                        "\nnumber of channels.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-
+                except ValueError as e:
+                    show_error_dialog(parent=self, error=e, solution=str("Number of specified rows and columns must match number of channels."))
                     return
 
             else:
@@ -723,26 +694,20 @@ class PlotEmg:
                 timeinseconds=eval(self.time_sec.get()),
                 figsize=figsize,
             )
-        except ValueError:
-            CTkMessagebox(title="Info", message="Enter valid input parameters."
-                + "\nPotenital error sources:"
-                + "\n - Matrix Code"
-                + "\n - Matrix Orientation"
-                + "\n - Figure size arguments"
-                + "\n - Rows, Columns arguments", icon="info",
-                bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-        except UnboundLocalError:
-            CTkMessagebox(title="Info", message="Enter valid Configuration and Matrix Column.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-        except KeyError:
-            CTkMessagebox(title="Info", message="Enter valid Matrix Column.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except ValueError as e:
+            show_error_dialog(parent=self, error=e,
+                              solution=str("Enter valid input parameters."
+                                            + "\nPotenital error sources:"
+                                            + "\n - Matrix Code"
+                                            + "\n - Matrix Orientation"
+                                            + "\n - Figure size arguments"
+                                            + "\n - Rows, Columns arguments"))
+
+        except UnboundLocalError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Enter valid Configuration and Matrix Column."))
+
+        except KeyError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Enter valid Matrix Column."))
 
     def plot_muaps(self):
         """
@@ -789,12 +754,8 @@ class PlotEmg:
                             n_cols=list_rcs[1]
                         )
 
-                    except ValueError:
-                        CTkMessagebox(title="Info", message="Number of specified rows and columns must match"
-                          + "\nnumber of channels.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+                    except ValueError as e:
+                        show_error_dialog(parent=self, error=e, solution=str("Number of specified rows and columns must match"))
                         return
 
                 else:
@@ -830,27 +791,29 @@ class PlotEmg:
                 # Plot MUAPS
                 openhdemg.plot_muaps(sta_dict[int(self.muap_munum.get())], figsize=figsize)
 
-        except ValueError:
-            CTkMessagebox(title="Info", message="Enter valid input parameters."
-                + "\nPotenital error sources:"
-                + "\n - Matrix Code"
-                + "\n - Matrix Orientation"
-                + "\n - Figure size arguments"
-                + "\n - Timewindow"
-                + "\n - MU Number"
-                + "\n - Rows, Columns arguments", icon="info",
-                bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except ValueError as e:
+            show_error_dialog(parent=self, error=e,
+                              solution=str("Enter valid input parameters."
+                                        + "\nPotenital error sources:"
+                                        + "\n - Matrix Code"
+                                        + "\n - Matrix Orientation"
+                                        + "\n - Figure size arguments"
+                                        + "\n - Timewindow"
+                                        + "\n - MU Number"
+                                        + "\n - Rows, Columns arguments"))
 
-        except UnboundLocalError:
-            CTkMessagebox(title="Info", message="Enter valid Configuration.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-        except KeyError:
-            CTkMessagebox(title="Info", message="Enter valid Matrix Column.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-            
+            show_error_dialog(parent=self, error=e,
+                              solution=str("Enter valid input parameters."
+                                        + "\nPotenital error sources:"
+                                        + "\n - Matrix Code"
+                                        + "\n - Matrix Orientation"
+                                        + "\n - Figure size arguments"
+                                        + "\n - Timewindow"
+                                        + "\n - MU Number"
+                                        + "\n - Rows, Columns arguments"))
+
+        except UnboundLocalError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Enter valid Configuration."))
+
+        except KeyError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Enter valid Matrix Column."))

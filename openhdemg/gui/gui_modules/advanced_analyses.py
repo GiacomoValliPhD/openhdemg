@@ -2,9 +2,9 @@
 
 from tkinter import ttk, W, E, N, S, StringVar, BooleanVar
 import customtkinter as ctk
-from CTkMessagebox import CTkMessagebox
 from pandastable import Table
 import openhdemg.library as openhdemg
+from openhdemg.gui.gui_modules.error_handler import show_error_dialog
 
 class AdvancedAnalysis:
     """
@@ -104,16 +104,10 @@ class AdvancedAnalysis:
         # Disable config for DELSYS files
         try:
             if self.parent.resdict["SOURCE"] == "DELSYS":
-                CTkMessagebox(title="Info", message="Advanced Tools for Delsys are only accessible from the library.", icon="info",
-                            bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                            button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                            font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+                show_error_dialog(parent=self, error=None, solution=str("Advanced Tools for Delsys are only accessible from the library."))
                 return
-        except AttributeError:
-            CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except AttributeError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))
             return
 
         # Open window
@@ -395,12 +389,8 @@ class AdvancedAnalysis:
                             n_rows=list_rcs[0],
                             n_cols=list_rcs[1]
                         )
-                    except ValueError:
-                        CTkMessagebox(title="Info", message="Number of specified rows and columns must match" + "\nnumber of channels.",
-                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-
+                    except ValueError as e:
+                        show_error_dialog(parent=self, error=e, solution=str("Number of specified rows and columns must match number of channels."))
                         return
                 # # DELSYS conduction velocity not available
                 # elif self.mat_code_adv.get() == "Trigno Galileo Sensor":
@@ -409,7 +399,7 @@ class AdvancedAnalysis:
                 #         "MUs conduction velocity estimation is not available for this matrix."
                 #         )
                 #     return
-                
+
                 else:
                     # Sort emg file
                     sorted_rawemg = openhdemg.sort_rawemg(
@@ -423,21 +413,14 @@ class AdvancedAnalysis:
                     sorted_rawemg=sorted_rawemg,
                 )
 
-            except AttributeError:
-                CTkMessagebox(title="Info", message="Please make sure to load a file prior to Conduction velocity calculation.",
-                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+            except AttributeError as e:
+                show_error_dialog(parent=self, error=e, solution=str("Please make sure to load a file prior to Conduction velocity calculation."))
                 self.head.destroy()
 
-            except ValueError:
-                CTkMessagebox(title="Info", message="Please make sure to enter valid Rows, Columns arguments."
-                    + "\nArguments must be non-negative and seperated by `,`.",
-                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+            except ValueError as e:
+                show_error_dialog(parent=self, error=e, solution=str("Please make sure to enter valid Rows, Columns arguments."
+                    + "Arguments must be non-negative and seperated by `,`."))
                 self.head.destroy()
-
 
         # Destroy first window to avoid too many pop-ups
         self.a_window.destroy()
@@ -471,11 +454,8 @@ class AdvancedAnalysis:
             # Add filename to GUI
             ctk.CTkLabel(self.head, text="File 1 loaded", font=('Segoe UI',15, 'bold')).grid(column=1, row=2)
 
-        except ValueError:
-            CTkMessagebox(title="Info", message="Make sure to specify a valid filetype or extension factor.",
-                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except ValueError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure to specify a valid filetype or extension factor."))
 
     def open_emgfile2(self):
         """
@@ -505,11 +485,8 @@ class AdvancedAnalysis:
             # Add filename to GUI
             ctk.CTkLabel(self.head, text="File 2 loaded", font=('Segoe UI',15, 'bold')).grid(column=1, row=3)
 
-        except ValueError:
-            CTkMessagebox(title="Info", message="Make sure to specify a valid filetype or extension factor.",
-                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except ValueError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure to specify a valid filetype or extension factor."))
 
     def on_filetype_change_adv(self, *args):
         """
@@ -579,11 +556,9 @@ class AdvancedAnalysis:
             else:
                 n_rows = None
                 n_cols = None
-        except ValueError:
-            CTkMessagebox(title="Info", message="Verify that Rows and Columns are separated by ','",
-                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except ValueError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Verify that Rows and Columns are separated by ','"))
+
         try:
             # Track motor units
             tracking_res = openhdemg.tracking(
@@ -618,24 +593,19 @@ class AdvancedAnalysis:
             track_table = Table(track_terminal, dataframe=tracking_res)
             track_table.show()
 
-        except AttributeError:
-            CTkMessagebox(title="Info", message="Make sure to load all required EMG files prior to tracking.",
-                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except AttributeError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure to load all required EMG files prior to tracking."))
 
-        except ValueError:
-            CTkMessagebox(title="Info", message=
-                "Enter valid input parameters."
-                + "\nPotenital error sources:"
-                + "\n - Extension Factor (in case of OTB file)"
-                + "\n - Matrix Code"
-                + "\n - Matrix Orientation"
-                + "\n - Threshold"
-                + "\n - Rows, Columns",
-                icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except ValueError as e:
+            show_error_dialog(parent=self, error=e,
+                              solution=str("Enter valid input parameters."
+                                            + "\nPotenital error sources:"
+                                            + "\n - Extension Factor (in case of OTB file)"
+                                            + "\n - Matrix Code"
+                                            + "\n - Matrix Orientation"
+                                            + "\n - Threshold"
+                                            + "\n - Rows, Columns"))
+
 
     def remove_duplicates_between(self):
         """
@@ -666,11 +636,8 @@ class AdvancedAnalysis:
             else:
                 n_rows = None
                 n_cols = None
-        except ValueError:
-            CTkMessagebox(title="Info", message="Verify that Rows and Columns are separated by ','",
-                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except ValueError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Verify that Rows and Columns are separated by ','"))
 
         try:
             # Remove motor unit duplicates
@@ -692,21 +659,16 @@ class AdvancedAnalysis:
             openhdemg.asksavefile(emg_file1)
             openhdemg.asksavefile(emg_file2)
 
-        except AttributeError:
-            CTkMessagebox(title="Info", message="Make sure to load all required EMG files prior to tracking.",
-                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except AttributeError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure to load all required EMG files prior to tracking."))
 
-        except ValueError:
-            CTkMessagebox(title="Info", message="Enter valid input parameters."
-                + "\nPotenital error sources:"
-                + "\n - Extension Factor (in case of OTB file)"
-                + "\n - Matrix Code"
-                + "\n - Matrix Orientation"
-                + "\n - Threshold"
-                + "\n - Which"
-                + "\n - Rows, Columns",
-                icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except ValueError as e:
+            show_error_dialog(parent=self, error=e,
+                              solution=str("Enter valid input parameters."
+                                            + "\nPotenital error sources:"
+                                            + "\n - Extension Factor (in case of OTB file)"
+                                            + "\n - Matrix Code"
+                                            + "\n - Matrix Orientation"
+                                            + "\n - Threshold"
+                                            + "\n - Which"
+                                            + "\n - Rows, Columns",))

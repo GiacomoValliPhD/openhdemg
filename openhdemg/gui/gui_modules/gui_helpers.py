@@ -2,10 +2,11 @@
 
 from tkinter import W, E, filedialog
 import customtkinter as ctk
-from CTkMessagebox import CTkMessagebox
 import pandas as pd
 
 import openhdemg.library as openhdemg
+from openhdemg.gui.gui_modules.error_handler import show_error_dialog
+
 
 class GUIHelpers:
     """
@@ -111,11 +112,8 @@ class GUIHelpers:
                     column=2, row=4, sticky=(W, E)
             )
 
-        except AttributeError:
-            CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except AttributeError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))
 
     def export_to_excel(self):
         """
@@ -156,24 +154,14 @@ class GUIHelpers:
 
             writer.close()
 
-        except IndexError:
-            CTkMessagebox(title="Info", message="Please conduct at least one analysis before saving.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except IndexError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Please conduct at least one analysis before saving."))
 
-        except AttributeError:
-            CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except AttributeError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))
 
-        except PermissionError:
-            CTkMessagebox(title="Info", message="If /Results.xlsx already opened, please close."
-                + "\nOtherwise ignore as you propably canceled the saving progress.", icon="info",
-                bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except PermissionError as e:
+            show_error_dialog(parent=self, error=e, solution=str("If /Results.xlsx already opened, please close."))
 
     def sort_mus(self):
         """
@@ -199,17 +187,11 @@ class GUIHelpers:
             if hasattr(self.parent, "fig"):
                 self.parent.in_gui_plotting(resdict=self.parent.resdict)
 
-        except AttributeError:
-            CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
-                bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except AttributeError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))
 
         except KeyError:
-            CTkMessagebox(title="Info", message="Sorting not possible when ≤ 1"
-                                    + "\nMU is present in the File (i.e. Refsigs)", icon="info",
-                bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-
+            show_error_dialog(parent=self, error=e,
+                              solution=str("Sorting not possible when ≤ 1"
+                                    + "\nMU is present in the File (i.e. Refsigs)"))
     

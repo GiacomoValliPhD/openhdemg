@@ -2,9 +2,10 @@
 
 from tkinter import ttk, W, E, StringVar
 import customtkinter as ctk
-from CTkMessagebox import CTkMessagebox
 import pandas as pd
 import openhdemg.library as openhdemg
+from openhdemg.gui.gui_modules.error_handler import show_error_dialog
+
 
 class AnalyseForce:
     """
@@ -123,11 +124,8 @@ class AnalyseForce:
             # Display results
             self.parent.display_results(input_df=self.parent.mvc_df)
 
-        except AttributeError:
-            CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except AttributeError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))
 
     def get_rfd(self):
         """
@@ -157,8 +155,5 @@ class AnalyseForce:
             # Display results
             self.parent.display_results(input_df=self.parent.rfd)
 
-        except AttributeError:
-            CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except AttributeError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))

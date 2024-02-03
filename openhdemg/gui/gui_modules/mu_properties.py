@@ -2,8 +2,8 @@
 
 from tkinter import ttk, W, E, StringVar
 import customtkinter as ctk
-from CTkMessagebox import CTkMessagebox
 import openhdemg.library as openhdemg
+from openhdemg.gui.gui_modules.error_handler import show_error_dialog
 
 class MuAnalysis:
     """
@@ -224,21 +224,14 @@ class MuAnalysis:
             # Display results
             self.parent.display_results(self.parent.mu_thresholds)
 
-        except AttributeError:
-            CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-        except ValueError:
-            CTkMessagebox(title="Info", message="Enter valid MVC, Event or Type.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-        except AssertionError:
-            CTkMessagebox(title="Info", message="Specify Event and/or Type.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except AttributeError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))
+
+        except ValueError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Enter valid MVC, Event or Type."))
+
+        except AssertionError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Specify Event and/or Type."))
 
     def compute_mu_dr(self):
         """
@@ -272,21 +265,14 @@ class MuAnalysis:
             # Display results
             self.parent.display_results(self.parent.mus_dr)
 
-        except AttributeError:
-            CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-        except ValueError:
-            CTkMessagebox(title="Info", message="Enter valid Firings value or select a correct number of points.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-        except AssertionError:
-            CTkMessagebox(title="Info", message="Specify Event and/or Type.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except AttributeError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))
+
+        except ValueError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Enter valid Firings value or select a correct number of points."))
+
+        except AssertionError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Specify Event and/or Type."))
 
     def basic_mus_properties(self):
         """
@@ -322,23 +308,14 @@ class MuAnalysis:
             # Display results
             self.parent.display_results(self.parent.mu_prop_df)
 
-        except AttributeError:
-            CTkMessagebox(title="Info", message="Make sure a file is loaded.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-        except ValueError:
-            CTkMessagebox(title="Info", message="Enter valid MVC value or select a correct number of points.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-        except AssertionError:
-            CTkMessagebox(title="Info", message="Specify Event and/or Type.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-        except UnboundLocalError:
-            CTkMessagebox(title="Info", message="Select start/end area again.", icon="info",
-                          bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
+        except AttributeError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))
+
+        except ValueError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Enter valid MVC value or select a correct number of points."))
+
+        except AssertionError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Specify Event and/or Type."))
+
+        except UnboundLocalError as e:
+            show_error_dialog(parent=self, error=e, solution=str("Select start/end area again."))
