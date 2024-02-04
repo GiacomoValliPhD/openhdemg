@@ -85,9 +85,12 @@ class EditRefsig:
             If certain widgets or properties are not properly instantiated due to missing 
             parent configurations or resources.
         """
+        # Initialize parent and load parent settings 
+        self.parent = parent
+        self.parent.load_settings()
+
         # Create new window
         self.head = ctk.CTkToplevel(fg_color="LightBlue4")
-        self.parent = parent
         self.head.title("Reference Signal Editing Window")
         self.head.wm_iconbitmap()
         self.head.grab_set()

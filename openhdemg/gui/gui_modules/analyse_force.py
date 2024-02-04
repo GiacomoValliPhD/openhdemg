@@ -68,8 +68,12 @@ class AnalyseForce:
             parent configurations or resources.
 
         """
-        # Create new window
+        # Initialize parent and load parent settings 
+        
         self.parent = parent
+        self.parent.load_settings()
+        
+        # Create new window
         self.head = ctk.CTkToplevel(fg_color="LightBlue4")
         self.head.title("Force Analysis Window")
         self.head.wm_iconbitmap()

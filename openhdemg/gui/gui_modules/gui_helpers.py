@@ -67,7 +67,9 @@ class GUIHelpers:
             necessary context and data for the helper functions.
 
         """
+        # Initialize parent and load parent settings 
         self.parent = parent
+        self.parent.load_settings()
 
     def resize_file(self):
         """

@@ -87,8 +87,10 @@ class MuAnalysis:
         properties like size, color, and variable bindings and placed in a grid layout.
 
         """
-        # Create new window
+        # Initialize parent and load parent settings 
         self.parent = parent
+        self.parent.load_settings()
+        # Create new window
         self.head = ctk.CTkToplevel(fg_color="LightBlue4")
         self.head.title("Motor Unit Properties Window")
         self.head.wm_iconbitmap()

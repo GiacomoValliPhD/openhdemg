@@ -114,7 +114,10 @@ class PlotEmg:
         """
         # Try is block is necessary as some widgets depend on parent resdict
         try:
+             # Initialize parent and load parent settings 
             self.parent = parent
+            self.parent.load_settings()
+
             self.head = ctk.CTkToplevel(fg_color="LightBlue4")
             self.head.title("Plot Window")
             self.head.wm_iconbitmap()
@@ -235,7 +238,7 @@ class PlotEmg:
             ctk.CTkLabel(self.head, text="Matrix Code", font=('Segoe UI',15, 'bold')).grid(row=0, column=3, sticky=(W))
 
             self.mat_code = StringVar()
-            matrix_code_values = ("GR08MM1305", "GR04MM1305", "GR10MM0808", "Trigno Galileo Sensor", "None")
+            matrix_code_values = ("GR08MM1305", "GR04MM1305", "GR10MM0808", self.parent.settings["delsys_sensor_label"], "None")
             matrix_code = ctk.CTkComboBox(self.head, width=100, variable=self.mat_code,
                                             values=matrix_code_values, state="readonly")
             matrix_code.grid(row=0, column=4, sticky=(W, E))
@@ -386,8 +389,7 @@ class PlotEmg:
             if hasattr(self, "row_cols_entry"):
                 self.row_cols_entry.grid_forget()
                 self.mat_label.grid_forget()
-                
-        
+
         self.head.update_idletasks()
 
 

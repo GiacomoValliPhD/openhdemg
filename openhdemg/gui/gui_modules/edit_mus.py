@@ -76,7 +76,10 @@ class MURemovalWindow:
             parent configurations or resources.
         """
         try:
+            # Initialize parent and load parent settings 
             self.parent = parent
+            self.parent.load_settings()
+
             # Create new window
             self.head = ctk.CTkToplevel(fg_color="LightBlue4")
             # Set the background color of the top-level window

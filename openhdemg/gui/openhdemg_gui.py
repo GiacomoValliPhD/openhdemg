@@ -12,7 +12,6 @@ import threading
 import webbrowser
 from tkinter import messagebox, ttk, filedialog, Canvas, StringVar, Tk, N, S, W, E
 import customtkinter as ctk
-from CTkMessagebox import CTkMessagebox
 from pandastable import Table, config
 
 from PIL import Image
@@ -147,7 +146,7 @@ class emgGUI():
 
         # Create left side framing for functionalities
         self.left = ctk.CTkFrame(self.master, fg_color=self.settings['background_color'], corner_radius=0)
-        self.left.grid(column=0, row=0, sticky="nsew")
+        self.left.grid(column=0, row=0, sticky=(N, S, E, W))
 
         # Configure columns with a loop
         for col in range(4):
@@ -161,7 +160,7 @@ class emgGUI():
         self.filetype = StringVar()
         signal_value = ["OPENHDEMG", "DEMUSE", "OTB", "OTB_REFSIG", "DELSYS", "DELSYS_REFSIG", "CUSTOMCSV", "CUSTOMCSV_REFSIG"]
         signal_entry = ctk.CTkComboBox(self.left, width=150, variable=self.filetype, values=signal_value, state="readonly")
-        signal_entry.grid(column=0, row=1, sticky=(ctk.W, ctk.E))
+        signal_entry.grid(column=0, row=1, sticky=(N, S, E, W))
         self.filetype.set("Type of file")
         # Trace filetype to apply function when changeing
         self.filetype.trace_add("write", self.on_filetype_change)
@@ -169,7 +168,7 @@ class emgGUI():
         # Load file
         load = ctk.CTkButton(self.left, text="Load File", command=self.get_file_input,
                             fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
-        load.grid(column=0, row=3, sticky=ctk.W)
+        load.grid(column=0, row=3, sticky=(N, S, E, W))
 
         # File specifications
         ctk.CTkLabel(self.left, text="Filespecs:", font=('Segoe UI',15, 'bold')).grid(column=1, row=1, sticky=(W))
@@ -177,83 +176,83 @@ class emgGUI():
         ctk.CTkLabel(self.left, text="N of MUs:", font=('Segoe UI',15, 'bold')).grid(column=1, row=3, sticky=(W))
         ctk.CTkLabel(self.left, text="File length:", font=('Segoe UI',15, 'bold')).grid(column=1, row=4, sticky=(W))
         separator0 = ttk.Separator(self.left, orient="horizontal")
-        separator0.grid(column=0, columnspan=3, row=5, sticky=(W, E))
+        separator0.grid(column=0, columnspan=3, row=5, sticky=(E, W))
         
         # Save File
         save = ctk.CTkButton(self.left, text="Save File", command=self.save_emgfile,
                             fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
-        save.grid(column=0, row=6, sticky=W)
+        save.grid(column=0, row=6, sticky=(N, S, E, W))
         separator1 = ttk.Separator(self.left, orient="horizontal")
-        separator1.grid(column=0, columnspan=3, row=7, sticky=(W, E))
+        separator1.grid(column=0, columnspan=3, row=7, sticky=(E, W))
 
         # Export to Excel
         export = ctk.CTkButton(self.left, text="Save Results", command=lambda: (GUIHelpers(parent=self).export_to_excel()),
                             fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
-        export.grid(column=1, row=6, sticky=(W, E))
+        export.grid(column=1, row=6, sticky=(N, S, E, W))
 
         # View Motor Unit Firings
         firings = ctk.CTkButton(self.left, text="View MUs", command=lambda: (self.in_gui_plotting(resdict=self.resdict)),
                                 fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
-        firings.grid(column=0, row=8, sticky=W)
+        firings.grid(column=0, row=8, sticky=(N, S, E, W))
 
         # Sort Motor Units
         sorting = ctk.CTkButton(self.left, text="Sort MUs", command=lambda: (GUIHelpers(parent=self).sort_mus()),
                                 fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
-        sorting.grid(column=1, row=8, sticky=(W, E))
+        sorting.grid(column=1, row=8, sticky=(N, S, E, W))
         separator2 = ttk.Separator(self.left, orient="horizontal")
-        separator2.grid(column=0, columnspan=3, row=9, sticky=(W, E))
+        separator2.grid(column=0, columnspan=3, row=9, sticky=(E, W))
 
         # Remove Motor Units
         remove_mus = ctk.CTkButton(self.left, text="Remove MUs", command=lambda:(MURemovalWindow(parent=self)),
                                 fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
-        remove_mus.grid(column=0, row=10, sticky=W)
+        remove_mus.grid(column=0, row=10, sticky=(N, S, E, W))
 
         separator3 = ttk.Separator(self.left, orient="horizontal")
-        separator3.grid(column=0, columnspan=3, row=11, sticky=(W, E))
+        separator3.grid(column=0, columnspan=3, row=11, sticky=(E, W))
 
         # Filter Reference Signal
         reference = ctk.CTkButton(self.left, text="RefSig Editing", command=lambda:(EditRefsig(parent=self)),
                                 fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
-        reference.grid(column=0, row=12, sticky=W)
+        reference.grid(column=0, row=12, sticky=(N, S, E, W))
 
         # Resize File
         resize = ctk.CTkButton(self.left, text="Resize File", command=lambda:(GUIHelpers(parent=self).resize_file()),
                             fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
-        resize.grid(column=1, row=12, sticky=(W, E))
+        resize.grid(column=1, row=12, sticky=(N, S, E, W))
         separator4 = ttk.Separator(self.left, orient="horizontal")
-        separator4.grid(column=0, columnspan=3, row=13, sticky=(W, E))
+        separator4.grid(column=0, columnspan=3, row=13, sticky=(E, W))
 
         # Force Analysis
         force = ctk.CTkButton(self.left, text="Analyse Force", command=lambda:(AnalyseForce(parent=self)),
                             fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
-        force.grid(column=0, row=14, sticky=W)
+        force.grid(column=0, row=14, sticky=(N, S, E, W))
         separator5 = ttk.Separator(self.left, orient="horizontal")
-        separator5.grid(column=0, columnspan=3, row=15, sticky=(W, E))
+        separator5.grid(column=0, columnspan=3, row=15, sticky=(E, W))
 
         # Motor Unit properties
         mus = ctk.CTkButton(self.left, text="MU Properties", command=lambda:(MuAnalysis(parent=self)),
                             fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
-        mus.grid(column=1, row=14, sticky=W)
+        mus.grid(column=1, row=14, sticky=(N, S, E, W))
         separator6 = ttk.Separator(self.left, orient="horizontal")
-        separator6.grid(column=0, columnspan=3, row=17, sticky=(W, E))
+        separator6.grid(column=0, columnspan=3, row=17, sticky=(E, W))
 
         # Plot EMG
         plots = ctk.CTkButton(self.left, text="Plot EMG", command=lambda:(PlotEmg(parent=self)),
                             fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
-        plots.grid(column=0, row=16, sticky=W)
+        plots.grid(column=0, row=16, sticky=(N, S, E, W))
         separator7 = ttk.Separator(self.left, orient="horizontal")
-        separator7.grid(column=0, columnspan=3, row=19, sticky=(W, E))
+        separator7.grid(column=0, columnspan=3, row=19, sticky=(E, W))
 
         # Reset Analysis
         reset = ctk.CTkButton(self.left, text="Reset Analysis", command=self.reset_analysis,
                             fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
-        reset.grid(column=1, row=18, sticky=(W, E))
+        reset.grid(column=1, row=18, sticky=(N, S, E, W))
 
         # Advanced tools
         advanced = ctk.CTkButton(self.left, text="Advanced Tools", command=lambda:(AdvancedAnalysis(self)),
                             fg_color="#000000", text_color="white", border_color="white", border_width=1,
                             hover_color="#FFBF00")
-        advanced.grid(row=20, column=0, columnspan=2, sticky=(W, E))
+        advanced.grid(row=20, column=0, columnspan=2, sticky=(N, S, E, W))
 
         # Create right side framing for functionalities
         self.right = ctk.CTkFrame(self.master, fg_color="LightBlue4", corner_radius=0)
@@ -269,16 +268,15 @@ class emgGUI():
         # Create empty figure
         self.first_fig = Figure(figsize=(20 / 2.54, 15 / 2.54), frameon=False)
         self.canvas = FigureCanvasTkAgg(self.first_fig, master=self.right)
-        self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=6)
+        self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=6, sticky=(N, S, E, W))
 
         # Create logo figure
         self.logo_canvas = Canvas(self.right, height=590, width=800, bg="white")
-        self.logo_canvas.grid(row=0, column=0, rowspan=6)
+        self.logo_canvas.grid(row=0, column=0, rowspan=6, sticky=(N, S, E, W))
 
         logo_path = master_path + "/gui_files/logo.png"  # Get logo path
         self.logo = tk.PhotoImage(file=logo_path)
 
-        # self.matrix = tk.PhotoImage(file="Matrix_illustration.png")
         self.logo_canvas.create_image(400, 300, anchor="center", image=self.logo)
 
         # Create info buttons
@@ -293,7 +291,7 @@ class emgGUI():
                                 height=30,
                                 bg_color="LightBlue4",
                                 fg_color="LightBlue4")
-        settings_b.grid(column=1, row=0, sticky=E)
+        settings_b.grid(column=1, row=0, sticky=E,  pady=(0, 20))
 
         # Information Button
         info_path = master_path + "/gui_files/Info.png"  # Get infor button path
@@ -310,7 +308,7 @@ class emgGUI():
             command=lambda: (
                 (webbrowser.open("https://www.giacomovalli.com/openhdemg/gui_intro/"))),
         )
-        info_button.grid(row=1, column=1, sticky=E)
+        info_button.grid(row=1, column=1, sticky=E, pady=(0, 20))
 
         # Button for online tutorials
         online_path = master_path + "/gui_files/Online.png"
@@ -327,7 +325,7 @@ class emgGUI():
             command=lambda: (
                 (webbrowser.open("https://www.giacomovalli.com/openhdemg/tutorials/setup_working_env/"))),
         )
-        online_button.grid(row=2, column=1, sticky=E)
+        online_button.grid(row=2, column=1, sticky=E, pady=(0, 20))
 
         # Button for dev information
         redirect_path = master_path + "/gui_files/Redirect.png"
@@ -343,7 +341,7 @@ class emgGUI():
             fg_color="LightBlue4",
             command=lambda: ((webbrowser.open("https://www.giacomovalli.com/openhdemg/about-us/#meet-the-developers"))),
         )
-        redirect_button.grid(row=3, column=1, sticky=E)
+        redirect_button.grid(row=3, column=1, sticky=E, pady=(0, 20))
 
         # Button for contact information
         contact_path = master_path + "/gui_files/Contact.png"
@@ -359,7 +357,7 @@ class emgGUI():
             fg_color="LightBlue4",
             command=lambda: ((webbrowser.open("https://www.giacomovalli.com/openhdemg/contacts/"))),
         )
-        contact_button.grid(row=4, column=1, sticky=E)
+        contact_button.grid(row=4, column=1, sticky=E, pady=(0, 20))
 
         # Button for citatoin information
         cite_path = master_path + "/gui_files/Cite.png"
@@ -375,14 +373,20 @@ class emgGUI():
             fg_color="LightBlue4",
             command=lambda: ((webbrowser.open("https://www.giacomovalli.com/openhdemg/cite-us/"))),
         )
-        cite_button.grid(row=5, column=1, sticky=E, pady=0)
+        cite_button.grid(row=5, column=1, sticky=E, pady=(0, 20))
 
         for child in self.left.winfo_children():
             child.grid_configure(padx=5, pady=5)
 
     ## Define functionalities for buttons used in GUI master window
     def load_settings(self):
-        
+        """
+        Instance Method to load the setting file for.
+
+        Executed each time when the GUI or a toplevel is openened.
+        The settings specified by the user will then be transferred 
+        to the code and used.
+        """
         # Load settings file
         importlib.reload(settings)
         self.settings = settings.settings
@@ -390,7 +394,7 @@ class emgGUI():
 
     def open_settings(self):
         """
-        Instance Method to load the setting file for.
+        Instance Method to open the setting file for.
 
         Executed when the button "Settings" in master GUI window is pressed.
         A python file is openend containing a dictionary with relevant variables
@@ -858,7 +862,7 @@ class emgGUI():
         --------
         plot_refsig, plot_idr in the library.
         """
-        try:  # NOTE as I previously said, OPENHDEMG (.json) files can contain anything. better check SOURCE.
+        try:
             if self.resdict["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]:
                 self.fig = openhdemg.plot_refsig(
                     emgfile=resdict, showimmediately=False, tight_layout=True
@@ -877,7 +881,7 @@ class emgGUI():
                 )
 
             self.canvas = FigureCanvasTkAgg(self.fig, master=self.right)
-            self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=5)
+            self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=6)
             toolbar = NavigationToolbar2Tk(self.canvas, self.right, pack_toolbar=False)
             toolbar.grid(row=5, column=0)
             plt.close()
