@@ -10,7 +10,7 @@ import importlib
 import tkinter as tk
 import threading
 import webbrowser
-from tkinter import ttk, filedialog, Canvas, StringVar, Tk, N, S, W, E
+from tkinter import messagebox, ttk, filedialog, Canvas, StringVar, Tk, N, S, W, E
 import customtkinter as ctk
 from CTkMessagebox import CTkMessagebox
 from pandastable import Table, config
@@ -735,11 +735,7 @@ class emgGUI():
 
             except AttributeError as e:
                 show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))
-                CTkMessagebox(title="Info", message="Make sure a file is loaded.",
-                          icon="info", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF")
-
+                
         # Indicate Progress
         progress = ctk.CTkProgressBar(self.left, mode="indeterminate")
         progress.grid(row=4, column=0)
@@ -765,12 +761,8 @@ class emgGUI():
             When no file was loaded in the GUI.
         """
         # Get user input and check whether analysis wants to be truly resetted
-        if CTkMessagebox(
-            title="Attention",message="Do you really want to reset the analysis?",
-            icon="warning", bg_color="#fdbc00", fg_color="LightBlue4", title_color="#000000",
-                          button_color="#E5E4E2", button_text_color="#000000", button_hover_color="#1e52fe",
-                          font=('Segoe UI',15, 'bold'), text_color="#FFFFFF"
-        ):
+        if messagebox.askokcancel(title="Attention", message="Do you really want to reset the analysis?",
+                                  icon="warning"):
             # user decided to rest analysis
             try:
                 # reload original file
