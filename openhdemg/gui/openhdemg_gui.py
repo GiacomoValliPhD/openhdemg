@@ -142,6 +142,7 @@ class emgGUI():
 
         # Necessary for resizing
         self.master.columnconfigure(0, weight=1)
+        self.master.columnconfigure(1, weight=1)
         self.master.rowconfigure(0, weight=1)
 
         # Create left side framing for functionalities
@@ -149,11 +150,11 @@ class emgGUI():
         self.left.grid(column=0, row=0, sticky=(N, S, E, W))
 
         # Configure columns with a loop
-        for col in range(4):
+        for col in range(3):
             self.left.columnconfigure(col, weight=1)
 
         # Configure rows with a loop
-        for row in range(19):
+        for row in range(21):
             self.left.rowconfigure(row, weight=1)
 
         # Specify filetype
@@ -257,10 +258,10 @@ class emgGUI():
         # Create right side framing for functionalities
         self.right = ctk.CTkFrame(self.master, fg_color="LightBlue4", corner_radius=0)
         self.right.grid(column=1, row=0, sticky=(N, S, E, W))
-        # Configure columns with a loop
-        for col in range(2):
-            self.right.columnconfigure(col, weight=1)
 
+        # Configure columns, plot is weighted more icons are not configured
+        self.right.columnconfigure(0, weight=10)
+        self.right.columnconfigure(1, weight=0)
         # Configure rows with a loop
         for row in range(5):
             self.right.rowconfigure(row, weight=1)
@@ -507,9 +508,6 @@ class emgGUI():
                         # load OPENHDEMG (.json)
                         self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
                         # Add filespecs
-                        # NOTE this is not correct because when the user asks to load OPENHDEMG (.json)
-                        # files, these could contain also the reference signal only. Therefore line 2
-                        # and 3 will crash. I temporarily fixed it, please review it for next release.
                         if self.resdict["SOURCE"] in ["DEMUSE", "OTB", "CUSTOMCSV", "DELSYS"]:
                             ctk.CTkLabel(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E))
                             ctk.CTkLabel(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W, E))
@@ -597,6 +595,9 @@ class emgGUI():
                     ctk.CTkLabel(self.left, text="        ").grid(
                         column=2, row=4, sticky=(W, E)
                     )
+                
+                for child in self.left.winfo_children():
+                    child.grid_configure(padx=5, pady=5)
                     
                 # End progress
                 progress.stop()
@@ -881,9 +882,9 @@ class emgGUI():
                 )
 
             self.canvas = FigureCanvasTkAgg(self.fig, master=self.right)
-            self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=6)
+            self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=6, sticky=(N,S,W,E))
             toolbar = NavigationToolbar2Tk(self.canvas, self.right, pack_toolbar=False)
-            toolbar.grid(row=5, column=0)
+            toolbar.grid(row=5, column=0, sticky=S)
             plt.close()
 
         except AttributeError as e:
