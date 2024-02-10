@@ -98,7 +98,7 @@ class AdvancedAnalysis:
         self.emgfile2 = {}
         self.extension_factor_adv = StringVar()
 
-         # Initialize parent and load parent settings 
+         # Initialize parent and load parent settings
         self.parent = parent
         self.parent.load_settings()
 
@@ -154,7 +154,7 @@ class AdvancedAnalysis:
         ctk.CTkLabel(self.a_window, text="Matrix Code", font=('Segoe UI',15, 'bold')).grid(
             row=4, column=0, sticky=(W, E))
         self.mat_code_adv = StringVar()
-        matrix_code_vals = ("GR08MM1305", "GR04MM1305", "GR10MM0808", self.parent.settings['delsys_sensor_label'], "None")
+        matrix_code_vals = ("GR08MM1305", "GR04MM1305", "GR10MM0808", self.parent.settings.delsys_sensor_label, "None")
         matrix_code = ctk.CTkComboBox(
             self.a_window, width=150, variable=self.mat_code_adv,
             values=matrix_code_vals, state="readonly")

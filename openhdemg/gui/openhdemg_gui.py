@@ -22,11 +22,11 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 
 import openhdemg.library as openhdemg
+import openhdemg.gui.settings as settings
 from openhdemg.gui.gui_modules import (MURemovalWindow, EditRefsig, GUIHelpers,
                                        AnalyseForce, MuAnalysis, PlotEmg, AdvancedAnalysis,
                                        show_error_dialog)
-# This loads the settings file directly 
-import settings
+
 
 matplotlib.use("TkAgg")
 
@@ -146,7 +146,7 @@ class emgGUI():
         self.master.rowconfigure(0, weight=1)
 
         # Create left side framing for functionalities
-        self.left = ctk.CTkFrame(self.master, fg_color=self.settings['background_color'], corner_radius=0)
+        self.left = ctk.CTkFrame(self.master, fg_color=self.settings.background_color, corner_radius=0)
         self.left.grid(column=0, row=0, sticky=(N, S, E, W))
 
         # Configure columns with a loop
@@ -388,9 +388,9 @@ class emgGUI():
         The settings specified by the user will then be transferred 
         to the code and used.
         """
-        # Load settings file
-        importlib.reload(settings)
-        self.settings = settings.settings
+        # If not previously imported, just import it
+        global settings
+        self.settings = importlib.reload(settings)
         self.update_gui_variables()
 
     def open_settings(self):
@@ -402,7 +402,7 @@ class emgGUI():
         that users should be able to customize.
         """
         # Determine relative filepath
-        file_path = "settings.py"
+        file_path = "openhdemg/gui/settings.py"
 
         # Check for operating system and open in default editor
         if sys.platform.startswith('darwin'):  # macOS
@@ -598,7 +598,7 @@ class emgGUI():
                 
                 for child in self.left.winfo_children():
                     child.grid_configure(padx=5, pady=5)
-                    
+
                 # End progress
                 progress.stop()
                 progress.grid_remove()
