@@ -295,13 +295,17 @@ class info:
         >>> emg.info().citeus()
         """
 
-        cite = {
-            "Journal": "Waiting for publication...",
-            "Title": "Thinking about it...",
-        }
+        cite = (
+            "Valli G, Ritsche P, Casolo A, Negro F, De Vito G. " +
+            "Tutorial: Analysis of central and peripheral motor unit " +
+            "properties from decomposed High-Density surface EMG signals " +
+            "with openhdemg. J Electromyogr Kinesiol. 2024 Feb;74:102850. " +
+            "doi: 10.1016/j.jelekin.2023.102850. Epub 2023 Nov 30."
+        )
 
         # Pretty dict printing
         print("\nCite Us:\n")
-        print(json.dumps(cite, indent=4))
+        print(cite)
+        print("\n")
 
         return cite
