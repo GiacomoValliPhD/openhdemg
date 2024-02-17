@@ -82,6 +82,13 @@ This module contains functions to produce and analyse MUs anction potentials
 
 <br/>
 
+::: openhdemg.library.muap.estimate_cv_via_mle
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
 ::: openhdemg.library.muap.MUcv_gui
     options:
         show_root_full_path: False

@@ -1,4 +1,4 @@
-If you use *openhdemg* for your reaserch, please cite our [tutorial article](/isek_jek_tutorials#jek-tutorial-article). Any citation will help us to continue our work.
+If you use *openhdemg* for your reaserch, please cite our [tutorial article](isek_jek_tutorials.md#jek-tutorial-article). Any citation will help us to continue our work.
 
 Cite us as:
 

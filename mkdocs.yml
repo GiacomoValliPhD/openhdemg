@@ -8,7 +8,7 @@ site_description: >-
 repo_name: openhdemg
 repo_url: https://github.com/GiacomoValliPhD/openhdemg
 
-copyright: Copyright &copy; 2022 - 2023. The openhdemg community
+copyright: Copyright &copy; 2022 - 2024. The openhdemg community
 
 theme:
   name: material
