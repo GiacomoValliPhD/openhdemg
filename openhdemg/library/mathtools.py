@@ -439,7 +439,7 @@ def derivatives_beamforming(sig, row, teta):
 
     Parameters
     ----------
-    sig : pd.Dataframe
+    sig : np.ndarray
         The source signal to be used for the calculation.
         Different channels should be organised in different rows.
     row : int
@@ -454,22 +454,21 @@ def derivatives_beamforming(sig, row, teta):
 
     See also
     --------
-    mle_cv_est : Estimate conduction velocity (CV) via maximum likelihood
-        estimation.
+    - estimate_cv_via_mle : Estimate signal conduction velocity via maximum
+        likelihood estimation.
+    - MUcv_gui : Graphical user interface for the estimation of MUs conduction
+        velocity.
     """
 
-    # To implement with nympy arrays instead of pd.Series for performance?
-    # Check also the use of pandas in row-major.
-
     # Define some necessary variables
-    total_rows = len(sig)
+    total_rows = np.shape(sig)[0]
     m = total_rows - 1
-    total_columns = len(sig.columns)
-    half_of_the_columns = pd.Series(np.arange((round(total_columns/2)))) + 1
+    total_columns = np.shape(sig)[1]
+    half_of_the_columns = np.arange((round(total_columns/2))) + 1
 
     # Create a custom position index with negative and mirrored values for
     # index < row.
-    position = np.zeros(len(sig.index))
+    position = np.zeros(np.shape(sig)[0])
     position[0] = row + 1  # + 1 used to overcome base 0 here and following
 
     for i in range(1, row+1):
@@ -481,34 +480,29 @@ def derivatives_beamforming(sig, row, teta):
     position = np.delete(position, 0)
 
     # Shift sig and move the value contained in sig[row] to sig[0]
-    this_row = pd.DataFrame(sig.iloc[row]).transpose()
-    sig = sig.drop(row).reset_index(drop=True)
-    sig = pd.concat([this_row, sig], ignore_index=True)
+    this_row = sig[row, :]
+    sig = np.delete(sig, (row), axis=0)  # axis=0 to delete rows
+    sig = np.insert(sig, 0, this_row, axis=0)
 
     # Calculate fft row-wise (for each signal)
-    sigfft = pd.DataFrame(0, index=np.arange(total_rows), columns=sig.columns)
+    sigfft = np.zeros_like(sig, dtype=np.complex128)  # Specify dtype as complex
     for i in range(total_rows):
-        sigfft.iloc[i] = fft(sig.iloc[i].to_numpy())
+        sigfft[i, :] = fft(sig[i, :])
 
     # Create the series used to store the terms of the derivatives
-    term_de1 = pd.Series(0, np.arange(len(half_of_the_columns)))
-    term_de2 = pd.Series(0, np.arange(len(half_of_the_columns)))
-    term_de12 = pd.Series(0, np.arange(len(half_of_the_columns)))
-    term_de22 = pd.Series(0, np.arange(len(half_of_the_columns)))
+    term_de1 = np.zeros(np.shape(half_of_the_columns)[0])
+    term_de2 = np.zeros(np.shape(half_of_the_columns)[0])
+    term_de12 = np.zeros(np.shape(half_of_the_columns)[0])
+    term_de22 = np.zeros(np.shape(half_of_the_columns)[0])
 
     # Calculate the first term of the first derivative
     for i in range(m):
         for u in range(i+1, m):
 
-            s_fft = sigfft.iloc[i+1, list(half_of_the_columns)]
-            s_conj = np.conj(sigfft.iloc[u+1, list(half_of_the_columns)])
+            s_fft = sigfft[i+1, half_of_the_columns]
+            s_conj = np.conj(sigfft[u+1, half_of_the_columns])
             s_exp = np.exp(1j * 2 * np.pi * half_of_the_columns * (position[i]-position[u]) * teta / total_columns)
             s_last = 2 * np.pi * half_of_the_columns * (position[i]-position[u]) / total_columns
-
-            s_fft = s_fft.reset_index(drop=True)
-            s_conj = s_conj.reset_index(drop=True)
-            s_exp = s_exp.reset_index(drop=True)
-            s_last = s_last.reset_index(drop=True)
 
             image = np.imag(s_fft * s_conj * s_exp * s_last)
 
@@ -519,18 +513,13 @@ def derivatives_beamforming(sig, row, teta):
     # Calculate the second term of the first derivative
     for i in range(m):
 
-        s_fft = sigfft.iloc[i+1, list(half_of_the_columns)]
+        s_fft = sigfft[i+1, half_of_the_columns]
         s_exp = np.exp(1j * 2 * np.pi * half_of_the_columns * position[i] * teta / total_columns)
         s_last = 2 * np.pi * half_of_the_columns * position[i] / total_columns
 
-        s_fft = s_fft.reset_index(drop=True)
-        s_exp = s_exp.reset_index(drop=True)
-        s_last = s_last.reset_index(drop=True)
-
         term_de2 = term_de2 + (s_fft * s_exp * s_last)
 
-    s_conj = np.conj(sigfft.iloc[0, list(half_of_the_columns)])
-    s_conj = s_conj.reset_index(drop=True)
+    s_conj = np.conj(sigfft[0, half_of_the_columns])
 
     term_de2 = 2 * np.imag(s_conj * term_de2) / m
 
@@ -541,15 +530,10 @@ def derivatives_beamforming(sig, row, teta):
     for i in range(m):
         for u in range(i+1, m):
 
-            s_fft = sigfft.iloc[i+1, list(half_of_the_columns)]
-            s_conj = np.conj(sigfft.iloc[u+1, list(half_of_the_columns)])
+            s_fft = sigfft[i+1, half_of_the_columns]
+            s_conj = np.conj(sigfft[u+1, half_of_the_columns])
             s_exp = np.exp(1j * 2 * np.pi * half_of_the_columns * (position[i]-position[u]) * teta / total_columns)
             s_last = 2 * np.pi * half_of_the_columns * (position[i]-position[u]) / total_columns
-
-            s_fft = s_fft.reset_index(drop=True)
-            s_conj = s_conj.reset_index(drop=True)
-            s_exp = s_exp.reset_index(drop=True)
-            s_last = s_last.reset_index(drop=True)
 
             term_de12 = term_de12 - np.real(s_fft * s_conj * s_exp * (s_last**2))
 
@@ -558,18 +542,13 @@ def derivatives_beamforming(sig, row, teta):
     # Calculate the second term of the second derivative
     for i in range(m):
 
-        s_fft = sigfft.iloc[i+1, list(half_of_the_columns)]
+        s_fft = sigfft[i+1, half_of_the_columns]
         s_exp = np.exp(1j * 2 * np.pi * half_of_the_columns * position[i] * teta / total_columns)
         s_last = 2 * np.pi * half_of_the_columns * position[i] / total_columns
 
-        s_fft = s_fft.reset_index(drop=True)
-        s_exp = s_exp.reset_index(drop=True)
-        s_last = s_last.reset_index(drop=True)
-
         term_de22 = term_de22 + (s_fft * s_exp * (s_last**2))
 
-    s_conj = np.conj(sigfft.iloc[0, list(half_of_the_columns)])
-    s_conj = s_conj.reset_index(drop=True)
+    s_conj = np.conj(sigfft[0, half_of_the_columns])
 
     term_de22 = 2 * np.real(s_conj * term_de22) / m
 
@@ -585,7 +564,7 @@ def mle_cv_est(sig, initial_teta, ied, fsamp):
 
     Parameters
     ----------
-    sig : pd.Dataframe
+    sig : np.ndarray
         The source signal to be used for the calculation.
         Different channels should be organised in different rows.
     initial_teta : int
@@ -604,7 +583,8 @@ def mle_cv_est(sig, initial_teta, ied, fsamp):
 
     See also
     --------
-    - find_teta : Find the starting value for teta.
+    - estimate_cv_via_mle : Estimate signal conduction velocity via maximum
+        likelihood estimation.
     - MUcv_gui : Graphical user interface for the estimation of MUs conduction
         velocity.
 
@@ -612,9 +592,6 @@ def mle_cv_est(sig, initial_teta, ied, fsamp):
     --------
     Refer to the examples of find_teta to obtain sig and initial_teta.
     """
-
-    # Set index to 0
-    sig = sig.reset_index(drop=True)
 
     # Calculate ied in meters
     ied = ied / 1000
@@ -627,14 +604,14 @@ def mle_cv_est(sig, initial_teta, ied, fsamp):
     eps = sys.float_info.epsilon
 
     while abs(teta - t) >= 5e-5 and trial < 30:
-        trial = trial+1
+        trial = trial + 1
         teta = t
         # Initialize the first and second derivatives
         de1 = 0
         de2 = 0
 
         # Calculate the first and second derivatives
-        for row in range(len(sig)):
+        for row in range(np.shape(sig)[0]):
             de1t, de2t = derivatives_beamforming(sig=sig, row=row, teta=teta)
             de1 = de1 + de1t + eps
             de2 = de2 + de2t + eps
@@ -667,12 +644,12 @@ def find_teta(sig1, sig2, ied, fsamp):
 
     Parameters
     ----------
-    sig1, sig2 : pd.Series
+    sig1, sig2 : np.ndarray
         The two signals based on which to calculate teta.
-        These must be pd.Series, i.e., 1-dimensional data structures.
-    ied : int
+        These must be 1-dimensional arrays where the data is contained in a row.
+    ied : int or float
         Interelectrode distance (mm).
-    fsamp : int
+    fsamp : int or float
         Sampling frequency (Hz).
 
     Returns
@@ -682,23 +659,24 @@ def find_teta(sig1, sig2, ied, fsamp):
 
     See also
     --------
-    - mle_cv_est : Estimate conduction velocity (CV) via maximum likelihood
-        estimation.
+    - estimate_cv_via_mle : Estimate signal conduction velocity via maximum
+        likelihood estimation.
     - MUcv_gui : Graphical user interface for the estimation of MUs conduction
         velocity.
 
     Examples
     --------
     Calculate the starting point for the maximum likelihood estimation.
-    In this example we calculate teta for the first MU on the channels 5,6,7
-    in the third column ("col3") of the double differential representation of
-    the MUAPs.
+    In this example, we calculate teta for the first MU (number 0) on the
+    channels 31, 32, 34, 34 that are contained in the second column ("col2")
+    of the double differential representation of the MUAPs.
     First, obtain the spike-triggered average of the double differential
     derivation.
 
     >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
-    ... sorted_rawemg = emg.sort_rawemg(
+    >>> emgfile = emg.filter_rawemg(emgfile)
+    >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile,
     ...     code="GR08MM1305",
     ...     orientation=180,
@@ -717,17 +695,17 @@ def find_teta(sig1, sig2, ied, fsamp):
     each row and all the instants are contained in columns. For this reason,
     the original content of the spike-triggered average has to be transposed.
     After that, the 1D signals used to estimate teta are defined based on the
-    number of available channels.
+    number of available channels. Please note that the original signal
+    contained in a pandas DataFrame has to be convertedn in a numpy array.
 
-    >>> sig = sta[1]["col3"].transpose()
-    >>> sig = sig.iloc[[5,6,7], :]
-    >>> sig = sig.reset_index(drop=True)
-    >>> if len(sig) > 3:
-    >>>     sig1 = sig.iloc[1]
-    >>>     sig2 = sig.iloc[2]
+    >>> sig = sta[0]["col2"].loc[:, 31:34]
+    >>> sig = sig.to_numpy()
+    >>> if np.shape(sig)[0] > 3:
+    ...     sig1 = sig[1, :]
+    ...     sig2 = sig[2, :]
     >>> else:
-    >>>     sig1 = sig.iloc[0]
-    >>>     sig2 = sig.iloc[1]
+    ...     sig1 = sig[0, :]
+    ...     sig2 = sig[1, :]
 
     Third, estimate teta.
 
@@ -746,10 +724,6 @@ def find_teta(sig1, sig2, ied, fsamp):
     max_cv = 10
     teta_min = math.floor(ied / max_cv * fsamp)
     teta_max = math.ceil(ied / min_cv * fsamp)
-
-    # Work with numpy arrays for better performance
-    sig1 = sig1.to_numpy()
-    sig2 = sig2.to_numpy()
 
     # Verify that the input is a 1D array. If not, it will affect the
     # calculation of corrpos.
