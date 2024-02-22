@@ -2,7 +2,8 @@
 
 from tkinter import ttk, W, E, StringVar, DoubleVar
 import customtkinter as ctk
-
+import os
+from sys import platform
 import openhdemg.library as openhdemg
 from openhdemg.gui.gui_modules.error_handler import show_error_dialog
 
@@ -92,10 +93,24 @@ class EditRefsig:
         # Create new window
         self.head = ctk.CTkToplevel(fg_color="LightBlue4")
         self.head.title("Reference Signal Editing Window")
-        self.head.wm_iconbitmap()
+        
+        head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        iconpath = head_path + "/gui_files/Icon2.ico"
+        self.head.iconbitmap(default=iconpath)
+        if platform.startswith("win"):
+            self.head.after(200, lambda: self.head.iconbitmap(iconpath))
+        
         self.head.grab_set()
-        self.head.resizable(width=True, height=True)
+        
+        # Set resizable window
+        # Configure columns with a loop
+        for col in range(3):
+            self.head.columnconfigure(col, weight=1)
 
+        # Configure rows with a loop
+        for row in range(10):
+            self.head.rowconfigure(row, weight=1)
+        
         # Filter Refsig
         # Define Labels
         ctk.CTkLabel(self.head, text="Filter Order", font=('Segoe UI',15, 'bold')).grid(column=1, row=0, sticky=(W, E))

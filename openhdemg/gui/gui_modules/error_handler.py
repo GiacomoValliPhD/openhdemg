@@ -1,6 +1,7 @@
 """Module containing the error message designs"""
 
 import os
+from sys import platform
 import traceback
 import customtkinter as ctk
 from PIL import Image
@@ -63,6 +64,14 @@ class ErrorDialog:
         self.head = ctk.CTkToplevel(fg_color="#FFBF00")
         self.head.title("Error Dialog")
         self.head.geometry("500x300")  # Adjust the size as needed
+        
+        # Set window icon
+        head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        iconpath = head_path + "/gui_files/Icon2.ico"
+        self.head.iconbitmap(default=iconpath)
+        if platform.startswith("win"):
+            self.head.after(200, lambda: self.head.iconbitmap(iconpath))
+        
         path = os.path.dirname(os.path.abspath(__file__))
 
         # Create a frame for the content with blue background, placed in the middle
@@ -121,5 +130,9 @@ def show_error_dialog(parent, error, solution):
     ...     show_error_dialog(root, e, "Check the value and try again.")
     >>> root.mainloop()
     """
-    error_message = "".join(traceback.format_exception(type(error), value=error, tb=error.__traceback__))
+    if error is None:
+        error_message = "".join(traceback.format_exception(type(error), value=error, tb=None))
+    else:
+        error_message = "".join(traceback.format_exception(type(error), value=error, tb=error.__traceback__))
+    
     ErrorDialog(parent, error_message, solution)

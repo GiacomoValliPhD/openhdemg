@@ -1,6 +1,8 @@
 """Module containing the MU Removal GUI class"""
 
 from tkinter import StringVar, W, E
+import os
+from sys import platform
 import customtkinter as ctk
 import openhdemg.library as openhdemg
 from openhdemg.gui.gui_modules.error_handler import show_error_dialog
@@ -84,9 +86,25 @@ class MURemovalWindow:
             self.head = ctk.CTkToplevel(fg_color="LightBlue4")
             # Set the background color of the top-level window
             self.head.title("Motor Unit Removal Window")
-            self.head.wm_iconbitmap()
+            
+            # Set the icon for the window
+            head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            iconpath = head_path + "/gui_files/Icon2.ico"
+            self.head.iconbitmap(default=iconpath)
+            if platform.startswith("win"):
+                self.head.after(200, lambda: self.head.iconbitmap(iconpath))
+        
             self.head.grab_set()
 
+            # Set resizable window
+            # Configure columns with a loop
+            for col in range(3):
+                self.head.columnconfigure(col, weight=1)
+
+            # Configure rows with a loop
+            for row in range(10):
+                self.head.rowconfigure(row, weight=1)
+            
             # Select Motor Unit
             ctk.CTkLabel(self.head, text="Select MU:", font=('Segoe UI',15, 'bold')).grid(
                 column=1, row=0, padx=5, pady=5, sticky=W

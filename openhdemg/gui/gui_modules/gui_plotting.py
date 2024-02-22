@@ -2,8 +2,9 @@
 
 import os
 import webbrowser
-from tkinter import ttk, W, E, StringVar, PhotoImage
+from tkinter import ttk, W, E,N, S, StringVar, PhotoImage
 from PIL import Image
+from sys import platform
 
 import customtkinter as ctk
 import openhdemg.library as openhdemg
@@ -120,8 +121,22 @@ class PlotEmg:
 
             self.head = ctk.CTkToplevel(fg_color="LightBlue4")
             self.head.title("Plot Window")
-            self.head.wm_iconbitmap()
-            self.head.grab_set()
+
+            # Set window icon
+            head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            iconpath = head_path + "/gui_files/Icon2.ico"
+            self.head.iconbitmap(default=iconpath)
+            if platform.startswith("win"):
+                self.head.after(200, lambda: self.head.iconbitmap(iconpath))
+            
+            # Set resizable window
+            # Configure columns with a loop
+            for col in range(7):
+                self.head.columnconfigure(col, weight=1)
+
+            # Configure rows with a loop
+            for row in range(21):
+                self.head.rowconfigure(row, weight=1)
 
             # define tk variables for later use
             self.matrix_rc = StringVar() # Matrix rows columns
@@ -238,7 +253,7 @@ class PlotEmg:
             ctk.CTkLabel(self.head, text="Matrix Code", font=('Segoe UI',15, 'bold')).grid(row=0, column=3, sticky=(W))
 
             self.mat_code = StringVar()
-            matrix_code_values = ("GR08MM1305", "GR04MM1305", "GR10MM0808", self.parent.settings["delsys_sensor_label"], "None")
+            matrix_code_values = ("GR08MM1305", "GR04MM1305", "GR10MM0808", self.parent.settings.delsys_sensor_label, "None")
             matrix_code = ctk.CTkComboBox(self.head, width=100, variable=self.mat_code,
                                             values=matrix_code_values, state="readonly")
             matrix_code.grid(row=0, column=4, sticky=(W, E))
@@ -361,7 +376,7 @@ class PlotEmg:
             info_button.grid(row=0, column=6, sticky=E)
 
             for child in self.head.winfo_children():
-                child.grid_configure(padx=5, pady=5)
+                child.grid_configure(padx=5, pady=5, )
 
         except AttributeError as e:
             show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))

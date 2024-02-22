@@ -256,7 +256,7 @@ class emgGUI():
         advanced.grid(row=20, column=0, columnspan=2, sticky=(N, S, E, W))
 
         # Create right side framing for functionalities
-        self.right = ctk.CTkFrame(self.master, fg_color="LightBlue4", corner_radius=0)
+        self.right = ctk.CTkFrame(self.master, fg_color="LightBlue4", corner_radius=0, bg_color="LightBlue4")
         self.right.grid(column=1, row=0, sticky=(N, S, E, W))
 
         # Configure columns, plot is weighted more icons are not configured
@@ -267,7 +267,7 @@ class emgGUI():
             self.right.rowconfigure(row, weight=1)
 
         # Create empty figure
-        self.first_fig = Figure(figsize=(20 / 2.54, 15 / 2.54), frameon=False)
+        self.first_fig = Figure(figsize=(20 / 2.54, 15 / 2.54), frameon=True)
         self.canvas = FigureCanvasTkAgg(self.first_fig, master=self.right)
         self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=6, sticky=(N, S, E, W))
 
@@ -292,7 +292,7 @@ class emgGUI():
                                 height=30,
                                 bg_color="LightBlue4",
                                 fg_color="LightBlue4")
-        settings_b.grid(column=1, row=0, sticky=E,  pady=(0, 20))
+        settings_b.grid(column=1, row=0, sticky=W,  pady=(0, 20))
 
         # Information Button
         info_path = master_path + "/gui_files/Info.png"  # Get infor button path
@@ -309,7 +309,7 @@ class emgGUI():
             command=lambda: (
                 (webbrowser.open("https://www.giacomovalli.com/openhdemg/gui_intro/"))),
         )
-        info_button.grid(row=1, column=1, sticky=E, pady=(0, 20))
+        info_button.grid(row=1, column=1, sticky=W, pady=(0, 20))
 
         # Button for online tutorials
         online_path = master_path + "/gui_files/Online.png"
@@ -326,7 +326,7 @@ class emgGUI():
             command=lambda: (
                 (webbrowser.open("https://www.giacomovalli.com/openhdemg/tutorials/setup_working_env/"))),
         )
-        online_button.grid(row=2, column=1, sticky=E, pady=(0, 20))
+        online_button.grid(row=2, column=1, sticky=W, pady=(0, 20))
 
         # Button for dev information
         redirect_path = master_path + "/gui_files/Redirect.png"
@@ -342,7 +342,7 @@ class emgGUI():
             fg_color="LightBlue4",
             command=lambda: ((webbrowser.open("https://www.giacomovalli.com/openhdemg/about-us/#meet-the-developers"))),
         )
-        redirect_button.grid(row=3, column=1, sticky=E, pady=(0, 20))
+        redirect_button.grid(row=3, column=1, sticky=W, pady=(0, 20))
 
         # Button for contact information
         contact_path = master_path + "/gui_files/Contact.png"
@@ -358,7 +358,7 @@ class emgGUI():
             fg_color="LightBlue4",
             command=lambda: ((webbrowser.open("https://www.giacomovalli.com/openhdemg/contacts/"))),
         )
-        contact_button.grid(row=4, column=1, sticky=E, pady=(0, 20))
+        contact_button.grid(row=4, column=1, sticky=W, pady=(0, 20))
 
         # Button for citatoin information
         cite_path = master_path + "/gui_files/Cite.png"
@@ -374,7 +374,7 @@ class emgGUI():
             fg_color="LightBlue4",
             command=lambda: ((webbrowser.open("https://www.giacomovalli.com/openhdemg/cite-us/"))),
         )
-        cite_button.grid(row=5, column=1, sticky=E, pady=(0, 20))
+        cite_button.grid(row=5, column=1, sticky=W, pady=(0, 20))
 
         for child in self.left.winfo_children():
             child.grid_configure(padx=5, pady=5)
@@ -402,7 +402,7 @@ class emgGUI():
         that users should be able to customize.
         """
         # Determine relative filepath
-        file_path = "openhdemg/gui/settings.py"
+        file_path = os.path.dirname(os.path.abspath(__file__)) + "/settings.py"
 
         # Check for operating system and open in default editor
         if sys.platform.startswith('darwin'):  # macOS
@@ -449,12 +449,12 @@ class emgGUI():
                         # Add filespecs
                         ctk.CTkLabel(
                             self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
-                        ).grid(column=2, row=2, sticky=(W, E))
+                        ).grid(column=2, row=2, sticky=(W, E), padx=5, pady=5)
                         ctk.CTkLabel(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
-                            column=2, row=3, sticky=(W, E)
+                            column=2, row=3, sticky=(W, E), padx=5, pady=5
                         )
                         ctk.CTkLabel(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
-                            column=2, row=4, sticky=(W, E)
+                            column=2, row=4, sticky=(W, E), padx=5, pady=5
                         )
 
                     elif self.filetype.get() == "DEMUSE":
@@ -468,12 +468,12 @@ class emgGUI():
                         # Add filespecs
                         ctk.CTkLabel(
                             self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
-                        ).grid(column=2, row=2, sticky=(W, E))
+                        ).grid(column=2, row=2, sticky=(W, E), padx=5, pady=5)
                         ctk.CTkLabel(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
-                            column=2, row=3, sticky=(W, E)
+                            column=2, row=3, sticky=(W, E), padx=5, pady=5
                         )
                         ctk.CTkLabel(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
-                            column=2, row=4, sticky=(W, E)
+                            column=2, row=4, sticky=(W, E), padx=5, pady=5
                         )
                     elif self.filetype.get() == "DELSYS":
                         # Ask user to select the file
@@ -491,12 +491,12 @@ class emgGUI():
                         self.resdict = openhdemg.emg_from_delsys(rawemg_filepath=self.file_path,
                                                                  mus_directory=self.mus_path)
                         # Add filespecs
-                        ctk.CTkLabel(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E))
+                        ctk.CTkLabel(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E), padx=5, pady=5)
                         ctk.CTkLabel(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(
-                            column=2, row=3, sticky=(W, E)
+                            column=2, row=3, sticky=(W, E), padx=5, pady=5
                         )
                         ctk.CTkLabel(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(
-                            column=2, row=4, sticky=(W, E)
+                            column=2, row=4, sticky=(W, E), padx=5, pady=5
                         )
 
                     elif self.filetype.get() == "OPENHDEMG":
@@ -509,17 +509,17 @@ class emgGUI():
                         self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
                         # Add filespecs
                         if self.resdict["SOURCE"] in ["DEMUSE", "OTB", "CUSTOMCSV", "DELSYS"]:
-                            ctk.CTkLabel(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E))
-                            ctk.CTkLabel(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W, E))
-                            ctk.CTkLabel(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W, E))
+                            ctk.CTkLabel(self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))).grid(column=2, row=2, sticky=(W, E), padx=5, pady=5)
+                            ctk.CTkLabel(self.left, text=str(self.resdict["NUMBER_OF_MUS"])).grid(column=2, row=3, sticky=(W, E), padx=5, pady=5)
+                            ctk.CTkLabel(self.left, text=str(self.resdict["EMG_LENGTH"])).grid(column=2, row=4, sticky=(W, E), padx=5, pady=5)
                         else:
                             # Reconfigure labels for refsig
                             ctk.CTkLabel(
                                 self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))
-                            ).grid(column=2, row=2, sticky=(W, E))
-                            ctk.CTkLabel(self.left, text="NA").grid(column=2, row=3, sticky=(W, E))
+                            ).grid(column=2, row=2, sticky=(W, E), padx=5, pady=5)
+                            ctk.CTkLabel(self.left, text="NA").grid(column=2, row=3, sticky=(W, E), padx=5, pady=5)
                             ctk.CTkLabel(self.left, text="        ").grid(
-                                column=2, row=4, sticky=(W, E)
+                                column=2, row=4, sticky=(W, E), padx=5, pady=5
                             )
                     else:
                         # Ask user to select the file
@@ -534,9 +534,9 @@ class emgGUI():
                             fsamp=float(self.fsamp.get()),
                         )
                         # Add filespecs
-                        ctk.CTkLabel(self.left, text="Custom CSV").grid(column=2, row=2, sticky=(W, E))
-                        ctk.CTkLabel(self.left, text="").grid(column=2, row=3, sticky=(W, E))
-                        ctk.CTkLabel(self.left, text="").grid(column=2, row=4, sticky=(W, E))
+                        ctk.CTkLabel(self.left, text="Custom CSV").grid(column=2, row=2, sticky=(W, E), padx=5, pady=5)
+                        ctk.CTkLabel(self.left, text="").grid(column=2, row=3, sticky=(W, E), padx=5, pady=5)
+                        ctk.CTkLabel(self.left, text="").grid(column=2, row=4, sticky=(W, E), padx=5, pady=5)
 
                     # Get filename
                     filename = os.path.splitext(os.path.basename(file_path))[0]
@@ -544,6 +544,11 @@ class emgGUI():
 
                     # Add filename to label
                     self.master.title(self.filename)
+
+                    # End progress
+                    progress.grid_remove()
+                    progress.stop()
+                    
 
                 # This sections is used for refsig loading as they required not the 
                 # the filespecs to be loaded.
@@ -578,7 +583,7 @@ class emgGUI():
                         self.resdict = openhdemg.refsig_from_customcsv(
                             filepath=self.file_path,
                             fsamp=float(self.fsamp.get()),
-                        )  # NOTE please check that I used correctly self.fsamp.get() here and above.
+                        )  
 
                     # Get filename
                     filename = os.path.splitext(os.path.basename(file_path))[0]
@@ -590,18 +595,20 @@ class emgGUI():
                     # Reconfigure labels for refsig
                     ctk.CTkLabel(
                         self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))
-                    ).grid(column=2, row=2, sticky=(W, E))
-                    ctk.CTkLabel(self.left, text="NA").grid(column=2, row=3, sticky=(W, E))
+                    ).grid(column=2, row=2, sticky=(W, E), padx=5, pady=5)
+                    ctk.CTkLabel(self.left, text="NA").grid(column=2, row=3, sticky=(W, E), padx=5, pady=5)
                     ctk.CTkLabel(self.left, text="        ").grid(
-                        column=2, row=4, sticky=(W, E)
+                        column=2, row=4, sticky=(W, E), padx=5, pady=5
                     )
                 
-                for child in self.left.winfo_children():
-                    child.grid_configure(padx=5, pady=5)
+                # for child in self.left.winfo_children():
+                #     child.grid_configure(padx=5, pady=5)
 
                 # End progress
-                progress.stop()
                 progress.grid_remove()
+                progress.stop()
+
+                return
 
             except ValueError as e:
                 show_error_dialog(parent=self, error=e, solution=str("When an OTB file is loaded, make sure to "
@@ -635,9 +642,10 @@ class emgGUI():
 
             except: 
                 # End progress
-                progress.stop()
                 progress.grid_remove()
-
+                progress.stop()
+                
+            
         # Indicate Progress
         progress = ctk.CTkProgressBar(self.left, mode="indeterminate", fg_color="#585858",
                                       width=100, progress_color="#FFBF00")
@@ -737,10 +745,14 @@ class emgGUI():
                 # End progress
                 progress.stop()
                 progress.grid_remove()
-
+                
+                return
+            
             except AttributeError as e:
                 show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))
-                
+            
+            
+        
         # Indicate Progress
         progress = ctk.CTkProgressBar(self.left, mode="indeterminate")
         progress.grid(row=4, column=0)
@@ -882,7 +894,7 @@ class emgGUI():
                 )
 
             self.canvas = FigureCanvasTkAgg(self.fig, master=self.right)
-            self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=6, sticky=(N,S,W,E))
+            self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=6, sticky=(N,S,E,W), padx=5)
             toolbar = NavigationToolbar2Tk(self.canvas, self.right, pack_toolbar=False)
             toolbar.grid(row=5, column=0, sticky=S)
             plt.close()

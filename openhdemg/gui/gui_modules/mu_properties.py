@@ -1,6 +1,8 @@
 """Module containing MU propterty analysis"""
 
 from tkinter import ttk, W, E, StringVar
+from sys import platform
+import os
 import customtkinter as ctk
 import openhdemg.library as openhdemg
 from openhdemg.gui.gui_modules.error_handler import show_error_dialog
@@ -93,8 +95,24 @@ class MuAnalysis:
         # Create new window
         self.head = ctk.CTkToplevel(fg_color="LightBlue4")
         self.head.title("Motor Unit Properties Window")
-        self.head.wm_iconbitmap()
+        
+        # Set window icon
+        head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        iconpath = head_path + "/gui_files/Icon2.ico"
+        self.head.iconbitmap(default=iconpath)
+        if platform.startswith("win"):
+            self.head.after(200, lambda: self.head.iconbitmap(iconpath))
         self.head.grab_set()
+
+        # Set resizable window
+        # Configure columns with a loop
+        for col in range(3):
+            self.head.columnconfigure(col, weight=1)
+
+        # Configure rows with a loop
+        for row in range(21):
+            self.head.rowconfigure(row, weight=1)
+
 
         # MVC Entry
         ctk.CTkLabel(self.head, text="Enter MVC[n]:", font=('Segoe UI',15, 'bold')).grid(column=0, row=0, sticky=(W))

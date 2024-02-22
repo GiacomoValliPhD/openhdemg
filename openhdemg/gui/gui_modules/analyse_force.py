@@ -1,6 +1,8 @@
 """Module containing the force analysis GUI"""
 
 from tkinter import ttk, W, E, StringVar
+from sys import platform
+import os
 import customtkinter as ctk
 import pandas as pd
 import openhdemg.library as openhdemg
@@ -76,9 +78,25 @@ class AnalyseForce:
         # Create new window
         self.head = ctk.CTkToplevel(fg_color="LightBlue4")
         self.head.title("Force Analysis Window")
-        self.head.wm_iconbitmap()
+        
+        # Set window icon
+        head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        iconpath = head_path + "/gui_files/Icon2.ico"
+        self.head.iconbitmap(default=iconpath)
+        if platform.startswith("win"):
+            self.head.after(200, lambda: self.head.iconbitmap(iconpath))
+        
         self.head.grab_set()
+        
+        # Set resizable window
+        # Configure columns with a loop
+        for col in range(3):
+            self.head.columnconfigure(col, weight=1)
 
+        # Configure rows with a loop
+        for row in range(10):
+            self.head.rowconfigure(row, weight=1)
+            
         # Get MVC
         get_mvf = ctk.CTkButton(self.head, text="Get MVC", command=self.get_mvc,
                                 fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
