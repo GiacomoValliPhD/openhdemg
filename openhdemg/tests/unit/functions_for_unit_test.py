@@ -13,9 +13,10 @@ def get_directories(folder, subfolder, filename):
         The name of the folder containing the folder with the specified file
         (e.g., library).
         The folder should be inside "tests/fixtures/..."
-    subfolder : str
-        The name of the folder containing the specified file (e.g., demuse).
-        The folder should be inside "tests/fixtures/...folder..."
+    subfolder : str or list
+        A sting or list of the subfolder/s containing the specified file
+        (e.g., "demuse" or ["delsys", "4pin"]).
+        The folder/s should be inside "tests/fixtures/...folder..."
     filename : str
         The name of the file to open including the file extension. The file to
         open should be inside "tests/fixtures/...folder.../...subfolder".
@@ -32,8 +33,11 @@ def get_directories(folder, subfolder, filename):
     # Get the directory containing the current Python file
     current_directory = os.path.dirname(os.path.dirname(current_file_path))
 
+    if isinstance(subfolder, str):
+        subfolder = [subfolder]
+
     filepath = os.path.join(
-        current_directory, "fixtures", folder, subfolder, filename,
+        current_directory, "fixtures", folder, *subfolder, filename,
     )
 
     return filepath
@@ -73,29 +77,51 @@ def validate_emgfile_content(tc, emgfile):
     tc.assertTrue(
         emgfile["RAW_SIGNAL"].shape[0] > emgfile["RAW_SIGNAL"].shape[1]
     )
-    tc.assertTrue(
-        emgfile["REF_SIGNAL"].shape[0] > emgfile["REF_SIGNAL"].shape[1]
-    )
+    try:  # Manage excpetion of no reference signal
+        tc.assertTrue(
+            emgfile["REF_SIGNAL"].shape[0] > emgfile["REF_SIGNAL"].shape[1]
+        )
+    except AssertionError:
+        tc.assertTrue(emgfile["REF_SIGNAL"].shape[0] == 0)
     tc.assertTrue(
         emgfile["ACCURACY"].shape[0] >= emgfile["ACCURACY"].shape[1]
     )  # >= to manage the exception of a single MU
-    tc.assertTrue(
-        emgfile["IPTS"].shape[0] > emgfile["IPTS"].shape[1]
-    )
+    if emgfile["SOURCE"] != "DELSYS":
+        tc.assertTrue(
+            emgfile["IPTS"].shape[0] > emgfile["IPTS"].shape[1]
+        )
+    else:
+        tc.assertTrue(
+            emgfile["IPTS"].shape[0] == 0
+        )
     tc.assertTrue(
         emgfile["BINARY_MUS_FIRING"].shape[0] > emgfile["BINARY_MUS_FIRING"].shape[1]
     )
 
     # Verify congruent sizes
-    tc.assertTrue(emgfile["RAW_SIGNAL"].shape[0] == emgfile["IPTS"].shape[0])
-    tc.assertTrue(
-        emgfile["IPTS"].shape[0] == emgfile["BINARY_MUS_FIRING"].shape[0]
-    )
-    tc.assertTrue(emgfile["IPTS"].shape[1] == emgfile["NUMBER_OF_MUS"])
-    tc.assertTrue(
-        emgfile["BINARY_MUS_FIRING"].shape[1] == emgfile["NUMBER_OF_MUS"]
-    )
-    tc.assertTrue(len(emgfile["MUPULSES"]) == emgfile["NUMBER_OF_MUS"])
+    if emgfile["SOURCE"] != "DELSYS":
+        tc.assertTrue(
+            emgfile["RAW_SIGNAL"].shape[0] == emgfile["IPTS"].shape[0]
+        )
+        tc.assertTrue(
+            emgfile["IPTS"].shape[0] == emgfile["BINARY_MUS_FIRING"].shape[0]
+        )
+        tc.assertTrue(emgfile["IPTS"].shape[1] == emgfile["NUMBER_OF_MUS"])
+        tc.assertTrue(
+            emgfile["BINARY_MUS_FIRING"].shape[1] == emgfile["NUMBER_OF_MUS"]
+        )
+        tc.assertTrue(len(emgfile["MUPULSES"]) == emgfile["NUMBER_OF_MUS"])
+    else:
+        tc.assertTrue(
+            emgfile["RAW_SIGNAL"].shape[0] == emgfile["BINARY_MUS_FIRING"].shape[0]
+        )
+        tc.assertTrue(
+            emgfile["BINARY_MUS_FIRING"].shape[1] == emgfile["NUMBER_OF_MUS"]
+        )
+        tc.assertTrue(len(emgfile["MUPULSES"]) == emgfile["NUMBER_OF_MUS"])
+        tc.assertTrue(
+            emgfile["EXTRAS"].shape[1] == emgfile["NUMBER_OF_MUS"] * 4
+        )
 
 
 def validate_emg_refsig_content(tc, emg_refsig):
