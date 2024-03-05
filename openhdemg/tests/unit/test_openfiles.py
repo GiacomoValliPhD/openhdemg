@@ -12,6 +12,8 @@ WARNING!!! Since the library's functions perform complex tasks and return
 complex data structures, these tests can verify that no critical errors occur,
 but the accuracy of each function must be assessed independently upon creation,
 or at each revision of the code.
+
+WARNING!!! - UNTESTED FUNCTIONS: askopenfile, asksavefile
 """
 
 
@@ -210,8 +212,213 @@ class TestOpenFiles(unittest.TestCase):
         save_json_emgfile(
             emgfile, filepath=getd("library", "saved", "temp.json")
         )
+        emgfile = emg_from_json(filepath=getd("library", "saved", "temp.json"))
+        validate_emgfile_content(self, emgfile)
 
+        # Test with DEMUSE files
+        # Load decomposed file with multiple MUs and reference signal
+        emgfile = emg_from_demuse(
+            filepath=getd("library", "demuse", "DEMUSE_D_R_mMU.mat"),
+            )
+        save_json_emgfile(
+            emgfile, filepath=getd("library", "saved", "temp.json")
+        )
+        emgfile = emg_from_json(filepath=getd("library", "saved", "temp.json"))
+        validate_emgfile_content(self, emgfile)
 
+        # Load decomposed file with only 1 MU and reference signal
+        emgfile = emg_from_demuse(
+            filepath=getd("library", "demuse", "DEMUSE_D_R_1MU.mat"),
+            )
+        save_json_emgfile(
+            emgfile, filepath=getd("library", "saved", "temp.json")
+        )
+        emgfile = emg_from_json(filepath=getd("library", "saved", "temp.json"))
+        validate_emgfile_content(self, emgfile)
+
+        # Load decomposed file with multiple MUs (some empty) and reference
+        # signal
+        emgfile = emg_from_demuse(
+            filepath=getd("library", "demuse", "demuse_D_R_E_mMU.mat"),
+            )
+        save_json_emgfile(
+            emgfile, filepath=getd("library", "saved", "temp.json")
+        )
+        emgfile = emg_from_json(filepath=getd("library", "saved", "temp.json"))
+        validate_emgfile_content(self, emgfile)
+
+        # Test with OTB files
+        # Load decomposed file with multiple MUs and reference signal
+        emgfile = emg_from_otb(
+            filepath=getd("library", "otb", "OTB_D_R_mMU.mat"),
+            )
+        save_json_emgfile(
+            emgfile, filepath=getd("library", "saved", "temp.json")
+        )
+        emgfile = emg_from_json(filepath=getd("library", "saved", "temp.json"))
+        validate_emgfile_content(self, emgfile)
+
+        # Load decomposed file with multiple MUs, reference signal and EXTRAS
+        emgfile = emg_from_otb(
+            filepath=getd("library", "otb", "OTB_D_R_EX_mMU.mat"),
+            extras="requested|AUX  Force"
+            )
+        save_json_emgfile(
+            emgfile, filepath=getd("library", "saved", "temp.json")
+        )
+        emgfile = emg_from_json(filepath=getd("library", "saved", "temp.json"))
+        validate_emgfile_content(self, emgfile)
+
+        # Load decomposed file with only 1 MU and reference signal
+        emgfile = emg_from_otb(
+            filepath=getd("library", "otb", "OTB_D_R_1MU.mat"),
+            )
+        save_json_emgfile(
+            emgfile, filepath=getd("library", "saved", "temp.json")
+        )
+        emgfile = emg_from_json(filepath=getd("library", "saved", "temp.json"))
+        validate_emgfile_content(self, emgfile)
+
+        # Load file with only the reference signal
+        emg_refsig = refsig_from_otb(
+            filepath=getd("library", "otb", "OTB_R.mat"),
+            )
+        save_json_emgfile(
+            emg_refsig, filepath=getd("library", "saved", "temp.json")
+        )
+        emg_refsig = emg_from_json(filepath=getd("library", "saved", "temp.json"))
+        validate_emg_refsig_content(self, emg_refsig)
+
+        # Load file with only the reference signal and EXTRAS
+        emg_refsig = refsig_from_otb(
+            filepath=getd("library", "otb", "OTB_R_EX.mat"),
+            extras="requested path",
+            )
+        save_json_emgfile(
+            emg_refsig, filepath=getd("library", "saved", "temp.json")
+        )
+        emg_refsig = emg_from_json(filepath=getd("library", "saved", "temp.json"))
+        validate_emg_refsig_content(self, emg_refsig)
+
+        # Test with Delsys files
+        # Load decomposed file with multiple MUs, reference signal and MUAPs
+        emgfile = emg_from_delsys(
+            rawemg_filepath=getd(
+                "library",
+                ["delsys", "4pin", "DELSYS_D_R_MUAPs_mMU"],
+                "Raw_EMG_signal_withFakeRef.mat"
+            ),
+            mus_directory=getd(
+                "library",
+                ["delsys", "4pin", "DELSYS_D_R_MUAPs_mMU"],
+                "Bicep_Brachii_Motor_Units (Sensor 1)"
+            ),
+        )
+        save_json_emgfile(
+            emgfile, filepath=getd("library", "saved", "temp.json")
+        )
+        emgfile = emg_from_json(filepath=getd("library", "saved", "temp.json"))
+        validate_emgfile_content(self, emgfile=emgfile)
+
+        # Load decomposed file with multiple MUs and MUAPs
+        emgfile = emg_from_delsys(
+            rawemg_filepath=getd(
+                "library",
+                ["delsys", "4pin", "DELSYS_D_MUAPs_mMU"],
+                "Raw_EMG_signal.mat"
+            ),
+            mus_directory=getd(
+                "library",
+                ["delsys", "4pin", "DELSYS_D_MUAPs_mMU"],
+                "Bicep_Brachii_Motor_Units (Sensor 1)"
+            ),
+        )
+        save_json_emgfile(
+            emgfile, filepath=getd("library", "saved", "temp.json")
+        )
+        emgfile = emg_from_json(filepath=getd("library", "saved", "temp.json"))
+        validate_emgfile_content(self, emgfile=emgfile)
+
+        # Load file with only the reference signal
+        emg_refsig = refsig_from_delsys(
+            filepath=getd(
+                "library",
+                ["delsys", "4pin", "DELSYS_D_R_MUAPs_mMU"],
+                "Raw_EMG_signal_withFakeRef.mat",
+            )
+        )
+        save_json_emgfile(
+            emg_refsig, filepath=getd("library", "saved", "temp.json")
+        )
+        emg_refsig = emg_from_json(
+            filepath=getd("library", "saved", "temp.json"),
+        )
+        validate_emg_refsig_content(self, emg_refsig)
+
+        # Test with CUSTOMCSV files
+        # Load decomposed file with multiple MUs, reference signal and EXTRAS
+        emgfile = emg_from_customcsv(
+            filepath=getd("library", "custom_csv", "C_CSV_D_R_EX_mMU.csv"),
+            )
+        save_json_emgfile(
+            emgfile, filepath=getd("library", "saved", "temp.json")
+        )
+        emgfile = emg_from_json(filepath=getd("library", "saved", "temp.json"))
+        validate_emgfile_content(self, emgfile)
+
+        # Load decomposed file with multiple MUs, reference signal and EXTRAS
+        emgfile = emg_from_customcsv(
+            filepath=getd("library", "custom_csv", "C_CSV_D_R_EX_1MU.csv"),
+            )
+        save_json_emgfile(
+            emgfile, filepath=getd("library", "saved", "temp.json")
+        )
+        emgfile = emg_from_json(filepath=getd("library", "saved", "temp.json"))
+        validate_emgfile_content(self, emgfile)
+
+        # Load file with only the reference signal, with EXTRAS
+        emg_refsig = refsig_from_customcsv(
+            filepath=getd("library", "custom_csv", "C_CSV_R_EX.csv"),
+            )
+        save_json_emgfile(
+            emg_refsig, filepath=getd("library", "saved", "temp.json")
+        )
+        emg_refsig = emg_from_json(
+            filepath=getd("library", "saved", "temp.json"),
+        )
+        validate_emg_refsig_content(self, emg_refsig)
+
+    def test_compression_level(self):
+        """
+        Test saving (various) and reloading (.json) files.
+        """
+
+        # Test with sample file, no compression
+        emgfile = emg_from_samplefile()
+        save_json_emgfile(
+            emgfile, filepath=getd("library", "saved", "temp.json"),
+            compresslevel=0,
+        )
+        emgfile = emg_from_json(filepath=getd("library", "saved", "temp.json"))
+        validate_emgfile_content(self, emgfile)
+
+        # Normal compression
+        emgfile = emg_from_samplefile()
+        save_json_emgfile(
+            emgfile, filepath=getd("library", "saved", "temp.json"),
+            compresslevel=4,
+        )
+        emgfile = emg_from_json(filepath=getd("library", "saved", "temp.json"))
+        validate_emgfile_content(self, emgfile)
+
+        # Maximum compression
+        emgfile = emg_from_samplefile()
+        save_json_emgfile(
+            emgfile, filepath=getd("library", "saved", "temp.json"),
+            compresslevel=9,
+        )
+        emgfile = emg_from_json(filepath=getd("library", "saved", "temp.json"))
+        validate_emgfile_content(self, emgfile)
 
 
 if __name__ == '__main__':
