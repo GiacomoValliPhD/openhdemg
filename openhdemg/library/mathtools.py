@@ -331,12 +331,12 @@ def compute_pnr(
         those in mupulses +- the number of samples specified in
         constrain_pulses[1].
         If constrain_pulses[0] == False, the times of firing are estimated via
-        a heuristic penality funtion (see Notes).
+        a heuristic penalty funtion (see Notes).
         constrain_pulses[1] must be an integer (see Notes for instructions on
         how to set the appropriate value).
     separate_paired_firings : bool, default False
         Whether to treat differently paired and non-paired firings during
-        the estimation of the signal/noise threshold (heuristic penality
+        the estimation of the signal/noise threshold (heuristic penalty
         funtion, see Notes). This is relevant only if
         constrain_pulses[0] == False. Otherwise, this argument is ignored.
 
@@ -367,7 +367,7 @@ def compute_pnr(
 
     If constrain_pulses[0] == False, the ipts values are classified as firings
     or noise based on a threshold value (named "Pi" or "r") estimated from the
-    euristic penality funtion described in Holobar 2012, as proposed in
+    euristic penalty funtion described in Holobar 2012, as proposed in
     Holobar 2014. If the variability of the firings is relevant, this
     apoproach should be preferred. Specifically:
     Pi = D · χ[3,50](D) + CoVIDI + CoVpIDI
@@ -387,11 +387,11 @@ def compute_pnr(
     discharge was within 50 ms of the first.
     Paired discharges are typical in pathological tremor and the use of both
     CoVIDI and CoVpIDI accounts for this condition.
-    However, this heuristic penality function penalizes MUs firing during
+    However, this heuristic penalty function penalizes MUs firing during
     specific types of contractions like explosive contractions
     (MUs discharge up to 200 pps).
     Therefore, in this implementation of the PNR, we did not include the
-    penality based on MUs discharge.
+    penalty based on MUs discharge.
     Additionally, the user can decide whether to adopt the two coefficients
     of variations to estimate Pi or not.
     If both are used, Pi would be calculated as:
