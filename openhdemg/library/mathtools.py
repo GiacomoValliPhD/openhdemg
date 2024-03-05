@@ -235,7 +235,7 @@ def norm_twod_xcorr(df1, df2, mode="full"):
     return normxcorr_df, normxcorr_max
 
 
-def compute_sil(ipts, mupulses):
+def compute_sil(ipts, mupulses, ignore_negative_ipts=True):
     """
     Calculate the Silhouette score for a single MU.
 
@@ -250,6 +250,9 @@ def compute_sil(ipts, mupulses):
         interest.
     mupulses : ndarray
         The time of firing (MUPULSES[mu]) of the MU of interest.
+    ignore_negative_ipts : bool, default True
+        Only use positive ipts during peak and noise clustering. This is
+        particularly important for sources with large negative components.
 
     Returns
     -------
@@ -261,12 +264,18 @@ def compute_sil(ipts, mupulses):
     - compute_pnr : to calculate the Pulse to Noise ratio of a single MU.
     """
 
-    # Manage exception of no firings (e.g., as can happen in files from DEMUSE)
+    # Manage exception of no firings
     if len(mupulses) == 0:
         return np.nan
 
     # Extract source and peaks and align source and peaks based on IPTS
     source = ipts.to_numpy()
+
+    if ignore_negative_ipts:
+        # Ignore negative values, this is particularly needed for negative
+        # unbalanced sources.
+        source = source * np.abs(source)
+
     peaks_idxs = mupulses - ipts.index[0]
 
     # Create clusters
@@ -300,7 +309,13 @@ def compute_sil(ipts, mupulses):
     return sil
 
 
-def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=True):
+def compute_pnr(
+    ipts,
+    mupulses,
+    fsamp,
+    constrain_pulses=[True, 3],
+    separate_paired_firings=True,
+):
     """
     Calculate the pulse to noise ratio for a single MU.
 
@@ -311,12 +326,19 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=True):
         interest.
     mupulses : ndarray
         The time of firing (MUPULSES[mu]) of the MU of interest.
+    constrain_pulses : list, default [True, 3]
+        If constrain_pulses[0] == True, the times of firing are considered
+        those in mupulses +- the number of samples specified in
+        constrain_pulses[1].
+        If constrain_pulses[0] == False, the times of firing are estimated via
+        a heuristic penality funtion (see Notes).
+        constrain_pulses[1] must be an integer (see Notes for instructions on
+        how to set the appropriate value).
     separate_paired_firings : bool, default False
         Whether to treat differently paired and non-paired firings during
-        the estimation of the signal/noise threshold. According to Holobar
-        2012, this is common in pathological tremor. The user is encouraged to
-        use the default value (True) to increase the robustness of the
-        estimation.
+        the estimation of the signal/noise threshold (heuristic penality
+        funtion, see Notes). This is relevant only if
+        constrain_pulses[0] == False. Otherwise, this argument is ignored.
 
     Returns
     -------
@@ -326,105 +348,138 @@ def compute_pnr(ipts, mupulses, fsamp, separate_paired_firings=True):
     See also
     --------
     - compute_sil : to calculate the Silhouette score for a single MU.
+
+    Notes
+    -----
+    The behaviour of the compute_pnr() function is determined by the argument
+    constrain_pulses.
+
+    If constrain_pulses[0] == True, the times of firing are considered those
+    in mupulses +- a number of samples specified in constrain_pulses[1].
+    The inclusion of the samples around the mupulses values allows to capture
+    the full ipts corresponding to the time of firing (e.g., including also
+    the raising and falling wedges). The appropriate value of
+    constrain_pulses[1] must be determined by the user and depends on the
+    sampling frequency. It is suggested to use 3 when the sampling frequency is
+    2000 or 2048 Hz and increase it if the sampling frequency is higher (e.g.
+    use 6 at 4000 or 4096 Hz). With this approach, the PNR estimation is not
+    related to the variability of the firings.
+
+    If constrain_pulses[0] == False, the ipts values are classified as firings
+    or noise based on a threshold value (named "Pi" or "r") estimated from the
+    euristic penality funtion described in Holobar 2012, as proposed in
+    Holobar 2014. If the variability of the firings is relevant, this
+    apoproach should be preferred. Specifically:
+    Pi = D · χ[3,50](D) + CoVIDI + CoVpIDI
+    Where:
+    D is the median of the low-pass filtered instantaneous motor unit discharge
+    rate (first-order Butterworth filter, cut-off frequency 3 Hz).
+    χ[3,50](D) stands for an indicator function that penalizes motor units
+    with filtered discharge rate D below 3 pulses per second (pps) or above
+    50 pps:
+    χ[3,50](D) = 0 if D is between 3 and 50 or D if D is not between 3 and 50.
+    Two separate coefficients of variation for inter-discharge interval (IDI)
+    calculated as standard deviation (SD) of IDI divided by the mean IDI,
+    are used. CoVIDI is the coefficient of variation for IDI of non-paired
+    MUs discharges only, whereas CoVpIDI is the coefficient of variation for
+    IDI of paired MUs discharges.
+    Holobar 2012 considered MUs discharges paired whenever the second
+    discharge was within 50 ms of the first.
+    Paired discharges are typical in pathological tremor and the use of both
+    CoVIDI and CoVpIDI accounts for this condition.
+    However, this heuristic penality function penalizes MUs firing during
+    specific types of contractions like explosive contractions
+    (MUs discharge up to 200 pps).
+    Therefore, in this implementation of the PNR, we did not include the
+    penality based on MUs discharge.
+    Additionally, the user can decide whether to adopt the two coefficients
+    of variations to estimate Pi or not.
+    If both are used, Pi would be calculated as:
+    Pi = CoVIDI + CoVpIDI
+    Otherwise, Pi would be calculated as:
+    Pi = CoV_all_IDI
     """
 
-    # According to Holobar 2014, the PNR is calculated as:
-    # 10 * log10((mean of firings) / (mean of noise))
-    # Where instants in the decomposed source are classified as firings or
-    # noise based on a threshold value named "Pi" or "r".
-    #
-    # Pi is calculated via a heuristic penalty funtion described in Holobar
-    # 2012 as:
-    # Pi = D · χ[3,50](D) + CoVIDI + CoVpIDI
-    # Where:
-    # D is the median of the low-pass filtered instantaneous motor unit
-    # discharge rate (first-order Butterworth filter, cut-off frequency 3 Hz)
-    # χ[3,50](D) stands for an indicator function that penalizes motor units
-    # with filtered discharge rate D below 3 pulses per second (pps) or above
-    # 50 pps:
-    # χ[3,50](D) = 0 if D is between 3 and 50 or D if D is not between 3 and 50.
-    # Two separate coefficients of variation for inter-discharge interval (IDI)
-    # calculated as standard deviation (SD) of IDI divided by the mean IDI,
-    # are used. CoVIDI is the coefficient of variation for IDI of non-paired
-    # MUs discharges only, whereas CoVpIDI is the coefficient of variation for
-    # IDI of paired MUs discharges.
-    # Holobar 2012 considered MUs discharges paired whenever the second
-    # discharge was within 50 ms of the first.
-    # Paired discharges are typical in pathological tremor and the use of both
-    # CoVIDI and CoVpIDI accounts for this condition.
-    #
-    # However, this heuristic penalty function penalizes MUs firing during
-    # specific types of contractions like explosive contractions
-    # (MUs discharge up to 200 pps).
-    # Therefore, in this implementation of the PNR estimation we did not use a
-    # penality based on MUs discharge.
-    # Additionally, the user can decide whether to adopt the two coefficients
-    # of variations to estimate Pi or not.
-    # If both are used, Pi would be calculated as:
-    # Pi = CoVIDI + CoVpIDI
-    # Otherwise, Pi would be calculated as:
-    # Pi = CoV_all_IDI
-
-    # Calculate IDI
-    idi = np.diff(mupulses)
-
-    # In order to increase robustness to outlier values, remove values outside
-    # mean +- 3 * STD in the idi array and the firings happening with more
-    # than 500ms of difference between each others.
-    idi = idi[idi <= (fsamp * 0.5)]
-
-    mean, std = np.mean(idi), np.std(idi)
-    upper_bound = mean + 3*std
-    lower_bound = mean - 3*std
-
-    idi = idi[idi <= upper_bound]
-    idi = idi[idi >= lower_bound]
-
-    # Calculate Pi
-    if separate_paired_firings is False:
-        # Calculate Pi on all IDI
-        CoV_all_IDI = np.std(idi) / np.mean(idi)
-
-        if math.isnan(CoV_all_IDI):
-            CoV_all_IDI = 0
-
-        Pi = CoV_all_IDI
-
-    else:
-        # Divide paired and non-paired IDIs before calculating specific CoV.
-        # De Luca 1985 considered dublets < 10 ms, Holobar < 50 ms
-        idinonp = idi[idi >= (fsamp * 0.05)]
-        idip = idi[idi < (fsamp * 0.05)]
-
-        if len(idinonp) > 1:
-            CoVIDI = np.std(idinonp) / np.mean(idinonp)
-        else:
-            CoVIDI = 0
-
-        if len(idip) > 1:
-            CoVpIDI = np.std(idip) / np.mean(idip)
-        else:
-            CoVpIDI = 0
-
-        # Calculate Pi
-        Pi = CoVIDI + CoVpIDI
+    # Manage exception of no firings
+    if len(mupulses) == 0:
+        return np.nan
 
     # Extract the source
     source = ipts.to_numpy()
 
-    # Use only absolute values from the source and normalise the source.
-    # This step is fundamental for the OTBiolab+ output.
-    source = np.abs(source)
-    source = (source - np.min(source)) / (np.max(source) - np.min(source))
+    # Normalise source
+    source = source / np.mean(source[mupulses])
 
-    # Create clusters
-    peak_cluster = source[source >= Pi]
-    noise_cluster = source[source < Pi]
+    # Check how to estimate PNR
+    if constrain_pulses[0] is True:
+        # Estimate by mupulses
+        start, stop = -int(constrain_pulses[1]), int(constrain_pulses[1])
+        extended_mupulses = np.concatenate(
+            [mupulses + t for t in range(start, stop+1)]
+        )
 
-    peak_cluster = np.square(peak_cluster)
-    noise_cluster = np.square(noise_cluster)
+        # Consider noise what outside the extenbded mupulses
+        noise_times = np.setdiff1d(
+            np.arange(mupulses[0], mupulses[-1]+1), extended_mupulses,
+        )
+
+        # Create clusters
+        peak_cluster = source[mupulses]
+        noise_cluster = source[noise_times]
+        noise_cluster = noise_cluster[~np.isnan(noise_cluster)]
+        noise_cluster = noise_cluster[noise_cluster >= 0]
+
+    elif constrain_pulses[0] is False:
+        # Estimate by Pi
+        # Calculate IDI
+        idi = np.diff(mupulses)
+
+        # In order to increase robustness to outlier values, remove values
+        # with more than 500ms of difference between each others.
+        idi = idi[idi <= (fsamp * 0.5)]
+
+        # Calculate Pi
+        if separate_paired_firings is False:
+            # Calculate Pi on all IDI
+            CoV_all_IDI = np.std(idi) / np.mean(idi)
+
+            if math.isnan(CoV_all_IDI):
+                CoV_all_IDI = 0
+
+            Pi = CoV_all_IDI
+
+        else:
+            # Divide paired and non-paired IDIs before calculating specific
+            # CoV. De Luca 1985 considered dublets < 10 ms, Holobar < 50 ms.
+            idinonp = idi[idi >= (fsamp * 0.05)]
+            idip = idi[idi < (fsamp * 0.05)]
+
+            if len(idinonp) > 1:
+                CoVIDI = np.std(idinonp) / np.mean(idinonp)
+            else:
+                CoVIDI = 0
+
+            if len(idip) > 1:
+                CoVpIDI = np.std(idip) / np.mean(idip)
+            else:
+                CoVpIDI = 0
+
+            # Calculate Pi
+            Pi = CoVIDI + CoVpIDI
+
+        # Create clusters
+        peak_cluster = source[source >= Pi]
+        noise_cluster = source[source < Pi]
+
+    else:
+        raise ValueError(
+            "constrain_pulses[0] can only be True or False. " +
+            f"{constrain_pulses[0]} was passed instead."
+        )
 
     # Calculate PNR
+    peak_cluster = np.square(peak_cluster)
+    noise_cluster = np.square(noise_cluster)
     pnr = 10 * np.log10(np.mean(peak_cluster) / np.mean(noise_cluster))
 
     return pnr
