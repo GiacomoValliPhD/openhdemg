@@ -9,3 +9,5 @@ openhdemg.egg-info/
 openhdemg/.DS_Store
 prove.py
 prove_storage.py
+openhdemg/tests/fixtures/*
+!openhdemg/tests/fixtures/__init__.py

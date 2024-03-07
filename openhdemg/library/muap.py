@@ -1329,6 +1329,101 @@ def xcc_sta(sta):
     return xcc_sta
 
 
+def estimate_cv_via_mle(emgfile, signal):
+    """
+    Estimate signal conduction velocity via maximum likelihood estimation.
+
+    This function can be used for the estimation of conduction velocity for 2
+    or more signals. These can be either MUAPs or global EMG signals.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile from whic "signal" has been
+        extracted. This is used to know IED and FSAMP.
+    signal : pd.DataFrame
+        A dataframe containing the signals on which to estimate CV. The signals
+        should be organised in colums.
+
+    Returns
+    -------
+    cv : float
+        The conduction velocity value in M/s.
+
+    See also
+    --------
+    - MUcv_gui : Graphical user interface for the estimation of MUs conduction
+        velocity.
+
+    Examples
+    --------
+    Calculate the CV for the first MU (number 0) on the channels 31, 32, 34,
+    34 that are contained in the second column ("col2") of the double
+    differential representation of the MUAPs. First, obtain the spike-
+    triggered average of the double differential derivation.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.filter_rawemg(emgfile)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ...     dividebycolumn=True
+    ... )
+    >>> dd = emg.double_diff(sorted_rawemg=sorted_rawemg)
+    >>> sta = emg.sta(
+    ...     emgfile=emgfile,
+    ...     sorted_rawemg=sorted_rawemg,
+    ...     firings=[0,50],
+    ...     timewindow=50,
+    ... )
+
+    Second, extract the channels of interest and estimate CV.
+
+    >>> signal = sta[0]["col2"].loc[:, 31:34]
+    >>> cv = estimate_cv_via_mle(emgfile=emgfile, signal=signal)
+    """
+
+    """
+    sta_mu is a pandas dataframe containing the signals where to estimate CV
+    sta = emg.sta(emgfile, dd)
+    sta_mu = sta[0]["col2"].loc[:, 31:34]
+    """
+    ied = emgfile["IED"]
+    fsamp = emgfile["FSAMP"]
+
+    # Work with numpy vectorised operations for better performance
+    sig = signal.to_numpy()
+    sig = sig.T
+
+    # Prepare the input 1D signals for find_teta
+    if np.shape(sig)[0] > 3:
+        sig1 = sig[1, :]
+        sig2 = sig[2, :]
+    else:
+        sig1 = sig[0, :]
+        sig2 = sig[1, :]
+
+    teta = find_teta(
+        sig1=sig1,
+        sig2=sig2,
+        ied=ied,
+        fsamp=fsamp,
+    )
+
+    cv, teta = mle_cv_est(
+        sig=sig,
+        initial_teta=teta,
+        ied=ied,
+        fsamp=fsamp,
+    )
+
+    cv = abs(cv)
+
+    return cv
+
+
 class MUcv_gui():
     """
     Graphical user interface for the estimation of MUs conduction velocity.
@@ -1339,7 +1434,7 @@ class MUcv_gui():
     Parameters
     ----------
     emgfile : dict
-        The dictionary containing the first emgfile.
+        The dictionary containing the emgfile.
     sorted_rawemg : dict
         A dict containing the sorted electrodes.
         Every key of the dictionary represents a different column of the
@@ -1354,11 +1449,18 @@ class MUcv_gui():
     muaps_timewindow : int, default 50
         Timewindow to compute ST MUAPs in milliseconds.
 
+    See also
+    --------
+    - estimate_cv_via_mle : Estimate signal conduction velocity via maximum
+        likelihood estimation.
+
     Examples
     --------
     Call the GUI.
 
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.filter_rawemg(emgfile)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile,
     ...     code="GR08MM1305",
@@ -1379,7 +1481,7 @@ class MUcv_gui():
         sorted_rawemg,
         n_firings=[0, 50],
         muaps_timewindow=50,
-        figsize=[20, 15],
+        figsize=[25, 20],
     ):
         # On start, compute the necessary information
         self.emgfile = emgfile
@@ -1534,8 +1636,7 @@ class MUcv_gui():
     # Define functions necessary for the GUI
     # Use empty docstrings to hide the functions from the documentation.
     def gui_plot(self):
-        """
-        """  # Plot the MUAPs used to estimate CV.
+        # Plot the MUAPs used to estimate CV.
 
         # Get MU number
         mu = int(self.selectmu_cb.get())
@@ -1555,58 +1656,32 @@ class MUcv_gui():
         plt.close()
 
     def copy_to_clipboard(self):
-        """
-        """  # Copy the dataframe to clipboard in csv format.
+        # Copy the dataframe to clipboard in csv format.
 
         pyperclip.copy(self.res_df.to_csv(index=False, sep='\t'))
 
     # Define functions for cv estimation
     def compute_cv(self):
-        """
-        """  # Compute conduction velocity.
+        # Compute conduction velocity.
 
-        # Get the muaps of the selected columns and represent them in
-        # different rows (as requested by the functions find_teta and
-        # mle_cv_est).
-        sig = self.st[int(self.selectmu_cb.get())][self.col_cb.get()].transpose()
+        # Get the muaps of the selected columns.
+        sig = self.st[int(self.selectmu_cb.get())][self.col_cb.get()]
         col_list = list(range(int(self.start_cb.get()), int(self.stop_cb.get())+1))
 
-        sig = sig.iloc[col_list, :]
-        sig = sig.reset_index(drop=True)
+        sig = sig.iloc[:, col_list]
 
         # Verify that the signal is correcly oriented
-        if len(sig) > len(sig.columns):
+        if len(sig) < len(sig.columns):
             raise ValueError(
                 "The number of signals exceeds the number of samples. Verify that each row represents a signal"
             )
 
-        # Prepare the input 1D signals for find_teta
-        if len(sig) > 3:
-            sig1 = sig.iloc[1]
-            sig2 = sig.iloc[2]
-        else:
-            sig1 = sig.iloc[0]
-            sig2 = sig.iloc[1]
-
-        initial_teta = find_teta(
-            sig1=sig1,
-            sig2=sig2,
-            ied=self.ied,
-            fsamp=self.fsamp,
-        )
-
-        # Calculate CV (and return only positive values)
-        cv, teta = mle_cv_est(
-            sig=sig,
-            initial_teta=initial_teta,
-            ied=self.ied,
-            fsamp=self.fsamp,
-        )
-        cv = abs(cv)
+        # Estimate CV
+        cv = estimate_cv_via_mle(emgfile=self.emgfile, signal=sig)
 
         # Calculate RMS
         sig = sig.to_numpy()
-        rms = np.mean(np.sqrt((np.mean(sig**2, axis=1))))
+        rms = np.mean(np.sqrt((np.mean(sig**2, axis=0))))
 
         # Update the self.res_df and the self.textbox
         mu = int(self.selectmu_cb.get())

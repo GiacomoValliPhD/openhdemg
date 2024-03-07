@@ -1959,6 +1959,11 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
         If your specific version is not available in the tested versions,
         trying with the closer one usually works, but please double check the
         results. Ignore if loading other files.
+    otb_extras : None or str, default None
+        Extras is used to store additional custom values. These information
+        will be stored in a pd.DataFrame with columns named as in the .mat
+        file. If not None, pass a regex pattern unequivocally identifying the
+        variable in the .mat file to load as extras.
     delsys_emg_sensor_name : str, default "Galileo sensor"
         The name of the EMG sensor used to collect the data. We currently
         support only the "Galileo sensor".
@@ -2160,7 +2165,8 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
             filepath=file_toOpen,
             ext_factor=kwargs.get("otb_ext_factor", 8),
             refsig=kwargs.get("otb_refsig_type", [True, "fullsampled"]),
-            version=kwargs.get("otb_version", "1.5.9.3")
+            version=kwargs.get("otb_version", "1.5.9.3"),
+            extras=kwargs.get("otb_extras", None),
         )
     elif filesource == "OTB_REFSIG":
         ref = kwargs.get("otb_refsig_type", [True, "fullsampled"])
@@ -2168,6 +2174,7 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
             filepath=file_toOpen,
             refsig=ref[1],
             version=kwargs.get("otb_version", "1.5.9.3"),
+            extras=kwargs.get("otb_extras", None),
         )
     elif filesource == "DELSYS":
         emgfile = emg_from_delsys(
