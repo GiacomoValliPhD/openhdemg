@@ -18,7 +18,11 @@ You can download the sample files and the sample scripts [here](https://drive.go
 
 <br>
 
-<embed src="https://www.giacomovalli.com/openhdemg/online_pdfs/valli_et_al_2023_tutorial_jek.pdf" width="100%" height="800px" allowfullscreen type="application/pdf"></iframe>
+<a href="https://www.giacomovalli.com/openhdemg/online_pdfs/valli_et_al_2023_tutorial_jek.pdf" target="_blank" rel="noopener noreferrer">
+  <object data="https://www.giacomovalli.com/openhdemg/online_pdfs/valli_et_al_2023_tutorial_jek.pdf" type="application/pdf" width="100%" height="800px">
+    <p>Your web browser doesn't have a PDF plugin. Instead, you can click here to download the PDF file.</p>
+  </object>
+</a>
 
 <br> <!-- links in HTML should be full links-->
 

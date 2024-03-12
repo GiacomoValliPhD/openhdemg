@@ -445,6 +445,8 @@ def basic_mus_properties(
     start_steady=-1,
     end_steady=-1,
     accuracy="default",
+    ignore_negative_ipts=False,
+    constrain_pulses=[True, 3],
     mvc=0,
 ):
     """
@@ -494,6 +496,20 @@ def basic_mus_properties(
         ``SIL_PNR``
             Both the Silhouette score and the pulse to noise ratio are
             computed.
+    ignore_negative_ipts : bool, default False
+        This parameter determines the silhouette score estimation. If True,
+        only positive ipts values are used during peak and noise clustering.
+        This is particularly important for compensating sources with large
+        negative components. This parameter is considered only when
+        accuracy=="SIL" or accuracy=="SIL_PNR".
+    constrain_pulses : list, default [True, 3]
+        This parameter determines the PNR estimation. If
+        constrain_pulses[0]==True, the times of firing are considered those in
+        mupulses +- the number of samples specified in constrain_pulses[1].
+        If constrain_pulses[0]==False, the times of firing are estimated via
+        a heuristic penalty funtion (see Notes in compute_pnr()).
+        constrain_pulses[1] must be an integer (see Notes in compute_pnr() for
+        instructions on how to set the appropriate value).
     mvc : float, default 0
         The maximum voluntary contraction (MVC). It is suggest to report
         MVC in Newton (N). If 0 (default), the user will be asked to imput it
@@ -604,6 +620,7 @@ def basic_mus_properties(
             sil = compute_sil(
                 ipts=emgfile["IPTS"][mu],
                 mupulses=emgfile["MUPULSES"][mu],
+                ignore_negative_ipts=ignore_negative_ipts,
             )
             toappend.append({"SIL": sil})
         toappend = pd.DataFrame(toappend)
@@ -623,6 +640,7 @@ def basic_mus_properties(
                 ipts=emgfile["IPTS"][mu],
                 mupulses=emgfile["MUPULSES"][mu],
                 fsamp=emgfile["FSAMP"],
+                constrain_pulses=constrain_pulses,
             )
             toappend.append({"PNR": pnr})
         toappend = pd.DataFrame(toappend)
@@ -641,6 +659,7 @@ def basic_mus_properties(
             sil = compute_sil(
                 ipts=emgfile["IPTS"][mu],
                 mupulses=emgfile["MUPULSES"][mu],
+                ignore_negative_ipts=ignore_negative_ipts,
             )
             toappend.append({"SIL": sil})
         toappend = pd.DataFrame(toappend)
@@ -659,6 +678,7 @@ def basic_mus_properties(
                 ipts=emgfile["IPTS"][mu],
                 mupulses=emgfile["MUPULSES"][mu],
                 fsamp=emgfile["FSAMP"],
+                constrain_pulses=constrain_pulses,
             )
             toappend.append({"PNR": pnr})
         toappend = pd.DataFrame(toappend)
