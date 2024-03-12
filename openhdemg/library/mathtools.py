@@ -235,7 +235,7 @@ def norm_twod_xcorr(df1, df2, mode="full"):
     return normxcorr_df, normxcorr_max
 
 
-def compute_sil(ipts, mupulses, ignore_negative_ipts=True):
+def compute_sil(ipts, mupulses, ignore_negative_ipts=False):
     """
     Calculate the Silhouette score for a single MU.
 
@@ -250,9 +250,9 @@ def compute_sil(ipts, mupulses, ignore_negative_ipts=True):
         interest.
     mupulses : ndarray
         The time of firing (MUPULSES[mu]) of the MU of interest.
-    ignore_negative_ipts : bool, default True
-        Only use positive ipts during peak and noise clustering. This is
-        particularly important for sources with large negative components.
+    ignore_negative_ipts : bool, default False
+        If True, only use positive ipts during peak and noise clustering. This
+        is particularly important for sources with large negative components.
 
     Returns
     -------

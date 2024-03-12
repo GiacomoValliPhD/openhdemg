@@ -152,7 +152,12 @@ def mupulses_from_binary(binarymusfiring):
     return MUPULSES
 
 
-def resize_emgfile(emgfile, area=None, accuracy="recalculate"):
+def resize_emgfile(
+    emgfile,
+    area=None,
+    accuracy="recalculate",
+    ignore_negative_ipts=False,
+):
     """
     Resize all the emgfile.
 
@@ -174,6 +179,12 @@ def resize_emgfile(emgfile, area=None, accuracy="recalculate"):
         ``maintain``
             The original accuracy measure already contained in the emgfile is
             returned without any computation.
+    ignore_negative_ipts : bool, default False
+        This parameter determines the silhouette score estimation. If True,
+        only positive ipts values are used during peak and noise clustering.
+        This is particularly important for compensating sources with large
+        negative components. This parameter is considered only if
+        accuracy=="recalculate".
 
     Returns
     -------
@@ -263,6 +274,7 @@ def resize_emgfile(emgfile, area=None, accuracy="recalculate"):
                         res = compute_sil(
                             ipts=rs_emgfile["IPTS"][mu],
                             mupulses=rs_emgfile["MUPULSES"][mu],
+                            ignore_negative_ipts=ignore_negative_ipts,
                         )
                         to_append.append(res)
                     rs_emgfile["ACCURACY"] = pd.DataFrame(to_append)
