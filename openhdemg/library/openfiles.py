@@ -1171,7 +1171,7 @@ def emg_from_delsys(
 
 # --------------------------------------------------------------------- #
 # Function to open the reference signal from Delsys.
-def refsig_from_delsys(filepath, refsig_sensor_name="Trigno Load Cell",):
+def refsig_from_delsys(filepath, refsig_sensor_name="Trigno Load Cell"):
     """
     Import the reference signal in the .mat file exportable by Delsys Neuromap.
 
