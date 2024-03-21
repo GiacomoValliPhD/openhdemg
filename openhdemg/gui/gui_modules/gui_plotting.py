@@ -922,6 +922,7 @@ class PlotEmg:
                         emgfile=self.parent.resdict,
                         code=self.mat_code.get(),
                         orientation=int(self.mat_orientation.get()),
+                        custom_sorting_order=self.parent.settings.sort_rawemg__custom_sorting_order,
                     )
 
                 # calcualte derivation
