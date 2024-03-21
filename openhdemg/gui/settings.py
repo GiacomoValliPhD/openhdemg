@@ -14,12 +14,15 @@ A tutorial on how to use this settings file is available at:
 # TODO add link to docs tutorial
 """
 
+import numpy as np
+
 # These graphic parameters are updated only after restarting the GUI
 #
 # --------------------------------- GUI LOOK ----------------------------------
-background_color = "LightBlue4"
+gui_background_color = "LightBlue4"
 # Options are #TODO Paul please explain what colors can be used, I will add these in the tutorial
 #TODO we also must rename this file in something more specific like gui_settings.py
+# Please insert gui_background_color were needed in the .py GUI files, I didn't do that
 
 
 # The following parameters are updated without restarting the GUI
@@ -58,6 +61,8 @@ emg_from_customcsv__extras = "EXTRAS"
 emg_from_customcsv__fsamp = 2048
 emg_from_customcsv__ied = 8
 # TODO in main window and in advanced tools, when selecting OTB, delsys and custom CSV write to check settings file
+# because I want to remove the dropdown for the otb extension factor and the dropdown for the discharge rate and only allow
+# To specify these from the settings.
 
 # in refsig_from_customcsv()
 refsig_from_customcsv__ref_signal = "REF_SIGNAL"
@@ -67,19 +72,19 @@ refsig_from_customcsv__extras = "EXTRAS"
 save_json_emgfile__compresslevel = 4
 
 
-# ---------------------------------- analysis ---------------------------------
+# ---------------------------------- analysis ---------------------------------  # DONE and it works
 
 # in compute_thresholds()
 compute_thresholds__n_firings = 1
 
 # in basic_mus_properties()
 basic_mus_properties__n_firings_rt_dert = 1
-basic_mus_properties__accuracy = "default"
+basic_mus_properties__accuracy = "SIL_PNR"
 basic_mus_properties__ignore_negative_ipts = False
 basic_mus_properties__constrain_pulses = [True, 3]
 
 
-# ----------------------------------- tools -----------------------------------
+# ----------------------------------- tools -----------------------------------  # DONE and it works
 
 # in resize_emgfile()
 resize_emgfile__how = "ref_signal"
@@ -103,5 +108,5 @@ MUcv_gui__n_firings = [0, 50]
 MUcv_gui__muaps_timewindow = 50
 MUcv_gui__figsize = [25, 20]
 
-# --------------------------------- electrodes --------------------------------
+# --------------------------------- electrodes --------------------------------  # DONE only in plot window, it works
 sort_rawemg__custom_sorting_order = None

@@ -146,7 +146,7 @@ class emgGUI():
         self.master.rowconfigure(0, weight=1)
 
         # Create left side framing for functionalities
-        self.left = ctk.CTkFrame(self.master, fg_color=self.settings.background_color, corner_radius=0)
+        self.left = ctk.CTkFrame(self.master, fg_color=self.settings.gui_background_color, corner_radius=0)
         self.left.grid(column=0, row=0, sticky=(N, S, E, W))
 
         # Configure columns with a loop
@@ -663,6 +663,9 @@ class emgGUI():
         create a second combobox on the grid at column 0 and row 2 and when the filetype
         is set to something else it will remove the second combobox from the grid.
         """
+        # TODO here, instead of showing the boxes, we shopuld simply write a text to tell them to check in the gui_settings
+        # File if the settings are appropriate for their file. e.g., extension factor and fsamp.
+        # A text "Verify openfiles settings" might be appropriate. To be displayed similary to "Ignored for DEMUSE files".
         if self.filetype.get() not in ["OTB"]:
             if hasattr(self, "otb_combobox"):
                 self.otb_combobox.grid_forget()
