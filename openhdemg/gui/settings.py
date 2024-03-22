@@ -29,11 +29,10 @@ gui_background_color = "LightBlue4"
 #
 # --------------------------------- openfiles ---------------------------------
 
-# in emg_from_demuse()
+# in emg_from_demuse()  # DONE and it works
 emg_from_demuse__ignore_negative_ipts = False
 
-# in emg_from_otb()
-emg_from_otb__ext_factor = 8
+# in emg_from_otb()  # DONE and it works
 emg_from_otb__refsig = [True, "fullsampled"]
 emg_from_otb__extras = None
 emg_from_otb__ignore_negative_ipts = False
@@ -58,18 +57,15 @@ emg_from_customcsv__mupulses = "MUPULSES"
 emg_from_customcsv__binary_mus_firing = "BINARY_MUS_FIRING"
 emg_from_customcsv__accuracy = "ACCURACY"
 emg_from_customcsv__extras = "EXTRAS"
-emg_from_customcsv__fsamp = 2048
 emg_from_customcsv__ied = 8
-# TODO in main window and in advanced tools, when selecting OTB, delsys and custom CSV write to check settings file
-# because I want to remove the dropdown for the otb extension factor and the dropdown for the discharge rate and only allow
-# To specify these from the settings.
+# TODO in main window and in advanced tools, when selecting OTB, delsys and custom CSV (both emgifle and refsig) write to check settings file
 
 # in refsig_from_customcsv()
 refsig_from_customcsv__ref_signal = "REF_SIGNAL"
 refsig_from_customcsv__extras = "EXTRAS"
 
 # in save_json_emgfile()
-save_json_emgfile__compresslevel = 4
+save_json_emgfile__compresslevel = 4  # DONE and it works
 
 
 # ---------------------------------- analysis ---------------------------------  # DONE and it works
@@ -79,7 +75,7 @@ compute_thresholds__n_firings = 1
 
 # in basic_mus_properties()
 basic_mus_properties__n_firings_rt_dert = 1
-basic_mus_properties__accuracy = "SIL_PNR"
+basic_mus_properties__accuracy = "default"
 basic_mus_properties__ignore_negative_ipts = False
 basic_mus_properties__constrain_pulses = [True, 3]
 
