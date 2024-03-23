@@ -10,7 +10,18 @@ import importlib
 import tkinter as tk
 import threading
 import webbrowser
-from tkinter import messagebox, ttk, filedialog, Canvas, StringVar, Tk, N, S, W, E
+from tkinter import (
+    messagebox,
+    ttk,
+    filedialog,
+    Canvas,
+    StringVar,
+    Tk,
+    N,
+    S,
+    W,
+    E,
+)
 import customtkinter as ctk
 from pandastable import Table, config
 
@@ -18,7 +29,10 @@ from PIL import Image
 
 import matplotlib.pyplot as plt
 import matplotlib
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib.backends.backend_tkagg import (
+    FigureCanvasTkAgg,
+    NavigationToolbar2Tk,
+)
 from matplotlib.figure import Figure
 
 import openhdemg.library as openhdemg
@@ -40,11 +54,11 @@ matplotlib.use("TkAgg")
 
 class emgGUI:
     """
-     This class is used to create a graphical user interface for
-     the openhdemg library.
+     This class is used to create a graphical user interface for the openhdemg
+     library.
 
-     Within this class and corresponding childs, most functionalities
-     of the ophdemg library are packed in a GUI. Howebver, the library is more
+     Within this class and corresponding childs, most functionalities of the
+     openhdemg library are packed in a GUI. However, the library is more
      comprehensive and much more adaptable to the users needs.
 
      Attributes
@@ -63,7 +77,8 @@ class emgGUI:
          String containing the path to EMG file selected for analysis.
      self.filetype : str
          String containing the filetype of import EMG file.
-         Filetype can be "OPENHDEMG", "OTB", "DEMUSE", "OTB_REFSIG", "CUSTOMCSV", "CUSTOMCSV_REFSIG".
+         Filetype can be "OPENHDEMG", "OTB", "DEMUSE", "OTB_REFSIG",
+         "CUSTOMCSV", "CUSTOMCSV_REFSIG".
      self.left : tk.frame
          Left frame inside of master that contains all buttons and filespecs.
     self.logo :
@@ -77,7 +92,8 @@ class emgGUI:
      self.right : tk.frame
          Left frame inside of master that contains plotting canvas.
      self.terminal : ttk.Labelframe
-         Tkinter labelframe that is used to display the results table in the GUI.
+         Tkinter labelframe that is used to display the results table in the
+         GUI.
      self.info : tk.PhotoImage
          Information Icon displayed in GUI.
      self.online : tk.Photoimage
@@ -89,9 +105,8 @@ class emgGUI:
      self.cite : tk.PhotoImage
          Citation Icon displayed in GUI.
      self.otb_combobox : ttk.Combobox
-         Combobox appearing in main GUI window or advanced
-         analysis window when OTB files are loaded. Contains
-         the extension factor for OTB files.
+         Combobox appearing in main GUI window or advanced analysis window when
+         OTB files are loaded. Contains the extension factor for OTB files.
          Stringvariable containing the
      self.extension_factor : tk.StringVar()
          Stringvariable containing the OTB extension factor value.
@@ -107,7 +122,8 @@ class emgGUI:
          Saves the edited emgfile dictionary to a .json file.
          Executed when button "Save File" in master GUI window pressed.
      reset_analysis()
-         Resets the whole analysis, restores the original input file and the graph.
+         Resets the whole analysis, restores the original input file and the
+         graph.
          Executed when button "Reset analysis" in master GUI window pressed.
      in_gui_plotting()
          Method used for creating plot inside the GUI (on the GUI canvas).
@@ -121,13 +137,15 @@ class emgGUI:
      Notes
      -----
      Please note that altough we created a GUI class, the included methods/
-     instances are highly specific. We did not conceptualize the methods/instances
-     to be used seperately. Similar functionalities are available in the library
-     and were specifically coded to be used seperately/singularly.
+     instances are highly specific. We did not conceptualize the
+     methods/instances to be used seperately. Similar functionalities are
+     available in the library and were specifically coded to be used
+     seperately/singularly.
 
-     Most instance methods of this class heavily rely on the functions provided in
-     the library. In the section "See Also" at each instance method, the reader is
-     referred to the corresponding function and extensive documentation in the library.
+     Most instance methods of this class heavily rely on the functions provided
+     in the library. In the section "See Also" at each instance method, the
+     reader is referred to the corresponding function and extensive
+     documentation in the library.
     """
 
     def __init__(self, master):
@@ -139,6 +157,7 @@ class emgGUI:
         master: tk
             tk class object
         """
+
         # Load settings
         self.load_settings()
 
@@ -156,7 +175,9 @@ class emgGUI:
 
         # Create left side framing for functionalities
         self.left = ctk.CTkFrame(
-            self.master, fg_color=self.settings.background_color, corner_radius=0
+            self.master,
+            fg_color=self.settings.gui_background_color,
+            corner_radius=0,
         )
         self.left.grid(column=0, row=0, sticky=(N, S, E, W))
 
@@ -182,14 +203,14 @@ class emgGUI:
         ]
         signal_entry = ctk.CTkComboBox(
             self.left,
-            width=150,
+            width=8,
             variable=self.filetype,
             values=signal_value,
             state="readonly",
         )
-        signal_entry.grid(column=0, row=1, sticky=(N, S, E, W))
+        signal_entry.grid(column=0, row=1, sticky=(W, E))
         self.filetype.set("Type of file")
-        # Trace filetype to apply function when changeing
+        # Trace filetype to apply function when changing
         self.filetype.trace_add("write", self.on_filetype_change)
 
         # Load file
@@ -205,17 +226,25 @@ class emgGUI:
         load.grid(column=0, row=3, sticky=(N, S, E, W))
 
         # File specifications
-        ctk.CTkLabel(self.left, text="Filespecs:", font=("Segoe UI", 15, "bold")).grid(
-            column=1, row=1, sticky=(W)
-        )
-        ctk.CTkLabel(self.left, text="N Channels:", font=("Segoe UI", 15, "bold")).grid(
-            column=1, row=2, sticky=(W)
-        )
-        ctk.CTkLabel(self.left, text="N of MUs:", font=("Segoe UI", 15, "bold")).grid(
-            column=1, row=3, sticky=(W)
-        )
         ctk.CTkLabel(
-            self.left, text="File length:", font=("Segoe UI", 15, "bold")
+            self.left,
+            text="Filespecs:",
+            font=("Segoe UI", 15, "bold"),
+        ).grid(column=1, row=1, sticky=(W))
+        ctk.CTkLabel(
+            self.left,
+            text="N Channels:",
+            font=("Segoe UI", 15, "bold"),
+        ).grid(column=1, row=2, sticky=(W))
+        ctk.CTkLabel(
+            self.left,
+            text="N of MUs:",
+            font=("Segoe UI", 15, "bold"),
+        ).grid(column=1, row=3, sticky=(W))
+        ctk.CTkLabel(
+            self.left,
+            text="File length:",
+            font=("Segoe UI", 15, "bold"),
         ).grid(column=1, row=4, sticky=(W))
         separator0 = ttk.Separator(self.left, orient="horizontal")
         separator0.grid(column=0, columnspan=3, row=5, sticky=(E, W))
@@ -382,7 +411,10 @@ class emgGUI:
 
         # Create right side framing for functionalities
         self.right = ctk.CTkFrame(
-            self.master, fg_color="LightBlue4", corner_radius=0, bg_color="LightBlue4"
+            self.master,
+            fg_color="LightBlue4",
+            corner_radius=0,
+            bg_color="LightBlue4",
         )
         self.right.grid(column=1, row=0, sticky=(N, S, E, W))
 
@@ -401,18 +433,31 @@ class emgGUI:
         )
 
         # Create logo figure
-        self.logo_canvas = Canvas(self.right, height=590, width=800, bg="white")
+        self.logo_canvas = Canvas(
+            self.right,
+            height=590,
+            width=800,
+            bg="white",
+        )
         self.logo_canvas.grid(row=0, column=0, rowspan=6, sticky=(N, S, E, W))
 
         logo_path = master_path + "/gui_files/logo.png"  # Get logo path
         self.logo = tk.PhotoImage(file=logo_path)
 
-        self.logo_canvas.create_image(400, 300, anchor="center", image=self.logo)
+        self.logo_canvas.create_image(
+            400,
+            300,
+            anchor="center",
+            image=self.logo,
+        )
 
         # Create info buttons
         # Settings button
         gear_path = master_path + "/gui_files/gear.png"
-        self.gear = ctk.CTkImage(light_image=Image.open(gear_path), size=(30, 30))
+        self.gear = ctk.CTkImage(
+            light_image=Image.open(gear_path),
+            size=(30, 30),
+        )
 
         settings_b = ctk.CTkButton(
             self.right,
@@ -427,8 +472,11 @@ class emgGUI:
         settings_b.grid(column=1, row=0, sticky=W, pady=(0, 20))
 
         # Information Button
-        info_path = master_path + "/gui_files/Info.png"  # Get infor button path
-        self.info = ctk.CTkImage(light_image=Image.open(info_path), size=(30, 30))
+        info_path = master_path + "/gui_files/Info.png"  # Get info button path
+        self.info = ctk.CTkImage(
+            light_image=Image.open(info_path),
+            size=(30, 30),
+        )
         info_button = ctk.CTkButton(
             self.right,
             image=self.info,
@@ -445,7 +493,10 @@ class emgGUI:
 
         # Button for online tutorials
         online_path = master_path + "/gui_files/Online.png"
-        self.online = ctk.CTkImage(light_image=Image.open(online_path), size=(30, 30))
+        self.online = ctk.CTkImage(
+            light_image=Image.open(online_path),
+            size=(30, 30),
+        )
         online_button = ctk.CTkButton(
             self.right,
             image=self.online,
@@ -467,7 +518,8 @@ class emgGUI:
         # Button for dev information
         redirect_path = master_path + "/gui_files/Redirect.png"
         self.redirect = ctk.CTkImage(
-            light_image=Image.open(redirect_path), size=(30, 30)
+            light_image=Image.open(redirect_path),
+            size=(30, 30),
         )
         redirect_button = ctk.CTkButton(
             self.right,
@@ -489,7 +541,10 @@ class emgGUI:
 
         # Button for contact information
         contact_path = master_path + "/gui_files/Contact.png"
-        self.contact = ctk.CTkImage(light_image=Image.open(contact_path), size=(30, 30))
+        self.contact = ctk.CTkImage(
+            light_image=Image.open(contact_path),
+            size=(30, 30),
+        )
         contact_button = ctk.CTkButton(
             self.right,
             image=self.contact,
@@ -506,7 +561,10 @@ class emgGUI:
 
         # Button for citatoin information
         cite_path = master_path + "/gui_files/Cite.png"
-        self.cite = ctk.CTkImage(light_image=Image.open(cite_path), size=(30, 30))
+        self.cite = ctk.CTkImage(
+            light_image=Image.open(cite_path),
+            size=(30, 30),
+        )
         cite_button = ctk.CTkButton(
             self.right,
             image=self.cite,
@@ -524,7 +582,7 @@ class emgGUI:
         for child in self.left.winfo_children():
             child.grid_configure(padx=5, pady=5)
 
-    ## Define functionalities for buttons used in GUI master window
+    # Define functionalities for buttons used in GUI master window
     def load_settings(self):
         """
         Instance Method to load the setting file for.
@@ -533,6 +591,7 @@ class emgGUI:
         The settings specified by the user will then be transferred
         to the code and used.
         """
+
         # If not previously imported, just import it
         global settings
         self.settings = importlib.reload(settings)
@@ -543,9 +602,10 @@ class emgGUI:
         Instance Method to open the setting file for.
 
         Executed when the button "Settings" in master GUI window is pressed.
-        A python file is openend containing a dictionary with relevant variables
-        that users should be able to customize.
+        A python file is openend containing a dictionary with relevant
+        variables that users should be able to customize.
         """
+
         # Determine relative filepath
         file_path = os.path.dirname(os.path.abspath(__file__)) + "/settings.py"
 
@@ -562,17 +622,20 @@ class emgGUI:
         """
         Method to update variables changes in the settings file
         """
+
         pass
 
     def get_file_input(self):
         """
-        Instance Method to load the file for analysis. The user is asked to select the file.
+        Instance Method to load the file for analysis. The user is asked to
+        select the file.
 
         Executed when the button "Load File" in master GUI window is pressed.
 
         See Also
         --------
-        emg_from_demuse, emg_from_otb, refsig_from_otb and emg_from_json in library.
+        emg_from_otb, emg_from_demuse, emg_from_delsys, emg_from_customcsv,
+        refsig_from_otb, refsig_from_delsys, refsig_from_customcsv in library.
         """
 
         def load_file():
@@ -588,7 +651,7 @@ class emgGUI:
                     if self.filetype.get() == "OTB":
                         # Ask user to select the decomposed file
                         file_path = filedialog.askopenfilename(
-                            title="Open OTB file to load",
+                            title="Open decomposed OTB file to load",
                             filetypes=[("MATLAB files", "*.mat")],
                         )
                         self.file_path = file_path
@@ -596,16 +659,22 @@ class emgGUI:
                         self.resdict = openhdemg.emg_from_otb(
                             filepath=self.file_path,
                             ext_factor=int(self.extension_factor.get()),
+                            refsig=self.settings.emg_from_otb__refsig,
+                            extras=self.settings.emg_from_otb__extras,
+                            ignore_negative_ipts=self.settings.emg_from_otb__ignore_negative_ipts,
                         )
                         # Add filespecs
                         ctk.CTkLabel(
-                            self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
+                            self.left,
+                            text=str(len(self.resdict["RAW_SIGNAL"].columns)),
                         ).grid(column=2, row=2, sticky=(W, E), padx=5, pady=5)
                         ctk.CTkLabel(
-                            self.left, text=str(self.resdict["NUMBER_OF_MUS"])
+                            self.left,
+                            text=str(self.resdict["NUMBER_OF_MUS"]),
                         ).grid(column=2, row=3, sticky=(W, E), padx=5, pady=5)
                         ctk.CTkLabel(
-                            self.left, text=str(self.resdict["EMG_LENGTH"])
+                            self.left,
+                            text=str(self.resdict["EMG_LENGTH"]),
                         ).grid(column=2, row=4, sticky=(W, E), padx=5, pady=5)
 
                     elif self.filetype.get() == "DEMUSE":
@@ -617,11 +686,13 @@ class emgGUI:
                         self.file_path = file_path
                         # load file
                         self.resdict = openhdemg.emg_from_demuse(
-                            filepath=self.file_path
+                            filepath=self.file_path,
+                            ignore_negative_ipts=self.settings.emg_from_demuse__ignore_negative_ipts,
                         )
                         # Add filespecs
                         ctk.CTkLabel(
-                            self.left, text=str(len(self.resdict["RAW_SIGNAL"].columns))
+                            self.left,
+                            text=str(len(self.resdict["RAW_SIGNAL"].columns)),
                         ).grid(column=2, row=2, sticky=(W, E), padx=5, pady=5)
                         ctk.CTkLabel(
                             self.left, text=str(self.resdict["NUMBER_OF_MUS"])
@@ -629,6 +700,7 @@ class emgGUI:
                         ctk.CTkLabel(
                             self.left, text=str(self.resdict["EMG_LENGTH"])
                         ).grid(column=2, row=4, sticky=(W, E), padx=5, pady=5)
+
                     elif self.filetype.get() == "DELSYS":
                         # Ask user to select the file
                         file_path = filedialog.askopenfilename(
@@ -789,7 +861,7 @@ class emgGUI:
                 #     child.grid_configure(padx=5, pady=5)
 
                 # End progress
-                progress.grid_remove()
+                progress.grid_remove()  # NOTE does it matter the order of grid_remove and stop? They are used with mixed orders!
                 progress.stop()
 
                 return
@@ -865,8 +937,8 @@ class emgGUI:
         progress.start()
 
         # Create a thread to run the load_file function
-        save_thread = threading.Thread(target=load_file)
-        save_thread.start()
+        load_thread = threading.Thread(target=load_file)
+        load_thread.start()
 
     def on_filetype_change(self, *args):
         """
@@ -875,6 +947,9 @@ class emgGUI:
         create a second combobox on the grid at column 0 and row 2 and when the filetype
         is set to something else it will remove the second combobox from the grid.
         """
+        # TODO here, instead of showing the boxes, we shopuld simply write a text to tell them to check in the gui_settings
+        # File if the settings are appropriate for their file. e.g., extension factor and fsamp.
+        # A text "Verify openfiles settings" might be appropriate. To be displayed similary to "Ignored for DEMUSE files".
         if self.filetype.get() not in ["OTB"]:
             if hasattr(self, "otb_combobox"):
                 self.otb_combobox.grid_forget()
@@ -892,6 +967,10 @@ class emgGUI:
             self.otb_combobox = ctk.CTkComboBox(
                 self.left,
                 values=[
+                    "4",
+                    "5",
+                    "6",
+                    "7",
                     "8",
                     "9",
                     "10",
@@ -901,6 +980,22 @@ class emgGUI:
                     "14",
                     "15",
                     "16",
+                    "17",
+                    "18",
+                    "19",
+                    "20",
+                    "21",
+                    "22",
+                    "23",
+                    "24",
+                    "25",
+                    "26",
+                    "27",
+                    "28",
+                    "29",
+                    "30",
+                    "31",
+                    "32",
                 ],
                 width=8,
                 variable=self.extension_factor,
@@ -920,9 +1015,11 @@ class emgGUI:
 
     def save_emgfile(self):
         """
-        Instance method to save the edited emgfile. Results are saved in a .json file.
+        Instance method to save the edited emgfile. Results are saved in a
+        .json file.
 
-        Executed when the "Save File" button in the master GUI window is pressed.
+        Executed when the "Save File" button in the master GUI window is
+        pressed.
 
         Raises
         ------
@@ -952,7 +1049,11 @@ class emgGUI:
                 save_emg = self.resdict
 
                 # Save json file
-                openhdemg.save_json_emgfile(emgfile=save_emg, filepath=save_filepath)
+                openhdemg.save_json_emgfile(
+                    emgfile=save_emg,
+                    filepath=save_filepath,
+                    compresslevel=self.settings.save_json_emgfile__compresslevel,
+                )
 
                 # End progress
                 progress.stop()
@@ -962,7 +1063,9 @@ class emgGUI:
 
             except AttributeError as e:
                 show_error_dialog(
-                    parent=self, error=e, solution=str("Make sure a file is loaded.")
+                    parent=self,
+                    error=e,
+                    solution=str("Make sure a file is loaded."),
                 )
 
         # Indicate Progress

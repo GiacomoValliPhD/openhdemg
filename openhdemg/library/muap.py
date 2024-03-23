@@ -729,6 +729,7 @@ def tracking(
     orientation=180,
     n_rows=None,
     n_cols=None,
+    custom_sorting_order=None,
     custom_muaps=None,
     exclude_belowthreshold=True,
     filter=True,
@@ -765,12 +766,17 @@ def tracking(
         ``GR08MM1305``
         ``GR04MM1305``
         ``GR10MM0808``
-        This is necessary to sort the channels in
-        the correct order. If matrixcode="None", the electrodes are not sorted.
+        ``Custom order``
+        ``None``
+        This is necessary to sort the channels in the correct order.
+        If matrixcode="None", the electrodes are not sorted.
         In this case, n_rows and n_cols must be specified.
+        If "Custom order", the electrodes are sorted based on
+        custom_sorting_order.
     orientation : int {0, 180}, default 180
         Orientation in degree of the matrix (same as in OTBiolab).
         E.g. 180 corresponds to the matrix connection toward the user.
+        This Parameter is ignored if code=="Custom order" or code=="None".
     n_rows : None or int, default None
         The number of rows of the matrix. This parameter is used to divide the
         channels based on the matrix shape. These are normally inferred by the
@@ -779,6 +785,15 @@ def tracking(
         The number of columns of the matrix. This parameter is used to divide
         the channels based on the matrix shape. These are normally inferred by
         the matrix code and must be specified only if code == None.
+    custom_sorting_order : None or list, default None
+        If code=="Custom order", custom_sorting_order will be used for
+        channels sorting. In this case, custom_sorting_order must be a list of
+        lists containing the order of the matrix channels.
+        Specifically, the number of columns are defined by
+        len(custom_sorting_order) while the number of rows by
+        len(custom_sorting_order[0]). np.nan can be used to specify empty
+        channels. Please refer to the Examples section for the structure of
+        the custom sorting order.
     custom_muaps : None or list, default None
         With this parameter, it is possible to perform MUs tracking on MUAPs
         computed with custom techniques. If this parameter is None (default),
@@ -859,6 +874,35 @@ def tracking(
     8         19        10  0.802635
     9         21        14  0.896419
     10        22        16  0.836356
+
+    Track MUs between two files where channels are sorted with a custom order.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile1 = emg.askopenfile(filesource="CUSTOMCSV")
+    >>> emgfile2 = emg.askopenfile(filesource="CUSTOMCSV")
+    >>> custom_sorting_order = [
+    ...     [63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52,     51,],
+    ...     [38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,     50,],
+    ...     [37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26,     25,],
+    ...     [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,     24,],
+    ...     [11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1,  0, np.nan,],
+    ... ]  # 13 rows and 5 columns
+    >>> tracking_res = emg.tracking(
+    ...     emgfile1=emgfile1,
+    ...     emgfile2=emgfile2,
+    ...     firings="all",
+    ...     derivation="sd",
+    ...     timewindow=50,
+    ...     threshold=0.8,
+    ...     matrixcode="Custom order",
+    ...     orientation=180,
+    ...     n_rows=None,
+    ...     n_cols=None,
+    ...     custom_sorting_order=custom_sorting_order,
+    ...     exclude_belowthreshold=True,
+    ...     filter=True,
+    ...     show=False,
+    ... )
     """
 
     # Obtain STAs
@@ -870,6 +914,7 @@ def tracking(
             orientation=orientation,
             n_rows=n_rows,
             n_cols=n_cols,
+            custom_sorting_order=custom_sorting_order,
         )
         emgfile2_sorted = sort_rawemg(
             emgfile2,
@@ -877,6 +922,7 @@ def tracking(
             orientation=orientation,
             n_rows=n_rows,
             n_cols=n_cols,
+            custom_sorting_order=custom_sorting_order,
         )
 
         # Calculate the derivation if needed
@@ -1070,6 +1116,7 @@ def remove_duplicates_between(
     orientation=180,
     n_rows=None,
     n_cols=None,
+    custom_sorting_order=None,
     custom_muaps=None,
     filter=True,
     show=False,
@@ -1100,13 +1147,23 @@ def remove_duplicates_between(
     threshold : float, default 0.9
         The 2-dimensional cross-correlation minimum value
         to consider two MUs to be the same. Ranges 0-1.
-    matrixcode : str {"GR08MM1305", "GR04MM1305", "GR10MM0808", "None"}, default "GR08MM1305"
-        The code of the matrix used. This is necessary to sort the channels in
-        the correct order. If matrixcode="None", the electrodes are not sorted.
+    matrixcode : str, default "GR08MM1305"
+        The code of the matrix used. It can be one of:
+
+        ``GR08MM1305``
+        ``GR04MM1305``
+        ``GR10MM0808``
+        ``Custom order``
+        ``None``
+        This is necessary to sort the channels in the correct order.
+        If matrixcode="None", the electrodes are not sorted.
         In this case, n_rows and n_cols must be specified.
+        If "Custom order", the electrodes are sorted based on
+        custom_sorting_order.
     orientation : int {0, 180}, default 180
         Orientation in degree of the matrix (same as in OTBiolab).
         E.g. 180 corresponds to the matrix connection toward the user.
+        This Parameter is ignored if code=="Custom order" or code=="None".
     n_rows : None or int, default None
         The number of rows of the matrix. This parameter is used to divide the
         channels based on the matrix shape. These are normally inferred by the
@@ -1115,6 +1172,15 @@ def remove_duplicates_between(
         The number of columns of the matrix. This parameter is used to divide
         the channels based on the matrix shape. These are normally inferred by
         the matrix code and must be specified only if code == None.
+    custom_sorting_order : None or list, default None
+        If code=="Custom order", custom_sorting_order will be used for
+        channels sorting. In this case, custom_sorting_order must be a list of
+        lists containing the order of the matrix channels.
+        Specifically, the number of columns are defined by
+        len(custom_sorting_order) while the number of rows by
+        len(custom_sorting_order[0]). np.nan can be used to specify empty
+        channels. Please refer to the Examples section for the structure of
+        the custom sorting order.
     custom_muaps : None or list, default None
         With this parameter, it is possible to perform MUs tracking on MUAPs
         computed with custom techniques. If this parameter is None (default),
@@ -1181,6 +1247,39 @@ def remove_duplicates_between(
     ... )
     >>> emg.asksavefile(emgfile1)
     >>> emg.asksavefile(emgfile2)
+
+    Remove duplicated MUs between two files where channels are sorted with a
+    custom order and save the emgfiles without duplicates. Of the 2 duplicated
+    MUs, the one with the lowest accuracy is removed.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile1 = emg.askopenfile(filesource="CUSTOMCSV")
+    >>> emgfile2 = emg.askopenfile(filesource="CUSTOMCSV")
+    >>> custom_sorting_order = [
+    ...     [63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52,     51,],
+    ...     [38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,     50,],
+    ...     [37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26,     25,],
+    ...     [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,     24,],
+    ...     [11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1,  0, np.nan,],
+    ... ]  # 13 rows and 5 columns
+    >>> emgfile1, emgfile2, tracking_res = emg.remove_duplicates_between(
+    ...     emgfile1,
+    ...     emgfile2,
+    ...     firings="all",
+    ...     derivation="sd",
+    ...     timewindow=50,
+    ...     threshold=0.9,
+    ...     matrixcode="Custom order",
+    ...     orientation=180,
+    ...     n_rows=None,
+    ...     n_cols=None,
+    ...     custom_sorting_order=custom_sorting_order,
+    ...     filter=True,
+    ...     show=False,
+    ...     which="accuracy",
+    ... )
+    >>> emg.asksavefile(emgfile1)
+    >>> emg.asksavefile(emgfile2)
     """
 
     # Work on deepcopies
@@ -1199,6 +1298,7 @@ def remove_duplicates_between(
         orientation=orientation,
         n_rows=n_rows,
         n_cols=n_cols,
+        custom_sorting_order=custom_sorting_order,
         custom_muaps=custom_muaps,
         exclude_belowthreshold=True,
         filter=filter,
