@@ -402,7 +402,7 @@ class emgGUI():
         that users should be able to customize.
         """
         # Determine relative filepath
-        file_path = "openhdemg/gui/settings.py"
+        file_path = os.path.dirname(os.path.abspath(__file__)) + "/settings.py"
 
         # Check for operating system and open in default editor
         if sys.platform.startswith('darwin'):  # macOS
