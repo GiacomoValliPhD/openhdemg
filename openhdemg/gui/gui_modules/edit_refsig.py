@@ -12,15 +12,15 @@ class EditRefsig:
     """
     A class to manage editing of the reference signal in a GUI application.
 
-    This class creates a window that offers various options for editing the reference signal. 
-    It includes functionalities for filtering the signal, removing offset, converting the signal, 
-    and transforming it to a percentage value. The class is instantiated when the "RefSig Editing" 
+    This class creates a window that offers various options for editing the reference signal.
+    It includes functionalities for filtering the signal, removing offset, converting the signal,
+    and transforming it to a percentage value. The class is instantiated when the "RefSig Editing"
     button in the master GUI window is pressed.
 
     Attributes
     ----------
     parent : object
-        The parent widget, typically the main application window, to which this EditRefsig 
+        The parent widget, typically the main application window, to which this EditRefsig
         instance belongs.
     head : CTkToplevel
         The top-level widget for the Reference Signal Editing window.
@@ -51,7 +51,7 @@ class EditRefsig:
         Convert the reference signal using the specified operation (Multiply/Divide) and factor.
     to_percent(self)
         Convert the reference signal to a percentage value based on the specified MVC value.
-    
+
     Examples
     --------
     >>> main_window = Tk()
@@ -60,48 +60,49 @@ class EditRefsig:
 
     Notes
     -----
-    This class relies on the `ctk` and `ttk` modules from the `tkinter` library. The class is designed 
-    to be instantiated from within a larger GUI application and operates on the reference signal data 
+    This class relies on the `ctk` and `ttk` modules from the `tkinter` library. The class is designed
+    to be instantiated from within a larger GUI application and operates on the reference signal data
     that is accessible via the `parent` widget.
 
     """
+
     def __init__(self, parent):
         """
         Initialize a new instance of the EditRefsig class.
 
-        This method sets up the GUI components for the Reference Signal Editing Window. It includes 
-        controls for filtering the reference signal, removing its offset, converting it, and 
-        transforming it to a percentage value. The method configures and places various widgets 
+        This method sets up the GUI components for the Reference Signal Editing Window. It includes
+        controls for filtering the reference signal, removing its offset, converting it, and
+        transforming it to a percentage value. The method configures and places various widgets
         such as labels, entries, buttons, and combo boxes in a grid layout for user interaction.
 
         Parameters
         ----------
         parent : object
-            The parent widget, typically the main application window, to which this EditRefsig 
+            The parent widget, typically the main application window, to which this EditRefsig
             instance belongs. The parent is used for accessing shared resources and data.
 
         Raises
         ------
         AttributeError
-            If certain widgets or properties are not properly instantiated due to missing 
+            If certain widgets or properties are not properly instantiated due to missing
             parent configurations or resources.
         """
-        # Initialize parent and load parent settings 
+        # Initialize parent and load parent settings
         self.parent = parent
         self.parent.load_settings()
 
         # Create new window
-        self.head = ctk.CTkToplevel(fg_color="LightBlue4")
+        self.head = ctk.CTkToplevel()
         self.head.title("Reference Signal Editing Window")
-        
+
         head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         iconpath = head_path + "/gui_files/Icon2.ico"
         self.head.iconbitmap(default=iconpath)
         if platform.startswith("win"):
             self.head.after(200, lambda: self.head.iconbitmap(iconpath))
-        
+
         self.head.grab_set()
-        
+
         # Set resizable window
         # Configure columns with a loop
         for col in range(3):
@@ -110,14 +111,21 @@ class EditRefsig:
         # Configure rows with a loop
         for row in range(10):
             self.head.rowconfigure(row, weight=1)
-        
+
         # Filter Refsig
         # Define Labels
-        ctk.CTkLabel(self.head, text="Filter Order", font=('Segoe UI',15, 'bold')).grid(column=1, row=0, sticky=(W, E))
-        ctk.CTkLabel(self.head, text="Cutoff Freq", font=('Segoe UI',15, 'bold')).grid(column=2, row=0, sticky=(W, E))
+        ctk.CTkLabel(
+            self.head, text="Filter Order", font=("Segoe UI", 18, "bold")
+        ).grid(column=1, row=0, sticky=(W, E))
+        ctk.CTkLabel(self.head, text="Cutoff Freq", font=("Segoe UI", 18, "bold")).grid(
+            column=2, row=0, sticky=(W, E)
+        )
         # Fiter button
-        basic = ctk.CTkButton(self.head, text="Filter Refsig", command=self.filter_refsig,
-                              fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+        basic = ctk.CTkButton(
+            self.head,
+            text="Filter Refsig",
+            command=self.filter_refsig,
+        )
         basic.grid(column=0, row=1, sticky=W)
         self.filter_order = StringVar()
         order = ctk.CTkEntry(self.head, width=100, textvariable=self.filter_order)
@@ -133,14 +141,19 @@ class EditRefsig:
         separator2 = ttk.Separator(self.head, orient="horizontal")
         separator2.grid(column=0, columnspan=3, row=2, sticky=(W, E), padx=5, pady=5)
 
-        ctk.CTkLabel(self.head, text="Offset Value", font=('Segoe UI',15, 'bold')).grid(column=1, row=3, sticky=(W, E))
-        ctk.CTkLabel(self.head, text="Automatic Offset", font=('Segoe UI',15, 'bold')).grid(
-            column=2, row=3, sticky=(W, E)
-        )
+        ctk.CTkLabel(
+            self.head, text="Offset Value", font=("Segoe UI", 18, "bold")
+        ).grid(column=1, row=3, sticky=(W, E))
+        ctk.CTkLabel(
+            self.head, text="Automatic Offset", font=("Segoe UI", 18, "bold")
+        ).grid(column=2, row=3, sticky=(W, E))
 
         # Offset removal button
-        basic2 = ctk.CTkButton(self.head, text="Remove Offset", command=self.remove_offset,
-                               fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+        basic2 = ctk.CTkButton(
+            self.head,
+            text="Remove Offset",
+            command=self.remove_offset,
+        )
         basic2.grid(column=0, row=4, sticky=W)
 
         self.offsetval = StringVar()
@@ -157,13 +170,17 @@ class EditRefsig:
         separator3.grid(column=0, columnspan=3, row=5, sticky=(W, E), padx=5, pady=5)
 
         # Convert Reference signal
-        ctk.CTkLabel(self.head, text="Operator", font=('Segoe UI',15, 'bold')).grid(column=1, row=6, sticky=(W, E))
-        ctk.CTkLabel(self.head, text="Factor", font=('Segoe UI',15, 'bold')).grid(
+        ctk.CTkLabel(self.head, text="Operator", font=("Segoe UI", 18, "bold")).grid(
+            column=1, row=6, sticky=(W, E)
+        )
+        ctk.CTkLabel(self.head, text="Factor", font=("Segoe UI", 18, "bold")).grid(
             column=2, row=6, sticky=(W, E)
         )
 
         self.convert = StringVar()
-        convert = ctk.CTkComboBox(self.head, width=100, variable=self.convert, values=("Multiply", "Divide"))
+        convert = ctk.CTkComboBox(
+            self.head, width=100, variable=self.convert, values=("Multiply", "Divide")
+        )
         convert.configure(state="readonly")
         convert.grid(column=1, row=7)
         self.convert.set("Multiply")
@@ -173,30 +190,37 @@ class EditRefsig:
         factor.grid(column=2, row=7)
         self.convert_factor.set(2.5)
 
-        convert_button = ctk.CTkButton(self.head, text="Convert", command=self.convert_refsig,
-                                       fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+        convert_button = ctk.CTkButton(
+            self.head,
+            text="Convert",
+            command=self.convert_refsig,
+        )
         convert_button.grid(column=0, row=7, sticky=W)
 
         separator3 = ttk.Separator(self.head, orient="horizontal")
         separator3.grid(column=0, columnspan=3, row=8, sticky=(W, E), padx=5, pady=5)
 
         # Convert to percentage
-        ctk.CTkLabel(self.head, text="MVC Value", font=('Segoe UI',15, 'bold')).grid(column=1, row=9, sticky=(W, E))
-        
-        percent_button = ctk.CTkButton(self.head, text="To Percent*", command=self.to_percent,
-                                       fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+        ctk.CTkLabel(self.head, text="MVC Value", font=("Segoe UI", 18, "bold")).grid(
+            column=1, row=9, sticky=(W, E)
+        )
+
+        percent_button = ctk.CTkButton(
+            self.head,
+            text="To Percent*",
+            command=self.to_percent,
+        )
         percent_button.grid(column=0, row=10, sticky=W)
 
         self.mvc_value = DoubleVar()
         mvc = ctk.CTkEntry(self.head, width=100, textvariable=self.mvc_value)
         mvc.grid(column=1, row=10)
 
-
-        ctk.CTkLabel(self.head,
-                  text= "*Use this button \nonly if your Refsig \nis in absolute values!",
-                  font=("Arial", 8)).grid(
-            column=2, row=9, rowspan=2
-        )
+        ctk.CTkLabel(
+            self.head,
+            text="*Use this button \nonly if your Refsig \nis in absolute values!",
+            font=("Arial", 8),
+        ).grid(column=2, row=9, rowspan=2)
 
         # Add padding to all children widgets of head
         for child in self.head.winfo_children():
@@ -231,7 +255,9 @@ class EditRefsig:
             self.parent.in_gui_plotting(resdict=self.parent.resdict, plot="refsig_fil")
 
         except AttributeError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Make sure a Refsig file is loaded."))
+            show_error_dialog(
+                parent=self, error=e, solution=str("Make sure a Refsig file is loaded.")
+            )
 
     def remove_offset(self):
         """
@@ -260,10 +286,16 @@ class EditRefsig:
             self.parent.in_gui_plotting(resdict=self.parent.resdict, plot="refsig_off")
 
         except AttributeError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Make sure a Refsig file is loaded."))
+            show_error_dialog(
+                parent=self, error=e, solution=str("Make sure a Refsig file is loaded.")
+            )
 
         except ValueError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Make sure to specify valid filtering or offset values."))
+            show_error_dialog(
+                parent=self,
+                error=e,
+                solution=str("Make sure to specify valid filtering or offset values."),
+            )
 
     def convert_refsig(self):
         """
@@ -278,22 +310,32 @@ class EditRefsig:
             When no reference signal file is available
         ValueError
             When invalid conversion factor is specified
-        
+
         """
         try:
             if self.convert.get() == "Multiply":
-                self.parent.resdict["REF_SIGNAL"] = self.parent.resdict["REF_SIGNAL"] * self.convert_factor.get()
+                self.parent.resdict["REF_SIGNAL"] = (
+                    self.parent.resdict["REF_SIGNAL"] * self.convert_factor.get()
+                )
             elif self.convert.get() == "Divide":
-                self.parent.resdict["REF_SIGNAL"] = self.parent.resdict["REF_SIGNAL"] / self.convert_factor.get()
+                self.parent.resdict["REF_SIGNAL"] = (
+                    self.parent.resdict["REF_SIGNAL"] / self.convert_factor.get()
+                )
 
             # Update Plot
             self.parent.in_gui_plotting(resdict=self.parent.resdict, plot="refsig_off")
 
         except AttributeError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Make sure a Refsig file is loaded."))
+            show_error_dialog(
+                parent=self, error=e, solution=str("Make sure a Refsig file is loaded.")
+            )
 
         except ValueError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Make sure to specify valid conversion factor."))
+            show_error_dialog(
+                parent=self,
+                error=e,
+                solution=str("Make sure to specify valid conversion factor."),
+            )
 
     def to_percent(self):
         """
@@ -310,12 +352,20 @@ class EditRefsig:
             When invalid conversion factor is specified
         """
         try:
-            self.parent.resdict["REF_SIGNAL"] = (self.parent.resdict["REF_SIGNAL"] * 100) / self.mvc_value.get()
+            self.parent.resdict["REF_SIGNAL"] = (
+                self.parent.resdict["REF_SIGNAL"] * 100
+            ) / self.mvc_value.get()
             # Update Plot
             self.parent.in_gui_plotting(resdict=self.parent.resdict)
 
         except AttributeError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Make sure a Refsig file is loaded."))
+            show_error_dialog(
+                parent=self, error=e, solution=str("Make sure a Refsig file is loaded.")
+            )
 
         except ValueError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Make sure to specify valid conversion factor."))
+            show_error_dialog(
+                parent=self,
+                error=e,
+                solution=str("Make sure to specify valid conversion factor."),
+            )

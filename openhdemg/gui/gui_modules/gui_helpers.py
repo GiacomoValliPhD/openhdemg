@@ -1,7 +1,6 @@
 """Module that contains all helper functions for the GUI"""
 
-from tkinter import W, E, filedialog
-import customtkinter as ctk
+from tkinter import filedialog
 import pandas as pd
 
 import openhdemg.library as openhdemg
@@ -106,12 +105,12 @@ class GUIHelpers:
             # Delsys requires different handling for resize
             if self.parent.resdict["SOURCE"] == "DELSYS":
                 self.parent.resdict, _, _ = openhdemg.resize_emgfile(
-                    emgfile=self.parent.resdict, area=[start, end],
-                    accuracy="maintain"
+                    emgfile=self.parent.resdict, area=[start, end], accuracy="maintain"
                 )
             else:
                 self.parent.resdict, _, _ = openhdemg.resize_emgfile(
-                    emgfile=self.parent.resdict, area=[start, end],
+                    emgfile=self.parent.resdict,
+                    area=[start, end],
                     accuracy=self.parent.settings.resize_emgfile__accuracy,
                     ignore_negative_ipts=self.parent.settings.resize_emgfile__ignore_negative_ipts,
                 )
@@ -119,14 +118,15 @@ class GUIHelpers:
             self.parent.in_gui_plotting(resdict=self.parent.resdict)
 
             # Update filelength
-            ctk.CTkLabel(
-                self.parent.left, text=str(self.parent.resdict["EMG_LENGTH"]),
-                font=('Segoe UI', 12)
-            ).grid(column=2, row=4, sticky=(W, E))
+            self.parent.file_length.configure(
+                text="N of MUs: " + str(self.parent.resdict["EMG_LENGTH"]),
+                font=("Segoe UI", 15, "bold"),
+            )
 
         except AttributeError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Make sure a file is loaded."),
             )
 
@@ -150,15 +150,13 @@ class GUIHelpers:
             path = filedialog.askdirectory()
 
             # Define excel writer
-            writer = pd.ExcelWriter(
-                path + "/Results_" + self.parent.filename + ".xlsx"
-            )
+            writer = pd.ExcelWriter(path + "/Results_" + self.parent.filename + ".xlsx")
 
             # Check for attributes and write sheets
             if hasattr(self.parent, "mvc_df"):
                 self.parent.mvc_df.to_excel(writer, sheet_name="MVC")
 
-            if hasattr(self.parent, "rfd"): 
+            if hasattr(self.parent, "rfd"):
                 self.parent.rfd.to_excel(writer, sheet_name="RFD")
 
             if hasattr(self.parent, "exportable_df"):
@@ -167,9 +165,7 @@ class GUIHelpers:
                 )
 
             if hasattr(self.parent, "mus_dr"):
-                self.parent.mus_dr.to_excel(
-                    writer, sheet_name="MU Discharge Rate"
-                )
+                self.parent.mus_dr.to_excel(writer, sheet_name="MU Discharge Rate")
 
             if hasattr(self.parent, "mu_thresholds"):
                 self.mu_thresholds.to_excel(writer, sheet_name="MU Thresholds")
@@ -178,21 +174,22 @@ class GUIHelpers:
 
         except IndexError as e:
             show_error_dialog(
-                parent=self, error=e,
-                solution=str(
-                    "Please conduct at least one analysis before saving."
-                ),
+                parent=self,
+                error=e,
+                solution=str("Please conduct at least one analysis before saving."),
             )
 
         except AttributeError as e:
             show_error_dialog(
-                parent=self, error=e,
-                solution=str("Make sure a file is loaded."))
+                parent=self, error=e, solution=str("Make sure a file is loaded.")
+            )
 
         except PermissionError as e:
             show_error_dialog(
-                parent=self, error=e,
-                solution=str("If /Results.xlsx already opened, please close."))
+                parent=self,
+                error=e,
+                solution=str("If /Results.xlsx already opened, please close."),
+            )
 
     def sort_mus(self):
         """
@@ -224,13 +221,15 @@ class GUIHelpers:
 
         except AttributeError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Make sure a file is loaded."),
             )
 
         except KeyError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str(
                     "Sorting not possible when ≤ 1"
                     + "\nMU is present in the File (i.e. Refsigs)"

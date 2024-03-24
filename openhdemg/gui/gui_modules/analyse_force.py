@@ -13,14 +13,14 @@ class AnalyseForce:
     """
     A class for conducting force analysis in an openhdemg GUI application.
 
-    This class provides a window for analyzing force signals. It includes functionalities 
-    for calculating Maximum Voluntary Contraction (MVC) and Rate of Force Development (RFD). 
+    This class provides a window for analyzing force signals. It includes functionalities
+    for calculating Maximum Voluntary Contraction (MVC) and Rate of Force Development (RFD).
     The class is activated through the "Analyse Force" button in the main GUI window.
 
     Attributes
     ----------
     parent : object
-        The parent widget, typically the main application window, to which this AnalyseForce 
+        The parent widget, typically the main application window, to which this AnalyseForce
         instance belongs.
     head : CTkToplevel
         The top-level widget for the Force Analysis window.
@@ -35,7 +35,7 @@ class AnalyseForce:
         Calculate and display the Maximum Voluntary Contraction (MVC).
     get_rfd(self)
         Calculate and display the Rate of Force Development (RFD) over specified milliseconds.
-    
+
     Examples
     --------
     >>> main_window = Tk()
@@ -44,7 +44,7 @@ class AnalyseForce:
 
     Notes
     -----
-    The class is designed to be a part of a larger GUI application and interacts with force 
+    The class is designed to be a part of a larger GUI application and interacts with force
     signal data accessible via the `parent` widget.
     """
 
@@ -52,42 +52,42 @@ class AnalyseForce:
         """
         Initialize a new instance of the AnalyseForce class.
 
-        This method sets up the GUI components for the Force Analysis Window. It includes buttons 
-        for calculating MVC and RFD, and an entry field for specifying RFD milliseconds. The method 
-        configures and places various widgets such as labels, buttons, and entry fields in a grid 
+        This method sets up the GUI components for the Force Analysis Window. It includes buttons
+        for calculating MVC and RFD, and an entry field for specifying RFD milliseconds. The method
+        configures and places various widgets such as labels, buttons, and entry fields in a grid
         layout for user interaction.
 
         Parameters
         ----------
         parent : object
-            The parent widget, typically the main application window, to which this AnalyseForce 
+            The parent widget, typically the main application window, to which this AnalyseForce
             instance belongs. The parent is used for accessing shared resources and data.
 
         Raises
         ------
         AttributeError
-            If certain widgets or properties are not properly instantiated due to missing 
+            If certain widgets or properties are not properly instantiated due to missing
             parent configurations or resources.
 
         """
-        # Initialize parent and load parent settings 
-        
+        # Initialize parent and load parent settings
+
         self.parent = parent
         self.parent.load_settings()
-        
+
         # Create new window
-        self.head = ctk.CTkToplevel(fg_color="LightBlue4")
+        self.head = ctk.CTkToplevel()
         self.head.title("Force Analysis Window")
-        
+
         # Set window icon
         head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         iconpath = head_path + "/gui_files/Icon2.ico"
-        self.head.iconbitmap(default=iconpath)
+        self.head.iconbitmap(iconpath)
         if platform.startswith("win"):
             self.head.after(200, lambda: self.head.iconbitmap(iconpath))
-        
+
         self.head.grab_set()
-        
+
         # Set resizable window
         # Configure columns with a loop
         for col in range(3):
@@ -96,22 +96,20 @@ class AnalyseForce:
         # Configure rows with a loop
         for row in range(10):
             self.head.rowconfigure(row, weight=1)
-            
+
         # Get MVC
-        get_mvf = ctk.CTkButton(self.head, text="Get MVC", command=self.get_mvc,
-                                fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+        get_mvf = ctk.CTkButton(self.head, text="Get MVC", command=self.get_mvc)
         get_mvf.grid(column=0, row=1, sticky=(W, E), padx=5, pady=5)
 
         # Get RFD
         separator1 = ttk.Separator(self.head, orient="horizontal")
         separator1.grid(column=0, columnspan=3, row=2, sticky=(W, E), padx=5, pady=5)
 
-        ctk.CTkLabel(self.head, text="RFD miliseconds", font=('Segoe UI',15, 'bold')).grid(
-            column=1, row=3, sticky=(W, E), padx=5, pady=5
-        )
+        ctk.CTkLabel(
+            self.head, text="RFD miliseconds", font=("Segoe UI", 18, "bold")
+        ).grid(column=1, row=3, sticky=(W, E), padx=5, pady=5)
 
-        get_rfd = ctk.CTkButton(self.head, text="Get RFD", command=self.get_rfd,
-                                fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+        get_rfd = ctk.CTkButton(self.head, text="Get RFD", command=self.get_rfd)
         get_rfd.grid(column=0, row=4, sticky=(W, E), padx=5, pady=5)
 
         self.rfdms = StringVar()
@@ -147,7 +145,9 @@ class AnalyseForce:
             self.parent.display_results(input_df=self.parent.mvc_df)
 
         except AttributeError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))
+            show_error_dialog(
+                parent=self, error=e, solution=str("Make sure a file is loaded.")
+            )
 
     def get_rfd(self):
         """
@@ -173,9 +173,13 @@ class AnalyseForce:
             # Use comprehension to iterate through
             ms_list = [int(i) for i in ms_list]
             # Calculate rfd
-            self.parent.rfd = openhdemg.compute_rfd(emgfile=self.parent.resdict, ms=ms_list)
+            self.parent.rfd = openhdemg.compute_rfd(
+                emgfile=self.parent.resdict, ms=ms_list
+            )
             # Display results
             self.parent.display_results(input_df=self.parent.rfd)
 
         except AttributeError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))
+            show_error_dialog(
+                parent=self, error=e, solution=str("Make sure a file is loaded.")
+            )

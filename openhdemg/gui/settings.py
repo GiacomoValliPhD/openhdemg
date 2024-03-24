@@ -16,17 +16,6 @@ A tutorial on how to use this settings file is available at:
 
 import numpy as np
 
-# These graphic parameters are updated only after restarting the GUI
-#
-# --------------------------------- GUI LOOK ----------------------------------
-gui_background_color = "LightBlue4"
-# Options are #TODO Paul please explain what colors can be used, I will add these in the tutorial
-#TODO we also must rename this file in something more specific like gui_settings.py
-# Please insert gui_background_color were needed in the .py GUI files, I didn't do that
-
-
-# The following parameters are updated without restarting the GUI
-#
 # --------------------------------- openfiles ---------------------------------
 
 # in emg_from_demuse()  # DONE and it works
@@ -36,6 +25,7 @@ emg_from_demuse__ignore_negative_ipts = False
 emg_from_otb__refsig = [True, "fullsampled"]
 emg_from_otb__extras = None
 emg_from_otb__ignore_negative_ipts = False
+emg_from_otb__extension_factor = 8  # TODO Giacomo check please
 
 # in refsig_from_otb()
 refsig_from_otb__refsig = "fullsampled"
@@ -58,6 +48,7 @@ emg_from_customcsv__binary_mus_firing = "BINARY_MUS_FIRING"
 emg_from_customcsv__accuracy = "ACCURACY"
 emg_from_customcsv__extras = "EXTRAS"
 emg_from_customcsv__ied = 8
+emg_from_customcsv__sampling_frequency = 1000  # TODO Giacomo check please
 # TODO in main window and in advanced tools, when selecting OTB, delsys and custom CSV (both emgifle and refsig) write to check settings file
 
 # in refsig_from_customcsv()
@@ -68,7 +59,7 @@ refsig_from_customcsv__extras = "EXTRAS"
 save_json_emgfile__compresslevel = 4  # DONE and it works
 
 
-# ---------------------------------- analysis ---------------------------------  # DONE and it works
+# ---------------------------------- analysis ---------------------------------
 
 # in compute_thresholds()
 compute_thresholds__n_firings = 1
@@ -80,7 +71,7 @@ basic_mus_properties__ignore_negative_ipts = False
 basic_mus_properties__constrain_pulses = [True, 3]
 
 
-# ----------------------------------- tools -----------------------------------  # DONE and it works
+# ----------------------------------- tools -----------------------------------
 
 # in resize_emgfile()
 resize_emgfile__how = "ref_signal"
