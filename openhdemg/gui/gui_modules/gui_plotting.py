@@ -194,7 +194,7 @@ class PlotEmg:
                 self.head,
                 text="Figure size in cm (h,w)",
                 font=("Segoe UI", 18, "bold"),
-            ).grid(column=0, row=2)
+            ).grid(column=0, row=2, sticky=W)
             self.size_fig = StringVar()
             fig_entry = ctk.CTkEntry(self.head, width=100, textvariable=self.size_fig)
             self.size_fig.set("20,15")
@@ -297,14 +297,13 @@ class PlotEmg:
             ).grid(row=0, column=3, sticky=(W))
 
             self.mat_code = StringVar()
-            # NOTE the matrix codes can only be those accepted by sort_rawemg(). matrix_code_values = ("GR08MM1305", "GR04MM1305", "GR10MM0808", self.parent.settings.delsys_sensor_label, "None")
             matrix_code_values = (
+                "Custom order",
+                "None",
                 "GR08MM1305",
                 "GR04MM1305",
                 "GR10MM0808",
                 "Trigno Galileo Sensor",
-                "Custom order",
-                "None",
             )
             matrix_code = ctk.CTkComboBox(
                 self.head,
@@ -314,10 +313,10 @@ class PlotEmg:
                 state="readonly",
             )
             matrix_code.grid(row=0, column=4, sticky=(W, E))
-            self.mat_code.set("GR08MM1305")
+            self.mat_code.set("Custom order")
 
             # Trace matrix code value
-            self.mat_code.trace_add("write", self.on_matrix_none)
+            self.mat_code.trace_add("write", self.on_matrix_none)  #TODO
 
             # Matrix Orientation
             ctk.CTkLabel(
@@ -505,7 +504,7 @@ class PlotEmg:
             # Column entry only when specified matrix code
             self.row_cols_entry = ctk.CTkEntry(
                 self.head,
-                width=30,
+                width=80,
                 textvariable=self.matrix_rc,
             )
             self.row_cols_entry.grid(row=0, column=6, sticky=W, padx=5)

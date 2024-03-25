@@ -18,14 +18,14 @@ import numpy as np
 
 # --------------------------------- openfiles ---------------------------------
 
-# in emg_from_demuse()  # DONE and it works
+# in emg_from_demuse()
 emg_from_demuse__ignore_negative_ipts = False
 
-# in emg_from_otb()  # DONE and it works
+# in emg_from_otb()
+emg_from_otb__ext_factor = 8
 emg_from_otb__refsig = [True, "fullsampled"]
 emg_from_otb__extras = None
 emg_from_otb__ignore_negative_ipts = False
-emg_from_otb__extension_factor = 8  # TODO Giacomo check please
 
 # in refsig_from_otb()
 refsig_from_otb__refsig = "fullsampled"
@@ -47,16 +47,16 @@ emg_from_customcsv__mupulses = "MUPULSES"
 emg_from_customcsv__binary_mus_firing = "BINARY_MUS_FIRING"
 emg_from_customcsv__accuracy = "ACCURACY"
 emg_from_customcsv__extras = "EXTRAS"
+emg_from_customcsv__fsamp = 2048
 emg_from_customcsv__ied = 8
-emg_from_customcsv__sampling_frequency = 1000  # TODO Giacomo check please
-# TODO in main window and in advanced tools, when selecting OTB, delsys and custom CSV (both emgifle and refsig) write to check settings file
 
 # in refsig_from_customcsv()
 refsig_from_customcsv__ref_signal = "REF_SIGNAL"
 refsig_from_customcsv__extras = "EXTRAS"
+refsig_from_customcsv__fsamp = 2048
 
 # in save_json_emgfile()
-save_json_emgfile__compresslevel = 4  # DONE and it works
+save_json_emgfile__compresslevel = 4
 
 
 # ---------------------------------- analysis ---------------------------------

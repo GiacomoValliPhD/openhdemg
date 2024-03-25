@@ -101,8 +101,8 @@ class MuAnalysis:
         and custom widgets (like CTkLabel, CTkEntry, CTkButton, CTkComboBox).
         Each widget is configured with specific properties like size, color,
         and variable bindings and placed in a grid layout.
-
         """
+
         # Initialize parent and load parent settings
         self.parent = parent
         self.parent.load_settings()

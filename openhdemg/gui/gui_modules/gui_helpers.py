@@ -130,6 +130,13 @@ class GUIHelpers:
                 solution=str("Make sure a file is loaded."),
             )
 
+        except ValueError as e:
+            show_error_dialog(
+                parent=self,
+                error=e,
+                solution=str("Verify settings for resize_emgfile()."),
+            )
+
     def export_to_excel(self):
         """
         Instnace method to export any prior analysis results. Results are

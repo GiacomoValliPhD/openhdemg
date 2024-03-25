@@ -50,100 +50,99 @@ from openhdemg.gui.gui_modules import (
 
 matplotlib.use("TkAgg")
 ctk.set_default_color_theme(
-    os.path.dirname(os.path.abspath(__file__)) + "/gui_files/openhdemg.json"
+    os.path.dirname(os.path.abspath(__file__))
+    + "/gui_files/gui_color_theme.json"
 )
 
 
 class emgGUI(ctk.CTk):
     """
-     This class is used to create a graphical user interface for the openhdemg
-     library.
+    This class is used to create a graphical user interface for the openhdemg
+    library.
 
-     Within this class and corresponding childs, most functionalities of the
-     openhdemg library are packed in a GUI. However, the library is more
-     comprehensive and much more adaptable to the users needs.
+    Within this class and corresponding childs, most functionalities of the
+    openhdemg library are packed in a GUI. However, the library is more
+    comprehensive and much more adaptable to the users needs.
 
-     Attributes
-     ----------
-     self.canvas : matplotlib.backends.backend_tkagg
-         Canvas for plotting figures inside the GUI.
-     self.channels : int or list
-         The channel (int) or channels (list of int) to plot.
-         The list can be passed as a manually-written with: "0,1,2,3,4,5...,n",
-         channels is expected to be with base 0.
-     self.fig : matplotlib.figure
-         Figure to be plotted on Canvas.
-     self.filename : str
-         String and name of the file to be analysed.
-     self.filepath : str
-         String containing the path to EMG file selected for analysis.
-     self.filetype : str
-         String containing the filetype of import EMG file.
-         Filetype can be "OPENHDEMG", "OTB", "DEMUSE", "OTB_REFSIG",
-         "CUSTOMCSV", "CUSTOMCSV_REFSIG".
-     self.left : tk.frame
-         Left frame inside of self that contains all buttons and filespecs.
+    Attributes
+    ----------
+    self.canvas : matplotlib.backends.backend_tkagg
+        Canvas for plotting figures inside the GUI.
+    self.channels : int or list
+        The channel (int) or channels (list of int) to plot.
+        The list can be passed as a manually-written with: "0,1,2,3,4,5...,n",
+        channels is expected to be with base 0.
+    self.fig : matplotlib.figure
+        Figure to be plotted on Canvas.
+    self.filename : str
+        String and name of the file to be analysed.
+    self.filepath : str
+        String containing the path to EMG file selected for analysis.
+    self.filetype : str
+        String containing the filetype of import EMG file.
+        Filetype can be "OPENHDEMG", "OTB", "DEMUSE", "OTB_REFSIG",
+        "CUSTOMCSV", "CUSTOMCSV_REFSIG".
+    self.left : tk.frame
+        Left frame inside of self that contains all buttons and filespecs.
     self.logo :
-         String containing the path to image file containing logo of openhdemg.
-     self.logo_canvas : tk.canvas
-         Canvas to display logo of Open_HG-EMG when openend.
-     self.self: tk
-         TK self window containing all widget children for this GUI.
-     self.resdict : dict
-         Dictionary derived from input EMG file for further analysis.
-     self.right : tk.frame
-         Left frame inside of self that contains plotting canvas.
-     self.terminal : ttk.Labelframe
-         Tkinter labelframe that is used to display the results table in the
-         GUI.
-     self.info : tk.PhotoImage
-         Information Icon displayed in GUI.
-     self.online : tk.Photoimage
-         Online Icon displayed in GUI.
-     self.redirect : tk.PhotoImage
-         Redirection Icon displayed in GUI.
-     self.contact : tk.PhotoImage
-         Contact Icon displayed in GUI.
-     self.cite : tk.PhotoImage
-         Citation Icon displayed in GUI.
-     self.extension_factor : tk.StringVar()
-         Stringvariable containing the OTB extension factor value.
+        String containing the path to image file containing logo of openhdemg.
+    self.logo_canvas : tk.canvas
+        Canvas to display logo of Open_HG-EMG when openend.
+    self.self: tk
+        TK self window containing all widget children for this GUI.
+    self.resdict : dict
+        Dictionary derived from input EMG file for further analysis.
+    self.right : tk.frame
+        Left frame inside of self that contains plotting canvas.
+    self.terminal : ttk.Labelframe
+        Tkinter labelframe that is used to display the results table in the
+        GUI.
+    self.info : tk.PhotoImage
+        Information Icon displayed in GUI.
+    self.online : tk.Photoimage
+        Online Icon displayed in GUI.
+    self.redirect : tk.PhotoImage
+        Redirection Icon displayed in GUI.
+    self.contact : tk.PhotoImage
+        Contact Icon displayed in GUI.
+    self.cite : tk.PhotoImage
+        Citation Icon displayed in GUI.
 
-     Methods
-     -------
-     __init__(self)
-         Initializes GUI class and main GUI window (self).
-     get_file_input()
-         Gets emgfile location and respective file is loaded.
-         Executed when button "Load File" in self GUI window pressed.
-     save_emgfile()
-         Saves the edited emgfile dictionary to a .json file.
-         Executed when button "Save File" in self GUI window pressed.
-     reset_analysis()
-         Resets the whole analysis, restores the original input file and the
-         graph.
-         Executed when button "Reset analysis" in self GUI window pressed.
-     in_gui_plotting()
-         Method used for creating plot inside the GUI (on the GUI canvas).
-         Executed when button "View MUs" in self GUI window pressed.
-     mu_analysis()
-         Opens seperate window to calculated specific motor unit properties.
-         Executed when button "MU properties" in self GUI window pressed.
-     display_results()
-         Method used to display result table containing analysis results.
+    Methods
+    -------
+    __init__(self)
+        Initializes GUI class and main GUI window (self).
+    get_file_input()
+        Gets emgfile location and respective file is loaded.
+        Executed when button "Load File" in self GUI window pressed.
+    save_emgfile()
+        Saves the edited emgfile dictionary to a .json file.
+        Executed when button "Save File" in self GUI window pressed.
+    reset_analysis()
+        Resets the whole analysis, restores the original input file and the
+        graph.
+        Executed when button "Reset analysis" in self GUI window pressed.
+    in_gui_plotting()
+        Method used for creating plot inside the GUI (on the GUI canvas).
+        Executed when button "View MUs" in self GUI window pressed.
+    mu_analysis()
+        Opens seperate window to calculated specific motor unit properties.
+        Executed when button "MU properties" in self GUI window pressed.
+    display_results()
+        Method used to display result table containing analysis results.
 
-     Notes
-     -----
-     Please note that altough we created a GUI class, the included methods/
-     instances are highly specific. We did not conceptualize the
-     methods/instances to be used seperately. Similar functionalities are
-     available in the library and were specifically coded to be used
-     seperately/singularly.
+    Notes
+    -----
+    Please note that altough we created a GUI class, the included methods/
+    instances are highly specific. We did not conceptualize the
+    methods/instances to be used seperately. Similar functionalities are
+    available in the library and were specifically coded to be used
+    seperately/singularly.
 
-     Most instance methods of this class heavily rely on the functions provided
-     in the library. In the section "See Also" at each instance method, the
-     reader is referred to the corresponding function and extensive
-     documentation in the library.
+    Most instance methods of this class heavily rely on the functions provided
+    in the library. In the section "See Also" at each instance method, the
+    reader is referred to the corresponding function and extensive
+    documentation in the library.
     """
 
     def __init__(self):
@@ -163,7 +162,9 @@ class emgGUI(ctk.CTk):
         # Set up GUI
         self.title("openhdemg")
         master_path = os.path.dirname(os.path.abspath(__file__))
-        ctk.set_default_color_theme(master_path + "/gui_files/openhdemg.json")
+        ctk.set_default_color_theme(
+            master_path + "/gui_files/gui_color_theme.json"
+        )
 
         iconpath = master_path + "/gui_files/Icon2.ico"
         self.iconbitmap(iconpath)
@@ -387,7 +388,8 @@ class emgGUI(ctk.CTk):
         logo_path = master_path + "/gui_files/logo.png"  # Get logo path
         self.logo = tk.PhotoImage(file=logo_path)
 
-        self.logo_canvas.create_image(  # TODO make resizable
+        # TODO make resizable and centre the logo
+        self.logo_canvas.create_image(
             1000,
             500,
             image=self.logo,
@@ -597,7 +599,7 @@ class emgGUI(ctk.CTk):
                         # Load file
                         self.resdict = openhdemg.emg_from_otb(
                             filepath=self.file_path,
-                            ext_factor=int(self.extension_factor.get()),
+                            ext_factor=self.settings.emg_from_otb__ext_factor,
                             refsig=self.settings.emg_from_otb__refsig,
                             extras=self.settings.emg_from_otb__extras,
                             ignore_negative_ipts=self.settings.emg_from_otb__ignore_negative_ipts,
@@ -658,7 +660,11 @@ class emgGUI(ctk.CTk):
 
                         # load DELSYS
                         self.resdict = openhdemg.emg_from_delsys(
-                            rawemg_filepath=self.file_path, mus_directory=self.mus_path
+                            rawemg_filepath=self.file_path,
+                            mus_directory=self.mus_path,
+                            emg_sensor_name=self.settings.emg_from_delsys__emg_sensor_name,
+                            refsig_sensor_name=self.settings.emg_from_delsys__refsig_sensor_name,
+                            filename_from=self.settings.emg_from_delsys__filename_from,
                         )
                         # Add filespecs
                         self.n_channels.configure(
@@ -709,15 +715,16 @@ class emgGUI(ctk.CTk):
                             # Add filespecs
                             self.n_channels.configure(
                                 text="N Channels: "
-                                + str(len(self.resdict["RAW_SIGNAL"].columns)),
+                                + str(len(self.resdict["REF_SIGNAL"].columns)),
                                 font=("Segoe UI", 15, ("bold")),
                             )
                             self.n_of_mus.configure(
-                                text="N of MUs: " + str(self.resdict["NUMBER_OF_MUS"]),
+                                text="N of MUs: N/A",
                                 font=("Segoe UI", 15, "bold"),
                             )
                             self.file_length.configure(
-                                text="File Length: " + str(self.resdict["EMG_LENGTH"]),
+                                text="File Length: "
+                                + str(len(self.resdict["REF_SIGNAL"].iloc[:, 0])),
                                 font=("Segoe UI", 15, "bold"),
                             )
                     else:
@@ -730,7 +737,15 @@ class emgGUI(ctk.CTk):
                         # load file
                         self.resdict = openhdemg.emg_from_customcsv(
                             filepath=self.file_path,
-                            fsamp=float(self.fsamp.get()),
+                            ref_signal=self.settings.emg_from_customcsv__ref_signal,
+                            raw_signal=self.settings.emg_from_customcsv__raw_signal,
+                            ipts=self.settings.emg_from_customcsv__ipts,
+                            mupulses=self.settings.emg_from_customcsv__mupulses,
+                            binary_mus_firing=self.settings.emg_from_customcsv__binary_mus_firing,
+                            accuracy=self.settings.emg_from_customcsv__accuracy,
+                            extras=self.settings.emg_from_customcsv__extras,
+                            fsamp=self.settings.emg_from_customcsv__fsamp,
+                            ied=self.settings.emg_from_customcsv__ied,
                         )
                         # Add filespecs
                         self.n_channels.configure(
@@ -758,8 +773,8 @@ class emgGUI(ctk.CTk):
                     progress.grid_remove()
                     progress.stop()
 
-                # This sections is used for refsig loading as they required not the
-                # the filespecs to be loaded.
+                # This sections is used for refsig loading as they do not
+                # require the filespecs to be loaded.
                 else:
                     if self.filetype.get() == "OTB_REFSIG":
                         file_path = filedialog.askopenfilename(
@@ -769,7 +784,9 @@ class emgGUI(ctk.CTk):
                         self.file_path = file_path
                         # load refsig
                         self.resdict = openhdemg.refsig_from_otb(
-                            filepath=self.file_path
+                            filepath=self.file_path,
+                            refsig=self.settings.refsig_from_otb__refsig,
+                            extras=self.settings.refsig_from_otb__extras,
                         )
 
                     elif self.filetype.get() == "DELSYS_REFSIG":
@@ -782,7 +799,8 @@ class emgGUI(ctk.CTk):
                         self.file_path = file_path
                         # load DELSYS
                         self.resdict = openhdemg.refsig_from_delsys(
-                            filepath=self.file_path
+                            filepath=self.file_path,
+                            refsig_sensor_name=self.settings.refsig_from_delsys__refsig_sensor_name,
                         )
 
                     elif self.filetype.get() == "CUSTOMCSV_REFSIG":
@@ -794,7 +812,9 @@ class emgGUI(ctk.CTk):
                         # load refsig
                         self.resdict = openhdemg.refsig_from_customcsv(
                             filepath=self.file_path,
-                            fsamp=float(self.fsamp.get()),
+                            ref_signal=self.settings.refsig_from_customcsv__ref_signal,
+                            extras=self.settings.refsig_from_customcsv__extras,
+                            fsamp=self.settings.refsig_from_customcsv__fsamp,
                         )
 
                     # Get filename
@@ -804,15 +824,20 @@ class emgGUI(ctk.CTk):
                     # Add filename to label
                     self.title(self.filename)
 
-                    # Reconfigure labels for refsig
-                    ctk.CTkLabel(
-                        self.left, text=str(len(self.resdict["REF_SIGNAL"].columns))
-                    ).grid(column=2, row=2, sticky=(W, E), padx=5, pady=5)
-                    ctk.CTkLabel(self.left, text="NA").grid(
-                        column=2, row=3, sticky=(W, E), padx=5, pady=5
+                    # Add filespecs
+                    self.n_channels.configure(
+                        text="N Channels: "
+                        + str(len(self.resdict["REF_SIGNAL"].columns)),
+                        font=("Segoe UI", 15, ("bold")),
                     )
-                    ctk.CTkLabel(self.left, text="        ").grid(
-                        column=2, row=4, sticky=(W, E), padx=5, pady=5
+                    self.n_of_mus.configure(
+                        text="N of MUs: N/A",
+                        font=("Segoe UI", 15, "bold"),
+                    )
+                    self.file_length.configure(
+                        text="File Length: "
+                        + str(len(self.resdict["REF_SIGNAL"].iloc[:, 0])),
+                        font=("Segoe UI", 15, "bold"),
                     )
 
                 # End progress
@@ -880,6 +905,9 @@ class emgGUI(ctk.CTk):
                 progress.stop()
                 progress.grid_remove()
 
+        # Re-Load settings
+        self.load_settings()
+
         # Indicate Progress
         progress = ctk.CTkProgressBar(
             self.left,
@@ -895,42 +923,27 @@ class emgGUI(ctk.CTk):
 
     def on_filetype_change(self, *args):
         """
-        This function is called when the value of the filetype variable is changed.
-        When the filetype is set to "OTB", "CUSTOMCSV", "CUSTOMCSV_REFSIG" it will
-        create a second combobox on the grid at column 0 and row 2 and when the filetype
-        is set to something else it will remove the second combobox from the grid.
+        This function is called when the value of the filetype variable is
+        changed. If filetype is set to != "OPENHDEMG", it will create a second
+        combobox on the grid at column 0 and row 2 and when the filetype is
+        set to "OPENHDEMG" it will remove the second combobox from the grid.
         """
-        if self.filetype.get() not in ["OTB"]:
-            if hasattr(self, "otb_text"):
-                self.otb_text.grid_forget()
-        if self.filetype.get() not in ["CUSTOMCSV"]:
-            if hasattr(self, "csv_entry"):
-                self.csv_entry.grid_forget()
-        if self.filetype.get() not in ["CUSTOMCSV_REFSIG"]:
-            if hasattr(self, "csv_entry"):
-                self.csv_entry.grid_forget()
 
-        # Add a combobox containing the OTB extension factors
-        # in case an OTB file is loaded
-        if self.filetype.get() == "OTB":
-            self.extension_factor = int(settings.emg_from_otb__extension_factor)
-            self.otb_text = ctk.CTkLabel(
+        # Make sure to forget all the previous labels
+        if hasattr(self, "verify_settings_text"):
+            self.verify_settings_text.grid_forget()
+
+        if self.filetype.get() != "OPENHDEMG":
+            # Display the text: Verify openfiles settings!
+            self.verify_settings_text = ctk.CTkLabel(
                 self.left,
                 text="Verify openfiles settings!",
                 font=("Segoe UI", 12, "bold"),
                 text_color="black",
             )
-            self.otb_text.grid(column=0, row=2, sticky=(W, E), padx=5)
-
-        elif self.filetype.get() in ["CUSTOMCSV", "CUSTOMCSV_REFSIG"]:
-            self.fsamp = int(settings.emg_from_customcsv__sampling_frequency)
-            self.csv_entry = ctk.CTkLabel(
-                self.left,
-                text="Verify openfiles settings!",
-                font=("Segoe UI", 12, "bold"),
-                text_color="black",
+            self.verify_settings_text.grid(
+                column=0, row=2, sticky=(W, E), padx=5,
             )
-            self.csv_entry.grid(column=0, row=2, sticky=(W, E), padx=5)
 
     def save_emgfile(self):
         """
@@ -987,6 +1000,9 @@ class emgGUI(ctk.CTk):
                     solution=str("Make sure a file is loaded."),
                 )
 
+        # Re-Load settings
+        self.load_settings()
+
         # Indicate Progress
         progress = ctk.CTkProgressBar(self.left, mode="indeterminate")
         progress.grid(row=4, column=0)
@@ -998,11 +1014,11 @@ class emgGUI(ctk.CTk):
 
     def reset_analysis(self):
         """
-        Instance method to restore the GUI to base data. Any analysis progress will be deleted by
-        reloading the original file.
+        Instance method to restore the GUI to base data. Any analysis progress
+        will be deleted by reloading the original file.
 
-        Executed when button "Reset Analysis" in master GUI window is pressed. The emgfile is
-        updated to its original state.
+        Executed when button "Reset Analysis" in master GUI window is pressed.
+        The emgfile is updated to its original state.
 
         Raises
         ------
@@ -1011,123 +1027,155 @@ class emgGUI(ctk.CTk):
         FileNotFoundError
             When no file was loaded in the GUI.
         """
+
         # Get user input and check whether analysis wants to be truly resetted
-        if messagebox.askokcancel(
+        if not messagebox.askokcancel(
             title="Attention",
             message="Do you really want to reset the analysis?",
             icon="warning",
         ):
-            # user decided to rest analysis
-            try:
-                # reload original file
-                if self.filetype.get() in [
-                    "OTB",
-                    "DEMUSE",
-                    "OPENHDEMG",
-                    "CUSTOMCSV",
-                    "DELSYS",
-                ]:
-                    if self.filetype.get() == "OTB":
-                        self.resdict = openhdemg.emg_from_otb(
-                            filepath=self.file_path,
-                            ext_factor=int(self.extension_factor.get()),
-                        )
+            # user decided to not rest analysis
+            return
 
-                    elif self.filetype.get() == "DEMUSE":
-                        self.resdict = openhdemg.emg_from_demuse(
-                            filepath=self.file_path
-                        )
-
-                    elif self.filetype.get() == "OPENHDEMG":
-                        self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
-
-                    elif self.filetype.get() == "CUSTOMCSV":
-                        self.resdict = openhdemg.emg_from_customcsv(
-                            filepath=self.file_path
-                        )
-                    elif self.filetype.get() == "DELSYS":
-                        self.resdict = openhdemg.emg_from_delsys(
-                            rawemg_filepath=self.file_path, mus_directory=self.mus_path
-                        )
-                    # Update Filespecs
-                    self.n_channels.configure(
-                        text="N Channels: "
-                        + str(len(self.resdict["RAW_SIGNAL"].columns)),
-                        font=("Segoe UI", 15, ("bold")),
-                    )
-                    self.n_of_mus.configure(
-                        text="N of MUs: " + str(self.resdict["NUMBER_OF_MUS"]),
-                        font=("Segoe UI", 15, "bold"),
-                    )
-                    self.file_length.configure(
-                        text="File Length: " + str(self.resdict["EMG_LENGTH"]),
-                        font=("Segoe UI", 15, "bold"),
+        # user decided to rest analysis
+        try:
+            # reload original file
+            if self.filetype.get() in [
+                "OTB",
+                "DEMUSE",
+                "OPENHDEMG",
+                "CUSTOMCSV",
+                "DELSYS",
+            ]:
+                if self.filetype.get() == "OTB":
+                    self.resdict = openhdemg.emg_from_otb(
+                        filepath=self.file_path,
+                        ext_factor=self.settings.emg_from_otb__ext_factor,
+                        refsig=self.settings.emg_from_otb__refsig,
+                        extras=self.settings.emg_from_otb__extras,
+                        ignore_negative_ipts=self.settings.emg_from_otb__ignore_negative_ipts,
                     )
 
-                else:
-                    # load refsig
-                    if self.filetype.get() == "OTB_REFSIG":
-                        self.resdict = openhdemg.refsig_from_otb(
-                            filepath=self.file_path
-                        )
-                    else:  # CUSTOMCSV_REFSIG
-                        self.resdict = openhdemg.refsig_from_customcsv(
-                            filepath=self.file_path
-                        )
-
-                    # Recondifgure labels for refsig
-                    self.n_channels.configure(
-                        text="N Channels: "
-                        + str(len(self.resdict["RAW_SIGNAL"].columns)),
-                        font=("Segoe UI", 15, ("bold")),
-                    )
-                    self.n_of_mus.configure(
-                        text="N of MUs: ",
-                        font=("Segoe UI", 15, "bold"),
-                    )
-                    self.file_length.configure(
-                        text="File Length: ",
-                        font=("Segoe UI", 15, "bold"),
+                elif self.filetype.get() == "DEMUSE":
+                    self.resdict = openhdemg.emg_from_demuse(
+                        filepath=self.file_path,
+                        ignore_negative_ipts=self.settings.emg_from_demuse__ignore_negative_ipts,
                     )
 
-                # Update Plot
-                if hasattr(self, "fig"):
-                    self.in_gui_plotting(resdict=self.resdict)
+                elif self.filetype.get() == "OPENHDEMG":
+                    self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
 
-                # Clear frame for output
-                if hasattr(self, "terminal"):
-                    self.terminal = ttk.LabelFrame(
-                        self, text="Result Output", height=100, relief="ridge"
+                elif self.filetype.get() == "CUSTOMCSV":
+                    self.resdict = openhdemg.emg_from_customcsv(
+                        filepath=self.file_path,
+                        ref_signal=self.settings.emg_from_customcsv__ref_signal,
+                        raw_signal=self.settings.emg_from_customcsv__raw_signal,
+                        ipts=self.settings.emg_from_customcsv__ipts,
+                        mupulses=self.settings.emg_from_customcsv__mupulses,
+                        binary_mus_firing=self.settings.emg_from_customcsv__binary_mus_firing,
+                        accuracy=self.settings.emg_from_customcsv__accuracy,
+                        extras=self.settings.emg_from_customcsv__extras,
+                        fsamp=self.settings.emg_from_customcsv__fsamp,
+                        ied=self.settings.emg_from_customcsv__ied,
                     )
-                    self.terminal.grid(
-                        column=0,
-                        row=21,
-                        columnspan=2,
-                        pady=8,
-                        padx=10,
-                        sticky=(N, S, W, E),
+                elif self.filetype.get() == "DELSYS":
+                    self.resdict = openhdemg.emg_from_delsys(
+                        rawemg_filepath=self.file_path,
+                        mus_directory=self.mus_path,
+                        emg_sensor_name=self.settings.emg_from_delsys__emg_sensor_name,
+                        refsig_sensor_name=self.settings.emg_from_delsys__refsig_sensor_name,
+                        filename_from=self.settings.emg_from_delsys__filename_from,
                     )
-
-            except AttributeError as e:
-                show_error_dialog(
-                    parent=self, error=e, solution=str("Make sure a file is loaded.")
+                # Update Filespecs
+                self.n_channels.configure(
+                    text="N Channels: "
+                    + str(len(self.resdict["RAW_SIGNAL"].columns)),
+                    font=("Segoe UI", 15, ("bold")),
+                )
+                self.n_of_mus.configure(
+                    text="N of MUs: " + str(self.resdict["NUMBER_OF_MUS"]),
+                    font=("Segoe UI", 15, "bold"),
+                )
+                self.file_length.configure(
+                    text="File Length: " + str(self.resdict["EMG_LENGTH"]),
+                    font=("Segoe UI", 15, "bold"),
                 )
 
-            except FileNotFoundError as e:
-                show_error_dialog(
-                    parent=self, error=e, solution=str("Make sure a file is loaded.")
+            else:
+                # load refsig
+                if self.filetype.get() == "OTB_REFSIG":
+                    self.resdict = openhdemg.refsig_from_otb(
+                        filepath=self.file_path
+                    )
+                elif self.filetype.get() == "DELSYS_REFSIG":
+                    self.resdict = openhdemg.refsig_from_delsys(
+                        filepath=self.file_path,
+                        refsig_sensor_name=self.settings.refsig_from_delsys__refsig_sensor_name,
+                    )
+                elif self.filetype.get() == "CUSTOMCSV_REFSIG":
+                    self.resdict = openhdemg.refsig_from_customcsv(
+                        filepath=self.file_path,
+                        ref_signal=self.settings.refsig_from_customcsv__ref_signal,
+                        extras=self.settings.refsig_from_customcsv__extras,
+                        fsamp=self.settings.refsig_from_customcsv__fsamp,
+                    )
+
+                # Reconfigure labels for refsig
+                self.n_channels.configure(
+                    text="N Channels: "
+                    + str(len(self.resdict["REF_SIGNAL"].columns)),
+                    font=("Segoe UI", 15, ("bold")),
                 )
+                self.n_of_mus.configure(
+                    text="N of MUs: N/A",
+                    font=("Segoe UI", 15, "bold"),
+                )
+                self.file_length.configure(
+                    text="File Length: "
+                    + str(len(self.resdict["REF_SIGNAL"].iloc[:, 0])),
+                    font=("Segoe UI", 15, "bold"),
+                )
+
+            # Update Plot
+            if hasattr(self, "fig"):
+                self.in_gui_plotting(resdict=self.resdict)
+
+            # Clear frame for output
+            if hasattr(self, "terminal"):
+                self.terminal = ttk.LabelFrame(
+                    self, text="Result Output", height=100, relief="ridge"
+                )
+                self.terminal.grid(
+                    column=0,
+                    row=21,
+                    columnspan=2,
+                    pady=8,
+                    padx=10,
+                    sticky=(N, S, W, E),
+                )
+
+        except AttributeError as e:
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str("Make sure a file is loaded."),
+            )
+
+        except FileNotFoundError as e:
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str("Make sure a file is loaded."),
+            )
 
     # -----------------------------------------------------------------------------------------------
     # Plotting inside of GUI
 
     def in_gui_plotting(self, resdict, plot="idr"):
         """
-        Instance method to plot any analysis results in the GUI for inspection. Plots are updated
-        during the analysis process.
+        Instance method to plot any analysis results in the GUI for inspection.
+        Plots are updated during the analysis process.
 
-        Executed when button "View MUs" in master GUI window is pressed or when the original
-        input file is changed.
+        Executed when button "View MUs" in master GUI window is pressed or
+        when the original input file is changed.
 
         Raises
         ------
@@ -1138,6 +1186,7 @@ class emgGUI(ctk.CTk):
         --------
         plot_refsig, plot_idr in the library.
         """
+
         try:
             if self.resdict["SOURCE"] in [
                 "OTB_REFSIG",
@@ -1145,7 +1194,7 @@ class emgGUI(ctk.CTk):
                 "DELSYS_REFSIG",
             ]:
                 self.fig = openhdemg.plot_refsig(
-                    emgfile=resdict, showimmediately=False, tight_layout=False
+                    emgfile=resdict, showimmediately=False, tight_layout=False,
                 )
             elif plot == "idr":
                 self.fig = openhdemg.plot_idr(
@@ -1156,24 +1205,27 @@ class emgGUI(ctk.CTk):
                 )
             elif plot == "refsig_fil":
                 self.fig = openhdemg.plot_refsig(
-                    emgfile=resdict, showimmediately=False, tight_layout=False
+                    emgfile=resdict, showimmediately=False, tight_layout=False,
                 )
             elif plot == "refsig_off":
                 self.fig = openhdemg.plot_refsig(
-                    emgfile=resdict, showimmediately=False, tight_layout=False
+                    emgfile=resdict, showimmediately=False, tight_layout=False,
                 )
 
             self.canvas = FigureCanvasTkAgg(self.fig, master=self.right)
             self.canvas.get_tk_widget().grid(
                 row=0, column=0, rowspan=6, sticky=(N, S, E, W), padx=5
             )
-            toolbar = NavigationToolbar2Tk(self.canvas, self.right, pack_toolbar=False)
+            toolbar = NavigationToolbar2Tk(
+                self.canvas, self.right, pack_toolbar=False,
+            )
             toolbar.grid(row=5, column=0, sticky=S)
             plt.close()
 
         except AttributeError as e:
             show_error_dialog(
-                parent=self, error=e, solution=str("Make sure a file is loaded.")
+                parent=self, error=e,
+                solution=str("Make sure a file is loaded."),
             )
 
     # -----------------------------------------------------------------------------------------------
@@ -1191,6 +1243,7 @@ class emgGUI(ctk.CTk):
         input_df : pd.DataFrame
             Dataftame containing the analysis results.
         """
+
         # Create frame for output
         self.terminal = ttk.LabelFrame(
             self,
@@ -1199,7 +1252,8 @@ class emgGUI(ctk.CTk):
             relief="ridge",
         )
         self.terminal.grid(
-            column=0, row=21, columnspan=2, pady=8, padx=10, sticky=(N, S, W, E)
+            column=0, row=21, columnspan=2, pady=8, padx=10,
+            sticky=(N, S, W, E),
         )
 
         # Display results
