@@ -80,8 +80,6 @@ resize_emgfile__ignore_negative_ipts = False
 
 
 # ------------------------------------ muap -----------------------------------
-# TODO missing custom order (2 variables) in traking and duplicates
-
 # in tracking()
 tracking__firings = "all"
 tracking__derivation = "sd"
@@ -95,5 +93,7 @@ MUcv_gui__n_firings = [0, 50]
 MUcv_gui__muaps_timewindow = 50
 MUcv_gui__figsize = [25, 20]
 
-# --------------------------------- electrodes --------------------------------  # DONE only in plot window, it works
-sort_rawemg__custom_sorting_order = None
+# --------------------------------- electrodes --------------------------------
+# This custom sorting order is valid for all the GUI windows, although the
+# documentation is accessible in the api of the electrodes module.
+custom_sorting_order = None

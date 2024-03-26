@@ -497,7 +497,7 @@ class PlotEmg:
             # Place label defined in init
             # Label for matriy rows columns
             self.mat_label = ctk.CTkLabel(
-                self.head, text="Rows, Columns:", font=("Segoe UI", 18, "bold")
+                self.head, text="Rows,Columns:", font=("Segoe UI", 18, "bold")
             )
             self.mat_label.grid(row=0, column=5, sticky=E)
 
@@ -878,7 +878,7 @@ class PlotEmg:
                     + "\n - Matrix Code"
                     + "\n - Matrix Orientation"
                     + "\n - Figure size arguments"
-                    + "\n - Rows, Columns arguments"
+                    + "\n - Rows,Columns arguments"
                 ),
             )
 
@@ -954,7 +954,8 @@ class PlotEmg:
                             parent=self,
                             error=e,
                             solution=str(
-                                "Number of specified rows and columns must match"
+                                "Number of specified rows and columns must "
+                                + "match the number of channels."
                             ),
                         )
                         return
@@ -965,7 +966,7 @@ class PlotEmg:
                         emgfile=self.parent.resdict,
                         code=self.mat_code.get(),
                         orientation=int(self.mat_orientation.get()),
-                        custom_sorting_order=self.parent.settings.sort_rawemg__custom_sorting_order,
+                        custom_sorting_order=self.parent.settings.custom_sorting_order,
                     )
 
                 # calcualte derivation
@@ -1010,11 +1011,12 @@ class PlotEmg:
                     + "\n - Figure size arguments"
                     + "\n - Timewindow"
                     + "\n - MU Number"
-                    + "\n - Rows, Columns arguments"
+                    + "\n - Rows,Columns arguments"
+                    + "\n - custom_sorting_order in settings"
                 ),
             )
 
-            show_error_dialog(
+            show_error_dialog(  # TODO Paul do we need two of these show_error_dialog?
                 parent=self,
                 error=e,
                 solution=str(
@@ -1025,7 +1027,8 @@ class PlotEmg:
                     + "\n - Figure size arguments"
                     + "\n - Timewindow"
                     + "\n - MU Number"
-                    + "\n - Rows, Columns arguments"
+                    + "\n - Rows,Columns arguments"
+                    + "\n - custom_sorting_order in settings"
                 ),
             )
 
