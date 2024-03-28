@@ -38,7 +38,7 @@ import openhdemg.library as openhdemg
 import openhdemg.gui.settings as settings
 from openhdemg.gui.gui_modules import (
     MURemovalWindow,
-    EditRefsig,
+    EditSig,
     GUIHelpers,
     AnalyseForce,
     MuAnalysis,
@@ -47,12 +47,13 @@ from openhdemg.gui.gui_modules import (
     show_error_dialog,
 )
 
-
 matplotlib.use("TkAgg")
 ctk.set_default_color_theme(
     os.path.dirname(os.path.abspath(__file__))
     + "/gui_files/gui_color_theme.json"
 )
+# TODO are you sure this is working? Because you always specify the colors
+# manually in the code
 
 
 class emgGUI(ctk.CTk):
@@ -166,7 +167,7 @@ class emgGUI(ctk.CTk):
             master_path + "/gui_files/gui_color_theme.json"
         )
 
-        iconpath = master_path + "/gui_files/Icon2.ico"
+        iconpath = master_path + "/gui_files/Icon_transp.ico"
         self.iconbitmap(iconpath)
 
         # Necessary for resizing
@@ -298,8 +299,8 @@ class emgGUI(ctk.CTk):
         # Filter Reference Signal
         reference = ctk.CTkButton(
             self.left,
-            text="RefSig Editing",
-            command=lambda: (EditRefsig(parent=self)),
+            text="Signal Editing",
+            command=lambda: (EditSig(parent=self)),
         )
         reference.grid(column=0, row=12, sticky=(N, S, E, W))
 
@@ -379,8 +380,8 @@ class emgGUI(ctk.CTk):
         # Create logo figure
         self.logo_canvas = Canvas(
             self.right,
-            height=800,
-            width=1000,
+            width=800,
+            height=600,
             bg="white",
         )
         self.logo_canvas.grid(row=0, column=0, rowspan=6, sticky=(N, S, E, W))
@@ -388,11 +389,13 @@ class emgGUI(ctk.CTk):
         logo_path = master_path + "/gui_files/logo.png"  # Get logo path
         self.logo = tk.PhotoImage(file=logo_path)
 
-        # TODO make resizable and centre the logo
+        # TODO make resizable and centre the logo - it is now acceptable
+        # although not resizable nor centered
         self.logo_canvas.create_image(
-            1000,
-            500,
+            400,
+            300,
             image=self.logo,
+            anchor="center"
         )
 
         # Create info buttons
@@ -1194,22 +1197,19 @@ class emgGUI(ctk.CTk):
                 "DELSYS_REFSIG",
             ]:
                 self.fig = openhdemg.plot_refsig(
-                    emgfile=resdict, showimmediately=False, tight_layout=False,
+                    emgfile=resdict, showimmediately=False,
                 )
             elif plot == "idr":
                 self.fig = openhdemg.plot_idr(
-                    emgfile=resdict,
-                    showimmediately=False,
-                    tight_layout=False,
-                    # figsize=[900 * (2.54 / 96), 800 * (2.54 / 96)],
+                    emgfile=resdict, showimmediately=False,
                 )
             elif plot == "refsig_fil":
                 self.fig = openhdemg.plot_refsig(
-                    emgfile=resdict, showimmediately=False, tight_layout=False,
+                    emgfile=resdict, showimmediately=False,
                 )
             elif plot == "refsig_off":
                 self.fig = openhdemg.plot_refsig(
-                    emgfile=resdict, showimmediately=False, tight_layout=False,
+                    emgfile=resdict, showimmediately=False,
                 )
 
             self.canvas = FigureCanvasTkAgg(self.fig, master=self.right)

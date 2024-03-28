@@ -112,7 +112,7 @@ class MuAnalysis:
 
         # Set window icon
         head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        iconpath = head_path + "/gui_files/Icon2.ico"
+        iconpath = head_path + "/gui_files/Icon_transp.ico"
         self.head.iconbitmap(iconpath)
         if platform.startswith("win"):
             self.head.after(200, lambda: self.head.iconbitmap(iconpath))
@@ -143,7 +143,9 @@ class MuAnalysis:
 
         # Compute MU re-/derecruitement threshold
         separator = ttk.Separator(self.head, orient="horizontal")
-        separator.grid(column=0, columnspan=4, row=2, padx=5, pady=5)
+        separator.grid(
+            column=0, columnspan=2, row=2, sticky=(W, E), padx=5, pady=5,
+        )  # TODO one row has been skipped between enter_mvc and separator
 
         thresh = ctk.CTkButton(
             self.head,

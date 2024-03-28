@@ -8,13 +8,13 @@ import openhdemg.library as openhdemg
 from openhdemg.gui.gui_modules.error_handler import show_error_dialog
 
 
-class EditRefsig:
+class EditSig:
     """
-    A class to manage editing of the reference signal in a GUI application.
+    A class to manage editing of the signals in a GUI application.
 
     This class creates a window that offers various options for editing the
-    reference signal. It includes functionalities for filtering the signal,
-    removing offset, converting the signal, and transforming it to a
+    reference and EMG signal. It includes functionalities for filtering the
+    signal, removing offset, converting the signal, and transforming it to a
     percentage value. The class is instantiated when the "RefSig Editing"
     button in the master GUI window is pressed.
 
@@ -22,7 +22,7 @@ class EditRefsig:
     ----------
     parent : object
         The parent widget, typically the main application window, to which
-        this EditRefsig instance belongs.
+        this EditSig instance belongs.
     head : CTkToplevel
         The top-level widget for the Reference Signal Editing window.
     filter_order : StringVar
@@ -48,7 +48,7 @@ class EditRefsig:
     Methods
     -------
     __init__(self, parent)
-        Initialize a new instance of the EditRefsig class.
+        Initialize a new instance of the EditSig class.
     filter_refsig(self)
         Apply filtering to the reference signal based on the specified order
         and cutoff frequency.
@@ -65,8 +65,8 @@ class EditRefsig:
     Examples
     --------
     >>> main_window = Tk()
-    >>> edit_refsig = EditRefsig(main_window)
-    >>> edit_refsig.head.mainloop()
+    >>> edit_sig = EditSig(main_window)
+    >>> edit_sig.head.mainloop()
 
     Notes
     -----
@@ -78,20 +78,19 @@ class EditRefsig:
 
     def __init__(self, parent):
         """
-        Initialize a new instance of the EditRefsig class.
+        Initialize a new instance of the EditSig class.
 
-        This method sets up the GUI components for the Reference Signal
-        Editing Window. It includes controls for filtering the reference
-        signal, removing its offset, converting it, and transforming it to a
-        percentage value. The method configures and places various widgets
-        such as labels, entries, buttons, and combo boxes in a grid layout for
-        user interaction.
+        This method sets up the GUI components for the Signal Editing Window.
+        It includes controls for filtering the signal, removing its offset,
+        converting it, and transforming it to a percentage value. The method
+        configures and places various widgets such as labels, entries, buttons,
+        and combo boxes in a grid layout for user interaction.
 
         Parameters
         ----------
         parent : object
             The parent widget, typically the main application window, to which
-            this EditRefsig instance belongs. The parent is used for accessing
+            this EditSig instance belongs. The parent is used for accessing
             shared resources and data.
 
         Raises
@@ -110,7 +109,7 @@ class EditRefsig:
         self.head.title("Reference Signal Editing Window")
 
         head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        iconpath = head_path + "/gui_files/Icon2.ico"
+        iconpath = head_path + "/gui_files/Icon_transp.ico"
         self.head.iconbitmap(default=iconpath)
         if platform.startswith("win"):
             self.head.after(200, lambda: self.head.iconbitmap(iconpath))
@@ -123,50 +122,79 @@ class EditRefsig:
             self.head.columnconfigure(col, weight=1)
 
         # Configure rows with a loop
-        for row in range(10):
+        for row in range(12):
             self.head.rowconfigure(row, weight=1)
+
+        # Filter RAW EMG signal
+        ctk.CTkLabel(
+            self.head, text="EMG Signal", font=("Segoe UI", 18, "bold"),
+        ).grid(column=0, row=0, sticky=W)
+        ctk.CTkLabel(
+            self.head, text="Filter Order", font=("Segoe UI", 18, "bold"),
+        ).grid(column=1, row=1, sticky=(W, E))
+        ctk.CTkLabel(
+            self.head, text="BandPass Freq", font=("Segoe UI", 18, "bold"),
+        ).grid(column=2, row=1, sticky=(W, E))
+        ctk.CTkButton(
+            self.head,
+            text="Filter EMG signal",
+            command=self.filter_emgsig,
+        ).grid(column=0, row=2, sticky=W)
+        self.emg_filter_order = StringVar()
+        ctk.CTkEntry(
+            self.head, width=100, textvariable=self.emg_filter_order,
+        ).grid(column=1, row=2)
+        self.emg_filter_order.set(2)
+        self.emg_bandpass_freq = StringVar()
+        ctk.CTkEntry(
+            self.head, width=100, textvariable=self.emg_bandpass_freq,
+        ).grid(column=2, row=2)
+        self.emg_bandpass_freq.set("20-500")
+        ttk.Separator(
+            self.head, orient="horizontal"
+        ).grid(
+            column=0, columnspan=3, row=3, sticky=(W, E), padx=5, pady=5,
+        )
 
         # Filter Refsig
         # Define Labels
         ctk.CTkLabel(
+            self.head, text="Reference Signal", font=("Segoe UI", 18, "bold"),
+        ).grid(column=0, row=4, sticky=W)
+        ctk.CTkLabel(
             self.head, text="Filter Order", font=("Segoe UI", 18, "bold"),
-        ).grid(column=1, row=0, sticky=(W, E))
+        ).grid(column=1, row=5, sticky=(W, E))
         ctk.CTkLabel(
             self.head, text="Cutoff Freq", font=("Segoe UI", 18, "bold"),
-        ).grid(column=2, row=0, sticky=(W, E))
+        ).grid(column=2, row=5, sticky=(W, E))
         # Fiter button
         basic = ctk.CTkButton(
             self.head,
             text="Filter Refsig",
             command=self.filter_refsig,
         )
-        basic.grid(column=0, row=1, sticky=W)
-        self.filter_order = StringVar()
-        order = ctk.CTkEntry(
-            self.head, width=100, textvariable=self.filter_order,
+        basic.grid(column=0, row=6, sticky=W)
+        self.refsig_filter_order = StringVar()
+        ref_order = ctk.CTkEntry(
+            self.head, width=100, textvariable=self.refsig_filter_order,
         )
-        order.grid(column=1, row=1)
-        self.filter_order.set(4)
+        ref_order.grid(column=1, row=6)
+        self.refsig_filter_order.set(4)
 
         self.cutoff_freq = StringVar()
         cutoff = ctk.CTkEntry(
             self.head, width=100, textvariable=self.cutoff_freq,
         )
-        cutoff.grid(column=2, row=1)
+        cutoff.grid(column=2, row=6)
         self.cutoff_freq.set(15)
 
         # Remove offset of reference signal
-        separator2 = ttk.Separator(self.head, orient="horizontal")
-        separator2.grid(
-            column=0, columnspan=3, row=2, sticky=(W, E), padx=5, pady=5,
-        )
-
         ctk.CTkLabel(
             self.head, text="Offset Value", font=("Segoe UI", 18, "bold")
-        ).grid(column=1, row=3, sticky=(W, E))
+        ).grid(column=1, row=7, sticky=(W, E))
         ctk.CTkLabel(
             self.head, text="Automatic Offset", font=("Segoe UI", 18, "bold")
-        ).grid(column=2, row=3, sticky=(W, E))
+        ).grid(column=2, row=7, sticky=(W, E))
 
         # Offset removal button
         basic2 = ctk.CTkButton(
@@ -174,32 +202,27 @@ class EditRefsig:
             text="Remove Offset",
             command=self.remove_offset,
         )
-        basic2.grid(column=0, row=4, sticky=W)
+        basic2.grid(column=0, row=8, sticky=W)
 
         self.offsetval = StringVar()
         offset = ctk.CTkEntry(
             self.head, width=100, textvariable=self.offsetval,
         )
-        offset.grid(column=1, row=4)
+        offset.grid(column=1, row=8)
         self.offsetval.set(4)
 
         self.auto_eval = StringVar()
         auto = ctk.CTkEntry(self.head, width=100, textvariable=self.auto_eval)
-        auto.grid(column=2, row=4)
+        auto.grid(column=2, row=8)
         self.auto_eval.set(0)
-
-        separator3 = ttk.Separator(self.head, orient="horizontal")
-        separator3.grid(
-            column=0, columnspan=3, row=5, sticky=(W, E), padx=5, pady=5,
-        )
 
         # Convert Reference signal
         ctk.CTkLabel(
             self.head, text="Operator", font=("Segoe UI", 18, "bold"),
-        ).grid(column=1, row=6, sticky=(W, E))
+        ).grid(column=1, row=9, sticky=(W, E))
         ctk.CTkLabel(
             self.head, text="Factor", font=("Segoe UI", 18, "bold"),
-        ).grid(column=2, row=6, sticky=(W, E))
+        ).grid(column=2, row=9, sticky=(W, E))
 
         self.convert = StringVar()
         convert = ctk.CTkComboBox(
@@ -207,14 +230,14 @@ class EditRefsig:
             values=("Multiply", "Divide"),
         )
         convert.configure(state="readonly")
-        convert.grid(column=1, row=7)
+        convert.grid(column=1, row=10)
         self.convert.set("Multiply")
 
         self.convert_factor = DoubleVar()
         factor = ctk.CTkEntry(
             self.head, width=100, textvariable=self.convert_factor,
         )
-        factor.grid(column=2, row=7)
+        factor.grid(column=2, row=10)
         self.convert_factor.set(2.5)
 
         convert_button = ctk.CTkButton(
@@ -222,40 +245,60 @@ class EditRefsig:
             text="Convert",
             command=self.convert_refsig,
         )
-        convert_button.grid(column=0, row=7, sticky=W)
-
-        separator3 = ttk.Separator(self.head, orient="horizontal")
-        separator3.grid(
-            column=0, columnspan=3, row=8, sticky=(W, E), padx=5, pady=5,
-        )
+        convert_button.grid(column=0, row=10, sticky=W)
 
         # Convert to percentage
         ctk.CTkLabel(
             self.head, text="MVC Value", font=("Segoe UI", 18, "bold"),
-        ).grid(column=1, row=9, sticky=(W, E))
+        ).grid(column=1, row=11, sticky=(W, E))
 
         percent_button = ctk.CTkButton(
             self.head,
             text="To Percent*",
             command=self.to_percent,
         )
-        percent_button.grid(column=0, row=10, sticky=W)
+        percent_button.grid(column=0, row=12, sticky=W)
 
         self.mvc_value = DoubleVar()
         mvc = ctk.CTkEntry(self.head, width=100, textvariable=self.mvc_value)
-        mvc.grid(column=1, row=10)
+        mvc.grid(column=1, row=12)
 
         ctk.CTkLabel(
             self.head,
             text="*Use this button \nonly if your Refsig \nis in absolute values!",
             font=("Arial", 8),
-        ).grid(column=2, row=9, rowspan=2)
+        ).grid(column=2, row=11, rowspan=2)
 
         # Add padding to all children widgets of head
         for child in self.head.winfo_children():
             child.grid_configure(padx=5, pady=5)
 
-    ### Define functions for Refsig editing
+    ### Define functions for signal editing
+
+    def filter_emgsig(self):
+        # Get the bandpass frequency string
+        bandpass_freq = self.emg_bandpass_freq.get()
+        # Split the string into lowcut and highcut values
+        lowcut, highcut = map(int, bandpass_freq.split("-"))
+
+        try:
+            # Filter RAW EMG
+            self.parent.resdict = openhdemg.filter_rawemg(
+                emgfile=self.parent.resdict,
+                order=int(self.emg_filter_order.get()),
+                lowcut=lowcut,
+                highcut=highcut,
+            )
+            # Plot filtered Refsig
+            self.parent.in_gui_plotting(
+                resdict=self.parent.resdict,
+            )  # Re-plot main plot to indicate that something happened
+
+        except AttributeError as e:
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str("Make sure a file is loaded."),
+            )
 
     def filter_refsig(self):
         """
@@ -278,7 +321,7 @@ class EditRefsig:
             # Filter refsig
             self.parent.resdict = openhdemg.filter_refsig(
                 emgfile=self.parent.resdict,
-                order=int(self.filter_order.get()),
+                order=int(self.refsig_filter_order.get()),
                 cutoff=int(self.cutoff_freq.get()),
             )
             # Plot filtered Refsig

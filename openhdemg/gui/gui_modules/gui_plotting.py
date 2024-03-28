@@ -134,7 +134,7 @@ class PlotEmg:
 
             # Set window icon
             head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            iconpath = head_path + "/gui_files/Icon2.ico"
+            iconpath = head_path + "/gui_files/Icon_transp.ico"
             self.head.iconbitmap(default=iconpath)
             if platform.startswith("win"):
                 self.head.after(200, lambda: self.head.iconbitmap(iconpath))
@@ -316,7 +316,7 @@ class PlotEmg:
             self.mat_code.set("Custom order")
 
             # Trace matrix code value
-            self.mat_code.trace_add("write", self.on_matrix_none)  #TODO
+            self.mat_code.trace_add("write", self.on_matrix_none)
 
             # Matrix Orientation
             ctk.CTkLabel(
@@ -337,7 +337,7 @@ class PlotEmg:
             self.mat_orientation.set("180")
             # Disable the orientation setting for DELSYS files
             if self.parent.resdict["SOURCE"] == "DELSYS":
-                orientation.config(state="disabled")
+                orientation.configure(state="disabled")
 
             # Plot derivation
             # Button
@@ -401,7 +401,8 @@ class PlotEmg:
             self.muap_config.set("Configuration")
             # Disable config for DELSYS files
             if self.parent.resdict["SOURCE"] == "DELSYS":
-                config_muap.config(state="disabled")
+                config_muap.configure(state="disabled")
+                # NOTE config does not exist for CTk widgets. Use configure
 
             # Combobox MU Number
             self.muap_munum = StringVar()
@@ -431,7 +432,7 @@ class PlotEmg:
             self.muap_time.set("Timewindow (ms)")
             # Disable Timewindow for DELSYS files
             if self.parent.resdict["SOURCE"] == "DELSYS":
-                timewindow.config(state="disabled")
+                timewindow.configure(state="disabled")
 
             # Matrix Illustration Graphic
             matrix_canvas = ctk.CTkCanvas(

@@ -136,7 +136,7 @@ class AdvancedAnalysis:
 
         # Set window icon
         head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        iconpath = head_path + "/gui_files/Icon2.ico"
+        iconpath = head_path + "/gui_files/Icon_transp.ico"
         self.a_window.iconbitmap(default=iconpath)
         if platform.startswith("win"):
             self.a_window.after(200, lambda: self.a_window.iconbitmap(iconpath))
@@ -326,7 +326,7 @@ class AdvancedAnalysis:
 
         # Set window icon
         head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        iconpath = head_path + "/gui_files/Icon2.ico"
+        iconpath = head_path + "/gui_files/Icon_transp.ico"
         self.head.iconbitmap(default=iconpath)
         if platform.startswith("win"):
             self.head.after(200, lambda: self.head.iconbitmap(iconpath))
