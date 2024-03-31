@@ -129,14 +129,12 @@ class PlotEmg:
             self.parent = parent
             self.parent.load_settings()
 
-            self.head = ctk.CTkToplevel(fg_color="LightBlue4")
+            self.head = ctk.CTkToplevel()
             self.head.title("Plot Window")
 
             # Set window icon
-            head_path = os.path.dirname(
-                os.path.dirname(os.path.abspath(__file__))
-            )
-            iconpath = head_path + "/gui_files/Icon2.ico"
+            head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            iconpath = head_path + "/gui_files/Icon_transp.ico"
             self.head.iconbitmap(default=iconpath)
             if platform.startswith("win"):
                 self.head.after(200, lambda: self.head.iconbitmap(iconpath))
@@ -159,7 +157,7 @@ class PlotEmg:
             ctk.CTkLabel(
                 self.head,
                 text="Reference signal",
-                font=('Segoe UI', 15, 'bold'),
+                font=("Segoe UI", 18, "bold"),
             ).grid(column=0, row=0, sticky=W)
             self.ref_but = StringVar()
             ref_button = ctk.CTkCheckBox(
@@ -168,7 +166,7 @@ class PlotEmg:
                 bg_color="LightBlue4",
                 onvalue="True",
                 offvalue="False",
-                text=""
+                text="",
             )
             ref_button.grid(column=1, row=0, sticky=(W))
             self.ref_but.set(False)
@@ -177,7 +175,7 @@ class PlotEmg:
             ctk.CTkLabel(
                 self.head,
                 text="Time in seconds",
-                font=('Segoe UI', 15, 'bold'),
+                font=("Segoe UI", 18, "bold"),
             ).grid(column=0, row=1, sticky=W)
             self.time_sec = StringVar()
             time_button = ctk.CTkCheckBox(
@@ -186,7 +184,7 @@ class PlotEmg:
                 bg_color="LightBlue4",
                 onvalue="True",
                 offvalue="False",
-                text=""
+                text="",
             )
             time_button.grid(column=1, row=1, sticky=W)
             self.time_sec.set(False)
@@ -195,45 +193,45 @@ class PlotEmg:
             ctk.CTkLabel(
                 self.head,
                 text="Figure size in cm (h,w)",
-                font=('Segoe UI', 15, 'bold'),
-            ).grid(column=0, row=2)
+                font=("Segoe UI", 18, "bold"),
+            ).grid(column=0, row=2, sticky=W)
             self.size_fig = StringVar()
-            fig_entry = ctk.CTkEntry(
-                self.head, width=100, textvariable=self.size_fig
-            )
+            fig_entry = ctk.CTkEntry(self.head, width=100, textvariable=self.size_fig)
             self.size_fig.set("20,15")
             fig_entry.grid(column=1, row=2, sticky=W)
 
             # Plot emgsig
             plt_emgsig = ctk.CTkButton(
-                self.head, text="Plot EMGsig", command=self.plt_emgsignal,
-                fg_color="#E5E4E2", text_color="black", border_color="black",
-                border_width=1,
+                self.head,
+                text="Plot EMGsig",
+                command=self.plt_emgsignal,
             )
             plt_emgsig.grid(column=0, row=3, sticky=W)
 
             self.channels = StringVar()
             channel_entry_values = ("0", "0,1,2", "0,1,2,3")
             channel_entry = ctk.CTkComboBox(
-                self.head, width=150, variable=self.channels,
-                values=channel_entry_values
+                self.head,
+                width=150,
+                variable=self.channels,
+                values=channel_entry_values,
             )
             channel_entry.grid(column=1, row=3, sticky=(W, E))
             self.channels.set("Channel Numbers")
 
             # Plot refsig
             plt_refsig = ctk.CTkButton(
-                self.head, text="Plot RefSig", command=self.plt_refsignal,
-                fg_color="#E5E4E2", text_color="black", border_color="black",
-                border_width=1,
+                self.head,
+                text="Plot RefSig",
+                command=self.plt_refsignal,
             )
             plt_refsig.grid(column=0, row=4, sticky=W)
 
             # Plot motor unit pulses
             plt_pulses = ctk.CTkButton(
-                self.head, text="Plot MUpulses", command=self.plt_mupulses,
-                fg_color="#E5E4E2", text_color="black", border_color="black",
-                border_width=1,
+                self.head,
+                text="Plot MUpulses",
+                command=self.plt_mupulses,
             )
             plt_pulses.grid(column=0, row=5, sticky=W)
 
@@ -241,24 +239,28 @@ class PlotEmg:
             self.linewidth = StringVar()
             linewidth_entry_values = ("0.25", "0.5", "0.75", "1")
             linewidth_entry = ctk.CTkComboBox(
-                self.head, width=15, variable=self.linewidth,
-                values=linewidth_entry_values
+                self.head,
+                width=15,
+                variable=self.linewidth,
+                values=linewidth_entry_values,
             )
             linewidth_entry.grid(column=1, row=5, sticky=(W, E))
             self.linewidth.set("Linewidth")
 
             # Plot impulse train
             plt_ipts_but = ctk.CTkButton(
-                self.head, text="Plot Source", command=self.plt_ipts,
-                fg_color="#E5E4E2", text_color="black", border_color="black",
-                border_width=1,
+                self.head,
+                text="Plot Source",
+                command=self.plt_ipts,
             )
             plt_ipts_but.grid(column=0, row=6, sticky=W)
 
             self.mu_numb = StringVar()
             munumb_entry_values = ("0", "0,1,2", "0,1,2,3", "all")
             munumb_entry = ctk.CTkComboBox(
-                self.head, width=15, variable=self.mu_numb,
+                self.head,
+                width=15,
+                variable=self.mu_numb,
                 values=munumb_entry_values,
             )
             munumb_entry.grid(column=1, row=6, sticky=(W, E))
@@ -266,17 +268,19 @@ class PlotEmg:
 
             # Plot instantaneous discharge rate
             plt_idr_but = ctk.CTkButton(
-                self.head, text="Plot IDR", command=self.plt_idr,
-                fg_color="#E5E4E2", text_color="black", border_color="black",
-                border_width=1,
+                self.head,
+                text="Plot IDR",
+                command=self.plt_idr,
             )
             plt_idr_but.grid(column=0, row=7, sticky=W)
 
             self.mu_numb_idr = StringVar()
             munumb_entry_idr_values = ("0", "0,1,2", "0,1,2,3", "all")
             munumb_entry_idr = ctk.CTkComboBox(
-                self.head, width=15, variable=self.mu_numb_idr,
-                values=munumb_entry_idr_values
+                self.head,
+                width=15,
+                variable=self.mu_numb_idr,
+                values=munumb_entry_idr_values,
             )
             munumb_entry_idr.grid(column=1, row=7, sticky=(W, E))
             self.mu_numb_idr.set("MU Number")
@@ -289,62 +293,70 @@ class PlotEmg:
 
             # Matrix code
             ctk.CTkLabel(
-                self.head, text="Matrix Code", font=('Segoe UI', 15, 'bold')
+                self.head, text="Matrix Code", font=("Segoe UI", 18, "bold")
             ).grid(row=0, column=3, sticky=(W))
 
             self.mat_code = StringVar()
-            # NOTE the matrix codes can only be those accepted by sort_rawemg(). matrix_code_values = ("GR08MM1305", "GR04MM1305", "GR10MM0808", self.parent.settings.delsys_sensor_label, "None")
             matrix_code_values = (
-                "GR08MM1305",
-                "GR04MM1305",
-                "GR10MM0808", 
-                "Trigno Galileo Sensor",
                 "Custom order",
                 "None",
+                "GR08MM1305",
+                "GR04MM1305",
+                "GR10MM0808",
+                "Trigno Galileo Sensor",
             )
             matrix_code = ctk.CTkComboBox(
-                self.head, width=100, variable=self.mat_code,
-                values=matrix_code_values, state="readonly",
+                self.head,
+                width=100,
+                variable=self.mat_code,
+                values=matrix_code_values,
+                state="readonly",
             )
             matrix_code.grid(row=0, column=4, sticky=(W, E))
-            self.mat_code.set("GR08MM1305")
+            self.mat_code.set("Custom order")
 
             # Trace matrix code value
             self.mat_code.trace_add("write", self.on_matrix_none)
 
             # Matrix Orientation
             ctk.CTkLabel(
-                self.head, text="Orientation", font=('Segoe UI', 15, 'bold'),
+                self.head,
+                text="Orientation",
+                font=("Segoe UI", 18, "bold"),
             ).grid(row=1, column=3, sticky=(W))
             self.mat_orientation = StringVar()
             orientation_values = ("0", "180")
             orientation = ctk.CTkComboBox(
-                self.head, width=15, variable=self.mat_orientation,
-                values=orientation_values, state="readonly"
+                self.head,
+                width=15,
+                variable=self.mat_orientation,
+                values=orientation_values,
+                state="readonly",
             )
             orientation.grid(row=1, column=4, sticky=(W, E))
             self.mat_orientation.set("180")
             # Disable the orientation setting for DELSYS files
             if self.parent.resdict["SOURCE"] == "DELSYS":
-                orientation.config(state="disabled")
+                orientation.configure(state="disabled")
 
             # Plot derivation
             # Button
             deriv_button = ctk.CTkButton(
-                self.head, text="Plot Derivation",
-                command=self.plot_derivation, fg_color="#E5E4E2",
-                text_color="black", border_color="black", border_width=1,
+                self.head,
+                text="Plot Derivation",
+                command=self.plot_derivation,
             )
             deriv_button.grid(row=3, column=3, sticky=W)
 
             # Combobox Config
             self.deriv_config = StringVar()
-            configuration_values = (
-                "Single differential", "Double differential"
-            )
+            configuration_values = ("Single differential", "Double differential")
             configuration = ctk.CTkComboBox(
-                self.head, width=15, variable=self.deriv_config,
-                values=configuration_values, state="readonly"
+                self.head,
+                width=15,
+                variable=self.deriv_config,
+                values=configuration_values,
+                state="readonly",
             )
             configuration.grid(row=3, column=4, sticky=(W, E))
             self.deriv_config.set("Configuration")
@@ -353,8 +365,11 @@ class PlotEmg:
             self.deriv_matrix = StringVar()
             mat_column_values = ("col0", "col1", "col2", "col3", "col4")
             mat_column = ctk.CTkComboBox(
-                self.head, width=100, variable=self.deriv_matrix,
-                values=mat_column_values, state="readonly"
+                self.head,
+                width=100,
+                variable=self.deriv_matrix,
+                values=mat_column_values,
+                state="readonly",
             )
             mat_column.grid(row=3, column=5, sticky=(W, E))
             self.deriv_matrix.set("Matrix Column")
@@ -362,9 +377,9 @@ class PlotEmg:
             # Motor unit action potential
             # Button
             muap_button = ctk.CTkButton(
-                self.head, text="Plot MUAPs", command=self.plot_muaps,
-                fg_color="#E5E4E2", text_color="black", border_color="black",
-                border_width=1,
+                self.head,
+                text="Plot MUAPs",
+                command=self.plot_muaps,
             )
             muap_button.grid(row=4, column=3, sticky=W)
 
@@ -376,14 +391,18 @@ class PlotEmg:
                 "Double differential",
             )
             config_muap = ctk.CTkComboBox(
-                self.head, width=15, variable=self.muap_config,
-                values=config_muap_values, state="readonly"
+                self.head,
+                width=15,
+                variable=self.muap_config,
+                values=config_muap_values,
+                state="readonly",
             )
             config_muap.grid(row=4, column=4, sticky=(W, E))
             self.muap_config.set("Configuration")
             # Disable config for DELSYS files
             if self.parent.resdict["SOURCE"] == "DELSYS":
-                config_muap.config(state="disabled")
+                config_muap.configure(state="disabled")
+                # NOTE config does not exist for CTk widgets. Use configure
 
             # Combobox MU Number
             self.muap_munum = StringVar()
@@ -391,8 +410,11 @@ class PlotEmg:
                 str(number) for number in range(0, self.parent.resdict["NUMBER_OF_MUS"])
             )
             muap_munum = ctk.CTkComboBox(
-                self.head, width=15, variable=self.muap_munum,
-                values=mu_numbers, state="readonly",
+                self.head,
+                width=15,
+                variable=self.muap_munum,
+                values=mu_numbers,
+                state="readonly",
             )
             muap_munum.grid(row=4, column=5, sticky=(W, E))
             self.muap_munum.set("MU Number")
@@ -401,26 +423,27 @@ class PlotEmg:
             self.muap_time = StringVar()
             timewindow_values = ("25", "50", "100", "200")
             timewindow = ctk.CTkComboBox(
-                self.head, width=120, variable=self.muap_time,
+                self.head,
+                width=120,
+                variable=self.muap_time,
                 values=timewindow_values,
             )
             timewindow.grid(row=4, column=6, sticky=(W, E))
             self.muap_time.set("Timewindow (ms)")
             # Disable Timewindow for DELSYS files
             if self.parent.resdict["SOURCE"] == "DELSYS":
-                timewindow.config(state="disabled")
+                timewindow.configure(state="disabled")
 
             # Matrix Illustration Graphic
             matrix_canvas = ctk.CTkCanvas(
-                self.head, height=150, width=600, bg="white",
+                self.head,
+                height=150,
+                width=600,
+                bg="white",
             )
             matrix_canvas.grid(row=5, column=3, rowspan=5, columnspan=5)
-            parent_dir = os.path.dirname(
-                os.path.dirname(os.path.abspath(__file__))
-            )
-            self.matrix = PhotoImage(
-                file=parent_dir + "/gui_files/Matrix.png"
-            )
+            parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            self.matrix = PhotoImage(file=parent_dir + "/gui_files/Matrix.png")
             matrix_canvas.create_image(0, 0, anchor="nw", image=self.matrix)
             # Information Button
             self.info = ctk.CTkImage(
@@ -435,6 +458,7 @@ class PlotEmg:
                 height=30,
                 bg_color="LightBlue4",
                 fg_color="LightBlue4",
+                border_width=0,
                 command=lambda: (
                     (
                         webbrowser.open(
@@ -446,11 +470,15 @@ class PlotEmg:
             info_button.grid(row=0, column=6, sticky=E)
 
             for child in self.head.winfo_children():
-                child.grid_configure(padx=5, pady=5, )
+                child.grid_configure(
+                    padx=5,
+                    pady=5,
+                )
 
         except AttributeError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Make sure a file is loaded."),
             )
             self.head.destroy()
@@ -469,12 +497,16 @@ class PlotEmg:
         if self.mat_code.get() == "None":
             # Place label defined in init
             # Label for matriy rows columns
-            self.mat_label = ttk.Label(self.head, text="Rows, Columns:")
+            self.mat_label = ctk.CTkLabel(
+                self.head, text="Rows,Columns:", font=("Segoe UI", 18, "bold")
+            )
             self.mat_label.grid(row=0, column=5, sticky=E)
 
             # Column entry only when specified matrix code
-            self.row_cols_entry = ttk.Entry(
-                self.head, width=8, textvariable=self.matrix_rc,
+            self.row_cols_entry = ctk.CTkEntry(
+                self.head,
+                width=80,
+                textvariable=self.matrix_rc,
             )
             self.row_cols_entry.grid(row=0, column=6, sticky=W, padx=5)
             self.matrix_rc.set("13,5")
@@ -538,21 +570,22 @@ class PlotEmg:
 
         except ValueError as e:
             show_error_dialog(
-                parent=self, error=e,
-                solution=str(
-                    "Enter valid channel number or non-negative figure size."
-                ),
+                parent=self,
+                error=e,
+                solution=str("Enter valid channel number or non-negative figure size."),
             )
 
         except KeyError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Enter valid channel number."),
             )
 
         except IndexError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str(
                     "Enter valid figure size. Must be non negative and tuple of (heigth, width)."
                 ),
@@ -614,7 +647,8 @@ class PlotEmg:
 
         except ValueError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Enter valid linewidth number."),
             )
 
@@ -679,13 +713,15 @@ class PlotEmg:
 
         except ValueError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Enter valid motor unit number."),
             )
 
         except KeyError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Enter valid motor unit number."),
             )
 
@@ -747,13 +783,15 @@ class PlotEmg:
 
         except ValueError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Enter valid motor unit number."),
             )
 
         except KeyError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Enter valid motor unit number."),
             )
 
@@ -791,12 +829,13 @@ class PlotEmg:
                         code=self.mat_code.get(),
                         orientation=int(self.mat_orientation.get()),
                         n_rows=list_rcs[0],
-                        n_cols=list_rcs[1]
+                        n_cols=list_rcs[1],
                     )
 
                 except ValueError as e:
                     show_error_dialog(
-                        parent=self, error=e,
+                        parent=self,
+                        error=e,
                         solution=str(
                             "Number of specified rows and columns must match number of channels."
                         ),
@@ -832,26 +871,29 @@ class PlotEmg:
             )
         except ValueError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str(
                     "Enter valid input parameters."
                     + "\nPotenital error sources:"
                     + "\n - Matrix Code"
                     + "\n - Matrix Orientation"
                     + "\n - Figure size arguments"
-                    + "\n - Rows, Columns arguments"
+                    + "\n - Rows,Columns arguments"
                 ),
             )
 
         except UnboundLocalError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Enter valid Configuration and Matrix Column."),
             )
 
         except KeyError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Enter valid Matrix Column."),
             )
 
@@ -889,7 +931,8 @@ class PlotEmg:
                     self.parent.resdict,
                 )
                 openhdemg.plot_muaps(
-                    muaps_dict[int(self.muap_munum.get())], figsize=figsize,
+                    muaps_dict[int(self.muap_munum.get())],
+                    figsize=figsize,
                 )
 
             else:
@@ -904,14 +947,16 @@ class PlotEmg:
                             code=self.mat_code.get(),
                             orientation=int(self.mat_orientation.get()),
                             n_rows=list_rcs[0],
-                            n_cols=list_rcs[1]
+                            n_cols=list_rcs[1],
                         )
 
                     except ValueError as e:
                         show_error_dialog(
-                            parent=self, error=e,
+                            parent=self,
+                            error=e,
                             solution=str(
-                                "Number of specified rows and columns must match"
+                                "Number of specified rows and columns must "
+                                + "match the number of channels."
                             ),
                         )
                         return
@@ -922,7 +967,7 @@ class PlotEmg:
                         emgfile=self.parent.resdict,
                         code=self.mat_code.get(),
                         orientation=int(self.mat_orientation.get()),
-                        custom_sorting_order=self.parent.settings.sort_rawemg__custom_sorting_order,
+                        custom_sorting_order=self.parent.settings.custom_sorting_order,
                     )
 
                 # calcualte derivation
@@ -951,12 +996,14 @@ class PlotEmg:
 
                 # Plot MUAPS
                 openhdemg.plot_muaps(
-                    sta_dict[int(self.muap_munum.get())], figsize=figsize,
+                    sta_dict[int(self.muap_munum.get())],
+                    figsize=figsize,
                 )
 
         except ValueError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str(
                     "Enter valid input parameters."
                     + "\nPotenital error sources:"
@@ -965,12 +1012,14 @@ class PlotEmg:
                     + "\n - Figure size arguments"
                     + "\n - Timewindow"
                     + "\n - MU Number"
-                    + "\n - Rows, Columns arguments"
+                    + "\n - Rows,Columns arguments"
+                    + "\n - custom_sorting_order in settings"
                 ),
             )
 
-            show_error_dialog(
-                parent=self, error=e,
+            show_error_dialog(  # TODO Paul do we need two of these show_error_dialog?
+                parent=self,
+                error=e,
                 solution=str(
                     "Enter valid input parameters."
                     + "\nPotenital error sources:"
@@ -979,18 +1028,21 @@ class PlotEmg:
                     + "\n - Figure size arguments"
                     + "\n - Timewindow"
                     + "\n - MU Number"
-                    + "\n - Rows, Columns arguments"
+                    + "\n - Rows,Columns arguments"
+                    + "\n - custom_sorting_order in settings"
                 ),
             )
 
         except UnboundLocalError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Enter valid Configuration."),
             )
 
         except KeyError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Enter valid Matrix Column."),
             )

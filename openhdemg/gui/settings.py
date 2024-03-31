@@ -16,23 +16,13 @@ A tutorial on how to use this settings file is available at:
 
 import numpy as np
 
-# These graphic parameters are updated only after restarting the GUI
-#
-# --------------------------------- GUI LOOK ----------------------------------
-gui_background_color = "LightBlue4"
-# Options are #TODO Paul please explain what colors can be used, I will add these in the tutorial
-#TODO we also must rename this file in something more specific like gui_settings.py
-# Please insert gui_background_color were needed in the .py GUI files, I didn't do that
-
-
-# The following parameters are updated without restarting the GUI
-#
 # --------------------------------- openfiles ---------------------------------
 
-# in emg_from_demuse()  # DONE and it works
+# in emg_from_demuse()
 emg_from_demuse__ignore_negative_ipts = False
 
-# in emg_from_otb()  # DONE and it works
+# in emg_from_otb()
+emg_from_otb__ext_factor = 8
 emg_from_otb__refsig = [True, "fullsampled"]
 emg_from_otb__extras = None
 emg_from_otb__ignore_negative_ipts = False
@@ -57,18 +47,19 @@ emg_from_customcsv__mupulses = "MUPULSES"
 emg_from_customcsv__binary_mus_firing = "BINARY_MUS_FIRING"
 emg_from_customcsv__accuracy = "ACCURACY"
 emg_from_customcsv__extras = "EXTRAS"
+emg_from_customcsv__fsamp = 2048
 emg_from_customcsv__ied = 8
-# TODO in main window and in advanced tools, when selecting OTB, delsys and custom CSV (both emgifle and refsig) write to check settings file
 
 # in refsig_from_customcsv()
 refsig_from_customcsv__ref_signal = "REF_SIGNAL"
 refsig_from_customcsv__extras = "EXTRAS"
+refsig_from_customcsv__fsamp = 2048
 
 # in save_json_emgfile()
-save_json_emgfile__compresslevel = 4  # DONE and it works
+save_json_emgfile__compresslevel = 4
 
 
-# ---------------------------------- analysis ---------------------------------  # DONE and it works
+# ---------------------------------- analysis ---------------------------------
 
 # in compute_thresholds()
 compute_thresholds__n_firings = 1
@@ -80,7 +71,7 @@ basic_mus_properties__ignore_negative_ipts = False
 basic_mus_properties__constrain_pulses = [True, 3]
 
 
-# ----------------------------------- tools -----------------------------------  # DONE and it works
+# ----------------------------------- tools -----------------------------------
 
 # in resize_emgfile()
 resize_emgfile__how = "ref_signal"
@@ -89,8 +80,6 @@ resize_emgfile__ignore_negative_ipts = False
 
 
 # ------------------------------------ muap -----------------------------------
-# TODO missing custom order (2 variables) in traking and duplicates
-
 # in tracking()
 tracking__firings = "all"
 tracking__derivation = "sd"
@@ -104,5 +93,7 @@ MUcv_gui__n_firings = [0, 50]
 MUcv_gui__muaps_timewindow = 50
 MUcv_gui__figsize = [25, 20]
 
-# --------------------------------- electrodes --------------------------------  # DONE only in plot window, it works
-sort_rawemg__custom_sorting_order = None
+# --------------------------------- electrodes --------------------------------
+# This custom sorting order is valid for all the GUI windows, although the
+# documentation is accessible in the api of the electrodes module.
+custom_sorting_order = None
