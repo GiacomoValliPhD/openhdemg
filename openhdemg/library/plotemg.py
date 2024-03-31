@@ -158,7 +158,8 @@ def plot_emgsig(
 
     else:
         raise TypeError(
-            "While calling the plot_emgsig function, you should pass an integer, a list or 'all' to channels"
+            "While calling the plot_emgsig function, you should pass an "
+            + "integer or a list to channels"
         )
 
     if addrefsig:
