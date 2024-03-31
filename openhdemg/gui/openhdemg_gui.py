@@ -11,7 +11,16 @@ import tkinter as tk
 import threading
 import webbrowser
 from tkinter import (
-    messagebox, ttk, filedialog, Canvas, StringVar, Tk, N, S, W, E,
+    messagebox,
+    ttk,
+    filedialog,
+    Canvas,
+    StringVar,
+    Tk,
+    N,
+    S,
+    W,
+    E,
 )
 import customtkinter as ctk
 from pandastable import Table, config
@@ -21,20 +30,26 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib.backends.backend_tkagg import (
-    FigureCanvasTkAgg, NavigationToolbar2Tk,
+    FigureCanvasTkAgg,
+    NavigationToolbar2Tk,
 )
 
 import openhdemg.library as openhdemg
 import openhdemg.gui.settings as settings
 from openhdemg.gui.gui_modules import (
-    MURemovalWindow, EditSig, GUIHelpers, AnalyseForce, MuAnalysis, PlotEmg,
-    AdvancedAnalysis, show_error_dialog,
+    MURemovalWindow,
+    EditSig,
+    GUIHelpers,
+    AnalyseForce,
+    MuAnalysis,
+    PlotEmg,
+    AdvancedAnalysis,
+    show_error_dialog,
 )
 
 matplotlib.use("TkAgg")
 ctk.set_default_color_theme(
-    os.path.dirname(os.path.abspath(__file__))
-    + "/gui_files/gui_color_theme.json"
+    os.path.dirname(os.path.abspath(__file__)) + "/gui_files/gui_color_theme.json"
 )
 
 
@@ -128,7 +143,7 @@ class emgGUI(ctk.CTk):
     documentation in the library.
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """
         Initialization of  GUI window upon calling.
 
@@ -137,7 +152,7 @@ class emgGUI(ctk.CTk):
         : tk
             tk class object
         """
-        super().__init__()
+        super().__init__(*args, **kwargs)
 
         # Load settings
         self.load_settings()
@@ -145,9 +160,7 @@ class emgGUI(ctk.CTk):
         # Set up GUI
         self.title("openhdemg")
         master_path = os.path.dirname(os.path.abspath(__file__))
-        ctk.set_default_color_theme(
-            master_path + "/gui_files/gui_color_theme.json"
-        )
+        ctk.set_default_color_theme(master_path + "/gui_files/gui_color_theme.json")
 
         iconpath = master_path + "/gui_files/Icon_transp.ico"
         self.iconbitmap(iconpath)
@@ -245,7 +258,8 @@ class emgGUI(ctk.CTk):
         export = ctk.CTkButton(
             self.left,
             text="Save Results",
-            command=lambda: (GUIHelpers(parent=self).export_to_excel()))
+            command=lambda: (GUIHelpers(parent=self).export_to_excel()),
+        )
         export.grid(column=1, row=6, sticky=(N, S, E, W))
 
         # View Motor Unit Firings
@@ -370,12 +384,7 @@ class emgGUI(ctk.CTk):
         logo_path = master_path + "/gui_files/logo.png"  # Get logo path
         self.logo = tk.PhotoImage(file=logo_path)
 
-        self.logo_canvas.create_image(
-            400,
-            300,
-            image=self.logo,
-            anchor="center"
-        )
+        self.logo_canvas.create_image(400, 300, image=self.logo, anchor="center")
 
         # Create info buttons
         # Settings button
@@ -510,6 +519,24 @@ class emgGUI(ctk.CTk):
             ),
         )
         cite_button.grid(row=5, column=1, sticky=W, pady=(0, 20))
+
+        # Create frame for output
+        self.terminal = ctk.CTkFrame(
+            self,
+            width=1000,
+            height=100,
+            fg_color="lightgrey",
+            border_width=2,
+            border_color="White",
+        )
+        self.terminal.grid(
+            column=0,
+            row=21,
+            columnspan=2,
+            pady=8,
+            padx=10,
+            sticky=(N, S, W, E),
+        )
 
         for child in self.left.winfo_children():
             child.grid_configure(padx=5, pady=5)
@@ -924,7 +951,10 @@ class emgGUI(ctk.CTk):
                 text_color="black",
             )
             self.verify_settings_text.grid(
-                column=0, row=2, sticky=(W, E), padx=5,
+                column=0,
+                row=2,
+                sticky=(W, E),
+                padx=5,
             )
 
     def save_emgfile(self):
@@ -1070,8 +1100,7 @@ class emgGUI(ctk.CTk):
                     )
                 # Update Filespecs
                 self.n_channels.configure(
-                    text="N Channels: "
-                    + str(len(self.resdict["RAW_SIGNAL"].columns)),
+                    text="N Channels: " + str(len(self.resdict["RAW_SIGNAL"].columns)),
                     font=("Segoe UI", 15, ("bold")),
                 )
                 self.n_of_mus.configure(
@@ -1086,9 +1115,7 @@ class emgGUI(ctk.CTk):
             else:
                 # load refsig
                 if self.filetype.get() == "OTB_REFSIG":
-                    self.resdict = openhdemg.refsig_from_otb(
-                        filepath=self.file_path
-                    )
+                    self.resdict = openhdemg.refsig_from_otb(filepath=self.file_path)
                 elif self.filetype.get() == "DELSYS_REFSIG":
                     self.resdict = openhdemg.refsig_from_delsys(
                         filepath=self.file_path,
@@ -1104,8 +1131,7 @@ class emgGUI(ctk.CTk):
 
                 # Reconfigure labels for refsig
                 self.n_channels.configure(
-                    text="N Channels: "
-                    + str(len(self.resdict["REF_SIGNAL"].columns)),
+                    text="N Channels: " + str(len(self.resdict["REF_SIGNAL"].columns)),
                     font=("Segoe UI", 15, ("bold")),
                 )
                 self.n_of_mus.configure(
@@ -1138,13 +1164,15 @@ class emgGUI(ctk.CTk):
 
         except AttributeError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Make sure a file is loaded."),
             )
 
         except FileNotFoundError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Make sure a file is loaded."),
             )
 
@@ -1176,19 +1204,23 @@ class emgGUI(ctk.CTk):
                 "DELSYS_REFSIG",
             ]:
                 self.fig = openhdemg.plot_refsig(
-                    emgfile=resdict, showimmediately=False,
+                    emgfile=resdict,
+                    showimmediately=False,
                 )
             elif plot == "idr":
                 self.fig = openhdemg.plot_idr(
-                    emgfile=resdict, showimmediately=False,
+                    emgfile=resdict,
+                    showimmediately=False,
                 )
             elif plot == "refsig_fil":
                 self.fig = openhdemg.plot_refsig(
-                    emgfile=resdict, showimmediately=False,
+                    emgfile=resdict,
+                    showimmediately=False,
                 )
             elif plot == "refsig_off":
                 self.fig = openhdemg.plot_refsig(
-                    emgfile=resdict, showimmediately=False,
+                    emgfile=resdict,
+                    showimmediately=False,
                 )
 
             self.canvas = FigureCanvasTkAgg(self.fig, master=self.right)
@@ -1196,14 +1228,17 @@ class emgGUI(ctk.CTk):
                 row=0, column=0, rowspan=6, sticky=(N, S, E, W), padx=5
             )
             toolbar = NavigationToolbar2Tk(
-                self.canvas, self.right, pack_toolbar=False,
+                self.canvas,
+                self.right,
+                pack_toolbar=False,
             )
             toolbar.grid(row=5, column=0, sticky=S)
             plt.close()
 
         except AttributeError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Make sure a file is loaded."),
             )
 
@@ -1222,19 +1257,6 @@ class emgGUI(ctk.CTk):
         input_df : pd.DataFrame
             Dataftame containing the analysis results.
         """
-
-        # Create frame for output
-        self.terminal = ttk.LabelFrame(
-            self,
-            text="Result Output",
-            height=100,
-            relief="ridge",
-        )
-        self.terminal.grid(
-            column=0, row=21, columnspan=2, pady=8, padx=10,
-            sticky=(N, S, W, E),
-        )
-
         # Display results
         table = Table(
             self.terminal,
