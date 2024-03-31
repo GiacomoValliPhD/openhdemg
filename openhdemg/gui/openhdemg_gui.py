@@ -2,43 +2,42 @@
 This file contains the gui functionalities of openhdemg.
 """
 
-import os
-import sys
-import subprocess
 import importlib
-
-import tkinter as tk
+import os
+import subprocess
+import sys
 import threading
+import tkinter as tk
 import webbrowser
-from tkinter import (
-    messagebox, ttk, filedialog, Canvas, StringVar, Tk, N, S, W, E,
-)
-import customtkinter as ctk
-from pandastable import Table, config
+from tkinter import Canvas, E, N, S, StringVar, Tk, W, filedialog, messagebox, ttk
 
+import customtkinter as ctk
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from pandastable import Table, config
 from PIL import Image
 
-import matplotlib.pyplot as plt
-import matplotlib
-from matplotlib.backends.backend_tkagg import (
-    FigureCanvasTkAgg, NavigationToolbar2Tk,
-)
-
-import openhdemg.library as openhdemg
 import openhdemg.gui.settings as settings
+import openhdemg.library as openhdemg
 from openhdemg.gui.gui_modules import (
-    MURemovalWindow, EditSig, GUIHelpers, AnalyseForce, MuAnalysis, PlotEmg,
-    AdvancedAnalysis, show_error_dialog,
+    AdvancedAnalysis,
+    AnalyseForce,
+    EditSig,
+    GUIHelpers,
+    MuAnalysis,
+    MURemovalWindow,
+    PlotEmg,
+    show_error_dialog,
 )
 
 matplotlib.use("TkAgg")
 ctk.set_default_color_theme(
-    os.path.dirname(os.path.abspath(__file__))
-    + "/gui_files/gui_color_theme.json"
+    os.path.dirname(os.path.abspath(__file__)) + "/gui_files/gui_color_theme.json"
 )
 
 
-class emgGUI(ctk.CTk):
+class emgGUI(tk.Tk):
     """
     This class is used to create a graphical user interface for the openhdemg
     library.
@@ -145,9 +144,7 @@ class emgGUI(ctk.CTk):
         # Set up GUI
         self.title("openhdemg")
         master_path = os.path.dirname(os.path.abspath(__file__))
-        ctk.set_default_color_theme(
-            master_path + "/gui_files/gui_color_theme.json"
-        )
+        ctk.set_default_color_theme(master_path + "/gui_files/gui_color_theme.json")
 
         iconpath = master_path + "/gui_files/Icon_transp.ico"
         self.iconbitmap(iconpath)
@@ -245,7 +242,8 @@ class emgGUI(ctk.CTk):
         export = ctk.CTkButton(
             self.left,
             text="Save Results",
-            command=lambda: (GUIHelpers(parent=self).export_to_excel()))
+            command=lambda: (GUIHelpers(parent=self).export_to_excel()),
+        )
         export.grid(column=1, row=6, sticky=(N, S, E, W))
 
         # View Motor Unit Firings
@@ -370,12 +368,7 @@ class emgGUI(ctk.CTk):
         logo_path = master_path + "/gui_files/logo.png"  # Get logo path
         self.logo = tk.PhotoImage(file=logo_path)
 
-        self.logo_canvas.create_image(
-            400,
-            300,
-            image=self.logo,
-            anchor="center"
-        )
+        self.logo_canvas.create_image(400, 300, image=self.logo, anchor="center")
 
         # Create info buttons
         # Settings button
@@ -924,7 +917,10 @@ class emgGUI(ctk.CTk):
                 text_color="black",
             )
             self.verify_settings_text.grid(
-                column=0, row=2, sticky=(W, E), padx=5,
+                column=0,
+                row=2,
+                sticky=(W, E),
+                padx=5,
             )
 
     def save_emgfile(self):
@@ -1070,8 +1066,7 @@ class emgGUI(ctk.CTk):
                     )
                 # Update Filespecs
                 self.n_channels.configure(
-                    text="N Channels: "
-                    + str(len(self.resdict["RAW_SIGNAL"].columns)),
+                    text="N Channels: " + str(len(self.resdict["RAW_SIGNAL"].columns)),
                     font=("Segoe UI", 15, ("bold")),
                 )
                 self.n_of_mus.configure(
@@ -1086,9 +1081,7 @@ class emgGUI(ctk.CTk):
             else:
                 # load refsig
                 if self.filetype.get() == "OTB_REFSIG":
-                    self.resdict = openhdemg.refsig_from_otb(
-                        filepath=self.file_path
-                    )
+                    self.resdict = openhdemg.refsig_from_otb(filepath=self.file_path)
                 elif self.filetype.get() == "DELSYS_REFSIG":
                     self.resdict = openhdemg.refsig_from_delsys(
                         filepath=self.file_path,
@@ -1104,8 +1097,7 @@ class emgGUI(ctk.CTk):
 
                 # Reconfigure labels for refsig
                 self.n_channels.configure(
-                    text="N Channels: "
-                    + str(len(self.resdict["REF_SIGNAL"].columns)),
+                    text="N Channels: " + str(len(self.resdict["REF_SIGNAL"].columns)),
                     font=("Segoe UI", 15, ("bold")),
                 )
                 self.n_of_mus.configure(
@@ -1138,13 +1130,15 @@ class emgGUI(ctk.CTk):
 
         except AttributeError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Make sure a file is loaded."),
             )
 
         except FileNotFoundError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Make sure a file is loaded."),
             )
 
@@ -1176,19 +1170,23 @@ class emgGUI(ctk.CTk):
                 "DELSYS_REFSIG",
             ]:
                 self.fig = openhdemg.plot_refsig(
-                    emgfile=resdict, showimmediately=False,
+                    emgfile=resdict,
+                    showimmediately=False,
                 )
             elif plot == "idr":
                 self.fig = openhdemg.plot_idr(
-                    emgfile=resdict, showimmediately=False,
+                    emgfile=resdict,
+                    showimmediately=False,
                 )
             elif plot == "refsig_fil":
                 self.fig = openhdemg.plot_refsig(
-                    emgfile=resdict, showimmediately=False,
+                    emgfile=resdict,
+                    showimmediately=False,
                 )
             elif plot == "refsig_off":
                 self.fig = openhdemg.plot_refsig(
-                    emgfile=resdict, showimmediately=False,
+                    emgfile=resdict,
+                    showimmediately=False,
                 )
 
             self.canvas = FigureCanvasTkAgg(self.fig, master=self.right)
@@ -1196,14 +1194,17 @@ class emgGUI(ctk.CTk):
                 row=0, column=0, rowspan=6, sticky=(N, S, E, W), padx=5
             )
             toolbar = NavigationToolbar2Tk(
-                self.canvas, self.right, pack_toolbar=False,
+                self.canvas,
+                self.right,
+                pack_toolbar=False,
             )
             toolbar.grid(row=5, column=0, sticky=S)
             plt.close()
 
         except AttributeError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Make sure a file is loaded."),
             )
 
@@ -1231,7 +1232,11 @@ class emgGUI(ctk.CTk):
             relief="ridge",
         )
         self.terminal.grid(
-            column=0, row=21, columnspan=2, pady=8, padx=10,
+            column=0,
+            row=21,
+            columnspan=2,
+            pady=8,
+            padx=10,
             sticky=(N, S, W, E),
         )
 

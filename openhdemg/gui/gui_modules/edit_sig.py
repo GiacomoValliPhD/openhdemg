@@ -1,9 +1,11 @@
 """Module containing the Resif editing class"""
 
-from tkinter import ttk, W, E, StringVar, DoubleVar
-import customtkinter as ctk
 import os
 from sys import platform
+from tkinter import DoubleVar, E, StringVar, W, ttk
+
+import customtkinter as ctk
+
 import openhdemg.library as openhdemg
 from openhdemg.gui.gui_modules.error_handler import show_error_dialog
 
@@ -110,7 +112,7 @@ class EditSig:
 
         head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         iconpath = head_path + "/gui_files/Icon_transp.ico"
-        self.head.iconbitmap(default=iconpath)
+        self.head.iconbitmap(iconpath)
         if platform.startswith("win"):
             self.head.after(200, lambda: self.head.iconbitmap(iconpath))
 
@@ -127,13 +129,19 @@ class EditSig:
 
         # Filter RAW EMG signal
         ctk.CTkLabel(
-            self.head, text="EMG Signal", font=("Segoe UI", 18, "bold"),
+            self.head,
+            text="EMG Signal",
+            font=("Segoe UI", 18, "bold"),
         ).grid(column=0, row=0, sticky=W)
         ctk.CTkLabel(
-            self.head, text="Filter Order", font=("Segoe UI", 18, "bold"),
+            self.head,
+            text="Filter Order",
+            font=("Segoe UI", 18, "bold"),
         ).grid(column=1, row=1, sticky=(W, E))
         ctk.CTkLabel(
-            self.head, text="BandPass Freq", font=("Segoe UI", 18, "bold"),
+            self.head,
+            text="BandPass Freq",
+            font=("Segoe UI", 18, "bold"),
         ).grid(column=2, row=1, sticky=(W, E))
         ctk.CTkButton(
             self.head,
@@ -142,30 +150,43 @@ class EditSig:
         ).grid(column=0, row=2, sticky=W)
         self.emg_filter_order = StringVar()
         ctk.CTkEntry(
-            self.head, width=100, textvariable=self.emg_filter_order,
+            self.head,
+            width=100,
+            textvariable=self.emg_filter_order,
         ).grid(column=1, row=2)
         self.emg_filter_order.set(2)
         self.emg_bandpass_freq = StringVar()
         ctk.CTkEntry(
-            self.head, width=100, textvariable=self.emg_bandpass_freq,
+            self.head,
+            width=100,
+            textvariable=self.emg_bandpass_freq,
         ).grid(column=2, row=2)
         self.emg_bandpass_freq.set("20-500")
-        ttk.Separator(
-            self.head, orient="horizontal"
-        ).grid(
-            column=0, columnspan=3, row=3, sticky=(W, E), padx=5, pady=5,
+        ttk.Separator(self.head, orient="horizontal").grid(
+            column=0,
+            columnspan=3,
+            row=3,
+            sticky=(W, E),
+            padx=5,
+            pady=5,
         )
 
         # Filter Refsig
         # Define Labels
         ctk.CTkLabel(
-            self.head, text="Reference Signal", font=("Segoe UI", 18, "bold"),
+            self.head,
+            text="Reference Signal",
+            font=("Segoe UI", 18, "bold"),
         ).grid(column=0, row=4, sticky=W)
         ctk.CTkLabel(
-            self.head, text="Filter Order", font=("Segoe UI", 18, "bold"),
+            self.head,
+            text="Filter Order",
+            font=("Segoe UI", 18, "bold"),
         ).grid(column=1, row=5, sticky=(W, E))
         ctk.CTkLabel(
-            self.head, text="Cutoff Freq", font=("Segoe UI", 18, "bold"),
+            self.head,
+            text="Cutoff Freq",
+            font=("Segoe UI", 18, "bold"),
         ).grid(column=2, row=5, sticky=(W, E))
         # Fiter button
         basic = ctk.CTkButton(
@@ -176,14 +197,18 @@ class EditSig:
         basic.grid(column=0, row=6, sticky=W)
         self.refsig_filter_order = StringVar()
         ref_order = ctk.CTkEntry(
-            self.head, width=100, textvariable=self.refsig_filter_order,
+            self.head,
+            width=100,
+            textvariable=self.refsig_filter_order,
         )
         ref_order.grid(column=1, row=6)
         self.refsig_filter_order.set(4)
 
         self.cutoff_freq = StringVar()
         cutoff = ctk.CTkEntry(
-            self.head, width=100, textvariable=self.cutoff_freq,
+            self.head,
+            width=100,
+            textvariable=self.cutoff_freq,
         )
         cutoff.grid(column=2, row=6)
         self.cutoff_freq.set(15)
@@ -206,7 +231,9 @@ class EditSig:
 
         self.offsetval = StringVar()
         offset = ctk.CTkEntry(
-            self.head, width=100, textvariable=self.offsetval,
+            self.head,
+            width=100,
+            textvariable=self.offsetval,
         )
         offset.grid(column=1, row=8)
         self.offsetval.set(4)
@@ -218,15 +245,21 @@ class EditSig:
 
         # Convert Reference signal
         ctk.CTkLabel(
-            self.head, text="Operator", font=("Segoe UI", 18, "bold"),
+            self.head,
+            text="Operator",
+            font=("Segoe UI", 18, "bold"),
         ).grid(column=1, row=9, sticky=(W, E))
         ctk.CTkLabel(
-            self.head, text="Factor", font=("Segoe UI", 18, "bold"),
+            self.head,
+            text="Factor",
+            font=("Segoe UI", 18, "bold"),
         ).grid(column=2, row=9, sticky=(W, E))
 
         self.convert = StringVar()
         convert = ctk.CTkComboBox(
-            self.head, width=100, variable=self.convert,
+            self.head,
+            width=100,
+            variable=self.convert,
             values=("Multiply", "Divide"),
         )
         convert.configure(state="readonly")
@@ -235,7 +268,9 @@ class EditSig:
 
         self.convert_factor = DoubleVar()
         factor = ctk.CTkEntry(
-            self.head, width=100, textvariable=self.convert_factor,
+            self.head,
+            width=100,
+            textvariable=self.convert_factor,
         )
         factor.grid(column=2, row=10)
         self.convert_factor.set(2.5)
@@ -249,7 +284,9 @@ class EditSig:
 
         # Convert to percentage
         ctk.CTkLabel(
-            self.head, text="MVC Value", font=("Segoe UI", 18, "bold"),
+            self.head,
+            text="MVC Value",
+            font=("Segoe UI", 18, "bold"),
         ).grid(column=1, row=11, sticky=(W, E))
 
         percent_button = ctk.CTkButton(
@@ -296,7 +333,8 @@ class EditSig:
 
         except AttributeError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Make sure a file is loaded."),
             )
 
@@ -326,12 +364,14 @@ class EditSig:
             )
             # Plot filtered Refsig
             self.parent.in_gui_plotting(
-                resdict=self.parent.resdict, plot="refsig_fil",
+                resdict=self.parent.resdict,
+                plot="refsig_fil",
             )
 
         except AttributeError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Make sure a Refsig file is loaded."),
             )
 
@@ -361,12 +401,14 @@ class EditSig:
             )
             # Update Plot
             self.parent.in_gui_plotting(
-                resdict=self.parent.resdict, plot="refsig_off",
+                resdict=self.parent.resdict,
+                plot="refsig_off",
             )
 
         except AttributeError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Make sure a Refsig file is loaded."),
             )
 
@@ -404,12 +446,14 @@ class EditSig:
 
             # Update Plot
             self.parent.in_gui_plotting(
-                resdict=self.parent.resdict, plot="refsig_off",
+                resdict=self.parent.resdict,
+                plot="refsig_off",
             )
 
         except AttributeError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Make sure a Refsig file is loaded."),
             )
 
@@ -445,7 +489,8 @@ class EditSig:
 
         except AttributeError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Make sure a Refsig file is loaded."),
             )
 

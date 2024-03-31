@@ -2,11 +2,12 @@
 
 import os
 import webbrowser
-from tkinter import ttk, W, E, N, S, StringVar, PhotoImage
-from PIL import Image
 from sys import platform
+from tkinter import E, N, PhotoImage, S, StringVar, W, ttk
 
 import customtkinter as ctk
+from PIL import Image
+
 import openhdemg.library as openhdemg
 from openhdemg.gui.gui_modules.error_handler import show_error_dialog
 
@@ -135,7 +136,7 @@ class PlotEmg:
             # Set window icon
             head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             iconpath = head_path + "/gui_files/Icon_transp.ico"
-            self.head.iconbitmap(default=iconpath)
+            self.head.iconbitmap(iconpath)
             if platform.startswith("win"):
                 self.head.after(200, lambda: self.head.iconbitmap(iconpath))
 

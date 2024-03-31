@@ -1,9 +1,11 @@
 """Module containing the MU Removal GUI class"""
 
-from tkinter import StringVar, W, E
 import os
 from sys import platform
+from tkinter import E, StringVar, W
+
 import customtkinter as ctk
+
 import openhdemg.library as openhdemg
 from openhdemg.gui.gui_modules.error_handler import show_error_dialog
 
@@ -94,11 +96,9 @@ class MURemovalWindow:
             self.head.title("Motor Unit Removal Window")
 
             # Set the icon for the window
-            head_path = os.path.dirname(
-                os.path.dirname(os.path.abspath(__file__))
-            )
+            head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             iconpath = head_path + "/gui_files/Icon_transp.ico"
-            self.head.iconbitmap(default=iconpath)
+            self.head.iconbitmap(iconpath)
             if platform.startswith("win"):
                 self.head.after(200, lambda: self.head.iconbitmap(iconpath))
 
@@ -151,7 +151,8 @@ class MURemovalWindow:
         except AttributeError as e:
             self.head.destroy()
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Make sure a file is loaded."),
             )
 
@@ -185,7 +186,9 @@ class MURemovalWindow:
             removed_mu_value = [*range(0, self.parent.resdict["NUMBER_OF_MUS"])]
             removed_mu_value = list(map(str, removed_mu_value))
             removed_mu = ctk.CTkComboBox(
-                self.head, width=10, variable=self.mu_to_remove,
+                self.head,
+                width=10,
+                variable=self.mu_to_remove,
                 values=removed_mu_value,
             )
             removed_mu.configure(state="readonly")
@@ -199,7 +202,8 @@ class MURemovalWindow:
 
         except AttributeError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Make sure a file is loaded."),
             )
 
@@ -231,7 +235,9 @@ class MURemovalWindow:
             removed_mu_value = [*range(0, self.parent.resdict["NUMBER_OF_MUS"])]
             removed_mu_value = list(map(str, removed_mu_value))
             removed_mu = ctk.CTkComboBox(
-                self.head, width=10, variable=self.mu_to_remove,
+                self.head,
+                width=10,
+                variable=self.mu_to_remove,
                 values=removed_mu_value,
             )
             removed_mu.configure(state="readonly")
@@ -245,6 +251,7 @@ class MURemovalWindow:
 
         except AttributeError as e:
             show_error_dialog(
-                parent=self, error=e,
+                parent=self,
+                error=e,
                 solution=str("Make sure a file is loaded."),
             )

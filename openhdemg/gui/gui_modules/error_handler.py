@@ -1,8 +1,9 @@
 """Module containing the error message designs"""
 
 import os
-from sys import platform
 import traceback
+from sys import platform
+
 import customtkinter as ctk
 from PIL import Image
 
@@ -74,7 +75,7 @@ class ErrorDialog:
         # Set window icon
         head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         iconpath = head_path + "/gui_files/Icon_transp.ico"
-        self.head.iconbitmap(default=iconpath)
+        self.head.iconbitmap(iconpath)
         if platform.startswith("win"):
             self.head.after(200, lambda: self.head.iconbitmap(iconpath))
 
@@ -83,39 +84,52 @@ class ErrorDialog:
         # Create a frame for the content with blue background, placed in the
         # middle.
         self.content_frame = ctk.CTkFrame(
-            self.head, corner_radius=10, fg_color="LightBlue4",
+            self.head,
+            corner_radius=10,
+            fg_color="LightBlue4",
             bg_color="#FFBF00",
         )
         self.content_frame.pack(padx=50, expand=True, fill="both")
 
         # Load an information icon and display it
         self.info_photo = ctk.CTkImage(
-            light_image=Image.open(path + "/Error.png"), size=(50, 50),
+            light_image=Image.open(path + "/Error.png"),
+            size=(50, 50),
         )
         self.icon = ctk.CTkLabel(
-            self.content_frame, text="", image=self.info_photo,
+            self.content_frame,
+            text="",
+            image=self.info_photo,
             bg_color="LightBlue4",
         )
         self.icon.pack(pady=5)
         self.icon_info = ctk.CTkLabel(
-            self.content_frame, text="INFORMATION", font=("Arial", 16, "bold"),
+            self.content_frame,
+            text="INFORMATION",
+            font=("Arial", 16, "bold"),
             text_color="#123456",
         )
         self.icon_info.pack(pady=5)
 
         # Error solution label (larger, bold), placed below the icon
         self.solution_label = ctk.CTkLabel(
-            self.content_frame, text=solution, font=("Arial", 14, "bold"),
-            wraplength=400, fg_color="LightBlue4",
+            self.content_frame,
+            text=solution,
+            font=("Arial", 14, "bold"),
+            wraplength=400,
+            fg_color="LightBlue4",
         )
         self.solution_label.pack(pady=(10, 5))
 
         # Error traceback label (smaller)
         self.error_label = ctk.CTkLabel(
-            self.content_frame, text=error, font=("Arial", 10), wraplength=400,
+            self.content_frame,
+            text=error,
+            font=("Arial", 10),
+            wraplength=400,
             fg_color="LightBlue4",
         )
-        self.error_label.pack(pady=(5, 10), expand=True, fill='both')
+        self.error_label.pack(pady=(5, 10), expand=True, fill="both")
 
         # Make window modal
         self.head.grab_set()  # Redirect all events to this window
@@ -158,7 +172,9 @@ def show_error_dialog(parent, error, solution):
     else:
         error_message = "".join(
             traceback.format_exception(
-                type(error), value=error, tb=error.__traceback__,
+                type(error),
+                value=error,
+                tb=error.__traceback__,
             )
         )
 
