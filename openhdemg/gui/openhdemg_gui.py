@@ -127,7 +127,7 @@ class emgGUI(tk.Tk):
     documentation in the library.
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """
         Initialization of  GUI window upon calling.
 
@@ -136,7 +136,7 @@ class emgGUI(tk.Tk):
         : tk
             tk class object
         """
-        super().__init__()
+        super().__init__(*args, **kwargs)
 
         # Load settings
         self.load_settings()
@@ -503,6 +503,24 @@ class emgGUI(tk.Tk):
             ),
         )
         cite_button.grid(row=5, column=1, sticky=W, pady=(0, 20))
+
+        # Create frame for output
+        self.terminal = ctk.CTkFrame(
+            self,
+            width=1000,
+            height=100,
+            fg_color="lightgrey",
+            border_width=2,
+            border_color="White",
+        )
+        self.terminal.grid(
+            column=0,
+            row=21,
+            columnspan=2,
+            pady=8,
+            padx=10,
+            sticky=(N, S, W, E),
+        )
 
         for child in self.left.winfo_children():
             child.grid_configure(padx=5, pady=5)
@@ -1223,23 +1241,6 @@ class emgGUI(tk.Tk):
         input_df : pd.DataFrame
             Dataftame containing the analysis results.
         """
-
-        # Create frame for output
-        self.terminal = ttk.LabelFrame(
-            self,
-            text="Result Output",
-            height=100,
-            relief="ridge",
-        )
-        self.terminal.grid(
-            column=0,
-            row=21,
-            columnspan=2,
-            pady=8,
-            padx=10,
-            sticky=(N, S, W, E),
-        )
-
         # Display results
         table = Table(
             self.terminal,
