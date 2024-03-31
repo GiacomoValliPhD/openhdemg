@@ -2,6 +2,8 @@
 
 from tkinter import ttk, W, E, N, S, StringVar, BooleanVar
 import customtkinter as ctk
+import os
+from sys import platform
 from pandastable import Table
 import openhdemg.library as openhdemg
 from openhdemg.gui.gui_modules.error_handler import show_error_dialog
@@ -98,7 +100,7 @@ class AdvancedAnalysis:
         self.emgfile2 = {}
         self.extension_factor_adv = StringVar()
 
-         # Initialize parent and load parent settings
+        # Initialize parent and load parent settings
         self.parent = parent
         self.parent.load_settings()
 
@@ -114,8 +116,24 @@ class AdvancedAnalysis:
         # Open window
         self.a_window = ctk.CTkToplevel(fg_color="LightBlue4")
         self.a_window.title("Advanced Tools Window")
-        self.a_window.wm_iconbitmap()
+        
+        # Set window icon
+        head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        iconpath = head_path + "/gui_files/Icon2.ico"
+        self.a_window.iconbitmap(iconpath)
+        if platform.startswith("win"):
+            self.a_window.after(200, lambda: self.a_window.iconbitmap(iconpath))
+        
         self.a_window.grab_set()
+
+        # Set resizable window
+        # Configure columns with a loop
+        for col in range(3):
+            self.head.columnconfigure(col, weight=1)
+
+        # Configure rows with a loop
+        for row in range(8):
+            self.head.rowconfigure(row, weight=1)
 
         # Add Label
         ctk.CTkLabel(
@@ -251,8 +269,25 @@ class AdvancedAnalysis:
 
         self.head = ctk.CTkToplevel(fg_color="LightBlue4")
         self.head.title(head_title)
-        self.head.wm_iconbitmap()
-        self.head.grab_set()
+        
+         # Set window icon
+        head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        iconpath = head_path + "/gui_files/Icon2.ico"
+        self.head.iconbitmap(default=iconpath)
+        if platform.startswith("win"):
+            self.head.after(200, lambda: self.head.iconbitmap(iconpath))
+        
+        self.a_window.grab_set()
+
+        # Set resizable window
+        # Configure columns with a loop
+        for col in range(3):
+            self.head.columnconfigure(col, weight=1)
+
+        # Configure rows with a loop
+        for row in range(17):
+            self.head.rowconfigure(row, weight=1)
+
 
         # Specify Signal
         signal_value = ("OTB", "DEMUSE", "OPENHDEMG", "CUSTOMCSV")

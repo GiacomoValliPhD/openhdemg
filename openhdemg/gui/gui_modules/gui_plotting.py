@@ -2,8 +2,9 @@
 
 import os
 import webbrowser
-from tkinter import ttk, W, E, StringVar, PhotoImage
+from tkinter import ttk, W, E, N, S, StringVar, PhotoImage
 from PIL import Image
+from sys import platform
 
 import customtkinter as ctk
 import openhdemg.library as openhdemg
@@ -12,16 +13,19 @@ from openhdemg.gui.gui_modules.error_handler import show_error_dialog
 
 class PlotEmg:
     """
-    A class to manage and display EMG (Electromyography) signal plots in a GUI application.
+    A class to manage and display EMG (Electromyography) signal plots in a GUI
+    application.
 
-    This class creates a plotting window with various options to create and display plots 
-    from an EMG file. It provides functionalities to plot EMG signals, reference signals, 
-    motor unit pulses, and more, with customizable settings.
+    This class creates a plotting window with various options to create and
+    display plots from an EMG file. It provides functionalities to plot EMG
+    signals, reference signals, motor unit pulses, and more, with customizable
+    settings.
 
     Attributes
     ----------
     parent : object
-        The parent widget, typically the main application window that this PlotEmg instance belongs to.
+        The parent widget, typically the main application window that this
+        PlotEmg instance belongs to.
     head : CTkToplevel
         The top-level widget for the plotting window.
     matrix_rc : StringVar
@@ -81,7 +85,7 @@ class PlotEmg:
         Plot the motor unit action potentials.
     on_matrix_none(self, *args)
         Handle changes in the matrix code selection.
-    
+
     Examples
     --------
     >>> main_window = Tk()
@@ -90,48 +94,73 @@ class PlotEmg:
 
     Notes
     -----
-    This class is dependent on the `ctk` and `ttk` modules from the `tkinter` library.
-    Some attributes and methods are conditional based on the `parent`'s properties.
+    This class is dependent on the `ctk` and `ttk` modules from the `tkinter`
+    library.
+    Some attributes and methods are conditional based on the `parent`'s
+    properties.
 
     """
+
     def __init__(self, parent):
         """
         Initialize a new instance of the PlotEmg class.
 
-        This method sets up the GUI components of the PlotEmg window, including labels, 
-        entries, checkboxes, and buttons for various plot settings and options.
+        This method sets up the GUI components of the PlotEmg window,
+        including labels, entries, checkboxes, and buttons for various plot
+        settings and options.
 
         Parameters
         ----------
         parent : object
-            The parent widget, typically the main application window, to which this PlotEmg instance belongs.
+            The parent widget, typically the main application window, to which
+            this PlotEmg instance belongs.
 
         Raises
         ------
         AttributeError
-            If certain widgets are not properly instantiated due to missing parent resdict.
+            If certain widgets are not properly instantiated due to missing
+            parent resdict.
 
         """
+
         # Try is block is necessary as some widgets depend on parent resdict
         try:
-             # Initialize parent and load parent settings 
+            # Initialize parent and load parent settings
             self.parent = parent
             self.parent.load_settings()
 
             self.head = ctk.CTkToplevel(fg_color="LightBlue4")
             self.head.title("Plot Window")
-            self.head.wm_iconbitmap()
-            self.head.grab_set()
 
-            # define tk variables for later use
-            self.matrix_rc = StringVar() # Matrix rows columns
-            self.mat_label = ttk.Label() # Label for matriy rows columns
-            self.row_cols_entry = ttk.Entry() # Entry for matrix rows columns
+            # Set window icon
+            head_path = os.path.dirname(
+                os.path.dirname(os.path.abspath(__file__))
+            )
+            iconpath = head_path + "/gui_files/Icon2.ico"
+            self.head.iconbitmap(default=iconpath)
+            if platform.startswith("win"):
+                self.head.after(200, lambda: self.head.iconbitmap(iconpath))
+
+            # Set resizable window
+            # Configure columns with a loop
+            for col in range(7):
+                self.head.columnconfigure(col, weight=1)
+
+            # Configure rows with a loop
+            for row in range(21):
+                self.head.rowconfigure(row, weight=1)
+
+            # Define tk variables for later use
+            self.matrix_rc = StringVar()  # Matrix rows columns
+            self.mat_label = ttk.Label()  # Label for matriy rows columns
+            self.row_cols_entry = ttk.Entry()  # Entry for matrix rows columns
 
             # Reference signal
-            ctk.CTkLabel(self.head, text="Reference signal", font=('Segoe UI',15, 'bold')).grid(
-                column=0, row=0, sticky=W
-            )
+            ctk.CTkLabel(
+                self.head,
+                text="Reference signal",
+                font=('Segoe UI', 15, 'bold'),
+            ).grid(column=0, row=0, sticky=W)
             self.ref_but = StringVar()
             ref_button = ctk.CTkCheckBox(
                 self.head,
@@ -145,7 +174,11 @@ class PlotEmg:
             self.ref_but.set(False)
 
             # Time
-            ctk.CTkLabel(self.head, text="Time in seconds", font=('Segoe UI',15, 'bold')).grid(column=0, row=1, sticky=W)
+            ctk.CTkLabel(
+                self.head,
+                text="Time in seconds",
+                font=('Segoe UI', 15, 'bold'),
+            ).grid(column=0, row=1, sticky=W)
             self.time_sec = StringVar()
             time_button = ctk.CTkCheckBox(
                 self.head,
@@ -159,16 +192,24 @@ class PlotEmg:
             self.time_sec.set(False)
 
             # Figure Size
-            ctk.CTkLabel(self.head, text="Figure size in cm (h,w)", font=('Segoe UI',15, 'bold')).grid(column=0, row=2)
+            ctk.CTkLabel(
+                self.head,
+                text="Figure size in cm (h,w)",
+                font=('Segoe UI', 15, 'bold'),
+            ).grid(column=0, row=2)
             self.size_fig = StringVar()
-            fig_entry = ctk.CTkEntry(self.head, width=100, textvariable=self.size_fig)
+            fig_entry = ctk.CTkEntry(
+                self.head, width=100, textvariable=self.size_fig
+            )
             self.size_fig.set("20,15")
             fig_entry.grid(column=1, row=2, sticky=W)
 
             # Plot emgsig
             plt_emgsig = ctk.CTkButton(
                 self.head, text="Plot EMGsig", command=self.plt_emgsignal,
-                fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+                fg_color="#E5E4E2", text_color="black", border_color="black",
+                border_width=1,
+            )
             plt_emgsig.grid(column=0, row=3, sticky=W)
 
             self.channels = StringVar()
@@ -183,13 +224,17 @@ class PlotEmg:
             # Plot refsig
             plt_refsig = ctk.CTkButton(
                 self.head, text="Plot RefSig", command=self.plt_refsignal,
-                fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+                fg_color="#E5E4E2", text_color="black", border_color="black",
+                border_width=1,
+            )
             plt_refsig.grid(column=0, row=4, sticky=W)
 
             # Plot motor unit pulses
             plt_pulses = ctk.CTkButton(
                 self.head, text="Plot MUpulses", command=self.plt_mupulses,
-                fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+                fg_color="#E5E4E2", text_color="black", border_color="black",
+                border_width=1,
+            )
             plt_pulses.grid(column=0, row=5, sticky=W)
 
             # Define Linewidth for plot
@@ -203,20 +248,28 @@ class PlotEmg:
             self.linewidth.set("Linewidth")
 
             # Plot impulse train
-            plt_ipts_but = ctk.CTkButton(self.head, text="Plot Source", command=self.plt_ipts,
-                                        fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+            plt_ipts_but = ctk.CTkButton(
+                self.head, text="Plot Source", command=self.plt_ipts,
+                fg_color="#E5E4E2", text_color="black", border_color="black",
+                border_width=1,
+            )
             plt_ipts_but.grid(column=0, row=6, sticky=W)
 
             self.mu_numb = StringVar()
             munumb_entry_values = ("0", "0,1,2", "0,1,2,3", "all")
-            munumb_entry = ctk.CTkComboBox(self.head, width=15, variable=self.mu_numb,
-                                            values=munumb_entry_values)
+            munumb_entry = ctk.CTkComboBox(
+                self.head, width=15, variable=self.mu_numb,
+                values=munumb_entry_values,
+            )
             munumb_entry.grid(column=1, row=6, sticky=(W, E))
             self.mu_numb.set("MU Number")
 
             # Plot instantaneous discharge rate
-            plt_idr_but = ctk.CTkButton(self.head, text="Plot IDR", command=self.plt_idr,
-                                    fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+            plt_idr_but = ctk.CTkButton(
+                self.head, text="Plot IDR", command=self.plt_idr,
+                fg_color="#E5E4E2", text_color="black", border_color="black",
+                border_width=1,
+            )
             plt_idr_but.grid(column=0, row=7, sticky=W)
 
             self.mu_numb_idr = StringVar()
@@ -235,12 +288,24 @@ class PlotEmg:
             )
 
             # Matrix code
-            ctk.CTkLabel(self.head, text="Matrix Code", font=('Segoe UI',15, 'bold')).grid(row=0, column=3, sticky=(W))
+            ctk.CTkLabel(
+                self.head, text="Matrix Code", font=('Segoe UI', 15, 'bold')
+            ).grid(row=0, column=3, sticky=(W))
 
             self.mat_code = StringVar()
-            matrix_code_values = ("GR08MM1305", "GR04MM1305", "GR10MM0808", self.parent.settings["delsys_sensor_label"], "None")
-            matrix_code = ctk.CTkComboBox(self.head, width=100, variable=self.mat_code,
-                                            values=matrix_code_values, state="readonly")
+            # NOTE the matrix codes can only be those accepted by sort_rawemg(). matrix_code_values = ("GR08MM1305", "GR04MM1305", "GR10MM0808", self.parent.settings.delsys_sensor_label, "None")
+            matrix_code_values = (
+                "GR08MM1305",
+                "GR04MM1305",
+                "GR10MM0808", 
+                "Trigno Galileo Sensor",
+                "Custom order",
+                "None",
+            )
+            matrix_code = ctk.CTkComboBox(
+                self.head, width=100, variable=self.mat_code,
+                values=matrix_code_values, state="readonly",
+            )
             matrix_code.grid(row=0, column=4, sticky=(W, E))
             self.mat_code.set("GR08MM1305")
 
@@ -248,7 +313,9 @@ class PlotEmg:
             self.mat_code.trace_add("write", self.on_matrix_none)
 
             # Matrix Orientation
-            ctk.CTkLabel(self.head, text="Orientation", font=('Segoe UI',15, 'bold')).grid(row=1, column=3, sticky=(W))
+            ctk.CTkLabel(
+                self.head, text="Orientation", font=('Segoe UI', 15, 'bold'),
+            ).grid(row=1, column=3, sticky=(W))
             self.mat_orientation = StringVar()
             orientation_values = ("0", "180")
             orientation = ctk.CTkComboBox(
@@ -264,13 +331,17 @@ class PlotEmg:
             # Plot derivation
             # Button
             deriv_button = ctk.CTkButton(
-                self.head, text="Plot Derivation", command=self.plot_derivation,
-                fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+                self.head, text="Plot Derivation",
+                command=self.plot_derivation, fg_color="#E5E4E2",
+                text_color="black", border_color="black", border_width=1,
+            )
             deriv_button.grid(row=3, column=3, sticky=W)
 
             # Combobox Config
             self.deriv_config = StringVar()
-            configuration_values = ("Single differential", "Double differential")
+            configuration_values = (
+                "Single differential", "Double differential"
+            )
             configuration = ctk.CTkComboBox(
                 self.head, width=15, variable=self.deriv_config,
                 values=configuration_values, state="readonly"
@@ -292,7 +363,9 @@ class PlotEmg:
             # Button
             muap_button = ctk.CTkButton(
                 self.head, text="Plot MUAPs", command=self.plot_muaps,
-                fg_color="#E5E4E2", text_color="black", border_color="black", border_width=1)
+                fg_color="#E5E4E2", text_color="black", border_color="black",
+                border_width=1,
+            )
             muap_button.grid(row=4, column=3, sticky=W)
 
             # Combobox Config
@@ -314,35 +387,45 @@ class PlotEmg:
 
             # Combobox MU Number
             self.muap_munum = StringVar()
-            mu_numbers = tuple(str(number) for number in range(0, self.parent.resdict["NUMBER_OF_MUS"]))
-            muap_munum = ctk.CTkComboBox(self.head, width=15, variable=self.muap_munum,
-                                        values=mu_numbers, state="readonly")
+            mu_numbers = tuple(
+                str(number) for number in range(0, self.parent.resdict["NUMBER_OF_MUS"])
+            )
+            muap_munum = ctk.CTkComboBox(
+                self.head, width=15, variable=self.muap_munum,
+                values=mu_numbers, state="readonly",
+            )
             muap_munum.grid(row=4, column=5, sticky=(W, E))
             self.muap_munum.set("MU Number")
 
             # Combobox Timewindow
             self.muap_time = StringVar()
             timewindow_values = ("25", "50", "100", "200")
-            timewindow = ctk.CTkComboBox(self.head, width=120, variable=self.muap_time,
-                                            values=timewindow_values)
+            timewindow = ctk.CTkComboBox(
+                self.head, width=120, variable=self.muap_time,
+                values=timewindow_values,
+            )
             timewindow.grid(row=4, column=6, sticky=(W, E))
             self.muap_time.set("Timewindow (ms)")
-            # Disable Timewindow for DELSYS files 
+            # Disable Timewindow for DELSYS files
             if self.parent.resdict["SOURCE"] == "DELSYS":
                 timewindow.config(state="disabled")
 
             # Matrix Illustration Graphic
-            matrix_canvas = ctk.CTkCanvas(self.head, height=150, width=600, bg="white")
+            matrix_canvas = ctk.CTkCanvas(
+                self.head, height=150, width=600, bg="white",
+            )
             matrix_canvas.grid(row=5, column=3, rowspan=5, columnspan=5)
-            parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            parent_dir = os.path.dirname(
+                os.path.dirname(os.path.abspath(__file__))
+            )
             self.matrix = PhotoImage(
-                file= parent_dir + "/gui_files/Matrix.png"
+                file=parent_dir + "/gui_files/Matrix.png"
             )
             matrix_canvas.create_image(0, 0, anchor="nw", image=self.matrix)
             # Information Button
             self.info = ctk.CTkImage(
                 light_image=Image.open(parent_dir + "/gui_files/Info.png"),
-                size = (30, 30)
+                size=(30, 30),
             )
             info_button = ctk.CTkButton(
                 self.head,
@@ -354,35 +437,46 @@ class PlotEmg:
                 fg_color="LightBlue4",
                 command=lambda: (
                     (
-                        webbrowser.open("https://www.giacomovalli.com/openhdemg/gui_basics/#plot-motor-units")
+                        webbrowser.open(
+                            "https://www.giacomovalli.com/openhdemg/gui_basics/#plot-motor-units"
+                        )
                     ),
                 ),
             )
             info_button.grid(row=0, column=6, sticky=E)
 
             for child in self.head.winfo_children():
-                child.grid_configure(padx=5, pady=5)
+                child.grid_configure(padx=5, pady=5, )
 
         except AttributeError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Make sure a file is loaded."))
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str("Make sure a file is loaded."),
+            )
             self.head.destroy()
 
     ### Define functions for motor unit plotting
     def on_matrix_none(self, *args):
         """
-        This function is called when the value of the mat_code variable is changed.
+        This function is called when the value of the mat_code variable is
+        changed.
 
-        When the variable is set to "None" it will create an Entrybox on the grid at column 1 and row 6,
-        and when the mat_code is set to something else it will remove the entrybox from the grid.
+        When the variable is set to "None" it will create an Entrybox on the
+        grid at column 1 and row 6, and when the mat_code is set to something
+        else it will remove the entrybox from the grid.
         """
+
         if self.mat_code.get() == "None":
             # Place label defined in init
-            self.mat_label = ttk.Label(self.head, text="Rows, Columns:") # Label for matriy rows columns
+            # Label for matriy rows columns
+            self.mat_label = ttk.Label(self.head, text="Rows, Columns:")
             self.mat_label.grid(row=0, column=5, sticky=E)
 
             # Column entry only when specified matrix code
-            self.row_cols_entry = ttk.Entry(self.head, width=8, textvariable= self.matrix_rc)
-            self.row_cols_entry.grid(row=0, column=6, sticky = W, padx=5)
+            self.row_cols_entry = ttk.Entry(
+                self.head, width=8, textvariable=self.matrix_rc,
+            )
+            self.row_cols_entry.grid(row=0, column=6, sticky=W, padx=5)
             self.matrix_rc.set("13,5")
 
         else:
@@ -392,12 +486,11 @@ class PlotEmg:
 
         self.head.update_idletasks()
 
-
     def plt_emgsignal(self):
         """
         Instance method to plot the raw emg signal in an seperate plot window.
-        The channels selected by the user are plotted. The plot can be saved and
-        partly edited using the matplotlib options.
+        The channels selected by the user are plotted. The plot can be saved
+        and partly edited using the matplotlib options.
 
         Executed when button "Plot EMGsig" in Plot Window is pressed.
 
@@ -413,6 +506,7 @@ class PlotEmg:
         --------
         plot_emgsignal in library.
         """
+
         try:
             # Create list of channels to be plotted
             channels = self.channels.get()
@@ -443,17 +537,31 @@ class PlotEmg:
                 )
 
         except ValueError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Enter valid channel number or non-negative figure size."))
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str(
+                    "Enter valid channel number or non-negative figure size."
+                ),
+            )
 
         except KeyError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Enter valid channel number."))
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str("Enter valid channel number."),
+            )
 
         except IndexError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Enter valid figure size. Must be non negative and tuple of (heigth, width)."))
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str(
+                    "Enter valid figure size. Must be non negative and tuple of (heigth, width)."
+                ),
+            )
 
     def plt_refsignal(self):
         """
-        Instance method to plot the reference signal in an seperate plot window.
+        Instance method to plot the reference signal in an seperate plot
+        window.
         The plot can be saved and partly edited using the matplotlib options.
 
         Executed when button "Plot REFsig" in Plot Window is pressed.
@@ -462,6 +570,7 @@ class PlotEmg:
         --------
         plot_refsig in library.
         """
+
         # Create list of figsize
         figsize = [int(i) for i in self.size_fig.get().split(",")]
 
@@ -489,6 +598,7 @@ class PlotEmg:
         --------
         plot_mupulses in library.
         """
+
         try:
             # Create list of figsize
             figsize = [int(i) for i in self.size_fig.get().split(",")]
@@ -503,13 +613,16 @@ class PlotEmg:
             )
 
         except ValueError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Enter valid linewidth number."))
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str("Enter valid linewidth number."),
+            )
 
     def plt_ipts(self):
         """
-        Instance method to plot the motor unit pulse train in an seperate plot window.
-        The motor units selected by the user are plotted. The plot can be saved and
-        partly edited using the matplotlib options.
+        Instance method to plot the motor unit pulse train in an seperate plot
+        window. The motor units selected by the user are plotted. The plot can
+        be saved and partly edited using the matplotlib options.
 
         Executed when button "Plot Source" in Plot Window is pressed.
 
@@ -524,6 +637,7 @@ class PlotEmg:
         --------
         plot_ipts in library.
         """
+
         try:
             # Create list contaning motor units to be plotted
             mu_numb = self.mu_numb.get()
@@ -564,16 +678,22 @@ class PlotEmg:
                 )
 
         except ValueError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Enter valid motor unit number."))
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str("Enter valid motor unit number."),
+            )
 
         except KeyError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Enter valid motor unit number."))
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str("Enter valid motor unit number."),
+            )
 
     def plt_idr(self):
         """
-        Instance method to plot the instanteous discharge rate in an seperate plot window.
-        The motor units selected by the user are plotted. The plot can be saved and
-        partly edited using the matplotlib options.
+        Instance method to plot the instanteous discharge rate in an seperate
+        plot window. The motor units selected by the user are plotted. The
+        plot can be saved and partly edited using the matplotlib options.
 
         Executed when button "Plot IDR" in Plot Window is pressed.
 
@@ -588,6 +708,7 @@ class PlotEmg:
         --------
         plot_idr in library.
         """
+
         try:
             mu_idr = self.mu_numb_idr.get()
             # Create list of figsize
@@ -625,18 +746,25 @@ class PlotEmg:
                 )
 
         except ValueError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Enter valid motor unit number."))
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str("Enter valid motor unit number."),
+            )
 
         except KeyError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Enter valid motor unit number."))
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str("Enter valid motor unit number."),
+            )
 
     def plot_derivation(self):
         """
-        Instance method to plot the differential derivation of the RAW_SIGNAL by matrix column.
+        Instance method to plot the differential derivation of the RAW_SIGNAL
+        by matrix column.
 
         Both the single and the double differencials can be plotted.
         This function is used to plot also the sorted RAW_SIGNAL.
-        
+
         Raises
         ------
         ValueError
@@ -650,6 +778,7 @@ class PlotEmg:
         --------
         plot_differentials in library.
         """
+
         try:
             if self.mat_code.get() == "None":
                 # Get rows and columns and turn into list
@@ -666,7 +795,12 @@ class PlotEmg:
                     )
 
                 except ValueError as e:
-                    show_error_dialog(parent=self, error=e, solution=str("Number of specified rows and columns must match number of channels."))
+                    show_error_dialog(
+                        parent=self, error=e,
+                        solution=str(
+                            "Number of specified rows and columns must match number of channels."
+                        ),
+                    )
                     return
 
             else:
@@ -697,28 +831,41 @@ class PlotEmg:
                 figsize=figsize,
             )
         except ValueError as e:
-            show_error_dialog(parent=self, error=e,
-                              solution=str("Enter valid input parameters."
-                                            + "\nPotenital error sources:"
-                                            + "\n - Matrix Code"
-                                            + "\n - Matrix Orientation"
-                                            + "\n - Figure size arguments"
-                                            + "\n - Rows, Columns arguments"))
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str(
+                    "Enter valid input parameters."
+                    + "\nPotenital error sources:"
+                    + "\n - Matrix Code"
+                    + "\n - Matrix Orientation"
+                    + "\n - Figure size arguments"
+                    + "\n - Rows, Columns arguments"
+                ),
+            )
 
         except UnboundLocalError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Enter valid Configuration and Matrix Column."))
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str("Enter valid Configuration and Matrix Column."),
+            )
 
         except KeyError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Enter valid Matrix Column."))
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str("Enter valid Matrix Column."),
+            )
 
     def plot_muaps(self):
         """
-        Instance methos to plot motor unit action potenital obtained from STA from one or
-        multiple MUs. Except for DELSYS files, where the STA is not comupted.
+        Instance methos to plot motor unit action potenital obtained from STA
+        from one or multiple MUs. Except for DELSYS files, where the STA is
+        not comupted.
 
-        There is no limit to the number of MUs and STA files that can be overplotted.
-        ``Remember: the different STAs should be matched`` with same number of electrode,
-        processing (i.e., differential) and computed on the same timewindow.
+        There is no limit to the number of MUs and STA files that can be
+        overplotted.
+        ``Remember: the different STAs should be matched`` with same number of
+        electrode, processing (i.e., differential) and computed on the same
+        timewindow.
 
         Raises
         ------
@@ -738,8 +885,12 @@ class PlotEmg:
             # DELSYS requires different MUAPS plot
             if self.parent.resdict["SOURCE"] == "DELSYS":
                 figsize = [int(i) for i in self.size_fig.get().split(",")]
-                muaps_dict = openhdemg.extract_delsys_muaps(self.parent.resdict)
-                openhdemg.plot_muaps(muaps_dict[int(self.muap_munum.get())], figsize=figsize)
+                muaps_dict = openhdemg.extract_delsys_muaps(
+                    self.parent.resdict,
+                )
+                openhdemg.plot_muaps(
+                    muaps_dict[int(self.muap_munum.get())], figsize=figsize,
+                )
 
             else:
                 if self.mat_code.get() == "None":
@@ -757,7 +908,12 @@ class PlotEmg:
                         )
 
                     except ValueError as e:
-                        show_error_dialog(parent=self, error=e, solution=str("Number of specified rows and columns must match"))
+                        show_error_dialog(
+                            parent=self, error=e,
+                            solution=str(
+                                "Number of specified rows and columns must match"
+                            ),
+                        )
                         return
 
                 else:
@@ -766,6 +922,7 @@ class PlotEmg:
                         emgfile=self.parent.resdict,
                         code=self.mat_code.get(),
                         orientation=int(self.mat_orientation.get()),
+                        custom_sorting_order=self.parent.settings.sort_rawemg__custom_sorting_order,
                     )
 
                 # calcualte derivation
@@ -773,7 +930,9 @@ class PlotEmg:
                     diff_file = openhdemg.diff(sorted_rawemg=sorted_file)
 
                 elif self.muap_config.get() == "Double differential":
-                    diff_file = openhdemg.double_diff(sorted_rawemg=sorted_file)
+                    diff_file = openhdemg.double_diff(
+                        sorted_rawemg=sorted_file,
+                    )
 
                 elif self.muap_config.get() == "Monopolar":
                     diff_file = sorted_file
@@ -791,31 +950,47 @@ class PlotEmg:
                 figsize = [int(i) for i in self.size_fig.get().split(",")]
 
                 # Plot MUAPS
-                openhdemg.plot_muaps(sta_dict[int(self.muap_munum.get())], figsize=figsize)
+                openhdemg.plot_muaps(
+                    sta_dict[int(self.muap_munum.get())], figsize=figsize,
+                )
 
         except ValueError as e:
-            show_error_dialog(parent=self, error=e,
-                              solution=str("Enter valid input parameters."
-                                        + "\nPotenital error sources:"
-                                        + "\n - Matrix Code"
-                                        + "\n - Matrix Orientation"
-                                        + "\n - Figure size arguments"
-                                        + "\n - Timewindow"
-                                        + "\n - MU Number"
-                                        + "\n - Rows, Columns arguments"))
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str(
+                    "Enter valid input parameters."
+                    + "\nPotenital error sources:"
+                    + "\n - Matrix Code"
+                    + "\n - Matrix Orientation"
+                    + "\n - Figure size arguments"
+                    + "\n - Timewindow"
+                    + "\n - MU Number"
+                    + "\n - Rows, Columns arguments"
+                ),
+            )
 
-            show_error_dialog(parent=self, error=e,
-                              solution=str("Enter valid input parameters."
-                                        + "\nPotenital error sources:"
-                                        + "\n - Matrix Code"
-                                        + "\n - Matrix Orientation"
-                                        + "\n - Figure size arguments"
-                                        + "\n - Timewindow"
-                                        + "\n - MU Number"
-                                        + "\n - Rows, Columns arguments"))
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str(
+                    "Enter valid input parameters."
+                    + "\nPotenital error sources:"
+                    + "\n - Matrix Code"
+                    + "\n - Matrix Orientation"
+                    + "\n - Figure size arguments"
+                    + "\n - Timewindow"
+                    + "\n - MU Number"
+                    + "\n - Rows, Columns arguments"
+                ),
+            )
 
         except UnboundLocalError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Enter valid Configuration."))
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str("Enter valid Configuration."),
+            )
 
         except KeyError as e:
-            show_error_dialog(parent=self, error=e, solution=str("Enter valid Matrix Column."))
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str("Enter valid Matrix Column."),
+            )
