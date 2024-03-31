@@ -37,7 +37,7 @@ ctk.set_default_color_theme(
 )
 
 
-class emgGUI(tk.Tk):
+class emgGUI(ctk.CTk):
     """
     This class is used to create a graphical user interface for the openhdemg
     library.
