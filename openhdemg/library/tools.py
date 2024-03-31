@@ -91,6 +91,11 @@ def showselect(emgfile, how="ref_signal", title="", titlesize=12, nclic=2):
     elif how == "mean_emg":
         data_to_plot = emgfile["RAW_SIGNAL"].mean(axis=1)
         y_label = "Mean EMG signal"
+    else:
+        raise ValueError(
+            "Wrong argument in showselect(). how can only be 'ref_signal' or "
+            + f"'mean_emg'. {how} was passed instead."
+        )
 
     # Show the signal for the selection
     plt.figure(num="Fig_ginput")

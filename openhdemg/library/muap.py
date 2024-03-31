@@ -371,6 +371,7 @@ def sta(
     # Compute half of the timewindow in samples
     timewindow_samples = round((timewindow / 1000) * emgfile["FSAMP"])
     halftime = round(timewindow_samples / 2)
+    tottime = halftime * 2
 
     # Container of the STA for every MUs
     # {0: {}, 1: {}, 2: {}, 3: {}}
@@ -378,23 +379,35 @@ def sta(
 
     # Calculate STA on sorted_rawemg for every mu and put it into sta_dict[mu]
     for mu in sta_dict.keys():
+        # Check if there are firings in this MU
+        tot_firings = len(emgfile["MUPULSES"][mu])
+        if tot_firings == 0:
+            raise ValueError(
+                "Empty MU in sta(). First use delete_empty_mus()."
+            )
+
         # Set firings if firings="all"
         if firings == "all":
-            firings_ = [0, len(emgfile["MUPULSES"][mu])]
+            firings_ = [0, tot_firings]
         else:
             firings_ = firings
+
+        # Get current mupulses
+        thismups = emgfile["MUPULSES"][mu][firings_[0]: firings_[1]]
 
         # Calculate STA for each column in sorted_rawemg
         sorted_rawemg_sta = {}
         for col in sorted_rawemg.keys():
             row_dict = {}
             for row in sorted_rawemg[col].columns:
-                thismups = emgfile["MUPULSES"][mu][firings_[0]: firings_[1]]
-                df = sorted_rawemg[col][row].to_numpy()
+                emg_array = sorted_rawemg[col][row].to_numpy()
                 # Calculate STA using NumPy vectorized operations
                 sta_values = []
                 for pulse in thismups:
-                    sta_values.append(df[pulse - halftime: pulse + halftime])
+                    ls = emg_array[pulse - halftime: pulse + halftime]
+                    # Avoid incomplete muaps
+                    if len(ls) == tottime:
+                        sta_values.append(ls)
                 row_dict[row] = np.mean(sta_values, axis=0)
             sorted_rawemg_sta[col] = pd.DataFrame(row_dict)
         sta_dict[mu] = sorted_rawemg_sta
@@ -470,6 +483,7 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
     # Compute half of the timewindow in samples
     timewindow_samples = round((timewindow / 1000) * emgfile["FSAMP"])
     halftime = round(timewindow_samples / 2)
+    tottime = halftime * 2
 
     # Container of the ST for every MUs
     # {0: {}, 1: {}, 2: {}, 3: {} ...}
@@ -477,6 +491,13 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
 
     # Calculate ST on sorted_rawemg for every mu and put it into sta_dict[mu]
     for mu in sta_dict.keys():
+        # Check if there are firings in this MU
+        tot_firings = len(emgfile["MUPULSES"][mu])
+        if tot_firings == 0:
+            raise ValueError(
+                "Empty MU in sta(). First use delete_empty_mus()."
+            )
+
         # Container for the st of each MUs' matrix column.
         sta_dict_cols = {}
         # Get MUPULSES for this MU
@@ -492,7 +513,9 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
                 # Calculate ST using NumPy vectorized operations
                 for pos, pulse in enumerate(thismups):
                     muap = this_emgsig[pulse - halftime: pulse + halftime]
-                    crow_muaps[pos] = muap
+                    # Avoid incomplete muaps
+                    if len(muap) == tottime:
+                        crow_muaps[pos] = muap
                 sta_dict_crows[row] = pd.DataFrame(crow_muaps)
             sta_dict_cols[col] = sta_dict_crows
         sta_dict[mu] = sta_dict_cols
