@@ -1844,7 +1844,15 @@ def emg_from_json(filepath):
         ref_signal.sort_index(inplace=True)
         # ACCURACY
         accuracy = pd.read_json(jsonemgfile["ACCURACY"], orient='split')
-        accuracy.columns = accuracy.columns.astype(int)
+        try:
+            accuracy.columns = accuracy.columns.astype(int)
+        except Exception:
+            accuracy.columns = [*range(len(accuracy.columns))]
+            warnings.warn(
+                "Error while loading accuracy, check or recalculate accuracy"
+            )
+            # TODO error occurring when accuracy was recalculated on empty MUs.
+            # Check if the error is present also for other params.
         accuracy.index = accuracy.index.astype(int)
         accuracy.sort_index(inplace=True)
         # IPTS

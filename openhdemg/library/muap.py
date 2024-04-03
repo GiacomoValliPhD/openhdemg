@@ -1627,7 +1627,7 @@ class MUcv_gui():
             "..",
             "gui",
             "gui_files",
-            "Icon.ico"
+            "Icon_transp.ico"
         )
         self.root.iconbitmap(iconpath)
 
