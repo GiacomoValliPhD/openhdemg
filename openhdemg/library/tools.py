@@ -315,11 +315,10 @@ def resize_emgfile(
         # Resize the reference signal and identify the first value of the
         # index to resize the mupulses. Then, reset the index.
         rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
-        first_idx = rs_emgfile["REF_SIGNAL"].index[0]
         rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].reset_index(drop=True)
-        rs_emgfile["RAW_SIGNAL"] = (
-            rs_emgfile["RAW_SIGNAL"].loc[start_:end_].reset_index(drop=True)
-        )
+        rs_emgfile["RAW_SIGNAL"] = rs_emgfile["RAW_SIGNAL"].loc[start_:end_]
+        first_idx = rs_emgfile["RAW_SIGNAL"].index[0]
+        rs_emgfile["RAW_SIGNAL"] = rs_emgfile["RAW_SIGNAL"].reset_index(drop=True)
         rs_emgfile["IPTS"] = rs_emgfile["IPTS"].loc[start_:end_].reset_index(drop=True)
         rs_emgfile["EMG_LENGTH"] = int(len(rs_emgfile["RAW_SIGNAL"].index))
         rs_emgfile["BINARY_MUS_FIRING"] = (
@@ -341,20 +340,19 @@ def resize_emgfile(
             if rs_emgfile["NUMBER_OF_MUS"] > 0:
                 if not rs_emgfile["IPTS"].empty:
                     # Calculate SIL
-                    to_append = []
                     for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
                         res = compute_sil(
                             ipts=rs_emgfile["IPTS"][mu],
                             mupulses=rs_emgfile["MUPULSES"][mu],
                             ignore_negative_ipts=ignore_negative_ipts,
                         )
-                        to_append.append(res)
-                    rs_emgfile["ACCURACY"] = pd.DataFrame(to_append)
+                        rs_emgfile["ACCURACY"].iloc[mu] = res
 
                 else:
                     raise ValueError(
-                        "Impossible to calculate ACCURACY (SIL). IPTS not found." +
-                        " If IPTS is not present or empty, set accuracy='maintain'"
+                        "Impossible to calculate ACCURACY (SIL). IPTS not " +
+                        "found. If IPTS is not present or empty, set " +
+                        "accuracy='maintain'"
                     )
 
         elif accuracy == "maintain":
@@ -370,7 +368,6 @@ def resize_emgfile(
 
     elif emgfile["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]:
         rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
-        first_idx = rs_emgfile["REF_SIGNAL"].index[0]
         rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].reset_index(drop=True)
 
         return rs_emgfile, start_, end_

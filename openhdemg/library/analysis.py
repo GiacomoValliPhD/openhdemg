@@ -317,11 +317,16 @@ def compute_dr(
     idr = compute_idr(emgfile=emgfile)
 
     # Check if we need to manually select the area for the steady-state phase
+    title = (
+        "Select the start/end area of the steady-state by hovering the mouse" +
+        "\nand pressing the 'a'-key. Wrong points can be removed with right " +
+        "\nclick or canc/delete key. When ready, press enter."
+    )
     if event_ == "rec_derec_steady" or event_ == "steady":
         if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
             points = showselect(
                 emgfile,
-                title="Select the start/end area of the steady-state by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+                title=title,
                 titlesize=10,
             )
             start_steady, end_steady = points[0], points[1]
@@ -564,10 +569,15 @@ def basic_mus_properties(
     # TODO make new examples, also with accuracy
 
     # Check if we need to select the steady-state phase
+    title = (
+        "Select the start/end area of the steady-state by hovering the mouse" +
+        "\nand pressing the 'a'-key. Wrong points can be removed with right " +
+        "\nclick or canc/delete key. When ready, press enter."
+    )
     if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
         points = showselect(
             emgfile,
-            title="Select the start/end area of the steady-state by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+            title=title,
             titlesize=10,
         )
         start_steady, end_steady = points[0], points[1]
@@ -864,10 +874,15 @@ def compute_covisi(
         # Check if we need to manually select the area for the steady-state
         # phase.
         if event_ == "rec_derec_steady" or event_ == "steady":
+            title = (
+                "Select the start/end area of the steady-state by hovering the mouse" +
+                "\nand pressing the 'a'-key. Wrong points can be removed with right " +
+                "\nclick or canc/delete key. When ready, press enter."
+            )
             if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
                 points = showselect(
                     emgfile,
-                    title="Select the start/end area of the steady-state by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+                    title=title,
                     titlesize=10,
                 )
                 start_steady, end_steady = points[0], points[1]
@@ -1058,10 +1073,15 @@ def compute_drvariability(
 
     # Check if we need to manually select the area for the steady-state phase
     if event_ == "rec_derec_steady" or event_ == "steady":
+        title = (
+            "Select the start/end area of the steady-state by hovering the mouse" +
+            "\nand pressing the 'a'-key. Wrong points can be removed with right " +
+            "\nclick or canc/delete key. When ready, press enter."
+        )
         if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
             points = showselect(
                 emgfile,
-                title="Select the start/end area of the steady-state by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+                title=title,
                 titlesize=10,
             )
             start_steady, end_steady = points[0], points[1]
