@@ -266,7 +266,8 @@ class EditSig:
         convert.grid(column=1, row=10)
         self.convert.set("Multiply")
 
-        self.convert_factor = DoubleVar()
+        # DoubleVar does not support - sign, use StringVar
+        self.convert_factor = StringVar()
         factor = ctk.CTkEntry(
             self.head,
             width=100,
@@ -313,6 +314,20 @@ class EditSig:
     ### Define functions for signal editing
 
     def filter_emgsig(self):
+        """
+        Instance method that filters the EMG signal based on user selected
+        specs.
+
+        Raises
+        ------
+        AttributeError
+            When no emgfile is available.
+
+        See Also
+        --------
+        filter_rawemg in library.
+        """
+
         # Get the bandpass frequency string
         bandpass_freq = self.emg_bandpass_freq.get()
         # Split the string into lowcut and highcut values
@@ -435,13 +450,14 @@ class EditSig:
         """
 
         try:
+            convert_factor = float(self.convert_factor.get())
             if self.convert.get() == "Multiply":
                 self.parent.resdict["REF_SIGNAL"] = (
-                    self.parent.resdict["REF_SIGNAL"] * self.convert_factor.get()
+                    self.parent.resdict["REF_SIGNAL"] * convert_factor
                 )
             elif self.convert.get() == "Divide":
                 self.parent.resdict["REF_SIGNAL"] = (
-                    self.parent.resdict["REF_SIGNAL"] / self.convert_factor.get()
+                    self.parent.resdict["REF_SIGNAL"] / convert_factor
                 )
 
             # Update Plot
@@ -485,7 +501,10 @@ class EditSig:
                 self.parent.resdict["REF_SIGNAL"] * 100
             ) / self.mvc_value.get()
             # Update Plot
-            self.parent.in_gui_plotting(resdict=self.parent.resdict)
+            self.parent.in_gui_plotting(
+                resdict=self.parent.resdict,
+                plot="refsig_off",
+            )
 
         except AttributeError as e:
             show_error_dialog(

@@ -4,9 +4,9 @@ This file contains the gui functionalities of openhdemg.
 
 import importlib
 import os
+import copy
 import subprocess
 import sys
-import threading
 import tkinter as tk
 import webbrowser
 from tkinter import Canvas, E, N, S, StringVar, Tk, W, filedialog, messagebox, ttk
@@ -15,7 +15,7 @@ import customtkinter as ctk
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from pandastable import Table, config
+from pandastable import Table
 from PIL import Image
 
 import openhdemg.gui.settings as settings
@@ -74,11 +74,15 @@ class emgGUI(ctk.CTk):
         TK self window containing all widget children for this GUI.
     self.resdict : dict
         Dictionary derived from input EMG file for further analysis.
+    self.resdict_copy_of_original : dict
+        A deepcopy of self.resdict stored for resetting the analyses.
     self.right : tk.frame
         Left frame inside of self that contains plotting canvas.
     self.terminal : ttk.Labelframe
         Tkinter labelframe that is used to display the results table in the
         GUI.
+    self.processing_indicator : ctk.CTkButton
+        Button used to indicate that the file is loading/saving.
     self.info : tk.PhotoImage
         Information Icon displayed in GUI.
     self.online : tk.Photoimage
@@ -136,6 +140,7 @@ class emgGUI(ctk.CTk):
         : tk
             tk class object
         """
+
         super().__init__(*args, **kwargs)
 
         # Load settings
@@ -153,6 +158,7 @@ class emgGUI(ctk.CTk):
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=5)
         self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)  # Output
         self.minsize(width=600, height=400)
 
         # Create left side framing for functionalities
@@ -200,6 +206,16 @@ class emgGUI(ctk.CTk):
             command=self.get_file_input,
         )
         load.grid(column=0, row=3, sticky=(N, S, E, W))
+
+        # Button to indicate that the file is loading
+        self.processing_indicator = ctk.CTkButton(
+            self.left,
+            text="Processing!",
+            fg_color="#FFA500",  # Orange
+        )
+        self.processing_indicator.grid(column=0, row=4, sticky=(N, S, E, W))
+        # Hide, don't forget to preserve rowconfigure settings
+        self.processing_indicator.lower()
 
         # File specifications
         ctk.CTkLabel(
@@ -356,23 +372,36 @@ class emgGUI(ctk.CTk):
         for row in range(5):
             self.right.rowconfigure(row, weight=1)
 
-        # Create logo figure
+        # Create logo canvas figure
         self.logo_canvas = Canvas(
             self.right,
             width=800,
             height=600,
             bg="white",
         )
-        self.logo_canvas.grid(row=0, column=0, rowspan=6, sticky=(N, S, E, W))
+        self.logo_canvas.grid(
+            row=0, column=0, rowspan=6, sticky=(N, S, E, W), pady=(5, 0),
+        )
 
-        logo_path = master_path + "/gui_files/logo.png"  # Get logo path
-        self.logo = tk.PhotoImage(file=logo_path)
+        # Load the logo as a resizable matplotlib figure
+        logo_path = master_path + "/gui_files/Logo_high_res.png"
+        logo = plt.imread(logo_path)
+        logo_fig, ax = plt.subplots()
+        ax.imshow(logo)
+        ax.axis('off')  # Turn off axis
+        logo_fig.tight_layout()  # Adjust layout padding
 
-        self.logo_canvas.create_image(400, 300, image=self.logo, anchor="center")
+        # Plot the figure in the in_gui_plotting canvas
+        self.canvas = FigureCanvasTkAgg(logo_fig, master=self.logo_canvas)
+        self.canvas.get_tk_widget().pack(
+            expand=True, fill="both", padx=5, pady=5,
+        )
+        plt.close()
+        # This solution is more flexible and memory efficient than previously.
 
         # Create info buttons
         # Settings button
-        gear_path = master_path + "/gui_files/gear.png"
+        gear_path = master_path + "/gui_files/Gear.png"
         self.gear = ctk.CTkImage(
             light_image=Image.open(gear_path),
             size=(30, 30),
@@ -505,20 +534,15 @@ class emgGUI(ctk.CTk):
         cite_button.grid(row=5, column=1, sticky=W, pady=(0, 20))
 
         # Create frame for output
-        self.terminal = ctk.CTkFrame(
-            self,
-            width=1000,
-            height=100,
-            fg_color="lightgrey",
-            border_width=2,
-            border_color="White",
+        self.terminal = ttk.LabelFrame(
+            self, text="Result Output", height=150, relief="ridge",
         )
         self.terminal.grid(
             column=0,
-            row=21,
+            row=1,
             columnspan=2,
-            pady=8,
-            padx=10,
+            pady=5,
+            padx=5,
             sticky=(N, S, W, E),
         )
 
@@ -565,6 +589,9 @@ class emgGUI(ctk.CTk):
         select the file.
 
         Executed when the button "Load File" in master GUI window is pressed.
+
+        This creates both an object containing the file to use and an object
+        to reset to the original file.
 
         See Also
         --------
@@ -762,9 +789,9 @@ class emgGUI(ctk.CTk):
                     # Add filename to label
                     self.title(self.filename)
 
-                    # End progress
-                    progress.grid_remove()
-                    progress.stop()
+                    # Lower processing_indicator
+                    if hasattr(self, "processing_indicator"):
+                        self.processing_indicator.lower()
 
                 # This sections is used for refsig loading as they do not
                 # require the filespecs to be loaded.
@@ -833,11 +860,21 @@ class emgGUI(ctk.CTk):
                         font=("Segoe UI", 15, "bold"),
                     )
 
-                # End progress
-                progress.stop()
-                progress.grid_remove()
+                # Lower processing_indicator
+                if hasattr(self, "processing_indicator"):
+                    self.processing_indicator.lower()
 
-                return
+                # If file succesfully loaded, delete previous analyses results
+                self.delete_previous_analyses_results()
+
+                # Make a copy of the loaded file
+                self.resdict_copy_of_original = copy.deepcopy(self.resdict)
+
+                # Display the loaded file
+                if self.resdict["SOURCE"] in ["DEMUSE", "OTB", "CUSTOMCSV", "DELSYS"]:
+                    self.in_gui_plotting(self.resdict)
+                else:
+                    self.in_gui_plotting(self.resdict, plot="refsig_off")
 
             except ValueError as e:
                 show_error_dialog(
@@ -850,9 +887,9 @@ class emgGUI(ctk.CTk):
                         + "specify the correct folder."
                     ),
                 )
-                # End progress
-                progress.stop()
-                progress.grid_remove()
+                # Lower processing_indicator
+                if hasattr(self, "processing_indicator"):
+                    self.processing_indicator.lower()
 
             except FileNotFoundError as e:
                 show_error_dialog(
@@ -863,9 +900,9 @@ class emgGUI(ctk.CTk):
                         + "according to your specification."
                     ),
                 )
-                # End progress
-                progress.stop()
-                progress.grid_remove()
+                # Lower processing_indicator
+                if hasattr(self, "processing_indicator"):
+                    self.processing_indicator.lower()
 
             except TypeError as e:
                 show_error_dialog(
@@ -876,9 +913,9 @@ class emgGUI(ctk.CTk):
                         + "according to your specification."
                     ),
                 )
-                # End progress
-                progress.stop()
-                progress.grid_remove()
+                # Lower processing_indicator
+                if hasattr(self, "processing_indicator"):
+                    self.processing_indicator.lower()
 
             except KeyError as e:
                 show_error_dialog(
@@ -889,30 +926,27 @@ class emgGUI(ctk.CTk):
                         + "according to your specification."
                     ),
                 )
-                # End progress
-                progress.stop()
-                progress.grid_remove()
+                # Lower processing_indicator
+                if hasattr(self, "processing_indicator"):
+                    self.processing_indicator.lower()
 
             except:
-                # End progress
-                progress.stop()
-                progress.grid_remove()
+                # Lower processing_indicator
+                if hasattr(self, "processing_indicator"):
+                    self.processing_indicator.lower()
 
         # Re-Load settings
         self.load_settings()
 
-        # Indicate Progress
-        progress = ctk.CTkProgressBar(
-            self.left,
-            mode="indeterminate",
-            width=100,
-        )
-        progress.grid(row=4, column=0)
-        progress.start()
+        # Display the processing indicator
+        self.processing_indicator.lift()
 
-        # Create a thread to run the load_file function
-        load_thread = threading.Thread(target=load_file)
-        load_thread.start()
+        # Call the function to load the file
+        load_file()
+
+        # Remove file loading indicator
+        if hasattr(self, "processing_indicator"):
+            self.processing_indicator.lower()
 
     def on_filetype_change(self, *args):
         """
@@ -959,54 +993,36 @@ class emgGUI(ctk.CTk):
         save_json_emgfile in library.
         """
 
-        def save_file():
-            try:
-                # Ask user to select the directory and file name
-                save_filepath = filedialog.asksaveasfilename(
-                    defaultextension=".json",
-                    filetypes=(("JSON files", "*.json"), ("all files", "*.*")),
-                )
-
-                if not save_filepath:
-                    # End progress
-                    progress.stop()
-                    progress.grid_remove()
-                    return  # User canceled the file dialog
-
-                # Get emgfile
-                save_emg = self.resdict
-
-                # Save json file
-                openhdemg.save_json_emgfile(
-                    emgfile=save_emg,
-                    filepath=save_filepath,
-                    compresslevel=self.settings.save_json_emgfile__compresslevel,
-                )
-
-                # End progress
-                progress.stop()
-                progress.grid_remove()
-
-                return
-
-            except AttributeError as e:
-                show_error_dialog(
-                    parent=self,
-                    error=e,
-                    solution=str("Make sure a file is loaded."),
-                )
-
         # Re-Load settings
         self.load_settings()
 
-        # Indicate Progress
-        progress = ctk.CTkProgressBar(self.left, mode="indeterminate")
-        progress.grid(row=4, column=0)
-        progress.start()
+        # Display the processing indicator
+        self.processing_indicator.lift()
 
-        # Create a thread to run the save_file function
-        save_thread = threading.Thread(target=save_file)
-        save_thread.start()
+        # Save the file
+        try:
+            openhdemg.asksavefile(
+                emgfile=self.resdict,
+                compresslevel=self.settings.save_json_emgfile__compresslevel,
+            )
+        except AttributeError as e:
+            # Remove file saving indicator
+            if hasattr(self, "processing_indicator"):
+                self.processing_indicator.lower()
+            # Show error
+            show_error_dialog(
+                parent=self,
+                error=e,
+                solution=str("Make sure a file is loaded."),
+            )
+        except Exception:
+            # Remove file saving indicator
+            if hasattr(self, "processing_indicator"):
+                self.processing_indicator.lower()
+
+        # Remove file saving indicator
+        if hasattr(self, "processing_indicator"):
+            self.processing_indicator.lower()
 
     def reset_analysis(self):
         """
@@ -1035,53 +1051,13 @@ class emgGUI(ctk.CTk):
 
         # user decided to rest analysis
         try:
-            # reload original file
-            if self.filetype.get() in [
-                "OTB",
-                "DEMUSE",
-                "OPENHDEMG",
-                "CUSTOMCSV",
-                "DELSYS",
+            # Revert to original file
+            if self.resdict["SOURCE"] in [
+                "OTB", "DEMUSE", "CUSTOMCSV", "DELSYS",
             ]:
-                if self.filetype.get() == "OTB":
-                    self.resdict = openhdemg.emg_from_otb(
-                        filepath=self.file_path,
-                        ext_factor=self.settings.emg_from_otb__ext_factor,
-                        refsig=self.settings.emg_from_otb__refsig,
-                        extras=self.settings.emg_from_otb__extras,
-                        ignore_negative_ipts=self.settings.emg_from_otb__ignore_negative_ipts,
-                    )
+                # Use the resdict copy
+                self.resdict = self.resdict_copy_of_original
 
-                elif self.filetype.get() == "DEMUSE":
-                    self.resdict = openhdemg.emg_from_demuse(
-                        filepath=self.file_path,
-                        ignore_negative_ipts=self.settings.emg_from_demuse__ignore_negative_ipts,
-                    )
-
-                elif self.filetype.get() == "OPENHDEMG":
-                    self.resdict = openhdemg.emg_from_json(filepath=self.file_path)
-
-                elif self.filetype.get() == "CUSTOMCSV":
-                    self.resdict = openhdemg.emg_from_customcsv(
-                        filepath=self.file_path,
-                        ref_signal=self.settings.emg_from_customcsv__ref_signal,
-                        raw_signal=self.settings.emg_from_customcsv__raw_signal,
-                        ipts=self.settings.emg_from_customcsv__ipts,
-                        mupulses=self.settings.emg_from_customcsv__mupulses,
-                        binary_mus_firing=self.settings.emg_from_customcsv__binary_mus_firing,
-                        accuracy=self.settings.emg_from_customcsv__accuracy,
-                        extras=self.settings.emg_from_customcsv__extras,
-                        fsamp=self.settings.emg_from_customcsv__fsamp,
-                        ied=self.settings.emg_from_customcsv__ied,
-                    )
-                elif self.filetype.get() == "DELSYS":
-                    self.resdict = openhdemg.emg_from_delsys(
-                        rawemg_filepath=self.file_path,
-                        mus_directory=self.mus_path,
-                        emg_sensor_name=self.settings.emg_from_delsys__emg_sensor_name,
-                        refsig_sensor_name=self.settings.emg_from_delsys__refsig_sensor_name,
-                        filename_from=self.settings.emg_from_delsys__filename_from,
-                    )
                 # Update Filespecs
                 self.n_channels.configure(
                     text="N Channels: " + str(len(self.resdict["RAW_SIGNAL"].columns)),
@@ -1096,22 +1072,14 @@ class emgGUI(ctk.CTk):
                     font=("Segoe UI", 15, "bold"),
                 )
 
-            else:
-                # load refsig
-                if self.filetype.get() == "OTB_REFSIG":
-                    self.resdict = openhdemg.refsig_from_otb(filepath=self.file_path)
-                elif self.filetype.get() == "DELSYS_REFSIG":
-                    self.resdict = openhdemg.refsig_from_delsys(
-                        filepath=self.file_path,
-                        refsig_sensor_name=self.settings.refsig_from_delsys__refsig_sensor_name,
-                    )
-                elif self.filetype.get() == "CUSTOMCSV_REFSIG":
-                    self.resdict = openhdemg.refsig_from_customcsv(
-                        filepath=self.file_path,
-                        ref_signal=self.settings.refsig_from_customcsv__ref_signal,
-                        extras=self.settings.refsig_from_customcsv__extras,
-                        fsamp=self.settings.refsig_from_customcsv__fsamp,
-                    )
+                # Update Plot
+                self.in_gui_plotting(resdict=self.resdict)
+
+            elif self.resdict["SOURCE"] in [
+                "OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"
+            ]:
+                # Use the resdict copy
+                self.resdict = self.resdict_copy_of_original
 
                 # Reconfigure labels for refsig
                 self.n_channels.configure(
@@ -1128,23 +1096,25 @@ class emgGUI(ctk.CTk):
                     font=("Segoe UI", 15, "bold"),
                 )
 
-            # Update Plot
-            if hasattr(self, "fig"):
-                self.in_gui_plotting(resdict=self.resdict)
+                # Update Plot
+                self.in_gui_plotting(resdict=self.resdict, plot="refsig_off")
 
             # Clear frame for output
             if hasattr(self, "terminal"):
                 self.terminal = ttk.LabelFrame(
-                    self, text="Result Output", height=100, relief="ridge"
+                    self, text="Result Output", height=150, relief="ridge"
                 )
                 self.terminal.grid(
                     column=0,
-                    row=21,
+                    row=1,
                     columnspan=2,
-                    pady=8,
-                    padx=10,
+                    pady=5,
+                    padx=5,
                     sticky=(N, S, W, E),
-                )
+                )  # Repeat original settings in init
+
+            # Delete previous analyses results
+            self.delete_previous_analyses_results()
 
         except AttributeError as e:
             show_error_dialog(
@@ -1159,6 +1129,23 @@ class emgGUI(ctk.CTk):
                 error=e,
                 solution=str("Make sure a file is loaded."),
             )
+
+    def delete_previous_analyses_results(self):
+        """
+        Instance method to delete the objects storing the analyses results.
+        """
+
+        # Check for attributes and delete them if present
+        if hasattr(self, "mvc_df"):
+            del self.mvc_df
+        if hasattr(self, "rfd"):
+            del self.rfd
+        if hasattr(self, "mu_prop_df"):
+            del self.mu_prop_df
+        if hasattr(self, "mus_dr"):
+            del self.mus_dr
+        if hasattr(self, "mu_thresholds"):
+            del self.mu_thresholds
 
     # ----------------------------------------------------------------------------------------------
     # Plotting inside of GUI
@@ -1207,16 +1194,24 @@ class emgGUI(ctk.CTk):
                     showimmediately=False,
                 )
 
-            self.canvas = FigureCanvasTkAgg(self.fig, master=self.right)
-            self.canvas.get_tk_widget().grid(
-                row=0, column=0, rowspan=6, sticky=(N, S, E, W), padx=5
+            # Remove previous figure
+            if hasattr(self, 'canvas'):
+                self.canvas.get_tk_widget().destroy()
+
+            # Pack figure inside logo_canvas. This is more reliable and should
+            # be more efficient.
+            self.canvas = FigureCanvasTkAgg(self.fig, master=self.logo_canvas)
+            self.canvas.get_tk_widget().pack(
+                expand=True, fill="both", padx=5, pady=5,
             )
+
+            # Add toolbar
             toolbar = NavigationToolbar2Tk(
                 self.canvas,
                 self.right,
                 pack_toolbar=False,
             )
-            toolbar.grid(row=5, column=0, sticky=S)
+            toolbar.grid(row=5, column=0, sticky=(S, E), padx=5, pady=5)
             plt.close()
 
         except AttributeError as e:
@@ -1241,7 +1236,22 @@ class emgGUI(ctk.CTk):
         input_df : pd.DataFrame
             Dataftame containing the analysis results.
         """
+
         # Display results
+        # Clear/recreate frame for output
+        if hasattr(self, "terminal"):
+            self.terminal = ttk.LabelFrame(
+                self, text="Result Output", height=150, relief="ridge",
+            )
+            self.terminal.grid(
+                column=0,
+                row=1,
+                columnspan=2,
+                pady=5,
+                padx=5,
+                sticky=(N, S, W, E),
+            )  # Repeat original settings in init
+
         table = Table(
             self.terminal,
             dataframe=input_df,
@@ -1252,8 +1262,8 @@ class emgGUI(ctk.CTk):
         )
 
         # Resize column width
-        options = {"cellwidth": 10}
-        config.apply_options(options, table)
+        """ options = {"cellwidth": 10}
+        config.apply_options(options, table) """
 
         # Show results
         table.show()

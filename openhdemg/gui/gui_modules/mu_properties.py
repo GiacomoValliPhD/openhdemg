@@ -387,7 +387,8 @@ class MuAnalysis:
 
         except AttributeError as e:
             show_error_dialog(
-                parent=self, error=e, solution=str("Make sure a file is loaded.")
+                parent=self, error=e,
+                solution=str("Make sure a file is loaded."),
             )
 
         except ValueError as e:
@@ -395,7 +396,8 @@ class MuAnalysis:
                 parent=self,
                 error=e,
                 solution=str(
-                    "Enter valid Firings value or select a correct number of points."
+                    "Enter valid Firings value or select a correct number of "
+                    + "points."
                 ),
             )
 
@@ -442,6 +444,8 @@ class MuAnalysis:
                 ignore_negative_ipts=self.parent.settings.basic_mus_properties__ignore_negative_ipts,
                 constrain_pulses=self.parent.settings.basic_mus_properties__constrain_pulses,
                 mvc=float(self.mvc_value.get()),
+                start_steady=-1,
+                end_steady=-1,
             )
             # Display results
             self.parent.display_results(self.parent.mu_prop_df)

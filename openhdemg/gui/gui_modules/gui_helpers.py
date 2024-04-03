@@ -93,11 +93,17 @@ class GUIHelpers:
         """
 
         try:
+            title = (
+                "Select the start/end area of the steady-state by hovering the"
+                + " mouse \nand pressing the 'a'-key. Wrong points can be "
+                + "removed with right \nclick or canc/delete key. When ready, "
+                + "press enter."
+            )
             # Open selection window for user
             points = openhdemg.showselect(
                 emgfile=self.parent.resdict,
                 how=self.parent.settings.resize_emgfile__how,
-                title="Select the start/end area to resize by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+                title=title,
                 titlesize=10,
             )
             start, end = points[0], points[1]
@@ -105,7 +111,8 @@ class GUIHelpers:
             # Delsys requires different handling for resize
             if self.parent.resdict["SOURCE"] == "DELSYS":
                 self.parent.resdict, _, _ = openhdemg.resize_emgfile(
-                    emgfile=self.parent.resdict, area=[start, end], accuracy="maintain"
+                    emgfile=self.parent.resdict, area=[start, end],
+                    accuracy="maintain",
                 )
             else:
                 self.parent.resdict, _, _ = openhdemg.resize_emgfile(
@@ -114,14 +121,29 @@ class GUIHelpers:
                     accuracy=self.parent.settings.resize_emgfile__accuracy,
                     ignore_negative_ipts=self.parent.settings.resize_emgfile__ignore_negative_ipts,
                 )
-            # Update Plot
-            self.parent.in_gui_plotting(resdict=self.parent.resdict)
 
-            # Update filelength
-            self.parent.file_length.configure(
-                text="N of MUs: " + str(self.parent.resdict["EMG_LENGTH"]),
-                font=("Segoe UI", 15, "bold"),
-            )
+            # Update Plot
+            if self.parent.resdict["SOURCE"] in [
+                "DEMUSE", "OTB", "CUSTOMCSV", "DELSYS",
+            ]:
+                self.parent.in_gui_plotting(resdict=self.parent.resdict)
+                # Update filelength
+                self.parent.file_length.configure(
+                    text="N of MUs: " + str(self.parent.resdict["EMG_LENGTH"]),
+                    font=("Segoe UI", 15, "bold"),
+                )
+            elif self.parent.resdict["SOURCE"] in [
+                "OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG",
+            ]:
+                self.parent.in_gui_plotting(
+                    resdict=self.parent.resdict, plot="refsig_off",
+                )
+                # Update filelength
+                length = len(self.parent.resdict["REF_SIGNAL"].index)
+                self.parent.file_length.configure(
+                    text="N of MUs: " + str(length),
+                    font=("Segoe UI", 15, "bold"),
+                )
 
         except AttributeError as e:
             show_error_dialog(
@@ -134,7 +156,10 @@ class GUIHelpers:
             show_error_dialog(
                 parent=self,
                 error=e,
-                solution=str("Verify settings for resize_emgfile()."),
+                solution=str(
+                    "Wrong number of points in showselect() or \n "
+                    + "Verify settings for resize_emgfile()."
+                ),
             )
 
     def export_to_excel(self):
@@ -166,7 +191,7 @@ class GUIHelpers:
             if hasattr(self.parent, "rfd"):
                 self.parent.rfd.to_excel(writer, sheet_name="RFD")
 
-            if hasattr(self.parent, "exportable_df"):
+            if hasattr(self.parent, "mu_prop_df"):
                 self.parent.mu_prop_df.to_excel(
                     writer, sheet_name="Basic MU Properties"
                 )
@@ -175,7 +200,7 @@ class GUIHelpers:
                 self.parent.mus_dr.to_excel(writer, sheet_name="MU Discharge Rate")
 
             if hasattr(self.parent, "mu_thresholds"):
-                self.mu_thresholds.to_excel(writer, sheet_name="MU Thresholds")
+                self.parent.mu_thresholds.to_excel(writer, sheet_name="MU Thresholds")
 
             writer.close()
 

@@ -364,7 +364,10 @@ class PlotEmg:
 
             # Combobox Matrix
             self.deriv_matrix = StringVar()
-            mat_column_values = ("col0", "col1", "col2", "col3", "col4")
+            mat_column_values = (
+                "col0", "col1", "col2", "col3", "col4", "col5", "col6",
+                "col7", "col8", "col9", "col10", "col11",
+                )
             mat_column = ctk.CTkComboBox(
                 self.head,
                 width=100,
@@ -407,9 +410,14 @@ class PlotEmg:
 
             # Combobox MU Number
             self.muap_munum = StringVar()
-            mu_numbers = tuple(
-                str(number) for number in range(0, self.parent.resdict["NUMBER_OF_MUS"])
-            )
+            if self.parent.resdict["SOURCE"] in [
+                "DEMUSE", "OTB", "CUSTOMCSV", "DELSYS",
+            ]:
+                mu_numbers = tuple(
+                    str(number) for number in range(0, self.parent.resdict["NUMBER_OF_MUS"])
+                )
+            else:
+                mu_numbers = ()  # Exception of refsig only files
             muap_munum = ctk.CTkComboBox(
                 self.head,
                 width=15,
@@ -1003,22 +1011,6 @@ class PlotEmg:
 
         except ValueError as e:
             show_error_dialog(
-                parent=self,
-                error=e,
-                solution=str(
-                    "Enter valid input parameters."
-                    + "\nPotenital error sources:"
-                    + "\n - Matrix Code"
-                    + "\n - Matrix Orientation"
-                    + "\n - Figure size arguments"
-                    + "\n - Timewindow"
-                    + "\n - MU Number"
-                    + "\n - Rows,Columns arguments"
-                    + "\n - custom_sorting_order in settings"
-                ),
-            )
-
-            show_error_dialog(  # TODO Paul do we need two of these show_error_dialog?
                 parent=self,
                 error=e,
                 solution=str(
