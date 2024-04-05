@@ -108,7 +108,7 @@ class EditSig:
 
         # Create new window
         self.head = ctk.CTkToplevel()
-        self.head.title("Reference Signal Editing Window")
+        self.head.title("Signal Editing Window")
 
         head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         iconpath = head_path + "/gui_files/Icon_transp.ico"

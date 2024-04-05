@@ -79,8 +79,6 @@ class ErrorDialog:
         if platform.startswith("win"):
             self.head.after(200, lambda: self.head.iconbitmap(iconpath))
 
-        path = os.path.dirname(os.path.abspath(__file__))
-
         # Create a frame for the content with blue background, placed in the
         # middle.
         self.content_frame = ctk.CTkFrame(
@@ -93,7 +91,7 @@ class ErrorDialog:
 
         # Load an information icon and display it
         self.info_photo = ctk.CTkImage(
-            light_image=Image.open(path + "/Error.png"),
+            light_image=Image.open(head_path + "/gui_files/Error.png"),
             size=(50, 50),
         )
         self.icon = ctk.CTkLabel(

@@ -92,18 +92,16 @@ class GUIHelpers:
         showselect, resize_emgfile in library.
         """
 
+        # TODO this try/except is not catching when the user closes the plot to
+        # select the resizing area (from the X button without selecting points).
+        # Instead, the error appears when closing the GUI. Same happens for mu
+        # properties analysis.
         try:
-            title = (
-                "Select the start/end area of the steady-state by hovering the"
-                + " mouse \nand pressing the 'a'-key. Wrong points can be "
-                + "removed with right \nclick or canc/delete key. When ready, "
-                + "press enter."
-            )
             # Open selection window for user
             points = openhdemg.showselect(
                 emgfile=self.parent.resdict,
                 how=self.parent.settings.resize_emgfile__how,
-                title=title,
+                title="Select the start/end area to resize by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
                 titlesize=10,
             )
             start, end = points[0], points[1]
@@ -121,29 +119,14 @@ class GUIHelpers:
                     accuracy=self.parent.settings.resize_emgfile__accuracy,
                     ignore_negative_ipts=self.parent.settings.resize_emgfile__ignore_negative_ipts,
                 )
-
             # Update Plot
-            if self.parent.resdict["SOURCE"] in [
-                "DEMUSE", "OTB", "CUSTOMCSV", "DELSYS",
-            ]:
-                self.parent.in_gui_plotting(resdict=self.parent.resdict)
-                # Update filelength
-                self.parent.file_length.configure(
-                    text="N of MUs: " + str(self.parent.resdict["EMG_LENGTH"]),
-                    font=("Segoe UI", 15, "bold"),
-                )
-            elif self.parent.resdict["SOURCE"] in [
-                "OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG",
-            ]:
-                self.parent.in_gui_plotting(
-                    resdict=self.parent.resdict, plot="refsig_off",
-                )
-                # Update filelength
-                length = len(self.parent.resdict["REF_SIGNAL"].index)
-                self.parent.file_length.configure(
-                    text="N of MUs: " + str(length),
-                    font=("Segoe UI", 15, "bold"),
-                )
+            self.parent.in_gui_plotting(resdict=self.parent.resdict)
+
+            # Update filelength
+            self.parent.file_length.configure(
+                text="N of MUs: " + str(self.parent.resdict["EMG_LENGTH"]),
+                font=("Segoe UI", 15, "bold"),
+            )
 
         except AttributeError as e:
             show_error_dialog(
@@ -157,9 +140,8 @@ class GUIHelpers:
                 parent=self,
                 error=e,
                 solution=str(
-                    "Wrong number of points in showselect() or \n "
-                    + "Verify settings for resize_emgfile()."
-                ),
+                    "Wrong number of inputs or verify settings for " +
+                    "resize_emgfile()."),
             )
 
     def export_to_excel(self):
