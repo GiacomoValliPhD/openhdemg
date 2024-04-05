@@ -32,8 +32,10 @@ def compute_thresholds(
 
         ``rt_dert``
             Both recruitment and derecruitment tresholds will be calculated.
+
         ``rt``
             Only recruitment tresholds will be calculated.
+
         ``dert``
             Only derecruitment tresholds will be calculated.
     type_ : str {"abs_rel", "rel", "abs"}, default "abs_rel"
@@ -41,8 +43,10 @@ def compute_thresholds(
 
         ``abs_rel``
             Both absolute and relative tresholds will be calculated.
+
         ``rel``
             Only relative tresholds will be calculated.
+
         ``abs``
             Only absolute tresholds will be calculated.
     n_firings : int, default 1
@@ -214,17 +218,21 @@ def compute_dr(
     event_ : str {"rec_derec_steady", "rec", "derec", "rec_derec", "steady"}, default "rec_derec_steady"
         When to calculate the DR.
 
-            ``rec_derec_steady``
-                DR is calculated at recruitment, derecruitment and during the
-                steady-state phase.
-            ``rec``
-                DR is calculated at recruitment.
-            ``derec``
-                DR is calculated at derecruitment.
-            ``rec_derec``
-                DR is calculated at recruitment and derecruitment.
-            ``steady``
-                DR is calculated during the steady-state phase.
+        ``rec_derec_steady``
+            DR is calculated at recruitment, derecruitment and during the
+            steady-state phase.
+
+        ``rec``
+            DR is calculated at recruitment.
+
+        ``derec``
+            DR is calculated at derecruitment.
+
+        ``rec_derec``
+            DR is calculated at recruitment and derecruitment.
+
+        ``steady``
+            DR is calculated during the steady-state phase.
 
     Returns
     -------
@@ -317,11 +325,16 @@ def compute_dr(
     idr = compute_idr(emgfile=emgfile)
 
     # Check if we need to manually select the area for the steady-state phase
+    title = (
+        "Select the start/end area of the steady-state by hovering the mouse" +
+        "\nand pressing the 'a'-key. Wrong points can be removed with right " +
+        "\nclick or canc/delete key. When ready, press enter."
+    )
     if event_ == "rec_derec_steady" or event_ == "steady":
         if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
             points = showselect(
                 emgfile,
-                title="Select the start/end area of the steady-state by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+                title=title,
                 titlesize=10,
             )
             start_steady, end_steady = points[0], points[1]
@@ -445,6 +458,8 @@ def basic_mus_properties(
     start_steady=-1,
     end_steady=-1,
     accuracy="default",
+    ignore_negative_ipts=False,
+    constrain_pulses=[True, 3],
     mvc=0,
 ):
     """
@@ -487,13 +502,30 @@ def basic_mus_properties(
         ``default``
             The original accuracy measure already contained in the emgfile is
             returned without any computation.
+
         ``SIL``
             The Silhouette score is computed.
+
         ``PNR``
             The pulse to noise ratio is computed.
+
         ``SIL_PNR``
             Both the Silhouette score and the pulse to noise ratio are
             computed.
+    ignore_negative_ipts : bool, default False
+        This parameter determines the silhouette score estimation. If True,
+        only positive ipts values are used during peak and noise clustering.
+        This is particularly important for compensating sources with large
+        negative components. This parameter is considered only when
+        accuracy=="SIL" or accuracy=="SIL_PNR".
+    constrain_pulses : list, default [True, 3]
+        This parameter determines the PNR estimation. If
+        constrain_pulses[0]==True, the times of firing are considered those in
+        mupulses +- the number of samples specified in constrain_pulses[1].
+        If constrain_pulses[0]==False, the times of firing are estimated via
+        a heuristic penalty funtion (see Notes in compute_pnr()).
+        constrain_pulses[1] must be an integer (see Notes in compute_pnr() for
+        instructions on how to set the appropriate value).
     mvc : float, default 0
         The maximum voluntary contraction (MVC). It is suggest to report
         MVC in Newton (N). If 0 (default), the user will be asked to imput it
@@ -548,10 +580,15 @@ def basic_mus_properties(
     # TODO make new examples, also with accuracy
 
     # Check if we need to select the steady-state phase
+    title = (
+        "Select the start/end area of the steady-state by hovering the mouse" +
+        "\nand pressing the 'a'-key. Wrong points can be removed with right " +
+        "\nclick or canc/delete key. When ready, press enter."
+    )
     if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
         points = showselect(
             emgfile,
-            title="Select the start/end area of the steady-state by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+            title=title,
             titlesize=10,
         )
         start_steady, end_steady = points[0], points[1]
@@ -604,6 +641,7 @@ def basic_mus_properties(
             sil = compute_sil(
                 ipts=emgfile["IPTS"][mu],
                 mupulses=emgfile["MUPULSES"][mu],
+                ignore_negative_ipts=ignore_negative_ipts,
             )
             toappend.append({"SIL": sil})
         toappend = pd.DataFrame(toappend)
@@ -623,6 +661,7 @@ def basic_mus_properties(
                 ipts=emgfile["IPTS"][mu],
                 mupulses=emgfile["MUPULSES"][mu],
                 fsamp=emgfile["FSAMP"],
+                constrain_pulses=constrain_pulses,
             )
             toappend.append({"PNR": pnr})
         toappend = pd.DataFrame(toappend)
@@ -641,6 +680,7 @@ def basic_mus_properties(
             sil = compute_sil(
                 ipts=emgfile["IPTS"][mu],
                 mupulses=emgfile["MUPULSES"][mu],
+                ignore_negative_ipts=ignore_negative_ipts,
             )
             toappend.append({"SIL": sil})
         toappend = pd.DataFrame(toappend)
@@ -659,6 +699,7 @@ def basic_mus_properties(
                 ipts=emgfile["IPTS"][mu],
                 mupulses=emgfile["MUPULSES"][mu],
                 fsamp=emgfile["FSAMP"],
+                constrain_pulses=constrain_pulses,
             )
             toappend.append({"PNR": pnr})
         toappend = pd.DataFrame(toappend)
@@ -744,17 +785,21 @@ def compute_covisi(
     event_ : str {"rec_derec_steady", "rec", "derec", "rec_derec", "steady"}, default "rec_derec_steady"
         When to calculate the COVisi.
 
-            ``rec_derec_steady``
-                covisi is calculated at recruitment, derecruitment and during
-                the steady-state phase.
-            ``rec``
-                covisi is calculated at recruitment.
-            ``derec``
-                covisi is calculated at derecruitment.
-            ``rec_derec``
-                covisi is calculated at recruitment and derecruitment.
-            ``steady``
-                covisi is calculated during the steady-state phase.
+        ``rec_derec_steady``
+            covisi is calculated at recruitment, derecruitment and during
+            the steady-state phase.
+
+        ``rec``
+            covisi is calculated at recruitment.
+
+        ``derec``
+            covisi is calculated at derecruitment.
+
+        ``rec_derec``
+            covisi is calculated at recruitment and derecruitment.
+
+        ``steady``
+            covisi is calculated during the steady-state phase.
     single_mu_number : int, default -1
         Number of the specific MU to compute the COVisi.
         If single_mu_number >= 0, only the COVisi of the entire contraction
@@ -844,10 +889,15 @@ def compute_covisi(
         # Check if we need to manually select the area for the steady-state
         # phase.
         if event_ == "rec_derec_steady" or event_ == "steady":
+            title = (
+                "Select the start/end area of the steady-state by hovering the mouse" +
+                "\nand pressing the 'a'-key. Wrong points can be removed with right " +
+                "\nclick or canc/delete key. When ready, press enter."
+            )
             if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
                 points = showselect(
                     emgfile,
-                    title="Select the start/end area of the steady-state by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+                    title=title,
                     titlesize=10,
                 )
                 start_steady, end_steady = points[0], points[1]
@@ -953,17 +1003,21 @@ def compute_drvariability(
     event_ : str {"rec_derec_steady", "rec", "derec", "rec_derec", "steady"}, default "rec_derec_steady"
         When to calculate the DR variability.
 
-            ``rec_derec_steady``
-                DR variability is calculated at recruitment, derecruitment and
-                during the steady-state phase.
-            ``rec``
-                DR variability is calculated at recruitment.
-            ``derec``
-                DR variability is calculated at derecruitment.
-            ``rec_derec``
-                DR variability is calculated at recruitment and derecruitment.
-            ``steady``
-                DR variability is calculated during the steady-state phase.
+        ``rec_derec_steady``
+            DR variability is calculated at recruitment, derecruitment and
+            during the steady-state phase.
+
+        ``rec``
+            DR variability is calculated at recruitment.
+
+        ``derec``
+            DR variability is calculated at derecruitment.
+
+        ``rec_derec``
+            DR variability is calculated at recruitment and derecruitment.
+
+        ``steady``
+            DR variability is calculated during the steady-state phase.
 
     Returns
     -------
@@ -1038,10 +1092,15 @@ def compute_drvariability(
 
     # Check if we need to manually select the area for the steady-state phase
     if event_ == "rec_derec_steady" or event_ == "steady":
+        title = (
+            "Select the start/end area of the steady-state by hovering the mouse" +
+            "\nand pressing the 'a'-key. Wrong points can be removed with right " +
+            "\nclick or canc/delete key. When ready, press enter."
+        )
         if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
             points = showselect(
                 emgfile,
-                title="Select the start/end area of the steady-state by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+                title=title,
                 titlesize=10,
             )
             start_steady, end_steady = points[0], points[1]

@@ -6,6 +6,7 @@ Functions to sort the electrode position are also included.
 
 import numpy as np
 import copy
+import itertools
 
 OTBelectrodes_tuple = (
     "GR04MM1305",
@@ -143,6 +144,7 @@ def sort_rawemg(
     dividebycolumn=True,
     n_rows=None,
     n_cols=None,
+    custom_sorting_order=None,
 ):
     """
     Sort RAW_SIGNAL based on matrix type and orientation.
@@ -150,10 +152,11 @@ def sort_rawemg(
     To date, built-in sorting functions have been implemented for the matrices:
 
         Code                    (Orientation)
-        GR08MM1305              (0, 180),
-        GR04MM1305              (0, 180),
-        GR10MM0808              (0, 180),
-        Trigno Galileo Sensor   (na).
+        GR08MM1305              (0, 180)
+        GR04MM1305              (0, 180)
+        GR10MM0808              (0, 180)
+        Trigno Galileo Sensor   (na)
+        Custom order            (any)
 
     Parameters
     ----------
@@ -163,32 +166,52 @@ def sort_rawemg(
         The code of the matrix used. It can be one of:
 
         ``GR08MM1305``
+
         ``GR04MM1305``
+
         ``GR10MM0808``
+
         ``Trigno Galileo Sensor``
+
+        ``Custom order``
+
+        ``None``
+
         If "None", the electodes are not sorted but n_rows and n_cols must be
         specified when dividebycolumn == True.
+        If "Custom order", the electrodes are sorted based on
+        custom_sorting_order.
     orientation : int {0, 180}, default 180
         Orientation in degree of the matrix.
         E.g. 180 corresponds to the matrix connection toward the researcher or
         the ground (depending on the limb).
         Ignore if using the "Trigno Galileo Sensor". In this case, channels
         will be oriented as in the Delsys Neuromap Explorer software.
+        This Parameter is ignored if code=="Custom order" or code=="None".
     dividebycolumn = bool, default True
         Whether to return the sorted channels classified by matrix column.
     n_rows : None or int, default None
         The number of rows of the matrix. This parameter is used to divide the
-        channels based on the matrix shape. These are normally inferred by the
-        matrix code and must be specified only if code == None.
+        channels based on the matrix shape. These are inferred by the matrix
+        code and must be specified only if code==None.
     n_cols : None or int, default None
         The number of columns of the matrix. This parameter is used to divide
-        the channels based on the matrix shape. These are normally inferred by
-        the matrix code and must be specified only if code == None.
+        the channels based on the matrix shape. These are inferred by the
+        matrix code and must be specified only if code==None.
+    custom_sorting_order : None or list, default None
+        If code=="Custom order", custom_sorting_order will be used for
+        channels sorting. In this case, custom_sorting_order must be a list of
+        lists containing the order of the matrix channels.
+        Specifically, the number of columns are defined by
+        len(custom_sorting_order) while the number of rows by
+        len(custom_sorting_order[0]). np.nan can be used to specify empty
+        channels. Please refer to the Notes and Examples section for the
+        structure of the custom sorting order.
 
     Returns
     -------
     sorted_rawemg : dict or pd.DataFrame
-        If dividebycolumn == True a dict containing the sorted electrodes is
+        If dividebycolumn == True, a dict containing the sorted electrodes is
         returned. Every key of the dictionary represents a different column of
         the matrix. Rows are stored in the dict as a pd.DataFrame.
         If dividebycolumn == False a pd.DataFrame containing the sorted
@@ -199,9 +222,13 @@ def sort_rawemg(
     -----
     The returned file is called ``sorted_rawemg`` for convention.
 
+    Additional info on how to create the custom sorting order is available at:
+    https://www.giacomovalli.com/openhdemg/gui_settings/#electrodes
+
     Examples
     --------
-    Sort emgfile RAW_SIGNAL and divide it by columns.
+    Sort emgfile RAW_SIGNAL and divide it by columns with built-in sorting
+    orders.
 
     >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
@@ -251,7 +278,9 @@ def sort_rawemg(
     Avoid RAW_SIGNAL sorting but divide it by columns.
 
     >>> emgfile = emg.askopenfile(filesource="CUSTOM")
-    >>> sorted_rawemg = emg.sort_rawemg(emgfile, code="None", n_cols=5, n_rows=13)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile, code="None", n_cols=5, n_rows=13,
+    ...     )
     >>> sorted_rawemg["col0"]
                  0         1         2  ...       10        11  12
     0      0.008138  0.001017  0.002035 ... 0.005595  0.008647 NaN
@@ -265,6 +294,38 @@ def sort_rawemg(
     62461  0.001526  0.009664  0.000000 ... 0.001526  0.025940 NaN
     62462  0.033061  0.037130  0.027974 ... 0.022380  0.049845 NaN
     62463  0.020854  0.028992  0.017802 ... 0.013733  0.037638 NaN
+
+    Sort RAW_SIGNAL based on a custom order and divide it by columns.
+    The custom_sorting_order refers to a grid of 13 rows and 5 columns with the
+    empty channel in last position.
+
+    Additional info on how to create the custom sorting order is available at:
+    https://www.giacomovalli.com/openhdemg/gui_settings/#electrodes
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> custom_sorting_order = [
+    ...     [63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52,     51,],
+    ...     [38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,     50,],
+    ...     [37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26,     25,],
+    ...     [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,     24,],
+    ...     [11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1,  0, np.nan,],
+    ... ]  # 13 rows and 5 columns
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile=emgfile,
+    ...     code="Custom order",
+    ...     dividebycolumn=True,
+    ...     custom_sorting_order=custom_sorting_order,
+    ... )
+    >>> sorted_rawemg["col0"]
+                  0          1          2  ...         10         11         12
+    0       2.034505  -9.663899  -5.086263 ... -26.957193  -8.138021  -2.034505
+    1       1.017253  -8.646647  -3.560384 ... -26.957193  -8.138021  -9.663899
+    2      17.293295   6.612142  11.189778 ... -13.224284   9.663899   6.612142
+    3      21.362305  14.750163  22.888184 ...  -9.155273  17.293295  12.715657
+    ...          ...        ...        ... ...        ...        ...        ...
+    63483 -15.258789 -20.345053  -8.646647 ... -20.853678 -15.767415 -10.681152
+    63484 -13.732910 -19.327799  -7.120768 ... -21.362305 -17.801920 -14.241536
     """
 
     valid_codes = [
@@ -273,6 +334,7 @@ def sort_rawemg(
         "GR10MM0808",
         "Trigno Galileo Sensor",
         "None",
+        "Custom order",
     ]
     if code not in valid_codes:
         return ValueError("Unsupported code in sort_rawemg()")
@@ -280,8 +342,19 @@ def sort_rawemg(
     # Work on a copy of the RAW_SIGNAL
     rawemg = copy.deepcopy(emgfile["RAW_SIGNAL"])
 
-    # Get sorting order by matrix
-    if code in ["GR08MM1305", "GR04MM1305"]:
+    # Get sorting order by matrix code
+    if code == "Custom order":
+        # Theck that custom_sorting_order has been specified
+        if not isinstance(custom_sorting_order, list):
+            raise ValueError(
+                "In sort_rawemg(), custom_sorting_order must be a list of " +
+                "lists when code=='Custom order'"
+            )
+
+        # Get custom sorting order
+        base0_sorting_order = custom_sorting_order
+
+    elif code in ["GR08MM1305", "GR04MM1305"]:
         # Get sorting order by matrix orientation
         if orientation == 0:
             """
@@ -295,7 +368,7 @@ def sort_rawemg(
             channel.
 
             Channel Order GR08MM1305
-                    0   1   2   3   4
+                   0   1   2   3   4
             0     64  39  38  13  12
             1     63  40  37  14  11
             2     62  41  36  15  10
@@ -311,17 +384,17 @@ def sort_rawemg(
             12    52  51  26  25 NaN
             """
             base0_sorting_order = [
-                63,62,61,60,59,58,57,56,55,54,53,52,    51,
-                38,39,40,41,42,43,44,45,46,47,48,49,    50,
-                37,36,35,34,33,32,31,30,29,28,27,26,    25,
-                12,13,14,15,16,17,18,19,20,21,22,23,    24,
-                11,10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,np.nan
+                [63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52,     51],
+                [38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,     50],
+                [37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26,     25],
+                [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,     24],
+                [11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1,  0, np.nan],
             ]
 
         elif orientation == 180:
             """
             Channel Order GR08MM1305
-                    0   1   2   3   4
+                   0   1   2   3   4
             0    NaN  25  26  51  52
             1      1  24  27  50  53
             2      2  23  28  49  54
@@ -337,11 +410,11 @@ def sort_rawemg(
             12    12  13  38  39  64
             """
             base0_sorting_order = [
-                np.nan,0, 1 ,2 ,3 ,4 ,5 ,6 ,7 ,8 ,9 ,10,11,
-                24    ,23,22,21,20,19,18,17,16,15,14,13,12,
-                25    ,26,27,28,29,30,31,32,33,34,35,36,37,
-                50    ,49,48,47,46,45,44,43,42,41,40,39,38,
-                51    ,52,53,54,55,56,57,58,59,60,61,62,63
+                [np.nan,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11],
+                [24,     23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12],
+                [25,     26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37],
+                [50,     49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38],
+                [51,     52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63],
             ]
 
     elif code == "GR10MM0808":
@@ -359,14 +432,14 @@ def sort_rawemg(
             7  64  56  48  40  32  24  16   8
             """
             base0_sorting_order = [
-                56, 57, 58, 59, 60, 61, 62, 63,
-                48, 49, 50, 51, 52, 53, 54, 55,
-                40, 41, 42, 43, 44, 45, 46, 47,
-                33, 33, 34, 35, 36, 37, 38, 39,
-                24, 25, 26, 27, 28, 29, 30, 31,
-                16, 17, 18, 19, 20, 21, 22, 23,
-                8,  9, 10, 11, 12, 13, 14, 15,
-                0,  1,  2,  3,  4,  5,  6,  7,
+                [56, 57, 58, 59, 60, 61, 62, 63],
+                [48, 49, 50, 51, 52, 53, 54, 55],
+                [40, 41, 42, 43, 44, 45, 46, 47],
+                [33, 33, 34, 35, 36, 37, 38, 39],
+                [24, 25, 26, 27, 28, 29, 30, 31],
+                [16, 17, 18, 19, 20, 21, 22, 23],
+                [8,  9, 10, 11, 12, 13, 14, 15],
+                [0,  1,  2,  3,  4,  5,  6,  7],
             ]
 
         elif orientation == 180:
@@ -383,14 +456,14 @@ def sort_rawemg(
             7   1   9  17  25  33  41  49  57
             """
             base0_sorting_order = [
-                7,   6,  5,  4,  3,  2,  1,  0,
-                15, 14, 13, 12, 11, 10,  9,  8,
-                23, 22, 21, 20, 19, 18, 17, 16,
-                31, 30, 29, 28, 27, 26, 25, 24,
-                39, 38, 37, 36, 35, 34, 33, 32,
-                47, 46, 45, 44, 43, 42, 41, 40,
-                55, 54, 53, 52, 51, 50, 49, 48,
-                63, 62, 61, 60, 59, 58, 57, 56,
+                [7,   6,  5,  4,  3,  2,  1,  0],
+                [15, 14, 13, 12, 11, 10,  9,  8],
+                [23, 22, 21, 20, 19, 18, 17, 16],
+                [31, 30, 29, 28, 27, 26, 25, 24],
+                [39, 38, 37, 36, 35, 34, 33, 32],
+                [47, 46, 45, 44, 43, 42, 41, 40],
+                [55, 54, 53, 52, 51, 50, 49, 48],
+                [63, 62, 61, 60, 59, 58, 57, 56],
             ]
 
     elif code == "Trigno Galileo Sensor":
@@ -408,53 +481,48 @@ def sort_rawemg(
         2   3
         3   4
         """
-        base0_sorting_order = [0, 1, 2, 3]
+        base0_sorting_order = [[0, 1, 2, 3]]
 
-    else:
+    else:  # elif code == "None":
         pass
 
     # Once the order to sort channels has been retrieved,
     # Sort the channels based on pre-specified order and reset columns
-    if code != "None":
-        sorted_rawemg = rawemg.reindex(columns=base0_sorting_order)
+    if code not in [None, "None"]:
+        flattened_base0_sorting_order = list(
+            itertools.chain(*base0_sorting_order),
+        )
+        sorted_rawemg = rawemg.reindex(columns=flattened_base0_sorting_order)
         sorted_rawemg.columns = range(sorted_rawemg.columns.size)
     else:
         # Always allow a way to avoid electrodes sorting.
         # Return a copy of the RAW_SIGNAL
-        sorted_rawemg = copy.deepcopy(emgfile["RAW_SIGNAL"])
+        sorted_rawemg = rawemg
 
     # Check if we need the sorted RAW_SIGNAL divided by column
     if dividebycolumn:
-        if code in ["GR08MM1305", "GR04MM1305"]:
-            if orientation in [0, 180]:
-                n_rows = 13
-                n_cols = 5
-
-        elif code == "GR10MM0808":
-            if orientation in [0, 180]:
-                n_rows = 8
-                n_cols = 8
-
-        elif code == "Trigno Galileo Sensor":
-            n_rows = 4
-            n_cols = 1
+        if code not in [None, "None"]:
+            n_cols = len(base0_sorting_order)
+            n_rows = len(base0_sorting_order[0])
 
         else:
             # Check if n_rows and n_cols have been passed
             if not isinstance(n_rows, int):
                 raise ValueError(
-                    "In sort_rawemg(), n_rows and n_cols must be integers when code == 'None'"
+                    "In sort_rawemg(), n_rows and n_cols must be integers " +
+                    "when code == 'None'"
                 )
             if not isinstance(n_cols, int):
                 raise ValueError(
-                    "In sort_rawemg(), n_rows and n_cols must be integers when code == 'None'"
+                    "In sort_rawemg(), n_rows and n_cols must be integers " +
+                    "when code == 'None'"
                 )
 
         # Create the empty dict to fill with the sorted_rawemg divided by
         # columns. But first check for missing empty channel.
         if n_rows * n_cols != sorted_rawemg.shape[1]:
             raise ValueError(
-                "Number of specified rows and columns must match the number of channels."
+                "Number of rows * columns must match the number of channels."
             )
 
         empty_dict = {f"col{n}": None for n in range(n_cols)}

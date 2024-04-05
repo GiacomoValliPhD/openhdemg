@@ -1,20 +1,24 @@
 # Copyright (C) 2023 Giacomo Valli, Paul Ritsche
 
 # For the openhdemg version
-import openhdemg as emg
 # To read the content of the README or description file
 from pathlib import Path
+
 # To install required dependencies
 from setuptools import setup
 
+import openhdemg as emg
+
 INSTALL_REQUIRES = [
     "customtkinter==5.2.1",
+    "CTkMessagebox==2.5",
     "matplotlib==3.8.1",
     "numpy==1.26.1",
     "openpyxl==3.1.2",
     "pandas==2.0.3",
     "pandastable==0.13.1",
     "pyperclip==1.8.2",
+    # "pre-commit==3.7.0",
     "scipy==1.11.3",
     "seaborn==0.13.0",
     "joblib==1.3.2",
@@ -27,6 +31,11 @@ PACKAGES = [
     "openhdemg.compatibility",
     "openhdemg.gui",
     "openhdemg.gui.gui_files",
+    "openhdemg.gui.gui_modules",
+    "openhdemg.tests",
+    "openhdemg.tests.fixtures",
+    "openhdemg.tests.integration",
+    "openhdemg.tests.unit",
 ]
 
 CLASSIFIERS = [
@@ -52,7 +61,7 @@ if __name__ == "__main__":
         maintainer_email="giacomo.valli@unibs.it",
         description="Open-source analysis of High-Density EMG data",
         long_description=long_descr,
-        long_description_content_type='text/markdown',
+        long_description_content_type="text/markdown",
         license="GPL-3.0",
         project_urls={
             "Documentation": "https://giacomovalli.com/openhdemg",

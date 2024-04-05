@@ -102,7 +102,7 @@ import fnmatch
 # --------------------------------------------------------------------- #
 # Function to open decomposed files coming from DEMUSE.
 
-def emg_from_demuse(filepath):
+def emg_from_demuse(filepath, ignore_negative_ipts=False):
     """
     Import the .mat file decomposed in DEMUSE.
 
@@ -112,6 +112,11 @@ def emg_from_demuse(filepath):
         The directory and the name of the file to load
         (including file extension .mat).
         This can be a simple string, the use of Path is not necessary.
+    ignore_negative_ipts : bool, default False
+        This parameter determines the silhouette score estimation. If True,
+        only positive ipts values are used during peak and noise clustering.
+        This is particularly important for compensating sources with large
+        negative components.
 
     Returns
     -------
@@ -261,7 +266,11 @@ def emg_from_demuse(filepath):
     if NUMBER_OF_MUS > 0:
         to_append = []
         for mu in range(NUMBER_OF_MUS):
-            sil = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
+            sil = compute_sil(
+                ipts=IPTS[mu],
+                mupulses=MUPULSES[mu],
+                ignore_negative_ipts=ignore_negative_ipts,
+            )
             to_append.append(sil)
         ACCURACY = pd.DataFrame(to_append)
 
@@ -538,6 +547,7 @@ def emg_from_otb(
     refsig=[True, "fullsampled"],
     version="1.5.9.3",
     extras=None,
+    ignore_negative_ipts=False,
 ):
     """
     Import the .mat file exportable from OTBiolab+.
@@ -575,6 +585,11 @@ def emg_from_otb(
         will be stored in a pd.DataFrame with columns named as in the .mat
         file. If not None, pass a regex pattern unequivocally identifying the
         variable in the .mat file to load as extras.
+    ignore_negative_ipts : bool, default False
+        This parameter determines the silhouette score estimation. If True,
+        only positive ipts values are used during peak and noise clustering.
+        This is particularly important for compensating sources with large
+        negative components.
 
     Returns
     -------
@@ -717,7 +732,11 @@ def emg_from_otb(
         if NUMBER_OF_MUS > 0:
             to_append = []
             for mu in range(NUMBER_OF_MUS):
-                sil = compute_sil(ipts=IPTS[mu], mupulses=MUPULSES[mu])
+                sil = compute_sil(
+                    ipts=IPTS[mu],
+                    mupulses=MUPULSES[mu],
+                    ignore_negative_ipts=ignore_negative_ipts,
+                )
                 to_append.append(sil)
             ACCURACY = pd.DataFrame(to_append)
 
@@ -1152,7 +1171,7 @@ def emg_from_delsys(
 
 # --------------------------------------------------------------------- #
 # Function to open the reference signal from Delsys.
-def refsig_from_delsys(filepath, refsig_sensor_name="Trigno Load Cell",):
+def refsig_from_delsys(filepath, refsig_sensor_name="Trigno Load Cell"):
     """
     Import the reference signal in the .mat file exportable by Delsys Neuromap.
 
@@ -1825,7 +1844,15 @@ def emg_from_json(filepath):
         ref_signal.sort_index(inplace=True)
         # ACCURACY
         accuracy = pd.read_json(jsonemgfile["ACCURACY"], orient='split')
-        accuracy.columns = accuracy.columns.astype(int)
+        try:
+            accuracy.columns = accuracy.columns.astype(int)
+        except Exception:
+            accuracy.columns = [*range(len(accuracy.columns))]
+            warnings.warn(
+                "Error while loading accuracy, check or recalculate accuracy"
+            )
+            # TODO error occurring when accuracy was recalculated on empty MUs.
+            # Check if the error is present also for other params.
         accuracy.index = accuracy.index.astype(int)
         accuracy.sort_index(inplace=True)
         # IPTS
@@ -1919,23 +1946,36 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
 
         ``OPENHDEMG``
             File saved from openhdemg (.json).
+
         ``DEMUSE``
             File saved from DEMUSE (.mat).
+
         ``OTB``
             File exported from OTB with decomposition and EMG signal.
             (.mat).
+
         ``DELSYS``
             Files exported from Delsys Neuromap and Neuromap explorer with
             decomposition and EMG signal (.mat + .txt).
+
         ``CUSTOMCSV``
             Custom file format (.csv) with decomposition and EMG signal.
+
         ``OTB_REFSIG``
             File exported from OTB with only the reference signal (.mat).
+
         ``DELSYS_REFSIG``
             File exported from DELSYS Neuromap with the reference signal
             (.mat).
+
         ``CUSTOMCSV_REFSIG``
             Custom file format (.csv) containing only the reference signal.
+    ignore_negative_ipts : bool, default False
+        This parameter determines the silhouette score estimation. If True,
+        only positive ipts values are used during peak and noise clustering.
+        This is particularly important for compensating sources with large
+        negative components. Currently, this parameter is used when loading
+        files decomposed in DEMUSE or OTB.
     otb_ext_factor : int, default 8
         The extension factor used for the decomposition in the OTbiolab+
         software.
@@ -1959,6 +1999,11 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
         If your specific version is not available in the tested versions,
         trying with the closer one usually works, but please double check the
         results. Ignore if loading other files.
+    otb_extras : None or str, default None
+        Extras is used to store additional custom values. These information
+        will be stored in a pd.DataFrame with columns named as in the .mat
+        file. If not None, pass a regex pattern unequivocally identifying the
+        variable in the .mat file to load as extras.
     delsys_emg_sensor_name : str, default "Galileo sensor"
         The name of the EMG sensor used to collect the data. We currently
         support only the "Galileo sensor".
@@ -2154,13 +2199,18 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
 
     # Open file depending on file origin
     if filesource == "DEMUSE":
-        emgfile = emg_from_demuse(filepath=file_toOpen)
+        emgfile = emg_from_demuse(
+            filepath=file_toOpen,
+            ignore_negative_ipts=kwargs.get("ignore_negative_ipts", False),
+        )
     elif filesource == "OTB":
         emgfile = emg_from_otb(
             filepath=file_toOpen,
             ext_factor=kwargs.get("otb_ext_factor", 8),
             refsig=kwargs.get("otb_refsig_type", [True, "fullsampled"]),
-            version=kwargs.get("otb_version", "1.5.9.3")
+            version=kwargs.get("otb_version", "1.5.9.3"),
+            extras=kwargs.get("otb_extras", None),
+            ignore_negative_ipts=kwargs.get("ignore_negative_ipts", False),
         )
     elif filesource == "OTB_REFSIG":
         ref = kwargs.get("otb_refsig_type", [True, "fullsampled"])
@@ -2168,6 +2218,7 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
             filepath=file_toOpen,
             refsig=ref[1],
             version=kwargs.get("otb_version", "1.5.9.3"),
+            extras=kwargs.get("otb_extras", None),
         )
     elif filesource == "DELSYS":
         emgfile = emg_from_delsys(
