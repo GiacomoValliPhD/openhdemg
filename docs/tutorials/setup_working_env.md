@@ -137,7 +137,7 @@ python -m openhdemg.gui.openhdemg_gui
 
 And the GUI will start:
 
-![openhdemg GUI](../md_graphics/index/gui_preview.png)
+![openhdemg GUI](../md_graphics/index/gui_preview_v2.png)
 
 If you instead want to write your own script using the functions contained in *openhdemg*, follow these steps:
 
@@ -189,7 +189,7 @@ This should solve the issue and you should now be able to activate your Virtual 
 
 ### *openhdemg* Installation Issues
 
-Windows:
+Windows (1):
 
 If trying to install *openhdemg* via pip you see this (or a similar) message in the terminal:
 
@@ -198,6 +198,31 @@ ImportError: DLL load failed while importing _cext: The specified module could n
 ```
 
 the problem might be that you do not have the necessary Visual C++ Redistributable. This can be simply solved by visitng the [Microsoft website](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170){:target="_blank"} and dowloading and installing the latest Visual Studio 2015, 2017, 2019 and 2022 redistributable. Please note, this is a single redistributable, you don't need to perform multiple dowloads. This should solve the issue and you should now be able to pip install *openhdemg*. If that's not the case, continue reading.
+
+Windows (2):
+
+If trying to install *openhdemg* via pip you see this (or a similar) message in the terminal:
+
+```
+Microsoft Visual C++ 14.0 or greater is required.
+```
+
+The problem might be that you are missing the C++ build tools necessary to compile some code present in libraries such as pandas. To solve this, follow the steps below:
+
+1. visit [https://visualstudio.microsoft.com/visual-cpp-build-tools/](https://visualstudio.microsoft.com/visual-cpp-build-tools/){:target="_blank"}
+2. click the button "download build tools"
+3. install the tools
+4. once the installation is completed, you should see a window like this:
+
+![Microsoft_Visual_C_step_1](setup_working_env/screen_visualC14_1.png)
+
+If the window is different, there should be a button like "install". Clicking "install" or "modify", if present. This should bring you to the next window (it is also possible that you directly visualise the next window if no previous installation of these components is present in your computer):
+
+![Microsoft_Visual_C_step_2](setup_working_env/screen_visualC14_1.png)
+
+Here, make sure that you select C++ build tool (as in the figure) and install them. If you have windows 10, you may want to select "Windows 10 SDK 10.0.20348" on the right panel.
+
+This should solve the issue and you should now be able to pip install *openhdemg*. If that's not the case, continue reading.
 
 ## More questions?
 

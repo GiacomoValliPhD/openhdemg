@@ -73,6 +73,7 @@ nav:
     - Intro: gui_intro.md
     - Basics: gui_basics.md
     - Advanced: gui_advanced.md
+    - Settings: gui_settings.md
   - What's New: what's-new.md
   - Contacts: contacts.md
   - Cite us: cite-us.md
