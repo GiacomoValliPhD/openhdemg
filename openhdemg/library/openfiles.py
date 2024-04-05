@@ -1946,21 +1946,28 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
 
         ``OPENHDEMG``
             File saved from openhdemg (.json).
+
         ``DEMUSE``
             File saved from DEMUSE (.mat).
+
         ``OTB``
             File exported from OTB with decomposition and EMG signal.
             (.mat).
+
         ``DELSYS``
             Files exported from Delsys Neuromap and Neuromap explorer with
             decomposition and EMG signal (.mat + .txt).
+
         ``CUSTOMCSV``
             Custom file format (.csv) with decomposition and EMG signal.
+
         ``OTB_REFSIG``
             File exported from OTB with only the reference signal (.mat).
+
         ``DELSYS_REFSIG``
             File exported from DELSYS Neuromap with the reference signal
             (.mat).
+
         ``CUSTOMCSV_REFSIG``
             Custom file format (.csv) containing only the reference signal.
     ignore_negative_ipts : bool, default False

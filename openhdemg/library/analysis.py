@@ -32,8 +32,10 @@ def compute_thresholds(
 
         ``rt_dert``
             Both recruitment and derecruitment tresholds will be calculated.
+
         ``rt``
             Only recruitment tresholds will be calculated.
+
         ``dert``
             Only derecruitment tresholds will be calculated.
     type_ : str {"abs_rel", "rel", "abs"}, default "abs_rel"
@@ -41,8 +43,10 @@ def compute_thresholds(
 
         ``abs_rel``
             Both absolute and relative tresholds will be calculated.
+
         ``rel``
             Only relative tresholds will be calculated.
+
         ``abs``
             Only absolute tresholds will be calculated.
     n_firings : int, default 1
@@ -214,17 +218,21 @@ def compute_dr(
     event_ : str {"rec_derec_steady", "rec", "derec", "rec_derec", "steady"}, default "rec_derec_steady"
         When to calculate the DR.
 
-            ``rec_derec_steady``
-                DR is calculated at recruitment, derecruitment and during the
-                steady-state phase.
-            ``rec``
-                DR is calculated at recruitment.
-            ``derec``
-                DR is calculated at derecruitment.
-            ``rec_derec``
-                DR is calculated at recruitment and derecruitment.
-            ``steady``
-                DR is calculated during the steady-state phase.
+        ``rec_derec_steady``
+            DR is calculated at recruitment, derecruitment and during the
+            steady-state phase.
+
+        ``rec``
+            DR is calculated at recruitment.
+
+        ``derec``
+            DR is calculated at derecruitment.
+
+        ``rec_derec``
+            DR is calculated at recruitment and derecruitment.
+
+        ``steady``
+            DR is calculated during the steady-state phase.
 
     Returns
     -------
@@ -494,10 +502,13 @@ def basic_mus_properties(
         ``default``
             The original accuracy measure already contained in the emgfile is
             returned without any computation.
+
         ``SIL``
             The Silhouette score is computed.
+
         ``PNR``
             The pulse to noise ratio is computed.
+
         ``SIL_PNR``
             Both the Silhouette score and the pulse to noise ratio are
             computed.
@@ -774,17 +785,21 @@ def compute_covisi(
     event_ : str {"rec_derec_steady", "rec", "derec", "rec_derec", "steady"}, default "rec_derec_steady"
         When to calculate the COVisi.
 
-            ``rec_derec_steady``
-                covisi is calculated at recruitment, derecruitment and during
-                the steady-state phase.
-            ``rec``
-                covisi is calculated at recruitment.
-            ``derec``
-                covisi is calculated at derecruitment.
-            ``rec_derec``
-                covisi is calculated at recruitment and derecruitment.
-            ``steady``
-                covisi is calculated during the steady-state phase.
+        ``rec_derec_steady``
+            covisi is calculated at recruitment, derecruitment and during
+            the steady-state phase.
+
+        ``rec``
+            covisi is calculated at recruitment.
+
+        ``derec``
+            covisi is calculated at derecruitment.
+
+        ``rec_derec``
+            covisi is calculated at recruitment and derecruitment.
+
+        ``steady``
+            covisi is calculated during the steady-state phase.
     single_mu_number : int, default -1
         Number of the specific MU to compute the COVisi.
         If single_mu_number >= 0, only the COVisi of the entire contraction
@@ -988,17 +1003,21 @@ def compute_drvariability(
     event_ : str {"rec_derec_steady", "rec", "derec", "rec_derec", "steady"}, default "rec_derec_steady"
         When to calculate the DR variability.
 
-            ``rec_derec_steady``
-                DR variability is calculated at recruitment, derecruitment and
-                during the steady-state phase.
-            ``rec``
-                DR variability is calculated at recruitment.
-            ``derec``
-                DR variability is calculated at derecruitment.
-            ``rec_derec``
-                DR variability is calculated at recruitment and derecruitment.
-            ``steady``
-                DR variability is calculated during the steady-state phase.
+        ``rec_derec_steady``
+            DR variability is calculated at recruitment, derecruitment and
+            during the steady-state phase.
+
+        ``rec``
+            DR variability is calculated at recruitment.
+
+        ``derec``
+            DR variability is calculated at derecruitment.
+
+        ``rec_derec``
+            DR variability is calculated at recruitment and derecruitment.
+
+        ``steady``
+            DR variability is calculated during the steady-state phase.
 
     Returns
     -------

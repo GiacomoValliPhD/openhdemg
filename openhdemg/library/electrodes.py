@@ -166,11 +166,17 @@ def sort_rawemg(
         The code of the matrix used. It can be one of:
 
         ``GR08MM1305``
+
         ``GR04MM1305``
+
         ``GR10MM0808``
+
         ``Trigno Galileo Sensor``
+
         ``Custom order``
+
         ``None``
+
         If "None", the electodes are not sorted but n_rows and n_cols must be
         specified when dividebycolumn == True.
         If "Custom order", the electrodes are sorted based on
@@ -199,8 +205,8 @@ def sort_rawemg(
         Specifically, the number of columns are defined by
         len(custom_sorting_order) while the number of rows by
         len(custom_sorting_order[0]). np.nan can be used to specify empty
-        channels. Please refer to the Examples section for the structure of
-        the custom sorting order.
+        channels. Please refer to the Notes and Examples section for the
+        structure of the custom sorting order.
 
     Returns
     -------
@@ -215,6 +221,9 @@ def sort_rawemg(
     Notes
     -----
     The returned file is called ``sorted_rawemg`` for convention.
+
+    Additional info on how to create the custom sorting order is available at:
+    https://www.giacomovalli.com/openhdemg/gui_settings/#electrodes
 
     Examples
     --------
@@ -290,6 +299,9 @@ def sort_rawemg(
     The custom_sorting_order refers to a grid of 13 rows and 5 columns with the
     empty channel in last position.
 
+    Additional info on how to create the custom sorting order is available at:
+    https://www.giacomovalli.com/openhdemg/gui_settings/#electrodes
+
     >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
     >>> custom_sorting_order = [
@@ -356,7 +368,7 @@ def sort_rawemg(
             channel.
 
             Channel Order GR08MM1305
-                    0   1   2   3   4
+                   0   1   2   3   4
             0     64  39  38  13  12
             1     63  40  37  14  11
             2     62  41  36  15  10
@@ -382,7 +394,7 @@ def sort_rawemg(
         elif orientation == 180:
             """
             Channel Order GR08MM1305
-                    0   1   2   3   4
+                   0   1   2   3   4
             0    NaN  25  26  51  52
             1      1  24  27  50  53
             2      2  23  28  49  54

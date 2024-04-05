@@ -771,8 +771,10 @@ def tracking(
         The range of firings to be used for the STA.
         If a MU has less firings than the range, the upper limit
         is adjusted accordingly.
+
         ``all``
             The STA is calculated over all the firings.
+
         A list can be passed as [start, stop] e.g., [0, 25]
         to compute the STA on the first 25 firings.
     derivation : str {mono, sd, dd}, default sd
@@ -787,10 +789,15 @@ def tracking(
         The code of the matrix used. It can be one of:
 
         ``GR08MM1305``
+
         ``GR04MM1305``
+
         ``GR10MM0808``
+
         ``Custom order``
+
         ``None``
+
         This is necessary to sort the channels in the correct order.
         If matrixcode="None", the electrodes are not sorted.
         In this case, n_rows and n_cols must be specified.
@@ -1158,8 +1165,10 @@ def remove_duplicates_between(
         The range of firings to be used for the STA.
         If a MU has less firings than the range, the upper limit
         is adjusted accordingly.
+
         ``all``
             The STA is calculated over all the firings.
+
         A list can be passed as [start, stop] e.g., [0, 25]
         to compute the STA on the first 25 firings.
     derivation : str {mono, sd, dd}, default sd
@@ -1174,10 +1183,15 @@ def remove_duplicates_between(
         The code of the matrix used. It can be one of:
 
         ``GR08MM1305``
+
         ``GR04MM1305``
+
         ``GR10MM0808``
+
         ``Custom order``
+
         ``None``
+
         This is necessary to sort the channels in the correct order.
         If matrixcode="None", the electrodes are not sorted.
         In this case, n_rows and n_cols must be specified.
@@ -1226,6 +1240,7 @@ def remove_duplicates_between(
 
         ``munumber``
             Duplicated MUs are removed from the file with more MUs.
+
         ``accuracy``
             The MU with the lowest accuracy is removed.
 
@@ -1567,6 +1582,7 @@ class MUcv_gui():
         The range of firings to be used for the STA.
         If a MU has less firings than the range, the upper limit
         is adjusted accordingly.
+
         ``all``
             The STA is calculated over all the firings.
     muaps_timewindow : int, default 50

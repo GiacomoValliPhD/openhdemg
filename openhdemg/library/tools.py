@@ -276,10 +276,15 @@ def resize_emgfile(
 
     else:
         # Visualise and select the area to resize
+        title = (
+            "Select the start/end area to resize by hovering the mouse" +
+            "\nand pressing the 'a'-key. Wrong points can be removed with " +
+            "right \nclick or canc/delete key. When ready, press enter."
+        )
         points = showselect(
             emgfile,
             how=how,
-            title="Select the start/end area to resize by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+            title=title,
             titlesize=10,
         )
         start_, end_ = points[0], points[1]
@@ -395,10 +400,10 @@ def compute_idr(emgfile):
         A dict containing a pd.DataFrame for each MU (keys are integers).
         Accessing the key, we have a pd.DataFrame containing:
 
-            - mupulses: firing sample.
-            - diff_mupulses: delta between consecutive firing samples.
-            - timesec: delta between consecutive firing samples in seconds.
-            - idr: instantaneous discharge rate.
+        - mupulses: firing sample.
+        - diff_mupulses: delta between consecutive firing samples.
+        - timesec: delta between consecutive firing samples in seconds.
+        - idr: instantaneous discharge rate.
 
     Examples
     --------
@@ -464,7 +469,9 @@ def compute_idr(emgfile):
         )
 
 
-def delete_mus(emgfile, munumber, if_single_mu="ignore"):
+def delete_mus(
+    emgfile, munumber, if_single_mu="ignore", delete_delsys_muaps=True,
+):
     """
     Delete unwanted MUs.
 
@@ -482,12 +489,16 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
     if_single_mu : str {"ignore", "remove"}, default "ignore"
         A string indicating how to behave in case of a file with a single MU.
 
-            ``ignore``
-            Ignore the process and return the original emgfile. (Default)
-            ``remove``
-            Remove the MU and return the emgfile without the MU. (Default)
-            This should allow full compatibility with the use of this file
-            in following processing (i.e., save/load and analyse).
+        ``ignore``
+        Ignore the process and return the original emgfile. (Default)
+
+        ``remove``
+        Remove the MU and return the emgfile without the MU. (Default)
+        This should allow full compatibility with the use of this file
+        in following processing (i.e., save/load and analyse).
+    delete_delsys_muaps : Bool, default True
+        If true, deletes also the associated MUAPs computed by the Delsys
+        software stored in emgfile["EXTRAS"].
 
     Returns
     -------
@@ -540,6 +551,7 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
                 "EMG_LENGTH" : EMG_LENGTH,
                 ==> "NUMBER_OF_MUS" : NUMBER_OF_MUS,
                 ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
+                ==> "EXTRAS" : EXTRAS but only for DELSYS file
                 }
     """
 
@@ -593,6 +605,37 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
         del_emgfile["BINARY_MUS_FIRING"] = pd.DataFrame(columns=[0])
         # list of ndarray
         del_emgfile["MUPULSES"] = [np.array([])]
+
+    if emgfile["SOURCE"] == "DELSYS" and delete_delsys_muaps:
+        # Remove also DELSYS MUAPs
+        if isinstance(munumber, int):
+            munumber = [munumber]
+
+        data = del_emgfile["EXTRAS"]
+
+        for mu in munumber:
+            # Get MU ID
+            mu_id = f"MU_{mu}_"
+            # Remove all columns with MU ID
+            data = data[[col for col in data.columns if not col.startswith(mu_id)]]
+
+        # Rescale the numbers in the remaining column names
+        col_list = list(data.columns)
+        if len(col_list) % 4 != 0:
+            raise ValueError("Unexpected number of channels in Delsys MUAPS")
+        new_col_list = []
+        for mu in range(del_emgfile["NUMBER_OF_MUS"]):
+            new_col_list.extend(
+                [
+                    f"MU_{mu}_CH_0",
+                    f"MU_{mu}_CH_1",
+                    f"MU_{mu}_CH_2",
+                    f"MU_{mu}_CH_3",
+                ]
+            )
+        data.columns = new_col_list
+
+        del_emgfile["EXTRAS"] = data
 
     return del_emgfile
 
@@ -749,9 +792,14 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
     """
 
     if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
+        title = (
+            "Select the start/end area of the steady-state by hovering the " +
+            "mouse \nand pressing the 'a'-key. Wrong points can be removed " +
+            "with right \nclick or canc/delete key. When ready, press enter."
+        )
         points = showselect(
             emgfile=emgfile,
-            title="Select the start/end area of the steady-state by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+            title=title,
             titlesize=10,
         )
         start_steady, end_steady = points[0], points[1]
@@ -912,9 +960,15 @@ def remove_offset(emgfile, offsetval=0, auto=0):
         else:
             # Select the area to calculate the offset
             # (average value of the selected area)
+            title = (
+                "Select the start/end area to calculate the offset by " +
+                "hovering the mouse \nand pressing the 'a'-key. Wrong " +
+                " points can be removed with right \nclick or canc/delete " +
+                "key. When ready, press enter."
+            )
             points = showselect(
                 emgfile=offs_emgfile,
-                title="Select the start/end of area to calculate the offset by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+                title=title,
                 titlesize=10,
             )
             start_, end_ = points[0], points[1]
@@ -924,7 +978,6 @@ def remove_offset(emgfile, offsetval=0, auto=0):
             offs_emgfile["REF_SIGNAL"][0] = (
                 offs_emgfile["REF_SIGNAL"][0] - float(offsetval[0])
             )
-            print(offsetval)
 
     else:
         # Compute and subtract the offset value.
@@ -950,6 +1003,7 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
         ``showselect``
             Ask the user to select the area where to calculate the MVC
             with a GUI.
+
         ``all``
             Calculate the MVC on the entire file.
     conversion_val : float or int, default 0
@@ -996,9 +1050,14 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
 
     elif how == "showselect":
         # Select the area to measure the MVC (maximum value)
+        title = (
+            "Select the start/end area to compute MVC by hovering the " +
+            "mouse \nand pressing the 'a'-key. Wrong points can be removed " +
+            "with right \nclick or canc/delete key. When ready, press enter."
+        )
         points = showselect(
             emgfile=emgfile,
-            title="Select the start/end area to compute MVC by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+            title=title,
             titlesize=10,
         )
         start_, end_ = points[0], points[1]
@@ -1103,9 +1162,14 @@ def compute_rfd(
         start_ = startpoint
     else:
         # Otherwise select the starting point for the RFD
+        title = (
+            "Select the start/end area to compute the RFD by hovering the " +
+            "mouse \nand pressing the 'a'-key. Wrong points can be removed " +
+            "with right \nclick or canc/delete key. When ready, press enter."
+        )
         points = showselect(
             emgfile,
-            title="Select the start area to compute the RFD by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+            title=title,
             titlesize=10,
             nclic=1,
         )

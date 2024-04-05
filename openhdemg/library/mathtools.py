@@ -74,6 +74,7 @@ def norm_xcorr(sig1, sig2, out="both"):
         ``both``
            The output is the greatest positive or negative cross-correlation
            value.
+
         ``max``
            The output is the maximum cross-correlation value.
 
@@ -137,10 +138,12 @@ def norm_twod_xcorr(df1, df2, mode="full"):
         ``full``
            The output is the full discrete linear cross-correlation
            of the inputs. (Default)
+
         ``valid``
            The output consists only of those elements that do not
            rely on the zero-padding. In 'valid' mode, either `sta_mu1` or
            `sta_mu2` must be at least as large as the other in every dimension.
+
         ``same``
            The output is the same size as `in1`, centered
            with respect to the 'full' output.
@@ -262,6 +265,20 @@ def compute_sil(ipts, mupulses, ignore_negative_ipts=False):
     See also
     --------
     - compute_pnr : to calculate the Pulse to Noise ratio of a single MU.
+
+    Examples
+    --------
+    Calculate the SIL score for the third MU (MU number 2) ignoring the
+    negative component of the decomposed source.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> mu_of_interest = 2
+    >>> sil_value = emg.compute_sil(
+    ...     ipts=emgfile["IPTS"][mu_of_interest],
+    ...     mupulses=emgfile["MUPULSES"][mu_of_interest],
+    ...     ignore_negative_ipts=True,
+    ... )
     """
 
     # Manage exception of no firings
@@ -390,7 +407,7 @@ def compute_pnr(
     However, this heuristic penalty function penalizes MUs firing during
     specific types of contractions like explosive contractions
     (MUs discharge up to 200 pps).
-    Therefore, in this implementation of the PNR, we did not include the
+    Therefore, in this implementation of the PNR, we did ``not`` include the
     penalty based on MUs discharge.
     Additionally, the user can decide whether to adopt the two coefficients
     of variations to estimate Pi or not.
@@ -398,6 +415,36 @@ def compute_pnr(
     Pi = CoVIDI + CoVpIDI
     Otherwise, Pi would be calculated as:
     Pi = CoV_all_IDI
+
+    Examples
+    --------
+    Calculate the PNR value for the third MU (MU number 2) forcing the
+    selction of the times of firing.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> mu_of_interest = 2
+    >>> pnr_value = emg.compute_pnr(
+    ...     ipts=emgfile["IPTS"][mu_of_interest],
+    ...     mupulses=emgfile["MUPULSES"][mu_of_interest],
+    ...     fsamp=emgfile["FSAMP"],
+    ...     constrain_pulses=[True, 3],
+    ... )
+
+    Calculate the PNR value for the third MU (MU number 2) selecting the times
+    of firing based on the euristic penalty funtion described in Holobar 2012
+    and considering, separately, the paired and the non-paired firings.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> mu_of_interest = 2
+    >>> pnr_value = emg.compute_pnr(
+    ...     ipts=emgfile["IPTS"][mu_of_interest],
+    ...     mupulses=emgfile["MUPULSES"][mu_of_interest],
+    ...     fsamp=emgfile["FSAMP"],
+    ...     constrain_pulses=[False],
+    ...     separate_paired_firings=True,
+    ... )
     """
 
     # Manage exception of no firings
