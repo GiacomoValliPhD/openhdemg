@@ -4,13 +4,16 @@ include LICENSE
 include requirements.txt
 
 # Add all the non .py files in openhdemg
-include openhdemg/gui/gui_files/Icon.ico
+include openhdemg/gui/gui_files/Icon_transp.ico
 include openhdemg/gui/gui_files/Cite.png
 include openhdemg/gui/gui_files/Contact.png
+include openhdemg/gui/gui_files/Gear.png
 include openhdemg/gui/gui_files/Info.png
-include openhdemg/gui/gui_files/logo.png
+include openhdemg/gui/gui_files/Logo_high_res.png
 include openhdemg/gui/gui_files/Matrix.png
 include openhdemg/gui/gui_files/Online.png
 include openhdemg/gui/gui_files/Redirect.png
+include openhdemg/gui/gui_files/Error.png
+include openhdemg/gui/gui_files/gui_color_theme.json
 
 include openhdemg/library/decomposed_test_files/otb_testfile.mat

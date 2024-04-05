@@ -371,6 +371,7 @@ def sta(
     # Compute half of the timewindow in samples
     timewindow_samples = round((timewindow / 1000) * emgfile["FSAMP"])
     halftime = round(timewindow_samples / 2)
+    tottime = halftime * 2
 
     # Container of the STA for every MUs
     # {0: {}, 1: {}, 2: {}, 3: {}}
@@ -378,23 +379,35 @@ def sta(
 
     # Calculate STA on sorted_rawemg for every mu and put it into sta_dict[mu]
     for mu in sta_dict.keys():
+        # Check if there are firings in this MU
+        tot_firings = len(emgfile["MUPULSES"][mu])
+        if tot_firings == 0:
+            raise ValueError(
+                "Empty MU in sta(). First use delete_empty_mus()."
+            )
+
         # Set firings if firings="all"
         if firings == "all":
-            firings_ = [0, len(emgfile["MUPULSES"][mu])]
+            firings_ = [0, tot_firings]
         else:
             firings_ = firings
+
+        # Get current mupulses
+        thismups = emgfile["MUPULSES"][mu][firings_[0]: firings_[1]]
 
         # Calculate STA for each column in sorted_rawemg
         sorted_rawemg_sta = {}
         for col in sorted_rawemg.keys():
             row_dict = {}
             for row in sorted_rawemg[col].columns:
-                thismups = emgfile["MUPULSES"][mu][firings_[0]: firings_[1]]
-                df = sorted_rawemg[col][row].to_numpy()
+                emg_array = sorted_rawemg[col][row].to_numpy()
                 # Calculate STA using NumPy vectorized operations
                 sta_values = []
                 for pulse in thismups:
-                    sta_values.append(df[pulse - halftime: pulse + halftime])
+                    ls = emg_array[pulse - halftime: pulse + halftime]
+                    # Avoid incomplete muaps
+                    if len(ls) == tottime:
+                        sta_values.append(ls)
                 row_dict[row] = np.mean(sta_values, axis=0)
             sorted_rawemg_sta[col] = pd.DataFrame(row_dict)
         sta_dict[mu] = sorted_rawemg_sta
@@ -470,6 +483,7 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
     # Compute half of the timewindow in samples
     timewindow_samples = round((timewindow / 1000) * emgfile["FSAMP"])
     halftime = round(timewindow_samples / 2)
+    tottime = halftime * 2
 
     # Container of the ST for every MUs
     # {0: {}, 1: {}, 2: {}, 3: {} ...}
@@ -477,6 +491,13 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
 
     # Calculate ST on sorted_rawemg for every mu and put it into sta_dict[mu]
     for mu in sta_dict.keys():
+        # Check if there are firings in this MU
+        tot_firings = len(emgfile["MUPULSES"][mu])
+        if tot_firings == 0:
+            raise ValueError(
+                "Empty MU in sta(). First use delete_empty_mus()."
+            )
+
         # Container for the st of each MUs' matrix column.
         sta_dict_cols = {}
         # Get MUPULSES for this MU
@@ -492,7 +513,9 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
                 # Calculate ST using NumPy vectorized operations
                 for pos, pulse in enumerate(thismups):
                     muap = this_emgsig[pulse - halftime: pulse + halftime]
-                    crow_muaps[pos] = muap
+                    # Avoid incomplete muaps
+                    if len(muap) == tottime:
+                        crow_muaps[pos] = muap
                 sta_dict_crows[row] = pd.DataFrame(crow_muaps)
             sta_dict_cols[col] = sta_dict_crows
         sta_dict[mu] = sta_dict_cols
@@ -729,6 +752,7 @@ def tracking(
     orientation=180,
     n_rows=None,
     n_cols=None,
+    custom_sorting_order=None,
     custom_muaps=None,
     exclude_belowthreshold=True,
     filter=True,
@@ -747,8 +771,10 @@ def tracking(
         The range of firings to be used for the STA.
         If a MU has less firings than the range, the upper limit
         is adjusted accordingly.
+
         ``all``
             The STA is calculated over all the firings.
+
         A list can be passed as [start, stop] e.g., [0, 25]
         to compute the STA on the first 25 firings.
     derivation : str {mono, sd, dd}, default sd
@@ -763,14 +789,24 @@ def tracking(
         The code of the matrix used. It can be one of:
 
         ``GR08MM1305``
+
         ``GR04MM1305``
+
         ``GR10MM0808``
-        This is necessary to sort the channels in
-        the correct order. If matrixcode="None", the electrodes are not sorted.
+
+        ``Custom order``
+
+        ``None``
+
+        This is necessary to sort the channels in the correct order.
+        If matrixcode="None", the electrodes are not sorted.
         In this case, n_rows and n_cols must be specified.
+        If "Custom order", the electrodes are sorted based on
+        custom_sorting_order.
     orientation : int {0, 180}, default 180
         Orientation in degree of the matrix (same as in OTBiolab).
         E.g. 180 corresponds to the matrix connection toward the user.
+        This Parameter is ignored if code=="Custom order" or code=="None".
     n_rows : None or int, default None
         The number of rows of the matrix. This parameter is used to divide the
         channels based on the matrix shape. These are normally inferred by the
@@ -779,6 +815,15 @@ def tracking(
         The number of columns of the matrix. This parameter is used to divide
         the channels based on the matrix shape. These are normally inferred by
         the matrix code and must be specified only if code == None.
+    custom_sorting_order : None or list, default None
+        If code=="Custom order", custom_sorting_order will be used for
+        channels sorting. In this case, custom_sorting_order must be a list of
+        lists containing the order of the matrix channels.
+        Specifically, the number of columns are defined by
+        len(custom_sorting_order) while the number of rows by
+        len(custom_sorting_order[0]). np.nan can be used to specify empty
+        channels. Please refer to the Examples section for the structure of
+        the custom sorting order.
     custom_muaps : None or list, default None
         With this parameter, it is possible to perform MUs tracking on MUAPs
         computed with custom techniques. If this parameter is None (default),
@@ -859,6 +904,35 @@ def tracking(
     8         19        10  0.802635
     9         21        14  0.896419
     10        22        16  0.836356
+
+    Track MUs between two files where channels are sorted with a custom order.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile1 = emg.askopenfile(filesource="CUSTOMCSV")
+    >>> emgfile2 = emg.askopenfile(filesource="CUSTOMCSV")
+    >>> custom_sorting_order = [
+    ...     [63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52,     51,],
+    ...     [38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,     50,],
+    ...     [37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26,     25,],
+    ...     [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,     24,],
+    ...     [11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1,  0, np.nan,],
+    ... ]  # 13 rows and 5 columns
+    >>> tracking_res = emg.tracking(
+    ...     emgfile1=emgfile1,
+    ...     emgfile2=emgfile2,
+    ...     firings="all",
+    ...     derivation="sd",
+    ...     timewindow=50,
+    ...     threshold=0.8,
+    ...     matrixcode="Custom order",
+    ...     orientation=180,
+    ...     n_rows=None,
+    ...     n_cols=None,
+    ...     custom_sorting_order=custom_sorting_order,
+    ...     exclude_belowthreshold=True,
+    ...     filter=True,
+    ...     show=False,
+    ... )
     """
 
     # Obtain STAs
@@ -870,6 +944,7 @@ def tracking(
             orientation=orientation,
             n_rows=n_rows,
             n_cols=n_cols,
+            custom_sorting_order=custom_sorting_order,
         )
         emgfile2_sorted = sort_rawemg(
             emgfile2,
@@ -877,6 +952,7 @@ def tracking(
             orientation=orientation,
             n_rows=n_rows,
             n_cols=n_cols,
+            custom_sorting_order=custom_sorting_order,
         )
 
         # Calculate the derivation if needed
@@ -1070,6 +1146,7 @@ def remove_duplicates_between(
     orientation=180,
     n_rows=None,
     n_cols=None,
+    custom_sorting_order=None,
     custom_muaps=None,
     filter=True,
     show=False,
@@ -1088,8 +1165,10 @@ def remove_duplicates_between(
         The range of firings to be used for the STA.
         If a MU has less firings than the range, the upper limit
         is adjusted accordingly.
+
         ``all``
             The STA is calculated over all the firings.
+
         A list can be passed as [start, stop] e.g., [0, 25]
         to compute the STA on the first 25 firings.
     derivation : str {mono, sd, dd}, default sd
@@ -1100,13 +1179,28 @@ def remove_duplicates_between(
     threshold : float, default 0.9
         The 2-dimensional cross-correlation minimum value
         to consider two MUs to be the same. Ranges 0-1.
-    matrixcode : str {"GR08MM1305", "GR04MM1305", "GR10MM0808", "None"}, default "GR08MM1305"
-        The code of the matrix used. This is necessary to sort the channels in
-        the correct order. If matrixcode="None", the electrodes are not sorted.
+    matrixcode : str, default "GR08MM1305"
+        The code of the matrix used. It can be one of:
+
+        ``GR08MM1305``
+
+        ``GR04MM1305``
+
+        ``GR10MM0808``
+
+        ``Custom order``
+
+        ``None``
+
+        This is necessary to sort the channels in the correct order.
+        If matrixcode="None", the electrodes are not sorted.
         In this case, n_rows and n_cols must be specified.
+        If "Custom order", the electrodes are sorted based on
+        custom_sorting_order.
     orientation : int {0, 180}, default 180
         Orientation in degree of the matrix (same as in OTBiolab).
         E.g. 180 corresponds to the matrix connection toward the user.
+        This Parameter is ignored if code=="Custom order" or code=="None".
     n_rows : None or int, default None
         The number of rows of the matrix. This parameter is used to divide the
         channels based on the matrix shape. These are normally inferred by the
@@ -1115,6 +1209,15 @@ def remove_duplicates_between(
         The number of columns of the matrix. This parameter is used to divide
         the channels based on the matrix shape. These are normally inferred by
         the matrix code and must be specified only if code == None.
+    custom_sorting_order : None or list, default None
+        If code=="Custom order", custom_sorting_order will be used for
+        channels sorting. In this case, custom_sorting_order must be a list of
+        lists containing the order of the matrix channels.
+        Specifically, the number of columns are defined by
+        len(custom_sorting_order) while the number of rows by
+        len(custom_sorting_order[0]). np.nan can be used to specify empty
+        channels. Please refer to the Examples section for the structure of
+        the custom sorting order.
     custom_muaps : None or list, default None
         With this parameter, it is possible to perform MUs tracking on MUAPs
         computed with custom techniques. If this parameter is None (default),
@@ -1137,6 +1240,7 @@ def remove_duplicates_between(
 
         ``munumber``
             Duplicated MUs are removed from the file with more MUs.
+
         ``accuracy``
             The MU with the lowest accuracy is removed.
 
@@ -1181,6 +1285,39 @@ def remove_duplicates_between(
     ... )
     >>> emg.asksavefile(emgfile1)
     >>> emg.asksavefile(emgfile2)
+
+    Remove duplicated MUs between two files where channels are sorted with a
+    custom order and save the emgfiles without duplicates. Of the 2 duplicated
+    MUs, the one with the lowest accuracy is removed.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile1 = emg.askopenfile(filesource="CUSTOMCSV")
+    >>> emgfile2 = emg.askopenfile(filesource="CUSTOMCSV")
+    >>> custom_sorting_order = [
+    ...     [63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52,     51,],
+    ...     [38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,     50,],
+    ...     [37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26,     25,],
+    ...     [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,     24,],
+    ...     [11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1,  0, np.nan,],
+    ... ]  # 13 rows and 5 columns
+    >>> emgfile1, emgfile2, tracking_res = emg.remove_duplicates_between(
+    ...     emgfile1,
+    ...     emgfile2,
+    ...     firings="all",
+    ...     derivation="sd",
+    ...     timewindow=50,
+    ...     threshold=0.9,
+    ...     matrixcode="Custom order",
+    ...     orientation=180,
+    ...     n_rows=None,
+    ...     n_cols=None,
+    ...     custom_sorting_order=custom_sorting_order,
+    ...     filter=True,
+    ...     show=False,
+    ...     which="accuracy",
+    ... )
+    >>> emg.asksavefile(emgfile1)
+    >>> emg.asksavefile(emgfile2)
     """
 
     # Work on deepcopies
@@ -1199,6 +1336,7 @@ def remove_duplicates_between(
         orientation=orientation,
         n_rows=n_rows,
         n_cols=n_cols,
+        custom_sorting_order=custom_sorting_order,
         custom_muaps=custom_muaps,
         exclude_belowthreshold=True,
         filter=filter,
@@ -1329,6 +1467,101 @@ def xcc_sta(sta):
     return xcc_sta
 
 
+def estimate_cv_via_mle(emgfile, signal):
+    """
+    Estimate signal conduction velocity via maximum likelihood estimation.
+
+    This function can be used for the estimation of conduction velocity for 2
+    or more signals. These can be either MUAPs or global EMG signals.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile from whic "signal" has been
+        extracted. This is used to know IED and FSAMP.
+    signal : pd.DataFrame
+        A dataframe containing the signals on which to estimate CV. The signals
+        should be organised in colums.
+
+    Returns
+    -------
+    cv : float
+        The conduction velocity value in M/s.
+
+    See also
+    --------
+    - MUcv_gui : Graphical user interface for the estimation of MUs conduction
+        velocity.
+
+    Examples
+    --------
+    Calculate the CV for the first MU (number 0) on the channels 31, 32, 34,
+    34 that are contained in the second column ("col2") of the double
+    differential representation of the MUAPs. First, obtain the spike-
+    triggered average of the double differential derivation.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.filter_rawemg(emgfile)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ...     dividebycolumn=True
+    ... )
+    >>> dd = emg.double_diff(sorted_rawemg=sorted_rawemg)
+    >>> sta = emg.sta(
+    ...     emgfile=emgfile,
+    ...     sorted_rawemg=sorted_rawemg,
+    ...     firings=[0,50],
+    ...     timewindow=50,
+    ... )
+
+    Second, extract the channels of interest and estimate CV.
+
+    >>> signal = sta[0]["col2"].loc[:, 31:34]
+    >>> cv = estimate_cv_via_mle(emgfile=emgfile, signal=signal)
+    """
+
+    """
+    sta_mu is a pandas dataframe containing the signals where to estimate CV
+    sta = emg.sta(emgfile, dd)
+    sta_mu = sta[0]["col2"].loc[:, 31:34]
+    """
+    ied = emgfile["IED"]
+    fsamp = emgfile["FSAMP"]
+
+    # Work with numpy vectorised operations for better performance
+    sig = signal.to_numpy()
+    sig = sig.T
+
+    # Prepare the input 1D signals for find_teta
+    if np.shape(sig)[0] > 3:
+        sig1 = sig[1, :]
+        sig2 = sig[2, :]
+    else:
+        sig1 = sig[0, :]
+        sig2 = sig[1, :]
+
+    teta = find_teta(
+        sig1=sig1,
+        sig2=sig2,
+        ied=ied,
+        fsamp=fsamp,
+    )
+
+    cv, teta = mle_cv_est(
+        sig=sig,
+        initial_teta=teta,
+        ied=ied,
+        fsamp=fsamp,
+    )
+
+    cv = abs(cv)
+
+    return cv
+
+
 class MUcv_gui():
     """
     Graphical user interface for the estimation of MUs conduction velocity.
@@ -1339,7 +1572,7 @@ class MUcv_gui():
     Parameters
     ----------
     emgfile : dict
-        The dictionary containing the first emgfile.
+        The dictionary containing the emgfile.
     sorted_rawemg : dict
         A dict containing the sorted electrodes.
         Every key of the dictionary represents a different column of the
@@ -1349,16 +1582,24 @@ class MUcv_gui():
         The range of firings to be used for the STA.
         If a MU has less firings than the range, the upper limit
         is adjusted accordingly.
+
         ``all``
             The STA is calculated over all the firings.
     muaps_timewindow : int, default 50
         Timewindow to compute ST MUAPs in milliseconds.
 
+    See also
+    --------
+    - estimate_cv_via_mle : Estimate signal conduction velocity via maximum
+        likelihood estimation.
+
     Examples
     --------
     Call the GUI.
 
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.filter_rawemg(emgfile)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile,
     ...     code="GR08MM1305",
@@ -1379,7 +1620,7 @@ class MUcv_gui():
         sorted_rawemg,
         n_firings=[0, 50],
         muaps_timewindow=50,
-        figsize=[20, 15],
+        figsize=[25, 20],
     ):
         # On start, compute the necessary information
         self.emgfile = emgfile
@@ -1402,7 +1643,7 @@ class MUcv_gui():
             "..",
             "gui",
             "gui_files",
-            "Icon.ico"
+            "Icon_transp.ico"
         )
         self.root.iconbitmap(iconpath)
 
@@ -1534,8 +1775,7 @@ class MUcv_gui():
     # Define functions necessary for the GUI
     # Use empty docstrings to hide the functions from the documentation.
     def gui_plot(self):
-        """
-        """  # Plot the MUAPs used to estimate CV.
+        # Plot the MUAPs used to estimate CV.
 
         # Get MU number
         mu = int(self.selectmu_cb.get())
@@ -1555,58 +1795,32 @@ class MUcv_gui():
         plt.close()
 
     def copy_to_clipboard(self):
-        """
-        """  # Copy the dataframe to clipboard in csv format.
+        # Copy the dataframe to clipboard in csv format.
 
         pyperclip.copy(self.res_df.to_csv(index=False, sep='\t'))
 
     # Define functions for cv estimation
     def compute_cv(self):
-        """
-        """  # Compute conduction velocity.
+        # Compute conduction velocity.
 
-        # Get the muaps of the selected columns and represent them in
-        # different rows (as requested by the functions find_teta and
-        # mle_cv_est).
-        sig = self.st[int(self.selectmu_cb.get())][self.col_cb.get()].transpose()
+        # Get the muaps of the selected columns.
+        sig = self.st[int(self.selectmu_cb.get())][self.col_cb.get()]
         col_list = list(range(int(self.start_cb.get()), int(self.stop_cb.get())+1))
 
-        sig = sig.iloc[col_list, :]
-        sig = sig.reset_index(drop=True)
+        sig = sig.iloc[:, col_list]
 
         # Verify that the signal is correcly oriented
-        if len(sig) > len(sig.columns):
+        if len(sig) < len(sig.columns):
             raise ValueError(
                 "The number of signals exceeds the number of samples. Verify that each row represents a signal"
             )
 
-        # Prepare the input 1D signals for find_teta
-        if len(sig) > 3:
-            sig1 = sig.iloc[1]
-            sig2 = sig.iloc[2]
-        else:
-            sig1 = sig.iloc[0]
-            sig2 = sig.iloc[1]
-
-        initial_teta = find_teta(
-            sig1=sig1,
-            sig2=sig2,
-            ied=self.ied,
-            fsamp=self.fsamp,
-        )
-
-        # Calculate CV (and return only positive values)
-        cv, teta = mle_cv_est(
-            sig=sig,
-            initial_teta=initial_teta,
-            ied=self.ied,
-            fsamp=self.fsamp,
-        )
-        cv = abs(cv)
+        # Estimate CV
+        cv = estimate_cv_via_mle(emgfile=self.emgfile, signal=sig)
 
         # Calculate RMS
         sig = sig.to_numpy()
-        rms = np.mean(np.sqrt((np.mean(sig**2, axis=1))))
+        rms = np.mean(np.sqrt((np.mean(sig**2, axis=0))))
 
         # Update the self.res_df and the self.textbox
         mu = int(self.selectmu_cb.get())

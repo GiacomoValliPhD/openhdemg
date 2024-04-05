@@ -1,10 +1,12 @@
 # Graphical Interface
 
-This is the toturial for the `Advanced Tools` in the *openhdemg* GUI. Great that you made it this far! In the next few sections we will take a look at the more advanced functions implemented in the GUI. But first of all, you need to click the `Advanced Tools`button in the main window of the GUI to get to the respective adavanced analysis. The `Advanced Tools Window` will open.
+This is the toturial for the `Advanced Tools` in the *openhdemg* GUI. Great that you made it this far! In the next few sections we will take a look at the more advanced functions implemented in the GUI. But first of all, you need to click the `Advanced Tools` button in the main window of the GUI to get to the respective adavanced analysis. The `Advanced Tools Window` will open.
+
+![advanced_analysis](md_graphics/gui/advanced_tools_window_v2.png)
 
 Please note, the `Advanced Tools` might not be available for all the files, as some of them might not have a sufficient number of electrodes to directly perform the advanced analyses. If you want to use the advanced tools anyway, you can still do so from the library.
 
-![advanced_analysis](md_graphics/gui/advanced_analysis_window.png)
+## Start a Specific Tool
 
 So far, we have included three advanced analyses in the *openhdemg* GUI.
 
@@ -12,37 +14,43 @@ So far, we have included three advanced analyses in the *openhdemg* GUI.
 - `Duplicate Removal`
 - `Conduction Velocity Estimation`
 
-For all of those, the specification of a `Matrix Orientation` and a `Matrix Code` is required. The `Matrix Orientaion` must match the one of your matrix during acquisition. You can find a reference image for the `Orientation` at the bottom in the right side of the `Plot Window` when using the `Plot EMG`function. The `Matrix Orientation` can be either **0** or **180** and must be chosen from the dropdown list.
+For all of those, the specification of a `Matrix Code` and a `Matrix Orientation` is required.
 
-The `Matrix Code` must be specified according to the one you used during acquisition. So far, the codes
+The `Matrix Code` must be specified according to the one you used during acquisition. So far, the implemented codes are:
 
-- `GR08MM1305`
-- `GR04MM1305`
-- `GR10MM0808`
-- `None`
+    - `Custom order`
+    - `None`
+    - `GR08MM1305`
+    - `GR04MM1305`
+    - `GR10MM0808`
 
-are implemented. You must choose one from the respective dropdown list. In case you selected `None`, the entrybox `Rows, Columns` will appear. Please specify the number of rows and columns of your used matrix since you now bypass included matrix codes. `Orientation` is ignored when `Matrix Code` is `None`. In example, specifying
+In case you selected `Custom order`, you must also specify the custom order in the GUI settings. Please refer to [this tutorial](gui_settings.md/#electrodes) for further instructions on how to do so.
+
+In case you selected `None`, the entrybox `Rows, Columns` will appear. Please specify the number of rows and columns of your used matrix since you now bypass included matrix codes. In example, specifying
 
 ```Python
 Rows, Columns: 13, 5
 ```
-means that your File has 65 channels.
+means that your File has 65 channels organised over 13 rows and 5 columns.
+
+If you selected one of the built-in sorting orders (e.g., `GR08MM1305`, `GR04MM1305`, `GR10MM0808`), you need to specify also the `Orientation` in row two and column four in the left side of the `Plot Window`. The `Orientaion` must match the one of your matrix during acquisition. You can find a reference image for the `Orientation` at the bottom in the right side of the `Plot Window`. `Orientation` is ignored when `Matrix Code` is `None` or `Custom order`.
 
 Once you specified these parameter, you can click the `Advaned Analysis` button to start your analysis.
 
 -----------------------------------------
 
 ## Motor Unit Tracking
-When you want to track MUs across two different files, you need to select the `Motor Unit Tracking` options and specify the `Matrix Code` and `Matrix Orentation` in the `Advanced Tools Window`. Once you clicked the `Advanced Analysis` button, the `MUs Tracking Window` will pop-up.
 
-![mus_tracking](md_graphics/gui/mu_tracking_window.png)
+When you want to track MUs across two different files, you need to select the `Motor Unit Tracking` option and specify the `Matrix Code` and `Matrix Orentation` in the `Advanced Tools Window`. Once you clicked the `Advanced Analysis` button, the `MUs Tracking Window` will pop-up.
+
+![mus_tracking](md_graphics/gui/mu_tracking_window_v2.png)
 
 1. You need to specify the `Type of file` you want to track MUs across in the respective dropdown. The available filetypes are:
 
-    - `OTB` (.mat file exportable by OTBiolab+)
-    - `DEMUSE` (.mat file used in DEMUSE)
     - `OPENHDEMG` (emgfile or reference signal stored in .json format)
     - `CUSTOMCSV` (custom data from a .csv file)
+    - `OTB` (.mat file exportable by OTBiolab+)
+    - `DEMUSE` (.mat file used in DEMUSE)
 
     Each filetype corresponds to a distinct datatype that should match the file you want to analyse. So, select the **Type of file** corresponding to the type of your file. In case you selected `OTB`, specify the `extension factor` in the dropdown.
 
@@ -61,9 +69,10 @@ When you want to track MUs across two different files, you need to select the `M
 8. By clicking the `Track` button, you can start the analysis. The tracking results will be displayed in the `MUs Tracking Resul` output in the right side of the `MUs Tracking Window`.
 
 ## Duplicate Removal
+
 When you want to remove MUs duplicates across different files, you need to select the `Duplicate Removal` options and specify the `Matrix Code` and `Matrix Orentation` in the `Advanced Tools Window`. Once you clicked the `Advanced Analysis` button, the `Duplicate Removal Window` will pop-up. `Duplicate Removal` requires similar input as `Motor Unit Tracking`, so please take a look at the [`Motor Unit Tracking`](#motor-unit-tracking) section. However, you need to do two more things. 
 
-![duplicate_removal](md_graphics/gui/duplicate_removal_window.png)
+![duplicate_removal](md_graphics/gui/duplicate_removal_window_v2.png)
 
 1. You should specify How to remove the duplicated MUs in the `Which` dropdown. You can choose between
 

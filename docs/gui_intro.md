@@ -14,9 +14,9 @@ python -m openhdemg.gui.openhdemg_gui
 
 Let us shortly walk you through the main window of the GUI. An image of the starting page of the GUI is displayed below.
 
-![gui_preview](md_graphics/index/gui_preview.png)
+![gui_preview](md_graphics/index/gui_preview_v2.png)
 
-This is your starting point for every analysis. On the left hand side you can find all the entryboxes and buttons relevant for the analyses you want to perform. In the middle you can see the plotting canvas where plots of the HD-EMG data analysis are displayed. On the right hand side you can find information buttons leading you directly to more information, tutorials, and more. And, with a little swoosh of magic, the results window appears at the bottom of the GUI once an analysis is finished. 
+This is your starting point for every analysis. On the left hand side you can find all the entryboxes and buttons relevant for the analyses you want to perform. In the middle you can see the plotting canvas where plots of the HD-EMG data analysis are displayed. On the right hand side you can find information buttons leading you directly to more information, tutorials, and more. Very important, at the top of this section, there is the settings icon (Gear icon). By clicking this icon, you will be able to [change some of the GUI settings](gui_settings.md). Finally, at the bottom of the GUI there is a window used to display the results of the analyses. 
 
 -------------------------------------------------
 
@@ -33,17 +33,20 @@ This is your starting point for every analysis. On the left hand side you can fi
     - `CUSTOMCSV` (custom data from a .csv file)
     - `CUSTOMCSV_REFSIG` (Reference signal in a custom .csv file)
 
-    Each filetype corresponds to a distinct datatype that should match the file you want to analyse. So, select the `Type of file` corresponding to the type of your file. In case you selected `OTB`, specify the `extension factor` in the dropdown.
+    Each filetype corresponds to a distinct datatype that should match the file you want to analyse. So, select the `Type of file` corresponding to the type of your file.
 
-2. To actually load the file, click the **Load File** button and select the file you want to analyse. In case of occurence, follow the error messages and repeat this and the previos step.
+2. Before loading a file, verify that the [GUI settings](gui_settings.md) are correct for your needs.
 
-3. Once the file is successfully loaded, the specifications of the file you want to analyse will be displayed next to the **Load File** button. 
+3. To actually load the file, click the **Load File** button and select the file you want to analyse. In case of occurence, follow the error messages and repeat this and the previos step.
+
+4. Once the file is successfully loaded, the specifications of the file you want to analyse will be displayed next to the **Load File** button. 
 
 ## Viewing an analysis file
 
 It doesn't get any simpler than this! 
 
-Once a file is successfully loaded as described above, you can click the `View MUs` button to plot/view your file. In the middle section of the GUI, a plot containing your data should appear.
+Once a file is successfully loaded as described above, a plot containing your data should appear in the middle section of the GUI, allowing you to
+view the content of your file. This can also be force by clicking the `View MUs` button.
 
 ----------------------------------------
 

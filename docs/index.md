@@ -39,12 +39,6 @@ If you already know how to use Python, that's the way to go! Otherwise, have a l
 pip install openhdemg
 ```
 
-or conda:
-
-```shell
-conda install -c conda-forge openhdemg
-```
-
 If you want an overview of what you can do with the *openhdemg* library, have a look at the [Quick Start](quick-start.md) section and then explore all the functions in the **API reference**.
 
 ## Good to know
@@ -58,7 +52,7 @@ python -m openhdemg.gui.openhdemg_gui
 
 Once opened, it will look like this. It is cool, isn't it?
 
-![gui_preview](md_graphics/index/gui_preview.png)
+![gui_preview](md_graphics/index/gui_preview_v2.png)
 
 ## Why openhdemg
 The *openhdemg* project was born in 2022 with the aim to provide the HD-EMG community with a free and open-source framework to analyse motor units' properties.

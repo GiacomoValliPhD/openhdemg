@@ -1,7 +1,67 @@
+## :octicons-tag-24: 0.1.0-beta.4
+:octicons-clock-24: April 2024 
+
+This release is aimed at increasing the robustness of the implemented functions and at improving the usability of the graphical user interface (GUI).
+
+### Backward Compatibility
+
+This version is fully backward compatible (with v0.1.0-beta.3) although the PNR (pulse to noise ratio) estimation might slightly differ from the previous versions.
+
+### Major Achievements
+- **Much faster**
+- **More accurate**
+- **More robust**
+- **More user-friendly**
+
+### Major Changes
+
+- **Restyled, debugged and more flexible GUI**:
+
+    - Almost all the functioning issues affecting the GUI have been solved. Enjoy a much better experience with this new release.
+    - New settings file: it is now possible to customise the functions behaviour directly from the GUI. This increases the number of possible analyses that can be performed from the GUI.
+    - New modern look
+    - Better responsiveness
+    - Expandable main window and figure
+    - New modular structure of the source code for easier implementation of new functionalities.
+
+- **Awesome performance improvements**:
+
+    - The estimation of MUs conduction velocity is 96% faster compared to the previous implementation, making it suitable also for the estimation of global conduction velocity.
+
+- **New functions**:
+
+    - The function `estimate_cv_via_mle` has been created to allow the user to estimate CV of any given signal with only 1 line of code.
+
+- **Updated functions**:
+    - The function `compute_sil` has a new argument that allows to include or exclude negative source values from the SIL estimation. This increases the estimation robustness when the source has large negative components.
+    - The function `compute_pnr` has a new argument that allows to select whether to cluster firings/noise via a heuristic penalty function or by using the provided discharge times.
+    - It is now possible to specify how to estimate accuracy in `emg_from_demuse`, `emg_from_otb` and `basic_mus_properties` based on the new implementation of `compute_sil` and `compute_pnr`.
+    - The function `sort_rawemg` now allows to sort channels based on custom orders with a custom number of empty channels.
+    - The function `resize_emgfile` now allows to select the area to resize based on the reference signal or on the mean EMG signal.
+    - The function `delete_mus` now allows to delete also the MUAPs computed in the Delsys software (stored in emgfile[“EXTRAS”]) simultaneously with the removal of MUs firing. This is now the default in the GUI.
+
+- **New modules**: With this release, we introduce dedicated test modules. These will progressively allow for automated extensive testing of the implemented functions and to exit the beta phase. Currently, test functions have been created for the `openfiles` module.
+
+### Other changes
+
+- It is now possible to pass OTB EXTRAS to the function `askopenfile`.
+- Improved readability of the string values in the docstrings and in the online documentation.
+
+### Tutorials
+
+- Added new troubleshooting in setup working env
+- Added new tutorial explaining how to use the GUI settings
+
+<br>
+
 ## :octicons-tag-24: 0.1.0-beta.3
 :octicons-clock-24: November 2023
 
 This release is focused on expanding the range of supported input files (decomposition outcomes) and to increase the speed and efficiency of the code. Furthermore, the introduction of a new backward compatibility module brings *openhdemg* a step closer to exiting the beta phase.
+
+### Backward Compatibility
+
+By default, the .json files saved from *openhdemg* version 0.1.0-beta.2 (released in September 2023) cannot be opened in *openhdemg* version 0.1.0-beta.3. However, these files can be easily converted to the newer file format thanks to the new backward compatibility module. We also created a [tutorials section](tutorials/convert_old_json_files.md) where the users are guided to the migration towards newer versions of the library. This will ensure easy migration to the latest *openhdemg* release.
 
 ### Major Achievements
 
@@ -45,10 +105,6 @@ Added new tutorials explaining:
 - How to export your decomposed files to directly load them in *openhdemg*.
 - How to use the backward compatibility module to easily migrate to the newer *openhdemg* releases.
 - In the tutorial “Setup working environment,” we specified that *openhdemg* is currently working with Python up to the 3.11.x version. We are working to make it compatible with Python 3.12.
-
-### Backward Compatibility
-
-By default, the .json files saved from *openhdemg* version 0.1.0-beta.2 (released in September 2023) cannot be opened in *openhdemg* version 0.1.0-beta.3. However, these files can be easily converted to the newer file format thanks to the new backward compatibility module. We also created a [tutorials section](tutorials/convert_old_json_files.md) where the users are guided to the migration towards newer versions of the library. This will ensure easy migration to the latest *openhdemg* release.
 
 <br>
 

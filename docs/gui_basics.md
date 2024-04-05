@@ -5,42 +5,57 @@ This is the basic introduction to the *openhdemg* GUI. In the next few sections,
 --------------------------------------------
 
 ## Motor Unit Sorting
+
 To sort the MUs included in your analysis file in order of their recruitement, we implemented a sorting algorithm. The MUs are sorted based on their recruitement order in an ascending manner.
 
 1. Load a file. Take a look at the [intro](gui_intro.md#specifying-an-analysis-file) section on how to do so.
 
-2. Pay attention to view the MUs first, using the `View MUs` button (we explained this button in the [intro](gui_intro.md) chapter). The MUs will be sorted anyways, but without viewing them you won't see what is happening. 
-
-3. On the left hand side in the main window of the GUI, you can find the `Sort MUs` button. It is located in row three, column two. Once you press the button, the MUs will be sorted. 
+2. On the left hand side in the main window of the GUI, you can find the `Sort MUs` button. It is located in row three, column two. Once you press the button, the MUs will be sorted based on recruitment order. 
 
 ## Remove Motor Units
+
 To remove MUs included in your analysis file, you can click the `Remove MUs` button. The button is located on the left hand side in the main window of the GUI in column one of row four.
 
-![remove_mus](md_graphics/gui/remove_mu_window.png)
+![remove_mus](md_graphics/gui/remove_mu_window_v2.png)
 
-1. View the MUs using the `View MUs` button prior to MU removal, you can directly see what is happening.
+1. Click the `Remove MUs` button, and a file is loaded, a pop-up window will open. 
 
-2. Click the `Remove MUs` button, and a file is loaded, a pop-up window will open. 
-
-3. Select the MU you want to delete from the analysis file from the `Select MU:`dropdown.
+2. Select the MU you want to delete from the analysis file from the `Select MU:`dropdown.
 
     ```Python
     Select MU: 1
     ```
     will result in the second MU to be deleted (Python is base 0).
 
-4. Click the `Remove MU` button to remove the MU.
+3. Click the `Remove MU` button to remove the MU.
 
-Alternatively, you can click the `Remove empty MUs` button to delete all the MUs without discharge times. These can be present in the emgfile as the result of decomposed duplicates that have not been fully removed.
+Alternatively, you can click the `Remove empty MUs` button to delete all the MUs without discharge times. These can be present in the *emgfile* as the result of decomposed duplicates that have not been fully removed.
 
-## Reference Signal Editing
-The *openhdemg* GUI also allows you to edit and filter reference signals corresponding to your analysis file (this can be either a file containing both the MUs and the reference signal or a file containing only the reference signal).
+## Signal Editing
 
-![reference_sig](md_graphics/gui/refsig_filter_window.png)
+It is often necessary to edit (e.g., filter or convert) the signals. In the *openhdemg* GUI this can be done from the `Signal Editing Window`. In order to open this window, click the `Signal Editing` button.
 
-1. View the MUs using the `View MUs` button prior to reference signal editing, so you can see what is happening.
+![signal_editing](md_graphics/gui/signal_editing_window.png)
 
-2. Click the `RefSig Editing` button located in row five and column one, a new pop-up window opens. In the `Reference Signal Editing Window`, you can low-pass filter the reference signal as well as remove any signal offset. Additionally, you can also convert your reference signal by a specific factor (amplification factor) or convert it from absolute to percentage (relative or normalised) values.
+### EMG Signal Filtering
+
+It is common practice to filter the EMG signal before decomposition. However, if your *emgfile* contains the raw (unfiltered) signal, this can be easily filtered from the `Signal Editing Window`.
+
+1. Click the `Signal Editing` button located in row five and column one, a new pop-up window opens. In the `Signal Editing Window`, you can band-pass filter the EMG signal and process the reference signal (see next paragraph).
+
+3. When you click the `Filter EMG signal` button, the EMG signal is band-pass filtered (Zero-lag, Butterworth) according to values specified in the `Filter Order` and `BandPass Freq` textboxes. In example, specifiying 
+
+    ```Python
+    Filter Order: 2
+    BandPass Freq: 20-500
+    ```
+    will allow only frequencies between 20 and 500 Hz to pass trough.
+
+### Reference Signal Editing
+
+The *openhdemg* GUI also allows you to edit and filter reference signals contained in your analysis file (this can be either a file containing both the MUs and the reference signal or a file containing only the reference signal).
+
+1. Click the `Signal Editing` button located in row five and column one, a new pop-up window opens. In the `Signal Editing Window`, you can low-pass filter the reference signal as well as remove any signal offset. Additionally, you can also convert your reference signal by a specific factor (amplification factor) or convert it from absolute to percentage (relative or normalised) values.
 
 3. When you click the `Filter RefSig` button, the reference signal is low-pass filtered (Zero-lag, Butterworth) according to values specified in the `Filter Order` and `Cutoff Freq` textboxes. In example, specifiying 
 
@@ -48,7 +63,7 @@ The *openhdemg* GUI also allows you to edit and filter reference signals corresp
     Filter Order: 4
     Cutoff Freq: 15
     ```
-    will allow only frequencies below 15 Hz to pass trough. The filter order of 4 indicates a fourth degree polynomial transfer function.
+    will allow only frequencies below 15 Hz to pass trough.
 
 4. When you click the `Remove Offset` button, the reference signal's offset will be removed according to the values specified in the `Offset Value` and `Automatic Offset` textboxes. In example, specifying
 
@@ -78,6 +93,14 @@ The *openhdemg* GUI also allows you to edit and filter reference signals corresp
     ```
     will amplify the reference signal 2.5 times.
 
+    While:
+
+    ```Python
+    Operator : "Multiply"
+    Factor: -1
+    ```
+    will make your negative reference signal become positive.
+
 6. When you click the `To Percent` button, the reference signal in absolute values is converted to percentage (relative or normalised) values based on the provided `MVC Value`. **This step should be performed before any analysis, because *openhdemg* is designed to work with a normalised reference signal.** In example, a file with a reference signal in absolute values ranging from 0 to 100 will be normalised from 0 to 20 if
 
     ```Python
@@ -93,12 +116,12 @@ Sometimes, resizing of your analysis file is unevitable. Luckily, *openhdemg* pr
 
 2. Clicking the `Resize File` button will open a new pop-up plot of your analysis file. 
 
-3. Follow the instructions in the plot to resize the file. Simply click in the signal twice (once for start-point, once for end-point) to specify the resizing region and press enter to confirm your coice.
+3. Follow the instructions in the plot to resize the file. Simply click in the signal twice (once for start-point, once for end-point) to specify the resizing region and press enter to confirm your choice.
 
 ## Analyse Force Signal
 In order to analyse the force signal in your analysis file, you can press the `Analyse Force` button located in row six and column one in the left side of the GUI. A new pop-up window will open where you can analyse the maximum voluntary contraction (MVC) value as well as the rate of force development (RFD). 
 
-![force_analysis](md_graphics/gui/force_analysis_window.png)
+![force_analysis](md_graphics/gui/force_analysis_window_v2.png)
 
 ### Maximum voluntary contraction
 1. In order to get the MVC value, simply press the `Get MVC` button. A pop-up plot opens and you can select the area where you suspect the MVC to be. 
@@ -114,14 +137,14 @@ In order to analyse the force signal in your analysis file, you can press the `A
     ```Python
     RFD miliseconds: 50,100,150,200
     ```
-    will result in RFD value calculation between the intervals 0-50ms, 50-100ms, 100-150ms and 150-200ms. You can also specify less or more values in the `RFD miliseconds` textbox. 
+    will result in RFD value calculation between the intervals 0-50ms, 0-100ms, 0-150ms and 0-200ms. You can also specify less or more values in the `RFD miliseconds` textbox. 
 
 4. You can edit or copy any value in the `Result Output`, however, you need to close the top-level `Force Analysis Window` first.
 
 ## Motor Unit Properties
 When you press the `MU Properties` button in row six and column two, the `Motor Unit Properties` Window will pop up. In this window, you have the option to analyse several MUs propierties such as the MUs recruitement threshold or the MUs discharge rate. 
 
-![mus_properties](md_graphics/gui/mu_properties_window.png)
+![mus_properties](md_graphics/gui/mu_properties_window_v2.png)
 
 1. Specify your priorly calculated MVC in the `Enter MVC [N]:` textbox, like
 
@@ -156,7 +179,7 @@ Subsequently to specifying the MVC, you can compute the MUs recruitement thresho
 Subsequently to specifying the MVC, you can compute the MUs discharge rate by entering the respective firing rates and event.
 
 1. Specify the number of firings at recruitment and derecruitment to consider for the calculation in the `Firings at Rec` textbox. 
-2. Enter the number of firings over which to calculate the DR at the start and end of the steady-state phase in the `Firings Start/End Steady` textbox.
+2. Enter the number of firings over which to calculate the discharge rate at the start and end of the steady-state phase in the `Firings Start/End Steady` textbox.
     
     For example:
     ```Python
@@ -189,8 +212,8 @@ Subsequently to specifying the MVC, you can calculate a number of basic MUs prop
 
 and are all displayed in the `Result Output` once the analysis in completed. 
 
-1. Specify the number of firings at recruitment and derecruitment to consider for the calculation in the `Firings at Rec` textbox. 
-2. Enter the start and end point (in samples) of the steady-state phase in the `Firings Start/End Steady` textbox. For example, 
+1. Specify the number of firings at recruitment and derecruitment to consider for the calculation of discharge rate in the `Firings at Rec` textbox. 
+2. Enter the number of firings over which to calculate the discharge rate at the start and end of the steady-state phase in the `Firings Start/End Steady` textbox. For example,
 
     ```Python
     Firings at Rec: 4
@@ -202,9 +225,9 @@ and are all displayed in the `Result Output` once the analysis in completed.
 
 ## Plot Motor Units
 In *openhdemg* we have implemented options to plot your analysis file ... a lot of options!
-Upon clicking the `Plot MUs` button, the `Plot Window` will pop up. In the top right corner of the window, you can find an information button forwarding you directly to some tutorials. 
+Upon clicking the `Plot MUs` button, the `Plot Window` will pop up. In the top right corner of the window, you can find an information button forwarding you directly to this tutorial. 
 
-![plot_mus](md_graphics/gui/plot_window.png)
+![plot_mus](md_graphics/gui/plot_window_v2.png)
 
 You can choose between the follwing plotting options:
 
@@ -214,7 +237,7 @@ You can choose between the follwing plotting options:
 - Plot the decomposed source. (Plot Source)
 - Plot the instantaneous discharge rate (IDR). (Plot IDR)
 - Plot the differential derivation of the raw emg signal by matrix column. (Plot Derivation)
-- Plot motor unit action potentials (MUAPs) obtained from spike-triggered average from one or multiple MUs. (Plot MUAPs)
+- Plot motor unit action potentials (MUAPs) obtained from spike-triggered average (STA) from one or multiple MUs. Please note that for Delsys files, the displayed MUAPs are those computed in the Delsys software and not those obtained via STA. (Plot MUAPs)
 
 Prior to plotting you can **optionally** select a few options on the left side of the `Plot Window`. 
 
@@ -229,44 +252,56 @@ Prior to plotting you can **optionally** select a few options on the left side o
 These three setting options are universally used in all plots. There are two more specification options on the right side of the `Plot Window` only relevant when using the `Plot Derivation` or `Plot MUAP` buttons. 
 
 1. The `Matrix Code` must be specified in row one and column four in the right side of the `Plot Window` according to the one you used during acquisition. So far, implemented codes are:
+
+    - `Custom order`
+    - `None`
     - `GR08MM1305`
     - `GR04MM1305`
     - `GR10MM0808`
-    - `None`
+    - `Trigno Galileo Sensor`
+
+    In case you selected `Custom order`, you must also specify the custom order in the GUI settings. Please refer to [this tutorial](gui_settings.md/#electrodes) for further instructions on how to do so.
 
     In case you selected `None`, the entrybox `Rows, Columns` will appear. Please specify the number of rows and columns of your used matrix since you now bypass included matrix codes. In example, specifying
+
     ```Python
     Rows, Columns: 13, 5
     ```
-    means that your File has 65 channels.
+    means that your File has 65 channels organised over 13 rows and 5 columns.
 
-2. You need to specify the `Orientation` in row two and column four in the left side of the `Plot Window`. The `Orientaion` must match the one of your matrix during acquisition. You can find a reference image for the `Orientation` at the bottom in the right side of the `Plot Window`. `Orientation` is ignored when `Matrix Code` is `None`.
+2. If you selected one of the built-in sorting orders (e.g., `GR08MM1305`, `GR04MM1305`, `GR10MM0808`), you need to specify also the `Orientation` in row two and column four in the left side of the `Plot Window`. The `Orientaion` must match the one of your matrix during acquisition. You can find a reference image for the `Orientation` at the bottom in the right side of the `Plot Window`. `Orientation` is ignored when `Matrix Code` is `None`, `Custom order` or `Trigno Galileo Sensor`.
 
 ### Plot Raw EMG Signal
+
 1. Click the `Plot EMGsig` button in row four and column one in the left side of the `Plot Window`, to plot the raw emg signal of your analysis file. 
 2. Enter or select a `Channel Number` in / from the dropdown list. For example, if you want to plot `Channel Number` one enter *0* in the dropdown. If you want to plot `Channel Numbers` one, two and three enter *0,1,2* in the dropdown. 
 3. Once you have clicked the `Plot EMGsig` button, a pop-up plot will appear. 
 
 ### Plot Reference Signal 
+
 1. Click the `Plot RefSig` button in row five and column one in the left side of the `Plot Window`, to plot the reference signal. 
 2. Once you have clicked the `Plot RefSig` button, a pop-up plot will appear. 
 
 ### Plot Motor Unit Pulses
+
 1. Click the `Plot MUpulses` button in row six and column one in the left side of the `Plot Window`, to plot the single pulses of the MUs in your analysis file.
 2. Enter/select a pulse `Linewidth` in/from the dropdown list. For example, if you want to use a `Linewidth` of one, enter *1* in the dropdown. 
 3. Once you have clicked the `Plot MUpulses` button, a pop-up plot will appear. 
 
 ### Plot the Decomposed Source
+
 1. Click the `Plot Source` button in row seven and column one in the left side of the `Plot Window`, to plot the Source of the decomposed MUs in your analysis file. 
 2. Enter/select a `MU Number` in/from the dropdown list. For example, if you want to plot the source for `MU Number` one enter *0* in the dropdown. If you want to plot the sources for `MU Number` one, two and three enter *0,1,2,* in the dropdown. You can also set `MU Number` to "all" to plot the sources for all included MUs in the analysis file.
 3. Once you have clicked the `Plot Source` button, a pop-up plot will appear. 
 
 ### Plot Instanteous Discharge rate
+
 1. Click the `Plot IDR` button in row eight and column one in the left side of the `Plot Window`, to plot the IDR of the MUs in your analysis file. 
 2. Enter/select a `MU Number` in/from the dropdown list. For example, if you want to plot the IDR of `MU Number` one enter *0* in the dropdown. If you want to plot the IDR of `MU Number` one, two and three enter *0,1,2* in the dropdown. You can also set `MU Number` to "all" to plot the IDR of all included MUs in the analysis file.
 3. Once you have clicked the `Plot IDR` button, a pop-up plot will appear. 
 
 ### Plot Differential Derivation
+
 1. Click the `Plot Derivation` button in row four and column three in the right side of the `Plot Window`, to plot the differential derivation of the MUs in your analysis file. 
 2. Specify the `Configuration` for the calculation first. You can choose from:
     - `Single differential` (Calculate single differential of raw signal on matrix rows)
@@ -282,9 +317,11 @@ These three setting options are universally used in all plots. There are two mor
     - `Double differential`(Calculate double differential of raw signal on matrix rows)
 3. Specify the respective `MU Number` you want to plot. You can choose one from the `MU Number` dropdown list. 
 4. Specify the `Timewindow` of the plots. You can choose from the `Timewindow` dropdown list or enter any integer. 
-5. Once you have clicked the `Plot MUAPs` button, a new pop-up plot appears. 
+5. Once you have clicked the `Plot MUAPs` button, a new pop-up plot appears.
 
-## Saving Your Analysis File 
+Please note, if you are using the Delsys decomposition outcome, the plotted MUAPs will be those calculated bu the Delsys software.
+
+## Saving Your Analysis File
 Subsequently to analysing your emg-file in the *openhdemg* GUI, it is beneficial to save it. Otherwise, all changes will be lost when the GUI is closed. 
 
 1. Click the `Save File` button in row two and column two in the left side of the main window. 
@@ -296,8 +333,9 @@ Some analyses included in the *openhdemg* GUI return values that are displayed i
 1. click the `Save Results` button in row two and column two in the left side of the main window. 
 2. Specify a location where to save the file and confirm. You can find the file there with the name of your analysis file. 
 
-## Resetting Your Analysis 
-We all make mistakes! But, most likely, we are also able to correct them. In case you have made a mistake in the analysis of you emg-file in the *openhdemg* GUI, we have implemented a reset button for you. Click the `Reset Analysis` button in row eight and column two in the lef side of the main window to  reset any analysis you previously performed since opening the GUI and inputting an analysis file. Your analysis file is reset to the original file and all the changes are discarded. So, no need to be perfect!
+## Resetting Your Analysis
+
+We all make mistakes! But, most likely, we are also able to correct them. In case you have made a mistake in the analysis of your emgfile in the *openhdemg* GUI, we have implemented a reset button for you. Click the `Reset Analysis` button in row eight and column two in the lef side of the main window to  reset any analysis you previously performed since opening the GUI and inputting an analysis file. Your analysis file is reset to the original file and all the changes are discarded. So, no need to be perfect!
 
 --------------------------------------------
 

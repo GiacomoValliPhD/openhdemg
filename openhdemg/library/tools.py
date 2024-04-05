@@ -14,19 +14,28 @@ import warnings
 from openhdemg.library.mathtools import compute_sil
 
 
-def showselect(emgfile, title="", titlesize=12, nclic=2):
+def showselect(emgfile, how="ref_signal", title="", titlesize=12, nclic=2):
     """
-    Select a part of the recording.
+    Visually select a part of the recording.
 
-    The area can be selected (based on the REF_SIGNAL) with any letter or
-    number in the keyboard, wrong points can be removed by pressing the
-    right mouse button. Once finished, press enter to continue.
+    The area can be selected based on the reference signal or based on the
+    mean EMG signal. The selection can be performed with any letter or number
+    in the keyboard, wrong points can be removed by pressing the right mouse
+    button. Once finished, press enter to continue.
 
     Parameters
     ----------
     emgfile : dict
-        The dictionary containing the emgfile and in particular the REF_SIGNAL
-        (which is used for the selection).
+        The dictionary containing the emgfile.
+    how : str {"ref_signal", "mean_emg"}, default "ref_signal"
+        What to display in the figure used to visually select the area to
+        resize.
+
+        ``ref_signal``
+            Visualise the reference signal to select the area to resize.
+
+        ``mean_emg``
+            Visualise the mean EMG signal to select the area to resize.
     title : str
         The title of the plot. It is optional but strongly recommended.
         It should describe the task to do.
@@ -48,23 +57,51 @@ def showselect(emgfile, title="", titlesize=12, nclic=2):
 
     Examples
     --------
-    Load the EMG file and select the points.
+    Load the EMG file and select the points based on the reference signal.
 
     >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB_REFSIG")
     >>> points = emg.showselect(
     ...     emgfile,
+    ...     how="ref_signal",
     ...     title="Select 2 points",
     ...     nclic=2,
     ... )
     >>> points
     [16115, 40473]
+
+    Load the EMG file and select the points based on the mean EMG signal.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askopenfile(filesource="OPENHDEMG")
+    >>> points = emg.showselect(
+    ...     emgfile,
+    ...     how="mean_emg",
+    ...     title="Select 2 points",
+    ...     nclic=2,
+    ... )
+    >>> points
+    [135, 26598]
     """
+
+    # Get the data to plot
+    if how == "ref_signal":
+        data_to_plot = emgfile["REF_SIGNAL"][0]
+        y_label = "Reference signal"
+    elif how == "mean_emg":
+        data_to_plot = emgfile["RAW_SIGNAL"].mean(axis=1)
+        y_label = "Mean EMG signal"
+    else:
+        raise ValueError(
+            "Wrong argument in showselect(). how can only be 'ref_signal' or "
+            + f"'mean_emg'. {how} was passed instead."
+        )
+
     # Show the signal for the selection
     plt.figure(num="Fig_ginput")
-    plt.plot(emgfile["REF_SIGNAL"][0])
+    plt.plot(data_to_plot)
     plt.xlabel("Samples")
-    plt.ylabel("MVC")
+    plt.ylabel(y_label)
     plt.title(title, fontweight="bold", fontsize=titlesize)
 
     ginput_res = plt.ginput(n=-1, timeout=0, mouse_add=False, show_clicks=True)
@@ -152,9 +189,15 @@ def mupulses_from_binary(binarymusfiring):
     return MUPULSES
 
 
-def resize_emgfile(emgfile, area=None, accuracy="recalculate"):
+def resize_emgfile(
+    emgfile,
+    area=None,
+    how="ref_signal",
+    accuracy="recalculate",
+    ignore_negative_ipts=False,
+):
     """
-    Resize all the emgfile.
+    Resize all the components in the emgfile.
 
     This function can be useful to compute the various parameters only in the
     area of interest.
@@ -167,13 +210,30 @@ def resize_emgfile(emgfile, area=None, accuracy="recalculate"):
         The resizing area. If already known, it can be passed in samples, as a
         list (e.g., [120,2560]).
         If None, the user can select the area of interest manually.
+    how : str {"ref_signal", "mean_emg"}, default "ref_signal"
+        If area==None, allow the user to visually select the area to resize
+        based on how.
+
+        ``ref_signal``
+            Visualise the reference signal to select the area to resize.
+
+        ``mean_emg``
+            Visualise the mean EMG signal to select the area to resize.
     accuracy : str {"recalculate", "maintain"}, default "recalculate"
+
         ``recalculate``
             The Silhouette score is computed in the new resized file. This can
             be done only if IPTS is present.
+
         ``maintain``
             The original accuracy measure already contained in the emgfile is
             returned without any computation.
+    ignore_negative_ipts : bool, default False
+        This parameter determines the silhouette score estimation. If True,
+        only positive ipts values are used during peak and noise clustering.
+        This is particularly important for compensating sources with large
+        negative components. This parameter is considered only if
+        accuracy=="recalculate".
 
     Returns
     -------
@@ -185,6 +245,28 @@ def resize_emgfile(emgfile, area=None, accuracy="recalculate"):
     Notes
     -----
     Suggested names for the returned objects: rs_emgfile, start_, end_.
+
+    Examples
+    --------
+    Manually select the area to resize the emgfile based on mean EMG signal
+    and recalculate the silhouette score in the new portion of the signal.
+
+    >>> emgfile = emg.askopenfile(filesource="DEMUSE", ignore_negative_ipts=True)
+    >>> rs_emgfile, start_, end_ = emg.resize_emgfile(
+    ...     emgfile,
+    ...     how="mean_emg",
+    ...     accuracy="recalculate",
+    ... )
+
+    Automatically resize the emgfile in the pre-specified area. Do not
+    recalculate the silhouette score in the new portion of the signal.
+
+    >>> emgfile = emg.askopenfile(filesource="CUSTOMCSV")
+    >>> rs_emgfile, start_, end_ = emg.resize_emgfile(
+    ...     emgfile,
+    ...     area=[120, 25680],
+    ...     accuracy="maintain",
+    ... )
     """
 
     # Identify the area of interest
@@ -194,9 +276,15 @@ def resize_emgfile(emgfile, area=None, accuracy="recalculate"):
 
     else:
         # Visualise and select the area to resize
+        title = (
+            "Select the start/end area to resize by hovering the mouse" +
+            "\nand pressing the 'a'-key. Wrong points can be removed with " +
+            "right \nclick or canc/delete key. When ready, press enter."
+        )
         points = showselect(
             emgfile,
-            title="Select the start/end area to resize by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+            how=how,
+            title=title,
             titlesize=10,
         )
         start_, end_ = points[0], points[1]
@@ -232,11 +320,10 @@ def resize_emgfile(emgfile, area=None, accuracy="recalculate"):
         # Resize the reference signal and identify the first value of the
         # index to resize the mupulses. Then, reset the index.
         rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
-        first_idx = rs_emgfile["REF_SIGNAL"].index[0]
         rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].reset_index(drop=True)
-        rs_emgfile["RAW_SIGNAL"] = (
-            rs_emgfile["RAW_SIGNAL"].loc[start_:end_].reset_index(drop=True)
-        )
+        rs_emgfile["RAW_SIGNAL"] = rs_emgfile["RAW_SIGNAL"].loc[start_:end_]
+        first_idx = rs_emgfile["RAW_SIGNAL"].index[0]
+        rs_emgfile["RAW_SIGNAL"] = rs_emgfile["RAW_SIGNAL"].reset_index(drop=True)
         rs_emgfile["IPTS"] = rs_emgfile["IPTS"].loc[start_:end_].reset_index(drop=True)
         rs_emgfile["EMG_LENGTH"] = int(len(rs_emgfile["RAW_SIGNAL"].index))
         rs_emgfile["BINARY_MUS_FIRING"] = (
@@ -258,19 +345,19 @@ def resize_emgfile(emgfile, area=None, accuracy="recalculate"):
             if rs_emgfile["NUMBER_OF_MUS"] > 0:
                 if not rs_emgfile["IPTS"].empty:
                     # Calculate SIL
-                    to_append = []
                     for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
                         res = compute_sil(
                             ipts=rs_emgfile["IPTS"][mu],
                             mupulses=rs_emgfile["MUPULSES"][mu],
+                            ignore_negative_ipts=ignore_negative_ipts,
                         )
-                        to_append.append(res)
-                    rs_emgfile["ACCURACY"] = pd.DataFrame(to_append)
+                        rs_emgfile["ACCURACY"].iloc[mu] = res
 
                 else:
                     raise ValueError(
-                        "Impossible to calculate ACCURACY (SIL). IPTS not found." +
-                        " If IPTS is not present or empty, set accuracy='maintain'"
+                        "Impossible to calculate ACCURACY (SIL). IPTS not " +
+                        "found. If IPTS is not present or empty, set " +
+                        "accuracy='maintain'"
                     )
 
         elif accuracy == "maintain":
@@ -286,7 +373,6 @@ def resize_emgfile(emgfile, area=None, accuracy="recalculate"):
 
     elif emgfile["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]:
         rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
-        first_idx = rs_emgfile["REF_SIGNAL"].index[0]
         rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].reset_index(drop=True)
 
         return rs_emgfile, start_, end_
@@ -314,10 +400,10 @@ def compute_idr(emgfile):
         A dict containing a pd.DataFrame for each MU (keys are integers).
         Accessing the key, we have a pd.DataFrame containing:
 
-            - mupulses: firing sample.
-            - diff_mupulses: delta between consecutive firing samples.
-            - timesec: delta between consecutive firing samples in seconds.
-            - idr: instantaneous discharge rate.
+        - mupulses: firing sample.
+        - diff_mupulses: delta between consecutive firing samples.
+        - timesec: delta between consecutive firing samples in seconds.
+        - idr: instantaneous discharge rate.
 
     Examples
     --------
@@ -383,7 +469,9 @@ def compute_idr(emgfile):
         )
 
 
-def delete_mus(emgfile, munumber, if_single_mu="ignore"):
+def delete_mus(
+    emgfile, munumber, if_single_mu="ignore", delete_delsys_muaps=True,
+):
     """
     Delete unwanted MUs.
 
@@ -401,12 +489,16 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
     if_single_mu : str {"ignore", "remove"}, default "ignore"
         A string indicating how to behave in case of a file with a single MU.
 
-            ``ignore``
-            Ignore the process and return the original emgfile. (Default)
-            ``remove``
-            Remove the MU and return the emgfile without the MU. (Default)
-            This should allow full compatibility with the use of this file
-            in following processing (i.e., save/load and analyse).
+        ``ignore``
+        Ignore the process and return the original emgfile. (Default)
+
+        ``remove``
+        Remove the MU and return the emgfile without the MU. (Default)
+        This should allow full compatibility with the use of this file
+        in following processing (i.e., save/load and analyse).
+    delete_delsys_muaps : Bool, default True
+        If true, deletes also the associated MUAPs computed by the Delsys
+        software stored in emgfile["EXTRAS"].
 
     Returns
     -------
@@ -459,6 +551,7 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
                 "EMG_LENGTH" : EMG_LENGTH,
                 ==> "NUMBER_OF_MUS" : NUMBER_OF_MUS,
                 ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
+                ==> "EXTRAS" : EXTRAS but only for DELSYS file
                 }
     """
 
@@ -512,6 +605,37 @@ def delete_mus(emgfile, munumber, if_single_mu="ignore"):
         del_emgfile["BINARY_MUS_FIRING"] = pd.DataFrame(columns=[0])
         # list of ndarray
         del_emgfile["MUPULSES"] = [np.array([])]
+
+    if emgfile["SOURCE"] == "DELSYS" and delete_delsys_muaps:
+        # Remove also DELSYS MUAPs
+        if isinstance(munumber, int):
+            munumber = [munumber]
+
+        data = del_emgfile["EXTRAS"]
+
+        for mu in munumber:
+            # Get MU ID
+            mu_id = f"MU_{mu}_"
+            # Remove all columns with MU ID
+            data = data[[col for col in data.columns if not col.startswith(mu_id)]]
+
+        # Rescale the numbers in the remaining column names
+        col_list = list(data.columns)
+        if len(col_list) % 4 != 0:
+            raise ValueError("Unexpected number of channels in Delsys MUAPS")
+        new_col_list = []
+        for mu in range(del_emgfile["NUMBER_OF_MUS"]):
+            new_col_list.extend(
+                [
+                    f"MU_{mu}_CH_0",
+                    f"MU_{mu}_CH_1",
+                    f"MU_{mu}_CH_2",
+                    f"MU_{mu}_CH_3",
+                ]
+            )
+        data.columns = new_col_list
+
+        del_emgfile["EXTRAS"] = data
 
     return del_emgfile
 
@@ -668,9 +792,14 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
     """
 
     if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
+        title = (
+            "Select the start/end area of the steady-state by hovering the " +
+            "mouse \nand pressing the 'a'-key. Wrong points can be removed " +
+            "with right \nclick or canc/delete key. When ready, press enter."
+        )
         points = showselect(
             emgfile=emgfile,
-            title="Select the start/end area of the steady-state by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+            title=title,
             titlesize=10,
         )
         start_steady, end_steady = points[0], points[1]
@@ -831,9 +960,15 @@ def remove_offset(emgfile, offsetval=0, auto=0):
         else:
             # Select the area to calculate the offset
             # (average value of the selected area)
+            title = (
+                "Select the start/end area to calculate the offset by " +
+                "hovering the mouse \nand pressing the 'a'-key. Wrong " +
+                " points can be removed with right \nclick or canc/delete " +
+                "key. When ready, press enter."
+            )
             points = showselect(
                 emgfile=offs_emgfile,
-                title="Select the start/end of area to calculate the offset by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+                title=title,
                 titlesize=10,
             )
             start_, end_ = points[0], points[1]
@@ -843,7 +978,6 @@ def remove_offset(emgfile, offsetval=0, auto=0):
             offs_emgfile["REF_SIGNAL"][0] = (
                 offs_emgfile["REF_SIGNAL"][0] - float(offsetval[0])
             )
-            print(offsetval)
 
     else:
         # Compute and subtract the offset value.
@@ -869,6 +1003,7 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
         ``showselect``
             Ask the user to select the area where to calculate the MVC
             with a GUI.
+
         ``all``
             Calculate the MVC on the entire file.
     conversion_val : float or int, default 0
@@ -915,9 +1050,14 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
 
     elif how == "showselect":
         # Select the area to measure the MVC (maximum value)
+        title = (
+            "Select the start/end area to compute MVC by hovering the " +
+            "mouse \nand pressing the 'a'-key. Wrong points can be removed " +
+            "with right \nclick or canc/delete key. When ready, press enter."
+        )
         points = showselect(
             emgfile=emgfile,
-            title="Select the start/end area to compute MVC by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+            title=title,
             titlesize=10,
         )
         start_, end_ = points[0], points[1]
@@ -1022,9 +1162,14 @@ def compute_rfd(
         start_ = startpoint
     else:
         # Otherwise select the starting point for the RFD
+        title = (
+            "Select the start/end area to compute the RFD by hovering the " +
+            "mouse \nand pressing the 'a'-key. Wrong points can be removed " +
+            "with right \nclick or canc/delete key. When ready, press enter."
+        )
         points = showselect(
             emgfile,
-            title="Select the start area to compute the RFD by hovering the mouse\nand pressing the 'a'-key. Wrong points can be removed with right click.\nWhen ready, press enter.",
+            title=title,
             titlesize=10,
             nclic=1,
         )

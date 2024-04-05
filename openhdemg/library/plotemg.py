@@ -23,8 +23,11 @@ def showgoodlayout(tight_layout=True, despined=False):
     tight_layout : bool, default True
         If true (default), plt.tight_layout() is applied to the figure.
     despined : bool or str {"2yaxes"}, default False
+
         False: left and bottom is not despined (standard plotting).
+
         True: all the sides are despined.
+
         ``2yaxes``
             Only the top is despined.
             This is used to show y axes both on the right and left side at the
@@ -158,7 +161,8 @@ def plot_emgsig(
 
     else:
         raise TypeError(
-            "While calling the plot_emgsig function, you should pass an integer, a list or 'all' to channels"
+            "While calling the plot_emgsig function, you should pass an "
+            + "integer or a list to channels"
         )
 
     if addrefsig:
@@ -427,6 +431,7 @@ def plot_mupulses(
 
         ``all``
             IPTS of all the MUs is plotted.
+
         Otherwise, a single MU (int) or multiple MUs (list of int) can be
         specified.
         The list can be passed as a manually-written list or with:
@@ -591,8 +596,10 @@ def plot_ipts(
     emgfile : dict
         The dictionary containing the emgfile.
     munumber : str, int or list, default "all"
+
         ``all``
             IPTS of all the MUs is plotted.
+
         Otherwise, a single MU (int) or multiple MUs (list of int) can be
         specified.
         The list can be passed as a manually-written list or with:
@@ -750,7 +757,8 @@ def plot_idr(
     emgfile : dict
         The dictionary containing the emgfile.
     munumber : str, int or list, default "all"
-        ``all"
+
+        ``all``
             IDR of all the MUs is plotted.
 
         Otherwise, a single MU (int) or multiple MUs (list of int) can be
