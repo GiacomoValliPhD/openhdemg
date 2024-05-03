@@ -17,11 +17,10 @@ INSTALL_REQUIRES = [
     "openpyxl==3.1.2",
     "pandas==2.0.3",
     "pandastable==0.13.1",
-    "pyperclip==1.8.2",
-    # "pre-commit==3.7.0",
     "scipy==1.11.3",
     "seaborn==0.13.0",
     "joblib==1.3.2",
+    # "pre-commit==3.7.0",
 ]
 
 PACKAGES = [
