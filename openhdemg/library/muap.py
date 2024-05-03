@@ -25,7 +25,6 @@ import warnings
 import tkinter as tk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import pyperclip
 
 
 def diff(sorted_rawemg):
@@ -1587,6 +1586,10 @@ class MUcv_gui():
             The STA is calculated over all the firings.
     muaps_timewindow : int, default 50
         Timewindow to compute ST MUAPs in milliseconds.
+    figsize : list, default [20, 15]
+        Size of the initial MUAPs figure in centimeters [width, height].
+    csv_separator : str, default "\t"
+        The field delimiter used to create the .csv copied to the clipboard.
 
     See also
     --------
@@ -1621,6 +1624,7 @@ class MUcv_gui():
         n_firings=[0, 50],
         muaps_timewindow=50,
         figsize=[25, 20],
+        csv_separator="\t",
     ):
         # On start, compute the necessary information
         self.emgfile = emgfile
@@ -1633,6 +1637,7 @@ class MUcv_gui():
         )
         self.sta_xcc = xcc_sta(self.st)
         self.figsize = figsize
+        self.csv_separator = csv_separator
 
         # After that, set up the GUI
         self.root = tk.Tk()
@@ -1647,20 +1652,33 @@ class MUcv_gui():
         )
         self.root.iconbitmap(iconpath)
 
-        # Create main frame, assign structure and minimum spacing
-        self.frm = ttk.Frame(self.root, padding=15)
-        # Assign grid structure
-        self.frm.grid()
+        # Create outer frames, assign structure and minimum spacing
+        # Left
+        left_frm = tk.Frame(self.root, padx=2, pady=2)
+        left_frm.pack(side=tk.LEFT, expand=True, fill="both")
+        # Right
+        right_frm = tk.Frame(self.root, padx=4, pady=4)
+        right_frm.pack(side=tk.TOP, anchor="nw", expand=True, fill="y")
+
+        # Create inner frames
+        # Top left
+        top_left_frm = tk.Frame(left_frm, padx=2, pady=2)
+        top_left_frm.pack(side=tk.TOP, anchor="nw", fill="x")
+        # Bottom left
+        self.bottom_left_frm = tk.Frame(left_frm, padx=2, pady=2)
+        self.bottom_left_frm.pack(
+            side=tk.TOP, anchor="nw", expand=True, fill="both",
+        )
 
         # Label MU number combobox
-        munumber_label = ttk.Label(self.frm, text="MU number", width=15)
+        munumber_label = ttk.Label(top_left_frm, text="MU number", width=15)
         munumber_label.grid(row=0, column=0, columnspan=1, sticky=tk.W)
 
         # Create a combobox to change MU
         self.all_mus = list(range(emgfile["NUMBER_OF_MUS"]))
 
         self.selectmu_cb = ttk.Combobox(
-            self.frm,
+            top_left_frm,
             textvariable=tk.StringVar(),
             values=self.all_mus,
             state='readonly',
@@ -1676,91 +1694,101 @@ class MUcv_gui():
             lambda event: self.gui_plot(),
         )
 
-        # Add 2 empty columns
-        emp0 = ttk.Label(self.frm, text="", width=15)
-        emp0.grid(row=0, column=1, columnspan=1, sticky=tk.W)
-        emp1 = ttk.Label(self.frm, text="", width=15)
-        emp1.grid(row=0, column=2, columnspan=1, sticky=tk.W)
+        # Add empty column
+        emp = ttk.Label(top_left_frm, text="", width=15)
+        emp.grid(row=0, column=1, columnspan=1, sticky=tk.W)
 
         # Create the widgets to calculate CV
         # Label and combobox to select the matrix column
-        col_label = ttk.Label(self.frm, text="Column", width=15)
-        col_label.grid(row=0, column=3, columnspan=1, sticky=tk.W)
+        col_label = ttk.Label(top_left_frm, text="Column", width=15)
+        col_label.grid(row=0, column=2, columnspan=1, sticky=tk.W)
 
         self.columns = list(self.st[0].keys())
 
         self.col_cb = ttk.Combobox(
-            self.frm,
+            top_left_frm,
             textvariable=tk.StringVar(),
             values=self.columns,
             state='readonly',
             width=15,
         )
-        self.col_cb.grid(row=1, column=3, columnspan=1, sticky=tk.W)
+        self.col_cb.grid(row=1, column=2, columnspan=1, sticky=tk.W)
         self.col_cb.current(0)
 
         # Label and combobox to select the matrix channels
         self.rows = list(range(len(list(self.st[0][self.columns[0]].columns))))
 
-        start_label = ttk.Label(self.frm, text="From row", width=15)
-        start_label.grid(row=0, column=4, columnspan=1, sticky=tk.W)
+        start_label = ttk.Label(top_left_frm, text="From row", width=15)
+        start_label.grid(row=0, column=3, columnspan=1, sticky=tk.W)
 
         self.start_cb = ttk.Combobox(
-            self.frm,
+            top_left_frm,
             textvariable=tk.StringVar(),
             values=self.rows,
             state='readonly',
             width=15,
         )
-        self.start_cb.grid(row=1, column=4, columnspan=1, sticky=tk.W)
+        self.start_cb.grid(row=1, column=3, columnspan=1, sticky=tk.W)
         self.start_cb.current(0)
 
-        self.stop_label = ttk.Label(self.frm, text="To row", width=15)
-        self.stop_label.grid(row=0, column=5, columnspan=1, sticky=tk.W)
+        self.stop_label = ttk.Label(top_left_frm, text="To row", width=15)
+        self.stop_label.grid(row=0, column=4, columnspan=1, sticky=tk.W)
 
         self.stop_cb = ttk.Combobox(
-            self.frm,
+            top_left_frm,
             textvariable=tk.StringVar(),
             values=self.rows,
             state='readonly',
             width=15,
         )
-        self.stop_cb.grid(row=1, column=5, columnspan=1, sticky=tk.W)
+        self.stop_cb.grid(row=1, column=4, columnspan=1, sticky=tk.W)
         self.stop_cb.current(max(self.rows))
 
         # Button to start CV estimation
         self.ied = emgfile["IED"]
         self.fsamp = emgfile["FSAMP"]
         button_est = ttk.Button(
-            self.frm,
+            top_left_frm,
             text="Estimate",
             command=self.compute_cv,
             width=15,
         )
-        button_est.grid(row=1, column=6, columnspan=1, sticky="we")
+        button_est.grid(row=1, column=5, columnspan=1, sticky="we")
 
-        # Add empty column
-        self.emp2 = ttk.Label(self.frm, text="", width=5)
-        self.emp2.grid(row=0, column=7, columnspan=1, sticky=tk.W)
+        # Configure column weights
+        for c in range(6):
+            if c == 1:
+                top_left_frm.columnconfigure(c, weight=20)
+            else:
+                top_left_frm.columnconfigure(c, weight=1)
 
-        # Add text frame to show the results (only CV and RMS)
-        self.res_df = pd.DataFrame(
-            data=0,
-            index=self.all_mus,
-            columns=["CV", "RMS", "XCC", "Column", "From_Row", "To_Row"],
-        )
-        self.textbox = tk.Text(self.frm, width=20)
-        self.textbox.grid(row=2, column=8, sticky="ns")
-        self.textbox.insert('1.0', self.res_df.loc[:, ["CV", "RMS"]].to_string())
+        # Align the right_frm
+        alignment_label = ttk.Label(right_frm, text="", width=15)
+        alignment_label.pack(side=tk.TOP, fill="x")
 
         # Create a button to copy the dataframe to clipboard
         copy_btn = ttk.Button(
-            self.frm,
+            right_frm,
             text="Copy results",
             command=self.copy_to_clipboard,
-            width=20,
+            width=15,
         )
-        copy_btn.grid(row=1, column=8, columnspan=1, sticky="we")
+        copy_btn.pack(side=tk.TOP, fill="x", pady=(0, 5))
+
+        # Add text frame to show the results (only CV and RMS)
+        self.res_df = pd.DataFrame(
+            data=0.00,
+            index=self.all_mus,
+            columns=["CV", "RMS", "XCC", "Column", "From_Row", "To_Row"],
+        )
+        self.textbox = tk.Text(right_frm, width=25)
+        self.textbox.pack(side=tk.TOP, expand=True, fill="y")
+        self.textbox.insert(
+            '1.0',
+            self.res_df.loc[:, ["CV", "RMS", "XCC"]].to_string(
+                float_format="{:.2f}".format
+            ),
+        )
 
         # Plot MU 0 while opening the GUI,
         # this will move the GUI in the background ??.
@@ -1788,16 +1816,22 @@ class MUcv_gui():
             figsize=self.figsize,
         )
 
+        # If canvas already exists, destroy it
+        if hasattr(self, 'canvas'):
+            self.canvas.get_tk_widget().destroy()
+
         # Place the figure in the GUI
-        canvas = FigureCanvasTkAgg(fig, master=self.frm)
-        canvas.draw()
-        canvas.get_tk_widget().grid(row=2, column=0, columnspan=7, sticky="we")
+        self.canvas = FigureCanvasTkAgg(fig, master=self.bottom_left_frm)
+        self.canvas.draw_idle()  # Await resizing
+        self.canvas.get_tk_widget().pack(
+            expand=True, fill="both", padx=0, pady=0,
+        )
         plt.close()
 
     def copy_to_clipboard(self):
         # Copy the dataframe to clipboard in csv format.
 
-        pyperclip.copy(self.res_df.to_csv(index=False, sep='\t'))
+        self.res_df.to_clipboard(excel=True, sep=self.csv_separator)
 
     # Define functions for cv estimation
     def compute_cv(self):
@@ -1839,5 +1873,7 @@ class MUcv_gui():
         self.textbox.replace(
             '1.0',
             'end',
-            self.res_df.loc[:, ["CV", "RMS"]].round(3).to_string(),
+            self.res_df.loc[:, ["CV", "RMS", "XCC"]].to_string(
+                float_format="{:.2f}".format
+            ),
         )
