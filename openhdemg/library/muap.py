@@ -8,7 +8,7 @@ from openhdemg.library.tools import delete_mus
 from openhdemg.library.mathtools import (
     norm_twod_xcorr,
     norm_xcorr,
-    find_teta,
+    find_mle_teta,
     mle_cv_est,
 )
 from openhdemg.library.electrodes import sort_rawemg
@@ -696,7 +696,6 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     )
     normxcorr_df = normxcorr_df.set_index(corr_lags)
     lag = normxcorr_df.idxmax().median()  # First signal compared to second
-    # TODO Can mean provide better results? allow choice?
 
     # Be sure that the lag/delay does not exceed values suitable for the final
     # expected duration.
@@ -736,12 +735,7 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
 
 
 # TODO update examples for code="None"
-# TODO change parallel processing, allow to specify if parallel
-# TODO add GUI
-
-# This function exploits parallel processing:
-#   - align and xcorr are processed in parallel
-#   - plotting is processed in parallel
+# This function exploits parallel processing for MUAPs alignment and xcorr
 def tracking(
     emgfile1,
     emgfile2,
@@ -757,10 +751,17 @@ def tracking(
     custom_muaps=None,
     exclude_belowthreshold=True,
     filter=True,
+    multiprocessing=True,
     show=False,
-):  # TODO add gui example
+    gui=True,
+    gui_addrefsig=True,
+    gui_csv_separator="\t",
+):
     """
     Track MUs across two files comparing the MUAPs' shape and distribution.
+
+    It is also possible to use a convenient GUI for the inspection of the
+    obtained MU pairs.
 
     Parameters
     ----------
@@ -842,14 +843,31 @@ def tracking(
     filter : bool, default True
         If true, when the same MU has a match of XCC > threshold with
         multiple MUs, only the match with the highest XCC is returned.
+    multiprocessing : bool, default True
+        If True (default) parallel processing will be used to reduce execution
+        time.
     show : bool, default False
-        Whether to plot the STA of pairs of MUs with XCC above threshold.
+        Whether to plot the STA of pairs of MUs with XCC above threshold. Set
+        to False (default) when gui=True to avoid postponing the GUI execution.
+        If show=True and gui=True, the GUI will be executed after closing all
+        the figures.
+    gui : bool, default True
+        If True (default) a GUI for the visual inspection and manual selection
+        of the tracking results will be called.
+    gui_addrefsig : bool, default True
+        If True, the REF_SIGNAL is plotted in front of the IDR with a
+        separated y-axes. This is used only when gui=True.
+    gui_csv_separator : str, default "\t"
+        The field delimiter used by the GUI to create the .csv copied to the
+        clipboard. This is used only when gui=True.
 
     Returns
     -------
     tracking_res : pd.DataFrame
         The results of the tracking including the MU from file 1,
         MU from file 2 and the normalised cross-correlation value (XCC).
+        If gui=True, an additional column indicating the inclusion/exclusion
+        of the MUs pairs will also be present in tracking_res.
 
     Warns
     -----
@@ -874,6 +892,26 @@ def tracking(
 
     Examples
     --------
+    Track MUs between two OPENHDEMG (.json) files and inspect the results with
+    a convenient GUI.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile1 = emg.askopenfile(filesource="OPENHDEMG")
+    >>> emgfile2 = emg.askopenfile(filesource="OPENHDEMG")
+    >>> tracking_res = emg.tracking(
+    ...     emgfile1=emgfile1,
+    ...     emgfile2=emgfile2,
+    ...     firings="all",
+    ...     derivation="sd",
+    ...     timewindow=50,
+    ...     threshold=0.8,
+    ...     matrixcode="GR08MM1305",
+    ...     orientation=180,
+    ...     filter=True,
+    ...     show=False,
+    ...     gui=True,
+    >>> )
+
     Track MUs between two OTB files and show the filtered results.
 
     >>> import openhdemg.library as emg
@@ -893,6 +931,7 @@ def tracking(
     ...     exclude_belowthreshold=True,
     ...     filter=True,
     ...     show=False,
+    ...     gui=False,
     ... )
         MU_file1  MU_file2       XCC
     0          0         3  0.820068
@@ -934,6 +973,7 @@ def tracking(
     ...     exclude_belowthreshold=True,
     ...     filter=True,
     ...     show=False,
+    ...     gui=False,
     ... )
     """
 
@@ -997,7 +1037,7 @@ def tracking(
         else:
             raise ValueError("custom_muaps is not a list of two dictionaries")
 
-    print("\nTracking started")
+    print("\nTracking started:")
 
     # Tracking function to run in parallel
     def parallel(mu_file1):  # Loop all the MUs of file 1
@@ -1039,16 +1079,27 @@ def tracking(
 
         return res
 
-    # Start parallel execution
-    # Measure running time
-    t0 = time.time()
+    if multiprocessing:
+        # Start parallel execution
+        res = Parallel(n_jobs=-1, verbose=1)(
+            delayed(parallel)(mu_file1) for mu_file1 in range(emgfile1["NUMBER_OF_MUS"])
+        )
+        print("\n")
 
-    res = Parallel(n_jobs=-1)(
-        delayed(parallel)(mu_file1) for mu_file1 in range(emgfile1["NUMBER_OF_MUS"])
-    )  # TODO n_jobs -1 remove joblib and allow user to select number of cores
+    else:
+        # Start serial execution
+        t0 = time.time()
 
-    t1 = time.time()
-    print(f"\nTime of tracking parallel processing: {round(t1-t0, 2)} Sec\n")
+        res = []
+        for pos, mu_file1 in enumerate(range(emgfile1["NUMBER_OF_MUS"])):
+            res.append(parallel(mu_file1))
+            # Show progress
+            t1 = time.time()
+            print(
+                f"Done {pos+1} out of {emgfile1['NUMBER_OF_MUS']} | " +
+                f"Elapsed time: {round(t1-t0, 2)} Sec",
+            )
+        print("\n")
 
     # Convert res to pd.DataFrame
     for pos, i in enumerate(res):
@@ -1061,31 +1112,38 @@ def tracking(
     # Filter the results
     if filter:
         # Sort file by MUs in file 1 and XCC to have first the highest XCC
-        sorted_res = tracking_res.sort_values(
-            by=["MU_file1", "XCC"], ascending=False
+        tracking_res = tracking_res.sort_values(
+            by=["MU_file1", "XCC"], ascending=False,
         )
-        # Get unique MUs from file 1
-        unique = sorted_res["MU_file1"].unique()
 
-        res_unique = pd.DataFrame(columns=sorted_res.columns)
+        # Get unique MUs from file 1
+        unique = tracking_res["MU_file1"].unique()
+
+        res_unique = pd.DataFrame(columns=tracking_res.columns)
 
         # Get the combo uf unique MUs from file 1 with MUs from file 2
         for pos, mu1 in enumerate(unique):
-            this_res = sorted_res[sorted_res["MU_file1"] == mu1]
+            this_res = tracking_res[tracking_res["MU_file1"] == mu1]
             # Fill the result df with the first row (highest XCC)
             res_unique.loc[pos, :] = this_res.iloc[0, :]
 
         # Now repeat the task with MUs from file 2
-        sorted_res = res_unique.sort_values(
+        tracking_res = res_unique.sort_values(
             by=["MU_file2", "XCC"], ascending=False
         )
-        unique = sorted_res["MU_file2"].unique()
-        res_unique = pd.DataFrame(columns=sorted_res.columns)
+        unique = tracking_res["MU_file2"].unique()
+        res_unique = pd.DataFrame(columns=tracking_res.columns)
         for pos, mu2 in enumerate(unique):
-            this_res = sorted_res[sorted_res["MU_file2"] == mu2]
+            this_res = tracking_res[tracking_res["MU_file2"] == mu2]
             res_unique.loc[pos, :] = this_res.iloc[0, :]
 
         tracking_res = res_unique.sort_values(by=["MU_file1"])
+
+    else:
+        # Sort file by MUs in file 1 and XCC to have first the highest XCC
+        tracking_res = tracking_res.sort_values(
+            by=["MU_file1", "XCC"], ascending=[True, False],
+        )
 
     # Print the full results
     pd.set_option("display.max_rows", None)
@@ -1097,50 +1155,61 @@ def tracking(
     pd.reset_option("display.max_rows")
 
     # Plot the MUs pairs
-    """ if show:
-        def parallel(ind):  # Function for the parallel execution of plotting """  # TODO
-    """ for ind in tracking_res.index:
-        if tracking_res["XCC"].loc[ind] >= threshold:
-            # Align STA
-            if not isinstance(custom_muaps, list):
-                aligned_sta1, aligned_sta2 = align_by_xcorr(
-                    sta_emgfile1[tracking_res["MU_file1"].loc[ind]],
-                    sta_emgfile2[tracking_res["MU_file2"].loc[ind]],
-                    finalduration=0.5,
+    if show:
+        for ind in tracking_res.index:
+            if tracking_res["XCC"].loc[ind] >= threshold:
+                # Align STA
+                if not isinstance(custom_muaps, list):
+                    aligned_sta1, aligned_sta2 = align_by_xcorr(
+                        sta_emgfile1[tracking_res["MU_file1"].loc[ind]],
+                        sta_emgfile2[tracking_res["MU_file2"].loc[ind]],
+                        finalduration=0.5,
+                    )
+                else:
+                    aligned_sta1 = sta_emgfile1[tracking_res["MU_file1"].loc[ind]]
+                    aligned_sta2 = sta_emgfile2[tracking_res["MU_file2"].loc[ind]]
+
+                title = "MUAPs from MU '{}' in file 1 and MU '{}' in file 2, XCC = {}".format(
+                    tracking_res["MU_file1"].loc[ind],
+                    tracking_res["MU_file2"].loc[ind],
+                    round(tracking_res["XCC"].loc[ind], 2),
                 )
+                plot_muaps(
+                    sta_dict=[aligned_sta1, aligned_sta2],
+                    title=title,
+                    showimmediately=False
+                )
+
+            if ind == tracking_res.index[-1]:
+                plt.show(block=True)
             else:
-                aligned_sta1 = sta_emgfile1[tracking_res["MU_file1"].loc[ind]]
-                aligned_sta2 = sta_emgfile2[tracking_res["MU_file2"].loc[ind]]
+                plt.show(block=False)
 
-            title = "MUAPs from MU '{}' in file 1 and MU '{}' in file 2, XCC = {}".format(
-                tracking_res["MU_file1"].loc[ind],
-                tracking_res["MU_file2"].loc[ind],
-                round(tracking_res["XCC"].loc[ind], 2),
-            )
-            plot_muaps(
-                sta_dict=[aligned_sta1, aligned_sta2],
-                title=title,
-                showimmediately=False
-            )
+    # Call the GUI and return the tracking_res
+    if gui:
+        # Check if no pairs have been detected
+        if tracking_res.empty:
+            return tracking_res
 
-        if ind == tracking_res.index[-1]:
-            plt.show(block=True)
-        else:
-            plt.show(block=False) """
+        tracking_gui = Tracking_gui(
+            emgfile1=emgfile1,
+            emgfile2=emgfile2,
+            tracking_res=tracking_res,
+            sta_emgfile1=sta_emgfile1,
+            sta_emgfile2=sta_emgfile2,
+            align_muaps=False if isinstance(custom_muaps, list) else True,
+            addrefsig=gui_addrefsig,
+            csv_separator=gui_csv_separator,
+        )
 
-    """  # Check that the number of plots does not exceed the number of cores
-        num_cores = os.cpu_count()
-        if len(tracking_res.index) > num_cores:
-            # If yes, raise a warning
-            warnings.warn("\n\nThere are more plots to show than available cores\n")
+        # Get and return updated tracking_res
+        return tracking_gui.get_results()
 
-        # Parallel execution of plotting
-        Parallel(n_jobs=-1)(delayed(parallel)(ind) for ind in tracking_res.index) """
-
-    return tracking_res
+    else:
+        return tracking_res
 
 
-class Tracking_gui():  # TODO return updated results, do not run if no pairs are detected when called from tracking, add delete excluded pairs button
+class Tracking_gui():  # TODO add delete excluded pairs button
     """
     GUI for the visual inspection and manual selection of the tracking results.
 
@@ -1189,7 +1258,7 @@ class Tracking_gui():  # TODO return updated results, do not run if no pairs are
     >>> import openhdemg.library as emg
     >>> emgfile_1 = emg.askopenfile(filesource="OPENHDEMG")
     >>> emgfile_2 = emg.askopenfile(filesource="OPENHDEMG")
-    >>> tracking_res = emg.tracking(emgfile_1, emgfile_2)
+    >>> tracking_res = emg.tracking(emgfile_1, emgfile_2, timewindow=50)
 
     Obtained required variables for Tracking_gui(). Pay attention to use the
     same derivation specified during tracking and to use an appropriate MUAPs
@@ -1527,6 +1596,7 @@ class Tracking_gui():  # TODO return updated results, do not run if no pairs are
         return self.tracking_res
 
 
+# TODO add GUI?
 def remove_duplicates_between(
     emgfile1,
     emgfile2,
@@ -1927,7 +1997,7 @@ def estimate_cv_via_mle(emgfile, signal):
     sig = signal.to_numpy()
     sig = sig.T
 
-    # Prepare the input 1D signals for find_teta
+    # Prepare the input 1D signals for find_mle_teta
     if np.shape(sig)[0] > 3:
         sig1 = sig[1, :]
         sig2 = sig[2, :]
@@ -1935,7 +2005,7 @@ def estimate_cv_via_mle(emgfile, signal):
         sig1 = sig[0, :]
         sig2 = sig[1, :]
 
-    teta = find_teta(
+    teta = find_mle_teta(
         sig1=sig1,
         sig2=sig2,
         ied=ied,
@@ -2035,7 +2105,7 @@ class MUcv_gui():
 
         # After that, set up the GUI
         self.root = tk.Tk()
-        self.root.title('MUs cv estimation')
+        self.root.title('MUs CV estimation')
         root_path = os.path.dirname(os.path.abspath(__file__))
         iconpath = os.path.join(
             root_path,
