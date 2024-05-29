@@ -12,7 +12,7 @@ from openhdemg.library.mathtools import (
     mle_cv_est,
 )
 from openhdemg.library.electrodes import sort_rawemg
-from openhdemg.library.plotemg import plot_muaps, plot_muaps_for_cv
+from openhdemg.library.plotemg import plot_idr, plot_muaps, plot_muaps_for_cv
 from scipy import signal
 import matplotlib.pyplot as plt
 from functools import reduce
@@ -21,7 +21,6 @@ import time
 from joblib import Parallel, delayed
 import copy
 import os
-import warnings
 import tkinter as tk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -687,7 +686,7 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     no_nan_sta2 = df2.dropna(axis=1, inplace=False)
 
     # Compute 2dxcorr to identify a common lag/delay
-    normxcorr_df, normxcorr_max = norm_twod_xcorr(
+    normxcorr_df, _ = norm_twod_xcorr(
         no_nan_sta1, no_nan_sta2, mode="same"
     )
 
@@ -697,6 +696,7 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     )
     normxcorr_df = normxcorr_df.set_index(corr_lags)
     lag = normxcorr_df.idxmax().median()  # First signal compared to second
+    # TODO Can mean provide better results? allow choice?
 
     # Be sure that the lag/delay does not exceed values suitable for the final
     # expected duration.
@@ -736,6 +736,8 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
 
 
 # TODO update examples for code="None"
+# TODO change parallel processing, allow to specify if parallel
+# TODO add GUI
 
 # This function exploits parallel processing:
 #   - align and xcorr are processed in parallel
@@ -756,7 +758,7 @@ def tracking(
     exclude_belowthreshold=True,
     filter=True,
     show=False,
-):
+):  # TODO add gui example
     """
     Track MUs across two files comparing the MUAPs' shape and distribution.
 
@@ -859,15 +861,16 @@ def tracking(
     - sta : computes the STA of every MUs.
     - norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
         two MUs.
+    - Tracking_gui : GUI for the visual inspection and manual selection of the
+    tracking results (directly callable from the tracking function).
     - remove_duplicates_between : remove duplicated MUs across two different
         files based on STA.
 
     Notes
     -----
-    Parallel processing can improve performances by 5-10 times compared to
+    Parallel processing can significantly improve performances compared to
     serial processing. In this function, parallel processing has been
-    implemented for the tasks involving 2-dimensional cross-correlation, and
-    plotting. This might change in future releases.
+    implemented for the tasks involving 2-dimensional cross-correlation.
 
     Examples
     --------
@@ -1019,7 +1022,7 @@ def tracking(
             df1.dropna(axis=1, inplace=True)
             df2, _ = unpack_sta(aligned_sta2)
             df2.dropna(axis=1, inplace=True)
-            normxcorr_df, normxcorr_max = norm_twod_xcorr(
+            _, normxcorr_max = norm_twod_xcorr(
                 df1, df2, mode="full"
             )
 
@@ -1042,13 +1045,12 @@ def tracking(
 
     res = Parallel(n_jobs=-1)(
         delayed(parallel)(mu_file1) for mu_file1 in range(emgfile1["NUMBER_OF_MUS"])
-    )
+    )  # TODO n_jobs -1 remove joblib and allow user to select number of cores
 
     t1 = time.time()
     print(f"\nTime of tracking parallel processing: {round(t1-t0, 2)} Sec\n")
 
     # Convert res to pd.DataFrame
-    tracking_res = []
     for pos, i in enumerate(res):
         if pos == 0:
             tracking_res = pd.DataFrame(i)
@@ -1095,43 +1097,434 @@ def tracking(
     pd.reset_option("display.max_rows")
 
     # Plot the MUs pairs
-    if show:
-        def parallel(ind):  # Function for the parallel execution of plotting
-            if tracking_res["XCC"].loc[ind] >= threshold:
-                # Align STA
-                if not isinstance(custom_muaps, list):
-                    aligned_sta1, aligned_sta2 = align_by_xcorr(
-                        sta_emgfile1[tracking_res["MU_file1"].loc[ind]],
-                        sta_emgfile2[tracking_res["MU_file2"].loc[ind]],
-                        finalduration=0.5,
-                    )
-                else:
-                    aligned_sta1 = sta_emgfile1[tracking_res["MU_file1"].loc[ind]]
-                    aligned_sta2 = sta_emgfile2[tracking_res["MU_file2"].loc[ind]]
-
-                title = "MUAPs from MU '{}' in file 1 and MU '{}' in file 2, XCC = {}".format(
-                    tracking_res["MU_file1"].loc[ind],
-                    tracking_res["MU_file2"].loc[ind],
-                    round(tracking_res["XCC"].loc[ind], 2),
+    """ if show:
+        def parallel(ind):  # Function for the parallel execution of plotting """  # TODO
+    """ for ind in tracking_res.index:
+        if tracking_res["XCC"].loc[ind] >= threshold:
+            # Align STA
+            if not isinstance(custom_muaps, list):
+                aligned_sta1, aligned_sta2 = align_by_xcorr(
+                    sta_emgfile1[tracking_res["MU_file1"].loc[ind]],
+                    sta_emgfile2[tracking_res["MU_file2"].loc[ind]],
+                    finalduration=0.5,
                 )
-                plot_muaps(
-                    sta_dict=[aligned_sta1, aligned_sta2],
-                    title=title,
-                    showimmediately=False
-                )
+            else:
+                aligned_sta1 = sta_emgfile1[tracking_res["MU_file1"].loc[ind]]
+                aligned_sta2 = sta_emgfile2[tracking_res["MU_file2"].loc[ind]]
 
-            plt.show()
+            title = "MUAPs from MU '{}' in file 1 and MU '{}' in file 2, XCC = {}".format(
+                tracking_res["MU_file1"].loc[ind],
+                tracking_res["MU_file2"].loc[ind],
+                round(tracking_res["XCC"].loc[ind], 2),
+            )
+            plot_muaps(
+                sta_dict=[aligned_sta1, aligned_sta2],
+                title=title,
+                showimmediately=False
+            )
 
-        # Check that the number of plots does not exceed the number of cores
+        if ind == tracking_res.index[-1]:
+            plt.show(block=True)
+        else:
+            plt.show(block=False) """
+
+    """  # Check that the number of plots does not exceed the number of cores
         num_cores = os.cpu_count()
         if len(tracking_res.index) > num_cores:
             # If yes, raise a warning
             warnings.warn("\n\nThere are more plots to show than available cores\n")
 
         # Parallel execution of plotting
-        Parallel(n_jobs=-1)(delayed(parallel)(ind) for ind in tracking_res.index)
+        Parallel(n_jobs=-1)(delayed(parallel)(ind) for ind in tracking_res.index) """
 
     return tracking_res
+
+
+class Tracking_gui():  # TODO return updated results, do not run if no pairs are detected when called from tracking, add delete excluded pairs button
+    """
+    GUI for the visual inspection and manual selection of the tracking results.
+
+    Parameters
+    ----------
+    emgfile1 : dict
+        The dictionary containing the first emgfile.
+    emgfile2 : dict
+        The dictionary containing the second emgfile.
+    tracking_res : pd.DataFrame
+        The results of the tracking including the MU from file 1,
+        MU from file 2 and the normalised cross-correlation value (XCC).
+        This is obtained with the function `tracking()`.
+    sta_emgfile1 : dict
+        dict containing a dict of STA (pd.DataFrame) for every MUs from
+        emgfile1. This is obtained with the function `sta()`.
+    sta_emgfile2 : dict
+        dict containing a dict of STA (pd.DataFrame) for every MUs from
+        emgfile2. This is obtained with the function `sta()`.
+    align_muaps : bool, default True
+        Whether to align the MUAPs before plotting. If true, the visualised
+        MUAPs time window will be 1/2 of the original (because the maximum
+        allowed shift during MUAPs alignment is 50%).
+    addrefsig : bool, default True
+        If True, the REF_SIGNAL is plotted in front of the IDR with a
+        separated y-axes.
+    csv_separator : str, default "\t"
+        The field delimiter used to create the .csv copied to the clipboard.
+
+    Methods
+    -------
+    get_results()
+        Returns the results of the tracking including the MU from file 1,
+        MU from file 2, the normalised cross-correlation value (XCC) and the
+        inclusion or exclusion of the MUs pair. after the GUI is closed.
+
+    See also
+    --------
+    - tracking : Track MUs across two files comparing the MUAPs' shape and
+    distribution.
+
+    Examples
+    --------
+    Track MUs between two files.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile_1 = emg.askopenfile(filesource="OPENHDEMG")
+    >>> emgfile_2 = emg.askopenfile(filesource="OPENHDEMG")
+    >>> tracking_res = emg.tracking(emgfile_1, emgfile_2)
+
+    Obtained required variables for Tracking_gui(). Pay attention to use the
+    same derivation specified during tracking and to use an appropriate MUAPs
+    timewindow, according to the align_muaps option in Tracking_gui().
+
+    >>> sorted_rawemg_1 = emg.sort_rawemg(emgfile_1)
+    >>> sorted_rawemg_1 = emg.diff(sorted_rawemg_1)
+    >>> sta_dict_1 = emg.sta(emgfile_1, sorted_rawemg_1, timewindow=100)
+    >>> sorted_rawemg_2 = emg.sort_rawemg(emgfile_2)
+    >>> sorted_rawemg_2 = emg.diff(sorted_rawemg_2)
+    >>> sta_dict_2 = emg.sta(emgfile_2, sorted_rawemg_2, timewindow=100)
+
+    Inspect the tracking results with a convenient GUI.
+
+    >>> tracking = emg.Tracking_gui(
+    ...     emgfile1=emgfile_1,
+    ...     emgfile2=emgfile_2,
+    ...     tracking_res=tracking_res,
+    ...     sta_emgfile1=sta_dict_1,
+    ...     sta_emgfile2=sta_dict_2,
+    ...     align_muaps=True,
+    ...     addrefsig=True,
+    ... )
+
+    Return the updated results for further use in the code.
+
+    >>> updated_results = tracking.get_results()
+        MU_file1  MU_file2       XCC Inclusion
+    0          0         2  0.897364  Excluded
+    1          1         0  0.947486  Included
+    2          2         1  0.923901  Included
+    3          4         8  0.893922  Included
+    """
+    def __init__(
+        self,
+        emgfile1,
+        emgfile2,
+        tracking_res,
+        sta_emgfile1,
+        sta_emgfile2,
+        align_muaps=True,
+        addrefsig=True,
+        csv_separator="\t",
+    ):
+        # Define needed variables
+        self.emgfile1 = emgfile1
+        self.emgfile2 = emgfile2
+        self.tracking_res = tracking_res
+        self.sta_emgfile1 = sta_emgfile1
+        self.sta_emgfile2 = sta_emgfile2
+        self.align_muaps = align_muaps
+        self.addrefsig = addrefsig
+        self.csv_separator = csv_separator
+
+        # Add included/excluded label to self.tracking_res
+        self.tracking_res = self.tracking_res.assign(Inclusion="Included")
+
+        # Define GUI structure
+        # After that, set up the GUI
+        self.root = tk.Tk()
+        self.root.title('MUAPs tracking')
+        root_path = os.path.dirname(os.path.abspath(__file__))
+        iconpath = os.path.join(
+            root_path,
+            "..",
+            "gui",
+            "gui_files",
+            "Icon_transp.ico"
+        )
+        self.root.iconbitmap(iconpath)
+
+        # Create outer frames, assign structure and minimum spacing
+        # Top
+        top_frm = tk.Frame(self.root, padx=10)
+        top_frm.grid(
+            row=0, column=0, columnspan=3, sticky=tk.NSEW, pady=(10, 8),
+        )
+        # Central - Left
+        self.central_left_frm = tk.Frame(
+            self.root, padx=1, pady=1, background="gray",
+        )
+        self.central_left_frm.grid(
+            row=1, rowspan=2, column=0, columnspan=2, sticky=tk.NSEW,
+        )
+        # Central - Right Top
+        self.central_right_top_frm = tk.Frame(
+            self.root, padx=0, pady=1, background="gray",
+        )
+        self.central_right_top_frm.grid(
+            row=1, column=2, columnspan=1, sticky=tk.NSEW,
+        )
+        # Central - Right Bottom
+        self.central_right_bottom_frm = tk.Frame(
+            self.root, padx=0, pady=1, background="gray",
+        )
+        self.central_right_bottom_frm.grid(
+            row=2, column=2, columnspan=1, sticky=tk.NSEW,
+        )
+        # Bottom
+        bottom_frm = tk.Frame(self.root, padx=1, pady=0, background="gray")
+        bottom_frm.grid(row=3, column=0, columnspan=3, sticky=tk.NSEW)
+
+        # Assign rows and columns weight to avoid empty spaces
+        self.root.rowconfigure(1, weight=1)
+        self.root.rowconfigure(2, weight=1)
+
+        self.root.columnconfigure(0, weight=1)
+        self.root.columnconfigure(1, weight=1)
+        self.root.columnconfigure(2, weight=1)
+
+        # Label MU pair selection and create combobox to change MUs pair
+        # File 1
+        mu_pair_label = ttk.Label(top_frm, text="Pair of MUs to visualise:")
+        mu_pair_label.pack(side=tk.LEFT)
+
+        mu_pairs = list(self.tracking_res.index)
+        self.select_mu_pair_cb = ttk.Combobox(
+            top_frm,
+            values=mu_pairs,
+            state='readonly',
+            width=5,
+        )
+        self.select_mu_pair_cb.pack(side=tk.LEFT, padx=(2, 15))
+        self.select_mu_pair_cb.current(0)
+        # gui_plot() takes one positional argument (self), but the bind()
+        # method is passing two arguments: the event object and the function
+        # itself. Use lambda to avoid the error.
+        self.select_mu_pair_cb.bind(
+            '<<ComboboxSelected>>',
+            lambda event: self.gui_plot(),
+        )
+
+        # Button to copy the dataframe to clipboard
+        copy_btn = ttk.Button(
+            top_frm,
+            text="Copy results",
+            command=self.copy_to_clipboard,
+        )
+        copy_btn.pack(side=tk.RIGHT, padx=(20, 0))
+
+        # Button to include/exclude MUAPs
+        btn_include_muaps = ttk.Button(
+            top_frm,
+            text="Include/Exclude",
+            command=self.include_exclude,
+        )
+        btn_include_muaps.pack(side=tk.RIGHT, padx=(0, 20))
+
+        # Inclusion label
+        self.inclusion_label = ttk.Label(
+            top_frm, text="INCLUDED", foreground="green",
+        )
+        self.inclusion_label.pack(side=tk.RIGHT, padx=(20, 20))
+
+        # Text frame to show the tracking results
+        self.textbox = tk.Text(bottom_frm, height=10, relief="flat")
+        self.textbox.pack(
+            expand=True, side=tk.BOTTOM, fill=tk.X)
+        self.textbox.insert(
+            '1.0',
+            self.tracking_res.to_string(float_format="{:.2f}".format),
+        )
+
+        # Highlight the specific row
+        self.highlight_row(0)
+
+        # Lower the window to prevent flashing
+        self.root.lower()
+
+        # Plot the first MU pair
+        self.gui_plot()
+
+        # Bring back the GUI in in the foreground
+        self.root.lift()
+
+        # Start mainloop
+        self.root.mainloop()
+
+    def highlight_row(self, row_number):
+        # Highlight a row in self.textbox
+
+        # Define a tag for highlighting
+        self.textbox.tag_configure("highlight", background="yellow")
+
+        # Update rownumber for the table format
+        row_number += 2
+
+        # Calculate the start and end index of the row in the text widget
+        start_index = f"{row_number}.0"
+        end_index = f"{row_number}.end"
+
+        # Add the highlight tag to the row
+        self.textbox.tag_add("highlight", start_index, end_index)
+
+    def gui_plot(self):
+        # Display the MUAPs and IDR.
+
+        # Update the textbox highlight
+        pair = int(self.select_mu_pair_cb.get())
+        self.textbox.tag_delete("highlight")
+        self.highlight_row(pair)
+
+        # Update the inclusion_label
+        if self.tracking_res.loc[pair, "Inclusion"] == "Excluded":
+            self.inclusion_label.config(
+                text="EXCLUDED",
+                foreground="red"
+            )
+        else:
+            self.inclusion_label.config(
+                text="INCLUDED",
+                foreground="green"
+            )
+
+        # Get MUs number
+        mu1 = int(self.tracking_res["MU_file1"].loc[pair])
+        mu2 = int(self.tracking_res["MU_file2"].loc[pair])
+
+        # MUAPs figure
+        if self.align_muaps:
+            aligned_sta1, aligned_sta2 = align_by_xcorr(
+                    self.sta_emgfile1[mu1],
+                    self.sta_emgfile2[mu2],
+                    finalduration=0.5,
+                )
+            muaps_fig = plot_muaps(
+                sta_dict=[aligned_sta1, aligned_sta2],
+                title="",
+                figsize=[5, 5],
+                showimmediately=False,
+                tight_layout=False,
+            )
+        else:
+            muaps_fig = plot_muaps(
+                sta_dict=[self.sta_emgfile1[mu1], self.sta_emgfile2[mu2]],
+                title="",
+                figsize=[5, 5],
+                showimmediately=False,
+                tight_layout=False,
+            )
+
+        # If canvas already exist, destroy it
+        if hasattr(self, 'muaps_canvas'):
+            self.muaps_canvas.get_tk_widget().destroy()
+
+        # Place the MUAPs figure in the canvas
+        self.muaps_canvas = FigureCanvasTkAgg(
+            muaps_fig, master=self.central_left_frm,
+        )
+        self.muaps_canvas.draw_idle()  # Await resizing
+        self.muaps_canvas.get_tk_widget().pack(
+            expand=True, fill="both", padx=0, pady=0,
+        )
+        plt.close(muaps_fig)
+
+        # Display IDR mu1 figure
+        idr_mu1_fig = plot_idr(
+            emgfile=self.emgfile1,
+            munumber=mu1,
+            addrefsig=self.addrefsig,
+            figsize=[3, 3],
+            showimmediately=False,
+            tight_layout=False,
+        )
+
+        if hasattr(self, 'idr_mu1_canvas'):
+            self.idr_mu1_canvas.get_tk_widget().destroy()
+
+        self.idr_mu1_canvas = FigureCanvasTkAgg(
+            idr_mu1_fig, master=self.central_right_top_frm,
+        )
+        self.idr_mu1_canvas.draw_idle()  # Await resizing
+        self.idr_mu1_canvas.get_tk_widget().pack(
+            expand=True, fill="both", padx=0, pady=0,
+        )
+        plt.close(idr_mu1_fig)
+
+        # Display IDR mu2 figure
+        idr_mu2_fig = plot_idr(
+            emgfile=self.emgfile2,
+            munumber=mu2,
+            addrefsig=self.addrefsig,
+            figsize=[3, 3],
+            showimmediately=False,
+            tight_layout=False,
+        )  # TODO plot orange as MUAPs
+
+        if hasattr(self, 'idr_mu2_canvas'):
+            self.idr_mu2_canvas.get_tk_widget().destroy()
+
+        self.idr_mu2_canvas = FigureCanvasTkAgg(
+            idr_mu2_fig, master=self.central_right_bottom_frm,
+        )
+        self.idr_mu2_canvas.draw_idle()  # Await resizing
+        self.idr_mu2_canvas.get_tk_widget().pack(
+            expand=True, fill="both", padx=0, pady=0,
+        )
+        plt.close(idr_mu2_fig)
+
+    def include_exclude(self):
+        # Include or exclude the current MU pair
+
+        # Check if the current pair is included or excluded and update label
+        pair = int(self.select_mu_pair_cb.get())
+        if self.tracking_res.loc[pair, "Inclusion"] == "Included":
+            self.tracking_res.loc[pair, "Inclusion"] = "Excluded"
+            self.inclusion_label.config(
+                text="EXCLUDED",
+                foreground="red"
+            )
+        else:
+            self.tracking_res.loc[pair, "Inclusion"] = "Included"
+            self.inclusion_label.config(
+                text="INCLUDED",
+                foreground="green"
+            )
+
+        # Update table
+        self.textbox.replace(
+            '1.0',
+            'end',
+            self.tracking_res.to_string(float_format="{:.2f}".format),
+        )
+        self.textbox.tag_delete("highlight")
+        self.highlight_row(pair)
+
+    def copy_to_clipboard(self):
+        # Copy the dataframe to clipboard in csv format.
+
+        self.tracking_res.to_clipboard(excel=True, sep=self.csv_separator)
+
+    def get_results(self):
+        # Get the edited tracking_res
+
+        return self.tracking_res
 
 
 def remove_duplicates_between(
@@ -1561,6 +1954,7 @@ def estimate_cv_via_mle(emgfile, signal):
     return cv
 
 
+# TODO add function to return the results
 class MUcv_gui():
     """
     Graphical user interface for the estimation of MUs conduction velocity.
