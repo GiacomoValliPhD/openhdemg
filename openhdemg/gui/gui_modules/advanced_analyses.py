@@ -343,7 +343,7 @@ class AdvancedAnalysis:
             self.head.rowconfigure(row, weight=1)
 
         # Specify Signal
-        signal_value = ("OTB", "DEMUSE", "OPENHDEMG", "CUSTOMCSV")
+        signal_value = ("OPENHDEMG", "DEMUSE", "OTB", "CUSTOMCSV")
         signal_entry = ctk.CTkComboBox(
             self.head,
             width=150,
@@ -471,6 +471,15 @@ class AdvancedAnalysis:
         for child in self.head.winfo_children():
             child.grid_configure(padx=5, pady=5)
 
+        # Add description for the show_checkbox for Motor Unit Tracking
+        if self.advanced_method.get() == "Motor Unit Tracking":
+            description_label = ctk.CTkLabel(
+                self.head,
+                text="Leave Show off if using \n the tracking GUI",
+                font=("Segoe UI", 10.5),
+            )
+            description_label.grid(column=0, row=14, pady=(0, 4))
+
         # Add Which widget and update the track button
         # to match functionalities required for duplicate removal
         if self.advanced_method.get() == "Duplicate Removal":
@@ -561,6 +570,7 @@ class AdvancedAnalysis:
                     n_firings=self.parent.settings.MUcv_gui__n_firings,
                     muaps_timewindow=self.parent.settings.MUcv_gui__muaps_timewindow,
                     figsize=self.parent.settings.MUcv_gui__figsize,
+                    csv_separator=self.parent.settings.MUcv_gui__csv_separator,
                 )
 
             except AttributeError as e:
@@ -804,26 +814,31 @@ class AdvancedAnalysis:
                 exclude_belowthreshold=self.exclude_thres.get(),
                 filter=self.filter_adv.get(),
                 show=self.show_adv.get(),
+                gui=self.parent.settings.tracking__gui,
+                gui_addrefsig=self.parent.settings.tracking__gui_addrefsig,
+                gui_csv_separator=self.parent.settings.tracking__gui_csv_separator,
             )
 
-            # Add result terminal
-            track_terminal = ttk.LabelFrame(
-                self.head, text="MUs Tracking Result", height=100,
-                relief="ridge",
-            )
-            track_terminal.grid(
-                column=2,
-                row=0,
-                columnspan=2,
-                rowspan=14,
-                pady=8,
-                padx=10,
-                sticky=(N, S, W, E),
-            )
+            # Add result terminal, only if tracking__gui=False to avoid
+            # uninterrupted processes.
+            if not self.parent.settings.tracking__gui:
+                track_terminal = ttk.LabelFrame(
+                    self.head, text="MUs Tracking Result", height=100,
+                    relief="ridge",
+                )
+                track_terminal.grid(
+                    column=2,
+                    row=0,
+                    columnspan=2,
+                    rowspan=14,
+                    pady=8,
+                    padx=10,
+                    sticky=(N, S, W, E),
+                )
 
-            # Add table containing results to the label frame
-            track_table = Table(track_terminal, dataframe=tracking_res)
-            track_table.show()
+                # Add table containing results to the label frame
+                track_table = Table(track_terminal, dataframe=tracking_res)
+                track_table.show()
 
         except AttributeError as e:
             show_error_dialog(

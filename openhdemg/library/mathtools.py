@@ -119,19 +119,19 @@ def norm_xcorr(sig1, sig2, out="both"):
 
 def norm_twod_xcorr(df1, df2, mode="full"):
     """
-    Normalised 2-dimensional cross-correlation of STAs of two MUS.
+    Normalised 2-dimensional cross-correlation of 2.
 
-    Any pre-processing of the RAW_SIGNAL (i.e., normal, differential or double
-    differential) can be passed as long as the two inputs have same shape.
+    The two inputs must have same shape.
+    When this function is used to cross-correlate MUAPs obtained via STA,
+    df1 and df2 should contain the unpacked STA of the first and second MU,
+    respectively, without np.nan columns.
 
     Parameters
     ----------
     df1 : pd.DataFrame
-        A pd.DataFrame containing the STA of the first MU without np.nan
-        column.
+        A pd.DataFrame containing the first 2-dimensional signal.
     df2 : pd.DataFrame
-        A pd.DataFrame containing the STA of the second MU without np.nan
-        column.
+        A pd.DataFrame containing the second 2-dimensional signal.
     mode : str {"full", "valid", "same"}, default "full"
         A string indicating the size of the output:
 
@@ -692,7 +692,7 @@ def mle_cv_est(sig, initial_teta, ied, fsamp):
 
     Examples
     --------
-    Refer to the examples of find_teta to obtain sig and initial_teta.
+    Refer to the examples of find_mle_teta to obtain sig and initial_teta.
     """
 
     # Calculate ied in meters
@@ -737,7 +737,7 @@ def mle_cv_est(sig, initial_teta, ied, fsamp):
     return cv, teta
 
 
-def find_teta(sig1, sig2, ied, fsamp):
+def find_mle_teta(sig1, sig2, ied, fsamp):
     """
     Find the starting value for teta.
 
@@ -811,7 +811,7 @@ def find_teta(sig1, sig2, ied, fsamp):
 
     Third, estimate teta.
 
-    >>> initial_teta = emg.find_teta(
+    >>> initial_teta = emg.find_mle_teta(
     ...     sig1=sig1,
     ...     sig2=sig2,
     ...     ied=emgfile["IED"],

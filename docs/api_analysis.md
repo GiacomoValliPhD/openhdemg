@@ -1,6 +1,9 @@
 Description
 -----------
-This module contains all the functions used to analyse the MUs properties when not involving the MUs action potential shape.
+This module contains all the functions used to analyse the MUs properties apart from those involving:
+
+- The MUs action potential shape => Available in the [muap module](api_muap.md)
+- DeltaF / PICs estimation => available in the [pic module](api_pic.md)
 
 <br/>
 

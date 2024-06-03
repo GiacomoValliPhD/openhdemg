@@ -148,6 +148,7 @@ def plot_emgsig(
         for count, thisChannel in enumerate(channels):
             # Normalise the series
             norm_raw = min_max_scaling(emgfile["RAW_SIGNAL"][thisChannel])
+            # TODO option to scale all the df or the single channel
             # Add 1 to the previous channel to avoid overlapping
             norm_raw = norm_raw + count
             plt.plot(x_axis, norm_raw)
@@ -851,8 +852,6 @@ def plot_idr(
     )
 
     # Check if we have a single MU or a list of MUs to plot.
-    # In the first case, the use of plt.figure has been preferred to
-    # plt.subplots for the implementation of the MUs cleaning.
     if isinstance(munumber, int):
         ax1 = sns.scatterplot(
             x=idr[munumber]["timesec" if timeinseconds else "mupulses"],
@@ -923,6 +922,7 @@ def plot_muaps(
     title="MUAPs from STA",
     figsize=[20, 15],
     showimmediately=True,
+    tight_layout=False,
 ):
     """
     Plot MUAPs obtained from STA from one or multiple MUs.
@@ -942,6 +942,11 @@ def plot_muaps(
         If True (default), plt.show() is called and the figure showed to the
         user.
         It is useful to set it to False when calling the function from the GUI.
+    tight_layout : bool, default False
+        If True (default), the plt.tight_layout() is called and the figure's
+        layout is improved.
+        It is useful to set it to False when calling the function from the GUI
+        or if the final layout is not correct.
 
     Returns
     -------
@@ -1088,7 +1093,7 @@ def plot_muaps(
                 "Unacceptable number of rows and columns to plot"
             )
 
-        showgoodlayout(tight_layout=False, despined=True)
+        showgoodlayout(tight_layout=tight_layout, despined=True)
         if showimmediately:
             plt.show()
 
@@ -1328,6 +1333,7 @@ def plot_muaps_for_cv(
     title="MUAPs for CV",
     figsize=[20, 15],
     showimmediately=True,
+    tight_layout=False,
 ):
     """
     Visualise MUAPs on which to calculate MUs CV.
@@ -1351,6 +1357,11 @@ def plot_muaps_for_cv(
         If True (default), plt.show() is called and the figure showed to the
         user.
         It is useful to set it to False when calling the function from the GUI.
+    tight_layout : bool, default False
+        If True (default), the plt.tight_layout() is called and the figure's
+        layout is improved.
+        It is useful to set it to False when calling the function from the GUI
+        or if the final layout is not correct.
 
     Returns
     -------
