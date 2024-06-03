@@ -7,6 +7,7 @@ __all__ = [
     "otbelectrodes",
     "muap",
     "info",
+    "pic"
 ]
 
 from openhdemg.library.openfiles import (
@@ -30,3 +31,4 @@ from openhdemg.library.mathtools import *
 from openhdemg.library.electrodes import *
 from openhdemg.library.muap import *
 from openhdemg.library.info import *
+from openhdemg.library.pic import *
