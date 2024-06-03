@@ -86,6 +86,9 @@ resize_emgfile__ignore_negative_ipts = False
 # in tracking()
 tracking__firings = "all"
 tracking__derivation = "sd"
+tracking__gui = True
+tracking__gui_addrefsig = True
+tracking__gui_csv_separator = "\t"
 
 # in remove_duplicates_between()
 remove_duplicates_between__firings = "all"
@@ -95,6 +98,7 @@ remove_duplicates_between__derivation = "sd"
 MUcv_gui__n_firings = [0, 50]
 MUcv_gui__muaps_timewindow = 50
 MUcv_gui__figsize = [25, 20]
+MUcv_gui__csv_separator = "\t"
 
 # --------------------------------- electrodes --------------------------------
 # This custom sorting order is valid for all the GUI windows, although the
