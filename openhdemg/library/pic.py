@@ -18,7 +18,7 @@ def compute_deltaf(
     recruitment_difference_cutoff=1.0,
     corr_cutoff=0.7,
     controlunitmodulation_cutoff=0.5,
-    clean="True",
+    clean="True",  # TODO should this be a boolean True?
 ):
     """
     Quantify delta F via paired motor unit analysis.
