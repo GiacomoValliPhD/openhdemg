@@ -1431,8 +1431,10 @@ class Tracking_gui():  # TODO add delete excluded pairs button
         # Plot the first MU pair
         self.gui_plot()
 
-        # Bring back the GUI in in the foreground
+        # Bring back the GUI in the foreground
         self.root.lift()
+        self.root.attributes('-topmost', True)
+        self.root.after_idle(self.root.attributes, '-topmost', False)
 
         # Start mainloop
         self.root.mainloop()
@@ -1596,7 +1598,6 @@ class Tracking_gui():  # TODO add delete excluded pairs button
         return self.tracking_res
 
 
-# TODO add GUI?
 def remove_duplicates_between(
     emgfile1,
     emgfile2,
@@ -1611,7 +1612,11 @@ def remove_duplicates_between(
     custom_sorting_order=None,
     custom_muaps=None,
     filter=True,
+    multiprocessing=True,
     show=False,
+    gui=True,
+    gui_addrefsig=True,
+    gui_csv_separator="\t",
     which="munumber",
 ):
     """
@@ -1695,8 +1700,20 @@ def remove_duplicates_between(
     filter : bool, default True
         If true, when the same MU has a match of XCC > threshold with
         multiple MUs, only the match with the highest XCC is returned.
+    multiprocessing : bool, default True
+        If True (default) parallel processing will be used to reduce execution
+        time.
     show : bool, default False
         Whether to plot the STA of pairs of MUs with XCC above threshold.
+    gui : bool, default True
+        If True (default) a GUI for the visual inspection and manual selection
+        of the tracking results will be called.
+    gui_addrefsig : bool, default True
+        If True, the REF_SIGNAL is plotted in front of the IDR with a
+        separated y-axes. This is used only when gui=True.
+    gui_csv_separator : str, default "\t"
+        The field delimiter used by the GUI to create the .csv copied to the
+        clipboard. This is used only when gui=True.
     which : str {"munumber", "accuracy"}, default "munumber"
         How to remove the duplicated MUs.
 
@@ -1713,6 +1730,8 @@ def remove_duplicates_between(
     tracking_res : pd.DataFrame
         The results of the tracking including the MU from file 1,
         MU from file 2 and the normalised cross-correlation value (XCC).
+        If gui=True, an additional column indicating the inclusion/exclusion
+        of the MUs pairs will also be present in tracking_res.
 
     See also
     --------
@@ -1723,7 +1742,29 @@ def remove_duplicates_between(
 
     Examples
     --------
-    Remove duplicated MUs between two OTB files and save the emgfiles
+    Remove duplicated MUs between two OPENHDEMG files and inspect the tracking
+    outcome via a convenient GUI. Then Save the emgfiles without duplicates.
+    Of the 2 duplicated MUs, the one with the lowest accuracy is removed.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile1 = emg.askopenfile(filesource="OPENHDEMG")
+    >>> emgfile2 = emg.askopenfile(filesource="OPENHDEMG")
+    >>> emgfile1, emgfile2, tracking_res = emg.remove_duplicates_between(
+    ...     emgfile1,
+    ...     emgfile2,
+    ...     firings="all",
+    ...     derivation="mono",
+    ...     timewindow=50,
+    ...     threshold=0.9,
+    ...     matrixcode="GR08MM1305",
+    ...     orientation=180,
+    ...     gui=True,
+    ...     which="accuracy",
+    ... )
+    >>> emg.asksavefile(emgfile1)
+    >>> emg.asksavefile(emgfile2)
+
+    Remove duplicated MUs between two OTB files and directly save the emgfiles
     without duplicates. The duplicates are removed from the file with
     more MUs.
 
@@ -1743,16 +1784,18 @@ def remove_duplicates_between(
     ...     n_cols=None,
     ...     filter=True,
     ...     show=False,
+    ...     gui=False,
     ...     which="munumber",
     ... )
     >>> emg.asksavefile(emgfile1)
     >>> emg.asksavefile(emgfile2)
 
     Remove duplicated MUs between two files where channels are sorted with a
-    custom order and save the emgfiles without duplicates. Of the 2 duplicated
-    MUs, the one with the lowest accuracy is removed.
+    custom order and directly save the emgfiles without duplicates. Of the 2
+    duplicated MUs, the one with the lowest accuracy is removed.
 
     >>> import openhdemg.library as emg
+    >>> import numpy as np
     >>> emgfile1 = emg.askopenfile(filesource="CUSTOMCSV")
     >>> emgfile2 = emg.askopenfile(filesource="CUSTOMCSV")
     >>> custom_sorting_order = [
@@ -1776,6 +1819,7 @@ def remove_duplicates_between(
     ...     custom_sorting_order=custom_sorting_order,
     ...     filter=True,
     ...     show=False,
+    ...     gui=False,
     ...     which="accuracy",
     ... )
     >>> emg.asksavefile(emgfile1)
@@ -1802,14 +1846,27 @@ def remove_duplicates_between(
         custom_muaps=custom_muaps,
         exclude_belowthreshold=True,
         filter=filter,
+        multiprocessing=multiprocessing,
         show=show,
+        gui=gui,
+        gui_addrefsig=gui_addrefsig,
+        gui_csv_separator=gui_csv_separator,
     )
+
+    # If the tracking gui has been used to include/exclude pairs, use the
+    # included pairs only.
+    if gui:
+        tracking_res_cleaned = tracking_res[
+            tracking_res["Inclusion"] == "Included"
+        ]
+    else:
+        tracking_res_cleaned = tracking_res
 
     # Identify how to remove MUs
     if which == "munumber":
         if emgfile1["NUMBER_OF_MUS"] >= emgfile2["NUMBER_OF_MUS"]:
             # Remove MUs from emgfile1
-            mus_to_remove = list(tracking_res["MU_file1"])
+            mus_to_remove = list(tracking_res_cleaned["MU_file1"])
             emgfile1 = delete_mus(
                 emgfile=emgfile1, munumber=mus_to_remove, if_single_mu="remove"
             )
@@ -1818,7 +1875,7 @@ def remove_duplicates_between(
 
         else:
             # Remove MUs from emgfile2
-            mus_to_remove = list(tracking_res["MU_file2"])
+            mus_to_remove = list(tracking_res_cleaned["MU_file2"])
 
             emgfile2 = delete_mus(
                 emgfile=emgfile2, munumber=mus_to_remove, if_single_mu="remove"
@@ -1831,7 +1888,7 @@ def remove_duplicates_between(
         # on ACCURACY value.
         to_remove1 = []
         to_remove2 = []
-        for i, row in tracking_res.iterrows():
+        for i, row in tracking_res_cleaned.iterrows():
             acc1 = emgfile1["ACCURACY"].loc[int(row["MU_file1"])]
             acc2 = emgfile2["ACCURACY"].loc[int(row["MU_file2"])]
 
@@ -2258,8 +2315,10 @@ class MUcv_gui():
         # this will move the GUI in the background ??.
         self.gui_plot()
 
-        # Bring back the GUI in in the foreground
+        # Bring back the GUI in the foreground
         self.root.lift()
+        self.root.attributes('-topmost', True)
+        self.root.after_idle(self.root.attributes, '-topmost', False)
 
         # Start the main loop
         self.root.mainloop()
