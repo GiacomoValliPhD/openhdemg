@@ -1051,6 +1051,7 @@ class AdvancedAnalysis:
                 custom_sorting_order=self.parent.settings.custom_sorting_order,
                 filter=self.filter_adv.get(),
                 show=self.show_adv.get(),
+                gui=False,
                 which=self.which_adv.get(),
             )
 
