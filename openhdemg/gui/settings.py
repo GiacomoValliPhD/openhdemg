@@ -19,30 +19,31 @@ backup_settings.py
 
 import numpy as np
 
+
 # --------------------------------- openfiles ---------------------------------
 
-# in emg_from_demuse()
+# In emg_from_demuse()
 emg_from_demuse__ignore_negative_ipts = False
 
-# in emg_from_otb()
+# In emg_from_otb()
 emg_from_otb__ext_factor = 8
 emg_from_otb__refsig = [True, "fullsampled"]
 emg_from_otb__extras = None
 emg_from_otb__ignore_negative_ipts = False
 
-# in refsig_from_otb()
+# In refsig_from_otb()
 refsig_from_otb__refsig = "fullsampled"
 refsig_from_otb__extras = None
 
-# in emg_from_delsys()
+# In emg_from_delsys()
 emg_from_delsys__emg_sensor_name = "Galileo sensor"
 emg_from_delsys__refsig_sensor_name = "Trigno Load Cell"
 emg_from_delsys__filename_from = "mus_directory"
 
-# in refsig_from_delsys()
+# In refsig_from_delsys()
 refsig_from_delsys__refsig_sensor_name = "Trigno Load Cell"
 
-# in emg_from_customcsv()
+# In emg_from_customcsv()
 emg_from_customcsv__ref_signal = "REF_SIGNAL"
 emg_from_customcsv__raw_signal = "RAW_SIGNAL"
 emg_from_customcsv__ipts = "IPTS"
@@ -53,21 +54,21 @@ emg_from_customcsv__extras = "EXTRAS"
 emg_from_customcsv__fsamp = 2048
 emg_from_customcsv__ied = 8
 
-# in refsig_from_customcsv()
+# In refsig_from_customcsv()
 refsig_from_customcsv__ref_signal = "REF_SIGNAL"
 refsig_from_customcsv__extras = "EXTRAS"
 refsig_from_customcsv__fsamp = 2048
 
-# in save_json_emgfile()
+# In save_json_emgfile()
 save_json_emgfile__compresslevel = 4
 
 
 # ---------------------------------- analysis ---------------------------------
 
-# in compute_thresholds()
+# In compute_thresholds()
 compute_thresholds__n_firings = 1
 
-# in basic_mus_properties()
+# In basic_mus_properties()
 basic_mus_properties__n_firings_rt_dert = 1
 basic_mus_properties__accuracy = "default"
 basic_mus_properties__ignore_negative_ipts = False
@@ -76,29 +77,44 @@ basic_mus_properties__constrain_pulses = [True, 3]
 
 # ----------------------------------- tools -----------------------------------
 
-# in resize_emgfile()
+# In resize_emgfile()
 resize_emgfile__how = "ref_signal"
 resize_emgfile__accuracy = "recalculate"
 resize_emgfile__ignore_negative_ipts = False
 
+# In compute_svr()
+compute_svr__gammain = 1/1.6
+compute_svr__regparam = 1/0.370
+compute_svr__endpointweights_numpulses = 5
+compute_svr__endpointweights_magnitude = 5
+compute_svr__discontfiring_dur = 1.0
+
+
+# ------------------------------------ pic ------------------------------------
+# In compute_deltaf()
+compute_deltaf__recruitment_difference_cutoff = 1.0
+compute_deltaf__corr_cutoff = 0.7
+compute_deltaf__controlunitmodulation_cutoff = 0.5
+
 
 # ------------------------------------ muap -----------------------------------
-# in tracking()
+# In tracking()
 tracking__firings = "all"
 tracking__derivation = "sd"
 tracking__gui = True
 tracking__gui_addrefsig = True
 tracking__gui_csv_separator = "\t"
 
-# in remove_duplicates_between()
+# In remove_duplicates_between()
 remove_duplicates_between__firings = "all"
 remove_duplicates_between__derivation = "sd"
 
-# in MUcv_gui()
+# In MUcv_gui()
 MUcv_gui__n_firings = [0, 50]
 MUcv_gui__muaps_timewindow = 50
 MUcv_gui__figsize = [25, 20]
 MUcv_gui__csv_separator = "\t"
+
 
 # --------------------------------- electrodes --------------------------------
 # This custom sorting order is valid for all the GUI windows, although the
