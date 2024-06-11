@@ -19,7 +19,7 @@ INSTALL_REQUIRES = [
     "pandastable==0.13.1",
     "scipy==1.11.3",
     "seaborn==0.13.0",
-    "joblib==1.3.2",
+    "scikit-learn==1.5.0",
     # "pre-commit==3.7.0",
 ]
 
