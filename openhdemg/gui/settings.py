@@ -68,11 +68,15 @@ save_json_emgfile__compresslevel = 4
 # In compute_thresholds()
 compute_thresholds__n_firings = 1
 
+# In compute_dr()
+compute_dr__idr_range = None
+
 # In basic_mus_properties()
 basic_mus_properties__n_firings_rt_dert = 1
 basic_mus_properties__accuracy = "default"
 basic_mus_properties__ignore_negative_ipts = False
 basic_mus_properties__constrain_pulses = [True, 3]
+basic_mus_properties__idr_range = None
 
 
 # ----------------------------------- tools -----------------------------------

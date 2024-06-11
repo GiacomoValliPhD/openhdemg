@@ -318,6 +318,9 @@ class MuAnalysis:
         compute_thresholds in library.
         """
 
+        # Update settings
+        self.parent.load_settings()
+
         try:
             # Compute thresholds
             self.parent.mu_thresholds = openhdemg.compute_thresholds(
@@ -374,6 +377,9 @@ class MuAnalysis:
         compute_dr in library.
         """
 
+        # Update settings
+        self.parent.load_settings()
+
         try:
             # Compute discharge rates
             self.parent.mus_dr = openhdemg.compute_dr(
@@ -381,6 +387,7 @@ class MuAnalysis:
                 n_firings_RecDerec=int(self.firings_rec.get()),
                 n_firings_steady=int(self.firings_ste.get()),
                 event_=self.dr_event.get(),
+                idr_range=self.parent.settings.compute_dr__idr_range,
             )
             # Display results
             self.parent.display_results(self.parent.mus_dr)
@@ -433,6 +440,9 @@ class MuAnalysis:
         basic_mus_properties in library.
         """
 
+        # Update settings
+        self.parent.load_settings()
+
         try:
             # Calculate properties
             self.parent.mu_prop_df = openhdemg.basic_mus_properties(
@@ -440,6 +450,7 @@ class MuAnalysis:
                 n_firings_rt_dert=self.parent.settings.basic_mus_properties__n_firings_rt_dert,
                 n_firings_RecDerec=int(self.b_firings_rec.get()),
                 n_firings_steady=int(self.b_firings_ste.get()),
+                idr_range=self.parent.settings.basic_mus_properties__idr_range,
                 accuracy=self.parent.settings.basic_mus_properties__accuracy,
                 ignore_negative_ipts=self.parent.settings.basic_mus_properties__ignore_negative_ipts,
                 constrain_pulses=self.parent.settings.basic_mus_properties__constrain_pulses,
