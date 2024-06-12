@@ -202,6 +202,22 @@ class TestAnalysis(unittest.TestCase):
             res["DR_end_steady"][1], 7.062, places=2,
         )
 
+        # Change idr_range
+        res = compute_dr(
+            emgfile=emgfile,
+            n_firings_RecDerec=4,
+            n_firings_steady=10,
+            start_steady=0 + t_ramps,
+            end_steady=emgfile["EMG_LENGTH"] - t_ramps,
+            event_="rec_derec_steady",
+            idr_range=[7, 10],
+        )
+
+        self.assertTrue(np.isnan(res["DR_end_steady"][0]))
+        self.assertAlmostEqual(
+            res["DR_all"][1], 7.644, places=2,
+        )
+
     def test_basic_mus_properties(self):
         """
         Test the basic_mus_properties function with the samplefile.
@@ -287,6 +303,29 @@ class TestAnalysis(unittest.TestCase):
             res["avg_PNR"][0], 29.895, places=2,
         )
 
+        # Change idr_range
+        res = basic_mus_properties(
+            emgfile=emgfile,
+            n_firings_rt_dert=1,
+            n_firings_RecDerec=4,
+            n_firings_steady=10,
+            start_steady=0 + t_ramps,
+            end_steady=emgfile["EMG_LENGTH"] - t_ramps,
+            idr_range=[7, 10],
+            accuracy="default",
+            ignore_negative_ipts=False,
+            constrain_pulses=[True, 3],
+            mvc=1234,
+        )
+
+        self.assertTrue(np.isnan(res["DR_end_steady"][0]))
+        self.assertAlmostEqual(
+            res["DR_all"][1], 7.644, places=2,
+        )
+        self.assertAlmostEqual(
+            res["COVisi_steady"][2], 7.677, places=2,
+        )
+
     def test_compute_covisi(self):
         """
         Test the compute_dr function with the samplefile.
@@ -348,6 +387,22 @@ class TestAnalysis(unittest.TestCase):
             res["COVisi_all"][0], 19.104, places=2,
         )
 
+        # Change idr_range
+        res = compute_covisi(
+            emgfile=emgfile,
+            n_firings_RecDerec=4,
+            start_steady=0 + t_ramps,
+            end_steady=emgfile["EMG_LENGTH"] - t_ramps,
+            event_="rec_derec_steady",
+            idr_range=[7, 10],
+            single_mu_number=-1,
+        )
+
+        self.assertTrue(np.isnan(res["COVisi_rec"][0]))
+        self.assertAlmostEqual(
+            res["COVisi_steady"][2], 7.677, places=2,
+        )
+
     def test_compute_drvariability(self):
         """
         Test the compute_drvariability function with the samplefile.
@@ -392,6 +447,21 @@ class TestAnalysis(unittest.TestCase):
 
         self.assertTrue(np.isnan(res["DRvar_rec"][0]))
         self.assertTrue(np.isnan(res["DRvar_derec"][1]))
+
+        # Change idr_range
+        res = compute_drvariability(
+            emgfile=emgfile,
+            n_firings_RecDerec=4,
+            start_steady=0 + t_ramps,
+            end_steady=emgfile["EMG_LENGTH"] - t_ramps,
+            event_="rec_derec_steady",
+            idr_range=[7, 10],
+        )
+
+        self.assertTrue(np.isnan(res["DRvar_rec"][0]))
+        self.assertAlmostEqual(
+            res["DRvar_all"][1], 6.466, places=2,
+        )
 
 
 if __name__ == '__main__':
