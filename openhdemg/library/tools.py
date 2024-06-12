@@ -1267,18 +1267,15 @@ def compute_svr(
 
     Quick plot showing the results.
 
-    >>> scl = 12  # offset MUs for viz
-    >>> idr = emg.compute_idr(emgfile)
-    >>> for ii in range(len(svrfits["svrfit"])):
-    ...     xtmp = np.transpose([idr[ii].timesec[1:]])
-    ...     ytmp = idr[ii].idr[1:].to_numpy()
-    ...     plt.scatter(xtmp, ytmp+scl*(ii), color='darkorange')
-    ...     plt.plot(
-    ...         svrfits["svrtime"][ii],
-    ...         svrfits["svrfit"][ii]+scl*(ii),
-    ...         color='cornflowerblue',
-    ...     )
-    >>> plt.show()
+    >>> smoothfits = pd.DataFrame(svrfits["gensvr"]).transpose()
+    >>> emg.plot_smoothed_dr(
+    >>>     emgfile,
+    >>>     smoothfits=smoothfits,
+    >>>     munumber="all",
+    >>>     addidr=False,
+    >>>     stack=True,
+    >>>     addrefsig=True,
+    >>> )
     """
 
     # TODO input checking and edge cases

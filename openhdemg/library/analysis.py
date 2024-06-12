@@ -350,13 +350,13 @@ def compute_dr(
     if idr_range is not None:
         if not isinstance(idr_range, list):
             raise ValueError(
-                "idr_range can be None or a list of 2 numbers." +
+                "idr_range can be None or a list of 2 numbers. " +
                 f"A{type(idr_range)} was passed instead."
             )
         else:
             if len(idr_range) != 2:
                 raise ValueError(
-                    "idr_range can be None or a list of 2 numbers." +
+                    "idr_range can be None or a list of 2 numbers. " +
                     f"The list contains {len(idr_range)} numbers instead."
                 )
         for mu in idr.keys():
@@ -944,13 +944,13 @@ def compute_covisi(
     if idr_range is not None:
         if not isinstance(idr_range, list):
             raise ValueError(
-                "idr_range can be None or a list of 2 numbers." +
+                "idr_range can be None or a list of 2 numbers. " +
                 f"A{type(idr_range)} was passed instead."
             )
         else:
             if len(idr_range) != 2:
                 raise ValueError(
-                    "idr_range can be None or a list of 2 numbers." +
+                    "idr_range can be None or a list of 2 numbers. " +
                     f"The list contains {len(idr_range)} numbers instead."
                 )
         idr_range[0] = emgfile["FSAMP"] / idr_range[0]
@@ -1180,13 +1180,13 @@ def compute_drvariability(
     if idr_range is not None:
         if not isinstance(idr_range, list):
             raise ValueError(
-                "idr_range can be None or a list of 2 numbers." +
+                "idr_range can be None or a list of 2 numbers. " +
                 f"A{type(idr_range)} was passed instead."
             )
         else:
             if len(idr_range) != 2:
                 raise ValueError(
-                    "idr_range can be None or a list of 2 numbers." +
+                    "idr_range can be None or a list of 2 numbers. " +
                     f"The list contains {len(idr_range)} numbers instead."
                 )
         for mu in idr.keys():

@@ -53,6 +53,13 @@ This module contains all the functions used to visualise the content of the impo
 
 <br/>
 
+::: openhdemg.library.plotemg.plot_smoothed_dr
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
 ::: openhdemg.library.plotemg.plot_muaps
     options:
         show_root_full_path: False
