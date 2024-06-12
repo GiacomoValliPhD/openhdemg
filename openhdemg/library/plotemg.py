@@ -933,7 +933,7 @@ def plot_smoothed_dr(
     tight_layout=True,
 ):
     """
-    Plot the instantaneous discharge rate (IDR).
+    Plot the smoothed discharge rate.
 
     Parameters
     ----------
