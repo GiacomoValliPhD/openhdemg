@@ -18,7 +18,7 @@ def compute_deltaf(
     recruitment_difference_cutoff=1.0,
     corr_cutoff=0.7,
     controlunitmodulation_cutoff=0.5,
-    clean="True",  # TODO should this be a boolean True?
+    clean=True,
 ):
     """
     Quantify delta F via paired motor unit analysis.
@@ -37,16 +37,17 @@ def compute_deltaf(
     smoothfits : list of arrays
         Smoothed discharge rate estimates.
         Each array: motor unit discharge rate x samples aligned in time;
-        instances of non-firing = NaN, please #TODO maybe something is missing after please?
+        instances of non-firing = NaN
         Your choice of smoothing. See compute_svr gen_svr for example.
     average_method : str {"test_unit_average", "all"}, default "test_unit_average"
-        The method for test MU deltaF value. More to be added. TODO # TODOs should be moved outside documentation or they will be displayed in the website
+        The method for test MU deltaF value. More to be added.
 
         ``test_unit_average``
             The average across all possible control units.
 
-        ``all`` TODO the user is not aware of what other average methods can be used
-            abc
+        ``all``
+            This returns all possible MU pairs
+
     normalisation : str {"False", "ctrl_max_desc"}, default "False"
         The method for deltaF nomalization.
 
@@ -54,6 +55,7 @@ def compute_deltaf(
             Whether to normalise deltaF values to control unit descending
             range during test unit firing. See Skarabot et. al., 2023:
             https://www.biorxiv.org/content/10.1101/2023.10.16.562612v1
+
     recruitment_difference_cutoff : float, default 1
         An exlusion criteria corresponding to the necessary difference between
         control and test MU recruitement in seconds.
@@ -63,26 +65,23 @@ def compute_deltaf(
     controlunitmodulation_cutoff : float, default 0.5
         An exclusion criteria corresponding to the necessary modulation of
         control unit discharge rate during test unit firing in Hz.
-    clean : str, default "True"
+    clean : bool, default True
         To remove values that do not meet exclusion criteria
 
     Returns
     -------
     delta_f : pd.DataFrame
         A pd.DataFrame containing deltaF values and corresponding MU number.
-        TODO here we should explain that the resulting df will be different
-        depending on average_method. In particular, if average_method="all",
-        delta_f[MU][row] will contain a tuple representing... instead of a MU
-        number.
+        The resulting df will be different depending on average_method.
+        In particular, if average_method="all", delta_f[MU][row] will
+        contain a tuple representing the indices of the two motor units
+        for each given pair (reporter, test) and their corresponding 
+        deltaF value.
 
     See also
     --------
     - compute_svr : fit MU discharge rates with Support Vector Regression,
         nonlinear regression.
-
-    Warnings
-    --------
-    TODO  consider removing section from docstring while not implemented
 
     Examples
     --------
@@ -130,7 +129,7 @@ def compute_deltaf(
     # If less than 2 MUs, can not quantify deltaF
     if emgfile["NUMBER_OF_MUS"] < 2:
         dfret_ret = np.nan
-        mucombo_ret = np.nan*np.ones(1, 2)  # TODO this line is not working, please replace with nan or what appropriate
+        mucombo_ret = np.nan*np.ones([1, 2]) 
 
         delta_f = pd.DataFrame({'MU': mucombo_ret, 'dF': dfret_ret})
 
@@ -296,7 +295,7 @@ def compute_deltaf(
         controlmu.append(mucombo[-1][controlU-1])
         testmu.append(mucombo[-1][1-controlU//2])
 
-    if clean == "True":  # Remove values that dont meet exclusion criteria
+    if clean:  # Remove values that dont meet exclusion criteria
         rcrt_diff_bin = rcrt_diff > recruitment_difference_cutoff
         corr_bin = r_ret > corr_cutoff
         ctrl_mod_bin = ctrl_mod > controlunitmodulation_cutoff
