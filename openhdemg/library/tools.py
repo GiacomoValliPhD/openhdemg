@@ -294,8 +294,8 @@ def resize_emgfile(
     # Double check that start_, end_ are within the real range.
     if start_ < 0:
         start_ = 0
-    if end_ > emgfile["REF_SIGNAL"].shape[0]:
-        end_ = emgfile["REF_SIGNAL"].shape[0]
+    if end_ > emgfile["RAW_SIGNAL"].shape[0]:
+        end_ = emgfile["RAW_SIGNAL"].shape[0]
 
     # Create the object to store the resized emgfile.
     rs_emgfile = copy.deepcopy(emgfile)
