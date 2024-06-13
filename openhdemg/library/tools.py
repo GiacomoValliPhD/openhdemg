@@ -1250,10 +1250,6 @@ def compute_svr(
     --------
     - compute_deltaf : quantify delta F via paired motor unit analysis.
 
-    Warnings
-    --------
-    TODO consider removing section from docstring while not implemented
-
     Examples
     --------
     Quantify svr fits.
