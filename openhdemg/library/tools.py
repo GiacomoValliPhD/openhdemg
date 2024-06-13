@@ -1255,8 +1255,7 @@ def compute_svr(
     Quantify svr fits.
 
     >>> import openhdemg.library as emg
-    >>> import numpy as np
-    >>> import matplotlib.pyplot as plt
+    >>> import pandas as pd
     >>> emgfile = emg.emg_from_samplefile()
     >>> emgfile = emg.sort_mus(emgfile=emgfile)
     >>> svrfits = emg.compute_svr(emgfile)
