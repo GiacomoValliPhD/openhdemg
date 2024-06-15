@@ -1244,7 +1244,7 @@ def compute_svr(
     -------
     svrfits : pd.DataFrame
         A pd.DataFrame containing the smooth/continous MU discharge rates and
-        corresponding time vetors.
+        corresponding time vectors.
 
     See also
     --------
@@ -1323,6 +1323,7 @@ def compute_svr(
         bkpnt = mup[
             np.where((xdiff > (discontfiring_dur * emgfile["FSAMP"])))[0]
         ]
+        bkpnt = bkpnt[np.where(bkpnt!=mup[-1])]
 
         # Make predictions on the data
         if bkpnt.size > 0:  # If there is a point of discontinuity
