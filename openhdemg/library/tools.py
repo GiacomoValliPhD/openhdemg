@@ -1327,10 +1327,25 @@ def compute_svr(
 
         # Make predictions on the data
         if bkpnt.size > 0:  # If there is a point of discontinuity
-            if bkpnt[0] == mup[0]:
+            if bkpnt[0] == mup[0]:  # When first firing is discontinuity
                 smoothfit = np.nan*np.ones(1)
                 newtm = np.nan*np.ones(1)
                 bkpnt = bkpnt[1:]
+                tmptm = predtime[
+                    0: np.where(
+                        (bkpnt[0] >= predind[0:-1]) & (bkpnt[0] < predind[1:])
+                    )[0][0]
+                ]  # Break up time vector for first continous range of firing
+                smoothfit = np.append(smoothfit, svr.predict(tmptm))
+                # Predict with svr model
+                newtm = np.append(newtm, tmptm)  # Track new time vector
+                tmpind = predind[
+                    0: np.where(
+                        (bkpnt[0] >= predind[0:-1]) & (bkpnt[0] < predind[1:])
+                    )[0][0]
+                ]  # Sample vector of first continous range of firing
+                # Fill corresponding sample indices with svr fit
+                gen_svr[tmpind.astype(np.int64)] = svr.predict(tmptm)                
             else:
                 tmptm = predtime[
                     0: np.where(
