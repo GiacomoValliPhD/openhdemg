@@ -1293,7 +1293,7 @@ def compute_svr(
         # Time between discharges, will use for discontinuity calc
         xdiff = idr[mu].diff_mupulses[1:].values
         # Motor unit pulses, samples
-        mup = np.array(idr[mu].mupulses[1:])
+        mup = np.array(idr[mu].mupulses)
 
         # Defining weight vector. A scaling applied to the regularization
         # parameter, per sample.
@@ -1313,7 +1313,7 @@ def compute_svr(
         # Defining prediction vector
         # TODO need to add custom range.
         # From the second firing to the end of firing, in samples.
-        predind = np.arange(mup[0], mup[-1]+1)
+        predind = np.arange(mup[1], mup[-1]+1)
         predtime = (predind/emgfile["FSAMP"]).reshape(-1, 1)  # In time (s)
         # Initialise nan vector for tracking fits aligned in time. Usefull for
         # later quant metrics.
@@ -1330,22 +1330,7 @@ def compute_svr(
             if bkpnt[0] == mup[0]:  # When first firing is discontinuity
                 smoothfit = np.nan*np.ones(1)
                 newtm = np.nan*np.ones(1)
-                bkpnt = bkpnt[1:]
-                tmptm = predtime[
-                    0: np.where(
-                        (bkpnt[0] >= predind[0:-1]) & (bkpnt[0] < predind[1:])
-                    )[0][0]
-                ]  # Break up time vector for first continous range of firing
-                smoothfit = np.append(smoothfit, svr.predict(tmptm))
-                # Predict with svr model
-                newtm = np.append(newtm, tmptm)  # Track new time vector
-                tmpind = predind[
-                    0: np.where(
-                        (bkpnt[0] >= predind[0:-1]) & (bkpnt[0] < predind[1:])
-                    )[0][0]
-                ]  # Sample vector of first continous range of firing
-                # Fill corresponding sample indices with svr fit
-                gen_svr[tmpind.astype(np.int64)] = svr.predict(tmptm)                
+                bkpnt = bkpnt[1:]       
             else:
                 tmptm = predtime[
                     0: np.where(
