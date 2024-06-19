@@ -1,13 +1,12 @@
-# Copyright (C) 2023 Giacomo Valli, Paul Ritsche
+# Copyright (C) 2022 - 2024. The openhdemg community.
 
-# For the openhdemg version
 # To read the content of the README or description file
 from pathlib import Path
 
 # To install required dependencies
 from setuptools import setup
 
-import openhdemg as emg
+import openhdemg
 
 INSTALL_REQUIRES = [
     "customtkinter==5.2.1",
@@ -17,11 +16,10 @@ INSTALL_REQUIRES = [
     "openpyxl==3.1.2",
     "pandas==2.0.3",
     "pandastable==0.13.1",
-    "pyperclip==1.8.2",
-    # "pre-commit==3.7.0",
     "scipy==1.11.3",
     "seaborn==0.13.0",
-    "joblib==1.3.2",
+    "scikit-learn==1.5.0",
+    # "pre-commit==3.7.0",
 ]
 
 PACKAGES = [
@@ -69,7 +67,7 @@ if __name__ == "__main__":
             "Source Code": "https://github.com/GiacomoValliPhD/openhdemg",
             "Bug Tracker": "https://github.com/GiacomoValliPhD/openhdemg/issues",
         },
-        version=emg.__version__,
+        version=openhdemg.__version__,
         install_requires=INSTALL_REQUIRES,
         include_package_data=True,
         packages=PACKAGES,

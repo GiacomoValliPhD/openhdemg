@@ -83,6 +83,7 @@ nav:
     - openfiles: api_openfiles.md
     - plotemg: api_plotemg.md
     - analysis: api_analysis.md
+    - pic: api_pic.md
     - tools: api_tools.md
     - mathtools: api_mathtools.md
     - muap: api_muap.md

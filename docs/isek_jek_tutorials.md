@@ -26,7 +26,7 @@ You can download the sample files and the sample scripts [here](https://drive.go
 
 <br> <!-- links in HTML should be full links-->
 
-## 2023 ISEK Workshop
+## 2024 ISEK Workshop
 
 **Workshop: Simplified analysis of motor unit properties with *openhdemg*.**
 

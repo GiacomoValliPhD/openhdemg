@@ -10,6 +10,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
+from scipy.stats import iqr
+from sklearn.svm import SVR
 import warnings
 from openhdemg.library.mathtools import compute_sil
 
@@ -144,7 +146,7 @@ def create_binary_firings(emg_length, number_of_mus, mupulses):
     if not isinstance(mupulses, list):
         raise ValueError("mupulses is not a list of ndarrays")
 
-    # Initialize a pd.DataFrame with zeros
+    # Initialise a pd.DataFrame with zeros
     binary_MUs_firing = pd.DataFrame(
         np.zeros((emg_length, number_of_mus), dtype=int)
     )
@@ -292,8 +294,8 @@ def resize_emgfile(
     # Double check that start_, end_ are within the real range.
     if start_ < 0:
         start_ = 0
-    if end_ > emgfile["REF_SIGNAL"].shape[0]:
-        end_ = emgfile["REF_SIGNAL"].shape[0]
+    if end_ > emgfile["RAW_SIGNAL"].shape[0]:
+        end_ = emgfile["RAW_SIGNAL"].shape[0]
 
     # Create the object to store the resized emgfile.
     rs_emgfile = copy.deepcopy(emgfile)
@@ -1195,3 +1197,203 @@ def compute_rfd(
         rfd = rfd * conversion_val
 
     return rfd
+
+
+def compute_svr(
+    emgfile,
+    gammain=1/1.6,
+    regparam=1/0.370,
+    endpointweights_numpulses=5,
+    endpointweights_magnitude=5,
+    discontfiring_dur=1.0,
+):
+    """
+    Fit MU discharge rates with Support Vector Regression, nonlinear
+    regression.
+
+    Provides smooth and continous estimates of discharge rate useful for
+    quantification and visualisation. Suggested hyperparameters and framework
+    from Beauchamp et. al., 2022
+    https://doi.org/10.1088/1741-2552/ac4594
+
+    Author: James (Drew) Beauchamp
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+    gammain : float,  default 1/1.6
+        The kernel coefficient.
+    regparam : float,  default 1/0.370
+        The regularization parameter, must be positive.
+    endpointweights_numpulses : int, default 5
+        Number of discharge instances at the start and end of MU firing to
+        apply a weighting coefficient.
+    endpointweights_magnitude : int, default 5
+        The scaling factor applied to the number of pulses provided by
+        endpointweights_numpulses.
+        The scaling is applied to the regularization parameter, per sample.
+        Larger values force the classifier to put more emphasis on the number
+        of discharge instances at the start and end of firing provided by
+        endpointweights_numpulses.
+    discontfiring_dur : int, default 1
+        Duration of time in seconds that defines an instnance of discontinuous
+        firing. SVR fits will not be returned at points of discontinuity.
+
+    Returns
+    -------
+    svrfits : pd.DataFrame
+        A pd.DataFrame containing the smooth/continous MU discharge rates and
+        corresponding time vectors.
+
+    See also
+    --------
+    - compute_deltaf : quantify delta F via paired motor unit analysis.
+
+    Examples
+    --------
+    Quantify svr fits.
+
+    >>> import openhdemg.library as emg
+    >>> import pandas as pd
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> emgfile = emg.sort_mus(emgfile=emgfile)
+    >>> svrfits = emg.compute_svr(emgfile)
+
+    Quick plot showing the results.
+
+    >>> smoothfits = pd.DataFrame(svrfits["gensvr"]).transpose()
+    >>> emg.plot_smoothed_dr(
+    >>>     emgfile,
+    >>>     smoothfits=smoothfits,
+    >>>     munumber="all",
+    >>>     addidr=False,
+    >>>     stack=True,
+    >>>     addrefsig=True,
+    >>> )
+    """
+
+    # TODO input checking and edge cases
+    idr = compute_idr(emgfile)  # Calc IDR
+
+    svrfit_acm = []
+    svrtime_acm = []
+    gensvr_acm = []
+    for mu in range(len(idr)):  # For all MUs
+        # Train the model on the data.
+        # Time vector, removing first element.
+        xtmp = np.transpose([idr[mu].timesec[1:]])
+        # Discharge rates, removing first element, since DR has been assigned
+        # to second pulse.
+        ytmp = idr[mu].idr[1:].to_numpy()
+        # Time between discharges, will use for discontinuity calc
+        xdiff = idr[mu].diff_mupulses[1:].values
+        # Motor unit pulses, samples
+        mup = np.array(idr[mu].mupulses)
+
+        # Defining weight vector. A scaling applied to the regularization
+        # parameter, per sample.
+        smpwht = np.ones(len(ytmp))
+        smpwht[0:endpointweights_numpulses-1] = endpointweights_magnitude
+        smpwht[(len(ytmp)-(endpointweights_numpulses-1)):len(ytmp)] = endpointweights_magnitude
+
+        # Create an SVR model with a gausian kernel and supplied hyperparams.
+        # Origional hyperparameters from Beauchamp et. al., 2022:
+        # https://doi.org/10.1088/1741-2552/ac4594
+        svr = SVR(
+            kernel='rbf', gamma=gammain, C=np.abs(regparam),
+            epsilon=iqr(ytmp)/11,
+        )
+        svr.fit(xtmp, ytmp, sample_weight=smpwht)
+
+        # Defining prediction vector
+        # TODO need to add custom range.
+        # From the second firing to the end of firing, in samples.
+        predind = np.arange(mup[1], mup[-1]+1)
+        predtime = (predind/emgfile["FSAMP"]).reshape(-1, 1)  # In time (s)
+        # Initialise nan vector for tracking fits aligned in time. Usefull for
+        # later quant metrics.
+        gen_svr = np.nan*np.ones(emgfile["EMG_LENGTH"])
+
+        # Check for discontinous firing
+        bkpnt = mup[
+            np.where((xdiff > (discontfiring_dur * emgfile["FSAMP"])))[0]
+        ]
+        bkpnt = bkpnt[np.where(bkpnt != mup[-1])]
+
+        # Make predictions on the data
+        if bkpnt.size > 0:  # If there is a point of discontinuity
+            if bkpnt[0] == mup[0]:  # When first firing is discontinuity
+                smoothfit = np.nan*np.ones(1)
+                newtm = np.nan*np.ones(1)
+                bkpnt = bkpnt[1:]       
+            else:
+                tmptm = predtime[
+                    0: np.where(
+                        (bkpnt[0] >= predind[0:-1]) & (bkpnt[0] < predind[1:])
+                    )[0][0]
+                ]  # Break up time vector for first continous range of firing
+                smoothfit = svr.predict(tmptm)  # Predict with svr model
+                newtm = tmptm  # Track new time vector
+
+                tmpind = predind[
+                    0: np.where(
+                        (bkpnt[0] >= predind[0:-1]) & (bkpnt[0] < predind[1:])
+                    )[0][0]
+                ]  # Sample vector of first continous range of firing
+                # Fill corresponding sample indices with svr fit
+                gen_svr[tmpind.astype(np.int64)] = smoothfit
+            # Add last firing as discontinuity
+            bkpnt = np.append(bkpnt, mup[-1])
+            for ii in range(bkpnt.size-1):  # All instances of discontinuity
+                curind = np.where(
+                    (bkpnt[ii] >= predind[0:-1]) & (bkpnt[ii] < predind[1:])
+                )[0][0]  # Current index of discontinuity
+                nextind = np.where(
+                    (bkpnt[ii+1] >= predind[0:-1]) & (bkpnt[ii+1] <= predind[1:])
+                )[0][0]  # Next index of discontinuity
+
+                # MU firing before discontinuity
+                curmup = np.where(mup == bkpnt[ii])[0][0]
+                curind_nmup = np.where(
+                    (mup[curmup+1] >= predind[0:-1]) & (mup[curmup+1] <= predind[1:])
+                )[0][0]  # MU firing after discontinuity
+
+                # If the next discontinuity is the next MU firing, nan fill
+                if curind_nmup >= nextind:
+                    # Edge case NEED TO CHECK THE GREATER THAN CASE>> WHY TODO
+                    smoothfit = np.append(smoothfit, np.nan*np.ones(1))
+                    newtm = np.append(newtm, np.nan*np.ones(1))
+                else:  # Fit next continuous region of firing
+                    smoothfit = np.append(
+                        smoothfit,
+                        np.nan*np.ones(len(predtime[curind:curind_nmup])-2),
+                    )
+                    smoothfit = np.append(
+                        smoothfit, svr.predict(predtime[curind_nmup:nextind]),
+                    )
+                    newtm = np.append(
+                        newtm,
+                        np.nan*np.ones(len(predtime[curind:curind_nmup])-2),
+                    )
+                    newtm = np.append(newtm, predtime[curind_nmup:nextind])
+                    gen_svr[predind[curind_nmup:nextind]] = svr.predict(
+                        predtime[curind_nmup:nextind]
+                    )
+        else:
+            smoothfit = svr.predict(predtime)
+            newtm = predtime
+            gen_svr[predind] = smoothfit
+
+        # Append fits, new time vect, time aligned fits
+        svrfit_acm.append(smoothfit.copy())
+        svrtime_acm.append(newtm.copy())
+        gensvr_acm.append(gen_svr.copy())
+
+    svrfits = {
+        "svrfit": svrfit_acm,
+        "svrtime": svrtime_acm,
+        "gensvr": gensvr_acm,
+    }
+
+    return svrfits

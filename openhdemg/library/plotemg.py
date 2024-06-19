@@ -6,6 +6,7 @@ imported EMG file, the MUs properties or to save figures.
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+import numpy as np
 from openhdemg.library.tools import compute_idr
 from openhdemg.library.mathtools import min_max_scaling
 
@@ -148,6 +149,7 @@ def plot_emgsig(
         for count, thisChannel in enumerate(channels):
             # Normalise the series
             norm_raw = min_max_scaling(emgfile["RAW_SIGNAL"][thisChannel])
+            # TODO option to scale all the df or the single channel
             # Add 1 to the previous channel to avoid overlapping
             norm_raw = norm_raw + count
             plt.plot(x_axis, norm_raw)
@@ -851,8 +853,6 @@ def plot_idr(
     )
 
     # Check if we have a single MU or a list of MUs to plot.
-    # In the first case, the use of plt.figure has been preferred to
-    # plt.subplots for the implementation of the MUs cleaning.
     if isinstance(munumber, int):
         ax1 = sns.scatterplot(
             x=idr[munumber]["timesec" if timeinseconds else "mupulses"],
@@ -885,6 +885,8 @@ def plot_idr(
             ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
         elif len(munumber) == 1:
+            # TODO remove this part and check len before.
+            # See plot_smoothed_dr as a reference
             ax1 = sns.scatterplot(
                 x=idr[munumber[0]]["timesec" if timeinseconds else "mupulses"],
                 y=idr[munumber[0]]["idr"],
@@ -918,11 +920,252 @@ def plot_idr(
     return fig
 
 
+def plot_smoothed_dr(
+    emgfile,
+    smoothfits,
+    munumber="all",
+    addidr=True,
+    stack=True,
+    addrefsig=True,
+    timeinseconds=True,
+    figsize=[20, 15],
+    showimmediately=True,
+    tight_layout=True,
+):
+    """
+    Plot the smoothed discharge rate.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+    smoothfits : pd.DataFrame
+        Smoothed discharge rate estimates aligned in time. Columns should
+        contain the smoothed discharge rate for each MU.
+    munumber : str, int or list, default "all"
+
+        ``all``
+            IDR of all the MUs is plotted.
+
+        Otherwise, a single MU (int) or multiple MUs (list of int) can be
+        specified.
+        The list can be passed as a manually-written list or with:
+        munumber=[*range(0, 12)].
+        We need the " * " operator to unpack the results of range into a list.
+        munumber is expected to be with base 0 (i.e., the first MU in the file
+        is the number 0).
+    addidr : bool, default True
+        Whether to show also the IDR behind the smoothed DR line.
+    stack : bool, default True
+        Whether to stack multiple MUs. If False, all the MUs smoothed DR will
+        be plotted on the same line.
+    addrefsig : bool, default True
+        If True, the REF_SIGNAL is plotted in front of the MUs IDR with a
+        separated y-axes.
+    timeinseconds : bool, default True
+        Whether to show the time on the x-axes in seconds (True)
+        or in samples (False).
+    figsize : list, default [20, 15]
+        Size of the figure in centimeters [width, height].
+    showimmediately : bool, default True
+        If True (default), plt.show() is called and the figure showed to the
+        user.
+        It is useful to set it to False when calling the function from the GUI.
+    tight_layout : bool, default True
+        If True (default), the plt.tight_layout() is called and the figure's
+        layout is improved.
+        It is useful to set it to False when calling the function from the GUI.
+
+    Returns
+    -------
+    fig : pyplot `~.figure.Figure`
+
+    See also
+    --------
+    - compute_svr : Fit MU discharge rates with Support Vector Regression,
+        nonlinear regression.
+
+    Notes
+    -----
+    munumber = "all" corresponds to:
+    munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
+
+    Examples
+    --------
+    Smooth MUs DR using Support Vector Regression.
+
+    >>> import openhdemg.library as emg
+    >>> import pandas as pd
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> emgfile = emg.sort_mus(emgfile=emgfile)
+    >>> svrfits = emg.compute_svr(emgfile)
+
+    Plot the stacked smoothed DR of all the MUs and overlay the IDR and the
+    reference signal.
+
+    >>> smoothfits = pd.DataFrame(svrfits["gensvr"]).transpose()
+    >>> emg.plot_smoothed_dr(
+    >>>     emgfile,
+    >>>     smoothfits=smoothfits,
+    >>>     munumber="all",
+    >>>     addidr=True,
+    >>>     stack=True,
+    >>>     addrefsig=True,
+    >>> )
+    """
+
+    # Compute the IDR
+    idr = compute_idr(emgfile=emgfile)
+
+    if addrefsig:
+        if not isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
+            raise TypeError(
+                "REF_SIGNAL is probably absent or it is not contained in a dataframe"
+            )
+
+    # Check if all the MUs have to be plotted
+    if isinstance(munumber, list):
+        if len(munumber) == 1:  # Manage exception of single MU
+            munumber = munumber[0]
+    elif isinstance(munumber, str):
+        if emgfile["NUMBER_OF_MUS"] == 1:  # Manage exception of single MU
+            munumber = 0
+        else:
+            munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
+
+    # Check smoothfits type
+    if not isinstance(smoothfits, pd.DataFrame):
+        raise TypeError("smoothfits must be a pd.DataFrame")
+
+    # Use the subplot function to allow for the use of twinx()
+    fig, ax1 = plt.subplots(
+        figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
+        num="Smoothed DR",
+    )
+
+    # Check if we have a single MU or a list of MUs to plot.
+    if isinstance(munumber, int):
+        # Plot IDR
+        if addidr:
+            sns.scatterplot(
+                x=idr[munumber]["timesec" if timeinseconds else "mupulses"],
+                y=idr[munumber]["idr"],
+                ax=ax1,
+                alpha=0.4,
+            )  # sns.scatterplot breaks if x or y are nan?
+
+        # Plot smoothed DR
+        if timeinseconds:
+            x_smooth = np.arange(len(smoothfits[munumber])) / emgfile["FSAMP"]
+        else:
+            x_smooth = np.arange(len(smoothfits[munumber]))
+        ax1.plot(x_smooth, smoothfits[munumber], linewidth=2)
+
+        # Labels
+        ax1.set_ylabel(
+            "MU {} (PPS)".format(munumber)
+        )  # Useful because if the MU is empty it won't show the channel number
+        ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+
+    elif isinstance(munumber, list) and stack:
+        for count, thisMU in enumerate(munumber):
+            # Plot IDR
+            if addidr:
+                # Normalise the IDR series and add 1 to the previous MUs to
+                # avoid overlapping of the MUs.
+                norm_idr = min_max_scaling(idr[thisMU]["idr"]) + count
+                sns.scatterplot(
+                    x=idr[thisMU]["timesec" if timeinseconds else "mupulses"],
+                    y=norm_idr,
+                    ax=ax1,
+                    alpha=0.4,
+                )
+
+            # Plot smoothed DR
+            if timeinseconds:
+                x_smooth = np.arange(
+                    len(smoothfits[thisMU])
+                ) / emgfile["FSAMP"]
+            else:
+                x_smooth = np.arange(len(smoothfits[thisMU]))
+
+            if addidr:
+                # Scale factor to match smoothed DR and IDR when stacked
+                delta = (
+                    (smoothfits[thisMU].max() - smoothfits[thisMU].min()) /
+                    (idr[thisMU]["idr"].max() - idr[thisMU]["idr"].min())
+                )
+                delta_min = (
+                    (smoothfits[thisMU].min() - idr[thisMU]["idr"].min()) /
+                    (idr[thisMU]["idr"].max() - idr[thisMU]["idr"].min())
+                )
+                norm_fit = min_max_scaling(smoothfits[thisMU])
+                norm_fit = norm_fit * delta + delta_min + count
+                ax1.plot(x_smooth, norm_fit, linewidth=2)
+            else:
+                norm_fit = min_max_scaling(smoothfits[thisMU]) + count
+                ax1.plot(x_smooth, norm_fit, linewidth=2)
+
+        # Ensure correct and complete ticks on the left y axis
+        ax1.set_yticks([*range(len(munumber))])
+        ax1.set_yticklabels([str(mu) for mu in munumber])
+        # Set axes labels
+        ax1.set_ylabel("Motor units")
+        ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+
+    elif isinstance(munumber, list) and not stack:
+        for count, thisMU in enumerate(munumber):
+            # Plot IDR
+            if addidr:
+                sns.scatterplot(
+                    x=idr[thisMU]["timesec" if timeinseconds else "mupulses"],
+                    y=idr[thisMU]["idr"],
+                    ax=ax1,
+                    alpha=0.4,
+                )
+
+            # Plot smoothed DR
+            if timeinseconds:
+                x_smooth = np.arange(
+                    len(smoothfits[thisMU])
+                ) / emgfile["FSAMP"]
+            else:
+                x_smooth = np.arange(len(smoothfits[thisMU]))
+            ax1.plot(x_smooth, smoothfits[thisMU], linewidth=2)
+
+        # Set axes labels
+        ax1.set_ylabel("Discharge rate (PPS)")
+        ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+
+    else:
+        raise TypeError(
+            "While calling the plot_idr function, you should pass an integer, a list or 'all' to munumber"
+        )
+
+    if addrefsig:
+        ax2 = ax1.twinx()
+        # Plot the ref signal
+        xref = (
+            emgfile["REF_SIGNAL"].index / emgfile["FSAMP"]
+            if timeinseconds
+            else emgfile["REF_SIGNAL"].index
+        )
+        sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
+        ax2.set_ylabel("MVC")
+
+    showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
+    if showimmediately:
+        plt.show()
+
+    return fig
+
+
 def plot_muaps(
     sta_dict,
     title="MUAPs from STA",
     figsize=[20, 15],
     showimmediately=True,
+    tight_layout=False,
 ):
     """
     Plot MUAPs obtained from STA from one or multiple MUs.
@@ -942,6 +1185,11 @@ def plot_muaps(
         If True (default), plt.show() is called and the figure showed to the
         user.
         It is useful to set it to False when calling the function from the GUI.
+    tight_layout : bool, default False
+        If True (default), the plt.tight_layout() is called and the figure's
+        layout is improved.
+        It is useful to set it to False when calling the function from the GUI
+        or if the final layout is not correct.
 
     Returns
     -------
@@ -1088,7 +1336,7 @@ def plot_muaps(
                 "Unacceptable number of rows and columns to plot"
             )
 
-        showgoodlayout(tight_layout=False, despined=True)
+        showgoodlayout(tight_layout=tight_layout, despined=True)
         if showimmediately:
             plt.show()
 
@@ -1328,6 +1576,7 @@ def plot_muaps_for_cv(
     title="MUAPs for CV",
     figsize=[20, 15],
     showimmediately=True,
+    tight_layout=False,
 ):
     """
     Visualise MUAPs on which to calculate MUs CV.
@@ -1351,6 +1600,11 @@ def plot_muaps_for_cv(
         If True (default), plt.show() is called and the figure showed to the
         user.
         It is useful to set it to False when calling the function from the GUI.
+    tight_layout : bool, default False
+        If True (default), the plt.tight_layout() is called and the figure's
+        layout is improved.
+        It is useful to set it to False when calling the function from the GUI
+        or if the final layout is not correct.
 
     Returns
     -------

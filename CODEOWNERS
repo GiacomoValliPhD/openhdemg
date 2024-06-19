@@ -7,3 +7,8 @@
 # When there are changes in the GUI folder, @GiacomoValliPhD
 # and @PaulRitsche will be requested for review.
 /openhdemg/gui/ @GiacomoValliPhD @PaulRitsche
+
+# When there are changes in the pic module, @GiacomoValliPhD
+# and @JABeauchamp will be requested for review.
+/openhdemg/library/pic.py @GiacomoValliPhD @JABeauchamp
+/openhdemg/library/tools.py @GiacomoValliPhD @JABeauchamp

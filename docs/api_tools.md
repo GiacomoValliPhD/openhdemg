@@ -104,3 +104,10 @@ shortcuts necessary to operate with the HD-EMG recordings.
         show_root_heading: True
 
 <br/>
+
+::: openhdemg.library.tools.compute_svr
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>

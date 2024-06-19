@@ -196,6 +196,7 @@ def compute_dr(
     start_steady=-1,
     end_steady=-1,
     event_="rec_derec_steady",
+    idr_range=None,
 ):
     """
     Calculate the discharge rate (DR).
@@ -233,6 +234,12 @@ def compute_dr(
 
         ``steady``
             DR is calculated during the steady-state phase.
+    idr_range : None or list, default None
+        If idr_range is a list [lower_limit, upper_limit], only firings with an
+        instantaneous discharge rate (IDR) within the limits are used for DR
+        calculation. lower_limit and upper_limit should be in pulses per
+        second. See examples section.
+        If idr_range is None, all the firings are used for DR calculation.
 
     Returns
     -------
@@ -300,6 +307,21 @@ def compute_dr(
     1        14.440561      10.019572      11.822081  11.683134
     2         7.293547       5.846093       7.589531   8.055731
     3        13.289651       9.694317      11.613640  11.109796
+
+    The firings used for DR calculation can be filtered to avoid too closed
+    firings (e.g., doublets) or intervals of inactivity.
+
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> idr = emg.compute_dr(
+    ...     emgfile, start_steady=15000, end_steady=51000, idr_range=[1, 50],
+    ... )
+    >>> idr
+         DR_rec  DR_derec ... DR_end_steady  DR_all_steady     DR_all
+    0  3.341579  4.606835 ...      8.506270       7.895837   7.657269
+    1  5.701081  4.662196 ...      6.271989       6.916566   6.814687
+    2  5.699017  3.691367 ...      7.221309       8.183408   7.949294
+    3  7.548770  5.449581 ...     10.399834      11.164994  10.693076
+    4  8.344515  5.333535 ...      9.694317      10.750855  10.543011
     """
 
     # Check that all the inputs are correct
@@ -323,6 +345,23 @@ def compute_dr(
         )
 
     idr = compute_idr(emgfile=emgfile)
+
+    # Filter firings outside the idr_range, if required
+    if idr_range is not None:
+        if not isinstance(idr_range, list):
+            raise ValueError(
+                "idr_range can be None or a list of 2 numbers. " +
+                f"A{type(idr_range)} was passed instead."
+            )
+        else:
+            if len(idr_range) != 2:
+                raise ValueError(
+                    "idr_range can be None or a list of 2 numbers. " +
+                    f"The list contains {len(idr_range)} numbers instead."
+                )
+        for mu in idr.keys():
+            idr[mu]["idr"] = idr[mu]["idr"][idr[mu]["idr"] > idr_range[0]]
+            idr[mu]["idr"] = idr[mu]["idr"][idr[mu]["idr"] < idr_range[1]]
 
     # Check if we need to manually select the area for the steady-state phase
     title = (
@@ -457,6 +496,7 @@ def basic_mus_properties(
     n_firings_steady=10,
     start_steady=-1,
     end_steady=-1,
+    idr_range=None,
     accuracy="default",
     ignore_negative_ipts=False,
     constrain_pulses=[True, 3],
@@ -496,6 +536,13 @@ def basic_mus_properties(
         The start and end point (in samples) of the steady-state phase.
         If < 0 (default), the user will need to manually select the start and
         end of the steady-state phase.
+    idr_range : None or list, default None
+        If idr_range is a list [lower_limit, upper_limit], only firings with an
+        instantaneous discharge rate (IDR) within the limits are used for DR
+        and coefficient of variation of interspike interval (COVisi)
+        calculation. lower_limit and upper_limit should be in pulses per
+        second. See compute_dr() examples section.
+        If idr_range is None, all the firings are used for DR calculation.
     accuracy : str {"default", "SIL", "PNR", "SIL_PNR"}, default "default"
         The accuracy measure to return.
 
@@ -732,6 +779,7 @@ def basic_mus_properties(
         n_firings_steady=n_firings_steady,
         start_steady=start_steady,
         end_steady=end_steady,
+        idr_range=idr_range,
     )
     exportable_df = pd.concat([exportable_df, mus_dr], axis=1)
 
@@ -742,6 +790,7 @@ def basic_mus_properties(
         start_steady=start_steady,
         end_steady=end_steady,
         event_="steady",
+        idr_range=idr_range,
     )
     exportable_df = pd.concat([exportable_df, covisi], axis=1)
 
@@ -763,6 +812,7 @@ def compute_covisi(
     start_steady=-1,
     end_steady=-1,
     event_="rec_derec_steady",
+    idr_range=None,
     single_mu_number=-1,
 ):
     """
@@ -800,6 +850,12 @@ def compute_covisi(
 
         ``steady``
             covisi is calculated during the steady-state phase.
+    idr_range : None or list, default None
+        If idr_range is a list [lower_limit, upper_limit], only firings with an
+        instantaneous discharge rate (IDR) within the limits are used for
+        COVisi calculation. lower_limit and upper_limit should be in pulses per
+        second. See compute_dr() examples section.
+        If idr_range is None, all the firings are used for DR calculation.
     single_mu_number : int, default -1
         Number of the specific MU to compute the COVisi.
         If single_mu_number >= 0, only the COVisi of the entire contraction
@@ -883,6 +939,29 @@ def compute_covisi(
 
     # We use the idr pd.DataFrame to calculate the COVisi
     idr = compute_idr(emgfile=emgfile)
+
+    # Filter firings outside the idr_range, if required
+    if idr_range is not None:
+        if not isinstance(idr_range, list):
+            raise ValueError(
+                "idr_range can be None or a list of 2 numbers. " +
+                f"A{type(idr_range)} was passed instead."
+            )
+        else:
+            if len(idr_range) != 2:
+                raise ValueError(
+                    "idr_range can be None or a list of 2 numbers. " +
+                    f"The list contains {len(idr_range)} numbers instead."
+                )
+        idr_range[0] = emgfile["FSAMP"] / idr_range[0]
+        idr_range[1] = emgfile["FSAMP"] / idr_range[1]
+        for mu in idr.keys():
+            idr[mu]["diff_mupulses"] = idr[mu]["diff_mupulses"][
+                idr[mu]["diff_mupulses"] < idr_range[0]
+            ]
+            idr[mu]["diff_mupulses"] = idr[mu]["diff_mupulses"][
+                idr[mu]["diff_mupulses"] > idr_range[1]
+            ]
 
     # Check if we need to analyse all the MUs or a single MU
     if single_mu_number < 0:
@@ -981,6 +1060,7 @@ def compute_drvariability(
     start_steady=-1,
     end_steady=-1,
     event_="rec_derec_steady",
+    idr_range=None,
 ):
     """
     Calculate the DR variability.
@@ -1018,6 +1098,12 @@ def compute_drvariability(
 
         ``steady``
             DR variability is calculated during the steady-state phase.
+    idr_range : None or list, default None
+        If idr_range is a list [lower_limit, upper_limit], only firings with an
+        instantaneous discharge rate (IDR) within the limits are used for DR
+        variability calculation. lower_limit and upper_limit should be in
+        pulses per second. See compute_dr() examples section.
+        If idr_range is None, all the firings are used for DR calculation.
 
     Returns
     -------
@@ -1089,6 +1175,23 @@ def compute_drvariability(
 
     # We use the idr pd.DataFrame to calculate the COVisi
     idr = compute_idr(emgfile=emgfile)
+
+    # Filter firings outside the idr_range, if required
+    if idr_range is not None:
+        if not isinstance(idr_range, list):
+            raise ValueError(
+                "idr_range can be None or a list of 2 numbers. " +
+                f"A{type(idr_range)} was passed instead."
+            )
+        else:
+            if len(idr_range) != 2:
+                raise ValueError(
+                    "idr_range can be None or a list of 2 numbers. " +
+                    f"The list contains {len(idr_range)} numbers instead."
+                )
+        for mu in idr.keys():
+            idr[mu]["idr"] = idr[mu]["idr"][idr[mu]["idr"] > idr_range[0]]
+            idr[mu]["idr"] = idr[mu]["idr"][idr[mu]["idr"] < idr_range[1]]
 
     # Check if we need to manually select the area for the steady-state phase
     if event_ == "rec_derec_steady" or event_ == "steady":

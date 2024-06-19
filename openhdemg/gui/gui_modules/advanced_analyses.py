@@ -101,6 +101,10 @@ class AdvancedAnalysis:
         self.filter_adv = BooleanVar()
         self.show_adv = BooleanVar()
         self.which_adv = StringVar()
+        self.average_method_adv = StringVar()
+        self.smoothing_method_adv = StringVar()
+        self.normalisation_adv = StringVar()
+        self.clean_adv = StringVar()  # TODO this may become a bool
         self.emgfile1 = {}
         self.emgfile2 = {}
         self.extension_factor_adv = StringVar()
@@ -109,27 +113,6 @@ class AdvancedAnalysis:
         self.parent = parent
         self.parent.load_settings()
 
-        # Disable config for DELSYS files
-        try:
-            if self.parent.resdict["SOURCE"] == "DELSYS":
-                show_error_dialog(
-                    parent=self,
-                    error=None,
-                    solution=str(
-                        "Advanced Tools for Delsys are only accessible from "
-                        + "the library."
-                    ),
-                )
-                return
-        except AttributeError:
-            pass  # Allow to open advanced tools even if no file is loaded
-        except Exception as e:
-            show_error_dialog(
-                parent=self, error=e,
-                solution=str("An unexpected error occurred."),
-            )
-            return
-
         # Open window
         self.a_window = ctk.CTkToplevel(fg_color="LightBlue4")
         self.a_window.title("Advanced Tools Window")
@@ -137,7 +120,8 @@ class AdvancedAnalysis:
         # Set window icon
         head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         iconpath = head_path + "/gui_files/Icon_transp.ico"
-        self.a_window.iconbitmap(default=iconpath)
+        self.a_window.iconbitmap(iconpath)
+
         if platform.startswith("win"):
             self.a_window.after(200, lambda: self.a_window.iconbitmap(iconpath))
 
@@ -170,14 +154,16 @@ class AdvancedAnalysis:
             "Motor Unit Tracking",
             "Duplicate Removal",
             "Conduction Velocity",
+            "Persistent Inward Currents",
         )
         self.advanced_method = StringVar()
         adv_box = ctk.CTkComboBox(
             self.a_window,
-            width=200,
+            width=260,
             variable=self.advanced_method,
             values=adv_box_values,
             state="readonly",
+            command=self.enable_disable_a_window_elements
         )
         adv_box.grid(row=2, column=1, sticky=(W, E))
         self.advanced_method.set("Motor Unit Tracking")
@@ -188,14 +174,14 @@ class AdvancedAnalysis:
             font=("Segoe UI", 18, "bold"),
         ).grid(row=3, column=0, sticky=(W, E))
         self.mat_orientation_adv = StringVar()
-        orientation = ctk.CTkComboBox(
+        self.orientation_combobox = ctk.CTkComboBox(
             self.a_window,
-            width=100,
+            width=260,
             variable=self.mat_orientation_adv,
             values=("0", "180"),
             state="readonly",
         )
-        orientation.grid(row=3, column=1, sticky=(W, E))
+        self.orientation_combobox.grid(row=3, column=1, sticky=(W, E))
         self.mat_orientation_adv.set("180")
 
         # Matrix code
@@ -210,14 +196,14 @@ class AdvancedAnalysis:
             "GR04MM1305",
             "GR10MM0808",
         )
-        matrix_code = ctk.CTkComboBox(
+        self.matrix_code_combobox = ctk.CTkComboBox(
             self.a_window,
-            width=150,
+            width=260,
             variable=self.mat_code_adv,
             values=matrix_code_vals,
             state="readonly",
         )
-        matrix_code.grid(row=4, column=1, sticky=(W, E))
+        self.matrix_code_combobox.grid(row=4, column=1, sticky=(W, E))
         self.mat_code_adv.set("GR08MM1305")
 
         # Trace variable for updating window
@@ -240,8 +226,37 @@ class AdvancedAnalysis:
         for child in self.a_window.winfo_children():
             child.grid_configure(padx=5, pady=5)
 
+        # Check emgfile source and adjust available functionalities
+        try:
+            if self.parent.resdict["SOURCE"] == "DELSYS":
+                new_values = ("Persistent Inward Currents", )
+                adv_box.configure(values=new_values)
+                self.advanced_method.set("Persistent Inward Currents")
+                self.enable_disable_a_window_elements(None)
+        except AttributeError:
+            pass  # Allow to open advanced tools even if no file is loaded
+        except Exception as e:
+            show_error_dialog(
+                parent=self, error=e,
+                solution=str("An unexpected error occurred."),
+            )
+            return
+
     # -----------------------------------------------------------------------------------------------
     # Advanced Analysis functionalities
+
+    def enable_disable_a_window_elements(self, _):
+        """
+        Enable or disable comboboxes in a_window depending on the value of
+        self.advanced_method.
+        """
+
+        if self.advanced_method.get() == "Persistent Inward Currents":
+            self.orientation_combobox.configure(state="disabled")
+            self.matrix_code_combobox.configure(state="disabled")
+        else:
+            self.orientation_combobox.configure(state="readonly")
+            self.matrix_code_combobox.configure(state="readonly")
 
     def on_matrix_none_adv(self, *args):
         """
@@ -303,7 +318,8 @@ class AdvancedAnalysis:
         depending on the advanced analysis option chosen by the user. It
         dynamically creates GUI elements like dropdowns, buttons, and
         checkboxes specific to the selected analysis tool, such as 'Motor Unit
-        Tracking', 'Conduction Velocity', or 'Duplicate Removal'.
+        Tracking', 'Conduction Velocity', 'Duplicate Removal' or 'Persistent
+        Inward Currents'.
 
         Raises
         ------
@@ -327,7 +343,7 @@ class AdvancedAnalysis:
         # Set window icon
         head_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         iconpath = head_path + "/gui_files/Icon_transp.ico"
-        self.head.iconbitmap(default=iconpath)
+        self.head.iconbitmap(iconpath)
         if platform.startswith("win"):
             self.head.after(200, lambda: self.head.iconbitmap(iconpath))
 
@@ -343,7 +359,7 @@ class AdvancedAnalysis:
             self.head.rowconfigure(row, weight=1)
 
         # Specify Signal
-        signal_value = ("OTB", "DEMUSE", "OPENHDEMG", "CUSTOMCSV")
+        signal_value = ("OPENHDEMG", "DEMUSE", "OTB", "CUSTOMCSV")
         signal_entry = ctk.CTkComboBox(
             self.head,
             width=150,
@@ -471,6 +487,15 @@ class AdvancedAnalysis:
         for child in self.head.winfo_children():
             child.grid_configure(padx=5, pady=5)
 
+        # Add description for the show_checkbox for Motor Unit Tracking
+        if self.advanced_method.get() == "Motor Unit Tracking":
+            description_label = ctk.CTkLabel(
+                self.head,
+                text="Leave Show off if using \n the tracking GUI",
+                font=("Segoe UI", 10.5),
+            )
+            description_label.grid(column=0, row=14, pady=(0, 4))
+
         # Add Which widget and update the track button
         # to match functionalities required for duplicate removal
         if self.advanced_method.get() == "Duplicate Removal":
@@ -502,6 +527,9 @@ class AdvancedAnalysis:
                 # Destroy unnecessary pop-ups
                 self.head.destroy()
                 self.a_window.destroy()
+
+                # Reload settings
+                self.parent.load_settings()
 
                 if self.mat_code_adv.get() == "None":
 
@@ -561,6 +589,7 @@ class AdvancedAnalysis:
                     n_firings=self.parent.settings.MUcv_gui__n_firings,
                     muaps_timewindow=self.parent.settings.MUcv_gui__muaps_timewindow,
                     figsize=self.parent.settings.MUcv_gui__figsize,
+                    csv_separator=self.parent.settings.MUcv_gui__csv_separator,
                 )
 
             except AttributeError as e:
@@ -585,8 +614,121 @@ class AdvancedAnalysis:
                 )
                 self.head.destroy()
 
+        # TODO better to do specific windows rather than modifying a default
+        if self.advanced_method.get() == "Persistent Inward Currents":
+            # Create appropriate widgets
+            for widget in self.head.winfo_children():
+                widget.destroy()
+
+            r = 0
+            # Smoothing Method label
+            smoothing_method_label = ctk.CTkLabel(
+                self.head, text="Smoothing Method:",
+                font=("Segoe UI", 18, "bold"),
+            )
+            smoothing_method_label.grid(column=0, row=r)
+            # Combobox for Smoothing Method
+            smoothing_method_combobox = ctk.CTkComboBox(
+                self.head,
+                values=("Support Vector Regression",),
+                variable=self.smoothing_method_adv,
+                state="disabled",
+                width=260,
+            )
+            smoothing_method_combobox.grid(column=1, row=r)
+            self.smoothing_method_adv.set("Support Vector Regression")
+
+            r += 1
+            # Average Method label
+            average_method_label = ctk.CTkLabel(
+                self.head, text="Average Method:",
+                font=("Segoe UI", 18, "bold"),
+            )
+            average_method_label.grid(column=0, row=r)
+            # Combobox for Average Method
+            average_method_combobox = ctk.CTkComboBox(
+                self.head,
+                values=("test_unit_average", "all"),
+                variable=self.average_method_adv,
+                state="readonly",
+                width=260,
+            )
+            average_method_combobox.grid(column=1, row=r)
+            self.average_method_adv.set("test_unit_average")
+
+            r += 1
+            # Normalisation label
+            normalisation_label = ctk.CTkLabel(
+                self.head, text="Normalisation:",
+                font=("Segoe UI", 18, "bold"),
+            )
+            normalisation_label.grid(column=0, row=r)
+            # Combobox for normalisation_label
+            normalisation_combobox = ctk.CTkComboBox(
+                self.head,
+                values=("False", "ctrl_max_desc"),
+                variable=self.normalisation_adv,
+                state="readonly",
+                width=260,
+            )
+            normalisation_combobox.grid(column=1, row=r)
+            self.normalisation_adv.set("False")
+
+            r += 1
+            # clean label  # TODO this may become a bool
+            clean_label = ctk.CTkLabel(
+                self.head, text="Clean:",
+                font=("Segoe UI", 18, "bold"),
+            )
+            clean_label.grid(column=0, row=r)
+            # Combobox for normalisation_label
+            clean_combobox = ctk.CTkComboBox(
+                    self.head,
+                    values=("True", "False"),
+                    variable=self.clean_adv,
+                    state="readonly",
+                    width=260,
+                )
+            clean_combobox.grid(column=1, row=r)
+            self.clean_adv.set("True")
+
+            r += 1
+            text = (
+                "Sort MUs based on recruitment order before PICs estimation." +
+                "\nThis can be done in the main window."
+            )
+            description_label = ctk.CTkLabel(
+                self.head,
+                text=text,
+                font=("Segoe UI", 10.5),
+            )
+            description_label.grid(column=1, row=r, pady=(5, 0))
+
+            r += 1
+            # Add button to execute MU tracking
+            compute_pic_button = ctk.CTkButton(
+                self.head,
+                text="Compute PIC",
+                command=self.compute_pic,
+            )
+            compute_pic_button.grid(
+                column=0, row=14, columnspan=2, sticky=(W, E),
+            )
+
+            # Add padding
+            for child in self.head.winfo_children():
+                child.grid_configure(padx=5, pady=5)
+
+            # Configure weights
+            for row in range(r):
+                self.head.rowconfigure(row, weight=1)
+            for column in range(4):
+                self.head.columnconfigure(column, weight=1)
+
         # Destroy first window to avoid too many pop-ups
-        self.a_window.withdraw()  # TODO check for reference as destroy will evoke tcl error upon continuing, whereas withdraw creates issue when closing.
+        self.a_window.withdraw()
+        # TODO check for reference as destroy will evoke tcl error upon
+        # continuing, whereas withdraw creates issue when closing.
 
     ### Define function for advanced analysis tools
     def open_emgfile1(self):
@@ -768,7 +910,7 @@ class AdvancedAnalysis:
         openhdemg.tracking()
         """
 
-        # Reload settings for tracking
+        # Reload settings for tracking and duplicates removal
         self.parent.load_settings()
 
         try:
@@ -804,26 +946,31 @@ class AdvancedAnalysis:
                 exclude_belowthreshold=self.exclude_thres.get(),
                 filter=self.filter_adv.get(),
                 show=self.show_adv.get(),
+                gui=self.parent.settings.tracking__gui,
+                gui_addrefsig=self.parent.settings.tracking__gui_addrefsig,
+                gui_csv_separator=self.parent.settings.tracking__gui_csv_separator,
             )
 
-            # Add result terminal
-            track_terminal = ttk.LabelFrame(
-                self.head, text="MUs Tracking Result", height=100,
-                relief="ridge",
-            )
-            track_terminal.grid(
-                column=2,
-                row=0,
-                columnspan=2,
-                rowspan=14,
-                pady=8,
-                padx=10,
-                sticky=(N, S, W, E),
-            )
+            # Add result terminal, only if tracking__gui=False to avoid
+            # uninterrupted processes.
+            if not self.parent.settings.tracking__gui:
+                track_terminal = ttk.LabelFrame(
+                    self.head, text="MUs Tracking Results", height=100,
+                    relief="ridge",
+                )
+                track_terminal.grid(
+                    column=2,
+                    row=0,
+                    columnspan=2,
+                    rowspan=14,
+                    pady=8,
+                    padx=10,
+                    sticky=(N, S, W, E),
+                )
 
-            # Add table containing results to the label frame
-            track_table = Table(track_terminal, dataframe=tracking_res)
-            track_table.show()
+                # Add table containing results to the label frame
+                track_table = Table(track_terminal, dataframe=tracking_res)
+                track_table.show()
 
         except AttributeError as e:
             show_error_dialog(
@@ -905,6 +1052,7 @@ class AdvancedAnalysis:
                 custom_sorting_order=self.parent.settings.custom_sorting_order,
                 filter=self.filter_adv.get(),
                 show=self.show_adv.get(),
+                gui=False,
                 which=self.which_adv.get(),
             )
 
@@ -943,3 +1091,81 @@ class AdvancedAnalysis:
                     + "\n - custom_sorting_order in settings"
                 ),
             )
+
+    def compute_pic(self):
+        try:
+            # Reload settings
+            self.parent.load_settings()
+
+            # Check that at least 1-2 MU is present, compute PICs and show results in the terminal
+            if self.parent.resdict["NUMBER_OF_MUS"] < 2:
+                show_error_dialog(
+                    parent=self,
+                    error=None,
+                    solution=str(
+                        "Not enough MUs for PICs estimation."
+                    ),
+                )
+                return
+
+            # Get smoothed DR
+            print("\n-----------------------------\nDR smoothing in progress")
+            if self.smoothing_method_adv.get() == "Support Vector Regression":
+                svrfits = openhdemg.compute_svr(
+                    emgfile=self.parent.resdict,
+                    gammain=self.parent.settings.compute_svr__gammain,
+                    regparam=self.parent.settings.compute_svr__regparam,
+                    endpointweights_numpulses=self.parent.settings.compute_svr__endpointweights_numpulses,
+                    endpointweights_magnitude=self.parent.settings.compute_svr__endpointweights_magnitude,
+                    discontfiring_dur=self.parent.settings.compute_svr__discontfiring_dur,
+                )
+            else:
+                pass  # TODO to implement
+
+            print(
+                "-----------------------------\nDeltaF estimation in progress"
+            )
+            delta_f = openhdemg.compute_deltaf(
+                emgfile=self.parent.resdict,
+                smoothfits=svrfits["gensvr"],
+                average_method=self.average_method_adv.get(),
+                normalisation=self.normalisation_adv.get(),
+                recruitment_difference_cutoff=self.parent.settings.compute_deltaf__recruitment_difference_cutoff,
+                corr_cutoff=self.parent.settings.compute_deltaf__corr_cutoff,
+                controlunitmodulation_cutoff=self.parent.settings.compute_deltaf__controlunitmodulation_cutoff,
+                clean=self.clean_adv.get(),
+            )
+            print(
+                "-----------------------------\nDeltaF estimation finished"
+                + "\n-----------------------------\n"
+            )
+
+            # Add results terminal
+            track_terminal = ttk.LabelFrame(
+                self.head, text="MUs PICs Results", height=100, width=100,
+                relief="ridge",
+            )
+            track_terminal.grid(
+                column=2,
+                row=0,
+                columnspan=2,
+                rowspan=15,
+                pady=8,
+                padx=10,
+                sticky=(N, S, W, E),
+            )
+
+            # Add table containing results to the label frame
+            track_table = Table(track_terminal, dataframe=delta_f)
+            track_table.show()
+
+        except AttributeError as e:
+            show_error_dialog(
+                parent=self,
+                error=e,
+                solution=str(
+                    "Please make sure to load a file in the main window "
+                    + "for Persistent Inward Currents estimation."
+                ),
+            )
+            self.head.destroy()

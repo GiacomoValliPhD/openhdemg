@@ -8,6 +8,10 @@ Accessing these GUI settings is simple: just click on the Gear icon located at t
 
 Upon clicking the settings icon, a Python file will open in your default text editor. Here, you'll be able to modify the settings according to your requirements.
 
+Always remember to **save the Python settings file after changing the variables**, or the changes will not be effective.
+
+If the Python file does not open, please read the [Troubleshooting section](#troubleshooting).
+
 ## Modify GUI settings
 
 The GUI settings file (named *settings.py*) is organised into distinct topic sections.
@@ -18,7 +22,7 @@ All the variables that can be modified are labelled as:
 
 In this way, the values that each variable can assume can be discovered from the API section of this website by navigating into the topic, then into the Name of the function and then looking at the specific variable.
 
-The variables that can be modified from the GUI settings, as well as their values, can differ between different *openhdemg* releases. Therefore, the user is always encouraged to check the specifics APIs, and not to rely on this guide, which only serves didactical purposes.
+**The variables that can be modified from the GUI settings, as well as their values, can differ between different *openhdemg* releases. Therefore, the user is always encouraged to check the specifics APIs, and not to rely on this guide, which only serves didactical purposes.**
 
 ### openfiles
 
@@ -88,6 +92,22 @@ resize_emgfile__ignore_negative_ipts = False
 ```
 
 The corresponding APIs for the function *resize_emgfile* can be accessed [here](api_tools.md/#openhdemg.library.tools.resize_emgfile).
+
+### pic
+
+The section named *pic* controls the Persistent Inward Currents estimation.
+
+The API section for this topic is [here](api_pic.md).
+
+For example, in the following code snippet we can adjust how to estimate Delta F.
+
+```Python
+compute_deltaf__recruitment_difference_cutoff = 1.0
+compute_deltaf__corr_cutoff = 0.7
+compute_deltaf__controlunitmodulation_cutoff = 0.5
+```
+
+The corresponding APIs for the function *compute_deltaf* can be accessed [here](api_pic.md/#openhdemg.library.pic.compute_deltaf).
 
 ### muap
 
@@ -188,6 +208,44 @@ Additionally, you cannot remove the unused variables from the settings file! You
 ## Restore GUI settings
 
 If you accidentally modify some variables and the GUI stops working properly, you can restore the original settings by copying and pasting the content of the *backup_settings.py* file. This will be visible in the file explorer of your editor next to the *settings.py* file.
+
+## Troubleshooting
+
+### The settings don't show up
+
+If clicking the Gear icon doesn't open the *settings.py* file, it might be because your operating system doesn't recognize the .py file extension. This can happen if you've never opened a Python file before. To solve this:
+
+1. Double-click on any Python file (do this from outside Visual Studio Code, or it will take care of the process and your operating system will not associate the Python file to a specific software).
+
+2. A window should prompt you to choose which software to use to open the file.
+
+3. Select Visual Studio Code and set it as the default application for .py files.
+
+4. After doing this, try restarting the *openhdemg* GUI and Visual Studio Code. The Gear icon should now function correctly.
+
+If the issue persists, please continue reading.
+
+### Locate the settings.py file
+
+If the *settings.py* file does not open after clicking on the Gear icon, you can still manually navigate to this file and change the settings. The *settings.py* file can be accessed navigating the file explorer of your editor (usually on the left side of Visual Studio Code).
+
+In your file explorer, navigate as follows:
+
+1. Click on your virtual environment folder
+
+2. Click on *Lib*
+
+3. Click on *openhdemg*
+
+4. Click on *gui*
+
+5. Here you will find the *settings.py* file. Double click it and edit the settings as needed.
+
+6. Save the file
+
+### Changes are not effective
+
+Always remember to save the Python settings file after changing the variables, or the changes will not be effective. It is not necessary to restart the GUI when changes are made to the settings.py file.
 
 ## More questions?
 
