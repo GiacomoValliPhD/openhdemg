@@ -18,15 +18,11 @@ WARNING!!! - UNTESTED FUNCTIONS: none
 
 
 import unittest
-from openhdemg.tests.unit.functions_for_unit_test import get_directories as getd
-
 from openhdemg.library.openfiles import emg_from_samplefile
-
 from openhdemg.library.analysis import (
     compute_thresholds, compute_dr, basic_mus_properties, compute_covisi,
     compute_drvariability,
 )
-
 import numpy as np
 
 
