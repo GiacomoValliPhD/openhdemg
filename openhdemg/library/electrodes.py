@@ -156,7 +156,7 @@ def sort_rawemg(
         GR04MM1305              (0, 180)
         GR10MM0808              (0, 180)
         Trigno Galileo Sensor   (na)
-        Custom order            (any)
+        Custom order            (na)
 
     Parameters
     ----------

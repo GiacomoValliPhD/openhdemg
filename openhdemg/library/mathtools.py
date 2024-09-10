@@ -748,7 +748,8 @@ def find_mle_teta(sig1, sig2, ied, fsamp):
     ----------
     sig1, sig2 : np.ndarray
         The two signals based on which to calculate teta.
-        These must be 1-dimensional arrays where the data is contained in a row.
+        These must be 1-dimensional arrays where the data is contained in a
+        row.
     ied : int or float
         Interelectrode distance (mm).
     fsamp : int or float

@@ -112,6 +112,11 @@ class info:
         """
         Print common abbreviations.
 
+        Returns
+        -------
+        abbr : dict
+            The dictionary containing the abbreviations and their meaning.
+
         Examples
         --------
         >>> import openhdemg.library as emg
@@ -126,11 +131,13 @@ class info:
         "IPTS": "Impulse train (decomposed source)",
         "MU": "Motor units",
         "MUAP": "MUs action potential",
+        "PIC": "Persistent inward currents",
         "PNR": "Pulse to noise ratio",
         "RT": "Recruitment threshold",
         "SD": "Single differential",
         "SIL": "Silhouette score",
         "STA": "Spike-triggered average",
+        "SVR": "Support Vector Regression",
         "XCC": "Cross-correlation coefficient"
         """
 
@@ -145,11 +152,13 @@ class info:
             "IPTS": "Impulse train (decomposed source)",
             "MU": "Motor units",
             "MUAP": "MUs action potential",
+            "PIC": "Persistent inward currents",
             "PNR": "Pulse to noise ratio",
             "RT": "Recruitment threshold",
             "SD": "Single differential",
             "SIL": "Silhouette score",
             "STA": "Spike-triggered average",
+            "SVR": "Support Vector Regression",
             "XCC": "Cross-correlation coefficient",
         }
 
@@ -162,6 +171,11 @@ class info:
     def aboutus(self):
         """
         Print informations about the library and the authors.
+
+        Returns
+        -------
+        about, us : str
+            The strings containing the information.
 
         Examples
         --------
@@ -238,6 +252,11 @@ class info:
         """
         Print the contacts.
 
+        Returns
+        -------
+        contacts : dict
+            The dictionary containing the contact details.
+
         Examples
         --------
         >>> import openhdemg.library as emg
@@ -248,7 +267,7 @@ class info:
         "Maintainer Email": "giacomo.valli@unibs.it",
         """
 
-        contact = {
+        contacts = {
             "Primary contact": "openhdemg@gmail.com",
             "Twitter": "@openhdemg",
             "Maintainer": "Giacomo Valli",
@@ -257,13 +276,18 @@ class info:
 
         # Pretty dict printing
         print("\nContacts:\n")
-        print(json.dumps(contact, indent=4))
+        print(json.dumps(contacts, indent=4))
 
-        return contact
+        return contacts
 
     def links(self):
         """
         Print a collection of useful links.
+
+        Returns
+        -------
+        links : dict
+            The dictionary containing the useful links.
 
         Examples
         --------
@@ -288,6 +312,11 @@ class info:
     def citeus(self):
         """
         Print how to cite the project.
+
+        Returns
+        -------
+        cite : str
+            The full citation.
 
         Examples
         --------
