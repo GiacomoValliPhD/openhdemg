@@ -834,7 +834,8 @@ def tracking(
         containing the MUAPs of the MUs from 2 different files. These
         dictionaries should be structured as the output of the ``sta``
         function. If custom MUAPs are passed, all the previous parameters
-        (except for ``emgfile1`` and ``emgfile2`` can be ignored).
+        (except for ``emgfile1``, ``emgfile2`` and ``threshold`` can be
+        ignored).
         If custom MUAPs are provided, these are not aligned by the algorithm,
         contrary to what is done for MUAPs obtained via spike triggered
         averaging.
@@ -868,11 +869,6 @@ def tracking(
         MU from file 2 and the normalised cross-correlation value (XCC).
         If gui=True, an additional column indicating the inclusion/exclusion
         of the MUs pairs will also be present in tracking_res.
-
-    Warns
-    -----
-    UserWarning
-        If the number of plots to show exceeds that of available cores.
 
     See also
     --------
@@ -2031,8 +2027,8 @@ def estimate_cv_via_mle(emgfile, signal):
     >>> dd = emg.double_diff(sorted_rawemg=sorted_rawemg)
     >>> sta = emg.sta(
     ...     emgfile=emgfile,
-    ...     sorted_rawemg=sorted_rawemg,
-    ...     firings=[0,50],
+    ...     sorted_rawemg=dd,
+    ...     firings=[0, 50],
     ...     timewindow=50,
     ... )
 
@@ -2042,11 +2038,6 @@ def estimate_cv_via_mle(emgfile, signal):
     >>> cv = estimate_cv_via_mle(emgfile=emgfile, signal=signal)
     """
 
-    """
-    sta_mu is a pandas dataframe containing the signals where to estimate CV
-    sta = emg.sta(emgfile, dd)
-    sta_mu = sta[0]["col2"].loc[:, 31:34]
-    """
     ied = emgfile["IED"]
     fsamp = emgfile["FSAMP"]
 
