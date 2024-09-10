@@ -18,14 +18,16 @@ WARNING!!! - UNTESTED FUNCTIONS: Tracking_gui, MUcv_gui
 
 
 import unittest
-from openhdemg.tests.unit.functions_for_unit_test import get_directories as getd
+from openhdemg.tests.unit.functions_for_unit_test import (
+    get_directories as getd,
+)
 from openhdemg.library.openfiles import emg_from_samplefile, emg_from_delsys
 from openhdemg.library.electrodes import sort_rawemg
 from openhdemg.library.tools import delete_mus
 from openhdemg.library.muap import (
     diff, double_diff, extract_delsys_muaps, sta, st_muap, unpack_sta,
-    pack_sta, align_by_xcorr, tracking, remove_duplicates_between, xcc_sta,
-    estimate_cv_via_mle,
+    pack_sta, align_by_xcorr, tracking, Tracking_gui,
+    remove_duplicates_between, xcc_sta, estimate_cv_via_mle, MUcv_gui,
 )
 import numpy as np
 import pandas as pd

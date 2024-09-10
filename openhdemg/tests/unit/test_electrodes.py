@@ -18,7 +18,9 @@ WARNING!!! - UNTESTED FUNCTIONS: none
 
 
 import unittest
-from openhdemg.tests.unit.functions_for_unit_test import get_directories as getd
+from openhdemg.tests.unit.functions_for_unit_test import (
+    get_directories as getd,
+)
 from openhdemg.library.openfiles import emg_from_delsys, emg_from_demuse
 from openhdemg.library.openfiles import emg_from_samplefile
 from openhdemg.library.electrodes import sort_rawemg
