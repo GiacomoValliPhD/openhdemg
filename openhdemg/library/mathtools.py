@@ -12,11 +12,12 @@ from scipy import signal
 from scipy.spatial.distance import cdist
 from scipy.fftpack import fft
 import sys
+import warnings
 
 
-def min_max_scaling(series_or_df):
+def min_max_scaling(data=None, series_or_df=None, col_by_col=False):
     """
-    Min-max scaling of pd.series or pd.dataframes.
+    Min-max scaling of pd.series, pd.dataframe or np.ndarray.
 
     Min-max feature scaling is often simply referred to as normalisation,
     which rescales the dataset feature to a range of 0 - 1.
@@ -28,34 +29,99 @@ def min_max_scaling(series_or_df):
 
     Parameters
     ----------
-    series_or_df : pd.Series or pd.DataFrame
-        The min-max scaling is performed for the entire series,
-        or for single columns in a pd.DataFrame.
+    data : pd.Series, pd.DataFrame or np.ndarray
+        The data to normalise.
+    series_or_df : None
+        This parameter is deprecated and will be removed in future releases.
+        Use "data" instead.
+    col_by_col : bool, default False
+        When True, each column is normalised between 0 and 1. When False, all
+        the data is normalised between 0 and 1. Use col_by_col=False if you
+        want to preserve the original relative amplitude of the different
+        columns. col_by_col=True is acceptable only for 1 and 2D data. If data
+        has more than 2 dimensions, set col_by_col=False to normalise the
+        whole data instead.
 
     Returns
     -------
-    object : pd.Series or pd.DataFrame
-        The normalised pd.Series or pd.DataFrame (normalised by column).
+    dataect : pd.Series, pd.DataFrame or np.ndarray
+        The normalised data of the same type as the input.
     """
 
-    # Create a deepcopy to avoid modifying the original series or df
-    object = copy.deepcopy(series_or_df)
+    # Create a deepcopy of the original data
+    if data is not None:
+        data = copy.deepcopy(data)
 
-    # Automatically act depending on the object received
-    if isinstance(object, pd.Series):
-        return (object - object.min()) / (object.max() - object.min())
+    elif series_or_df is not None:
+        data = copy.deepcopy(series_or_df)
 
-    elif isinstance(object, pd.DataFrame):
-        for col in object.columns:
-            object[col] = (object[col] - object[col].min()) / (
-                object[col].max() - object[col].min()
+        # Warn for the use of deprecated parameters
+        msg = (
+            "The 'series_or_df' parameter is deprecated and will be removed " +
+            "in future releases. Please use 'data' instead."
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+
+    # Automatically act depending on the data received
+    if isinstance(data, pd.Series):
+        data = (data - data.min()) / (data.max() - data.min())
+
+        return data
+
+    elif isinstance(data, pd.DataFrame):
+        if col_by_col:
+            for col in data.columns:
+                data[col] = (
+                    (data[col] - data[col].min()) /
+                    (data[col].max() - data[col].min())
+                )
+
+            return data
+
+        else:
+            data = (
+                (data - data.min().min()) /
+                (data.max().max() - data.min().min())
             )
 
-        return object
+            return data
+
+    elif isinstance(data, np.ndarray):
+        if col_by_col:
+            # Check if data is 1D 2D or nD and act accordingly
+            if len(data.shape) == 1:
+                data = (data - data.min()) / (data.max() - data.min())
+
+                return data
+
+            elif len(data.shape) == 2:
+                dims = any(d == 0 or d == 1 for d in data.shape)
+                if dims:  # Only 1 column
+                    data = (data - data.min()) / (data.max() - data.min())
+                else:  # Multiple columns
+                    for col in range(data.shape[1]):
+                        data[:, col] = (
+                            (data[:, col] - data[:, col].min()) /
+                            (data[:, col].max() - data[:, col].min())
+                        )
+
+                return data
+
+            elif len(data.shape) > 2:
+                raise ValueError(
+                    "col_by_col is supported only for 1 and 2D arrays. Set " +
+                    "col_by_col=False to normalise the whole data instead."
+                )
+
+        else:
+            data = (data - data.min()) / (data.max() - data.min())
+
+            return data
 
     else:
         raise TypeError(
-            f"series_or_df must a pandas series or a dataframe. {type(series_or_df)} was passed instead."
+            "data must be one of pd.series, pd.dataframe or np.ndarray. " +
+            f"{type(data)} was passed instead."
         )
 
 
