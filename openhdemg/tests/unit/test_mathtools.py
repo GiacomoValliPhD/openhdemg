@@ -49,6 +49,35 @@ class TestMathTools(unittest.TestCase):
         self.assertAlmostEqual(res.min().min(), 0, places=0)
         self.assertAlmostEqual(res.max().max(), 1, places=0)
 
+        res = min_max_scaling(emgfile["RAW_SIGNAL"], col_by_col=True)
+        for col in res.columns:
+            self.assertAlmostEqual(res[col].min(), 0, places=0)
+            self.assertAlmostEqual(res[col].max(), 1, places=0)
+
+        # Test with a 1D array
+        array = np.random.uniform(low=-2, high=5, size=(100))
+        res = min_max_scaling(array, col_by_col=True)
+        self.assertAlmostEqual(res.min(), 0, places=0)
+        self.assertAlmostEqual(res.max(), 1, places=0)
+
+        array = np.random.uniform(low=-2, high=5, size=(100, 1))
+        res = min_max_scaling(array, col_by_col=True)
+        self.assertAlmostEqual(res.min(), 0, places=0)
+        self.assertAlmostEqual(res.max(), 1, places=0)
+
+        # Test with a 2D array
+        array = np.random.uniform(low=-2, high=5, size=(100, 10))
+        res = min_max_scaling(array, col_by_col=True)
+        for col in range(res.shape[1]):
+            self.assertAlmostEqual(res[:, col].min(), 0, places=0)
+            self.assertAlmostEqual(res[:, col].max(), 1, places=0)
+
+        # Test with a 3D array
+        array = np.random.uniform(low=-2, high=5, size=(100, 10, 25))
+        res = min_max_scaling(array)
+        self.assertAlmostEqual(res.min(), 0, places=0)
+        self.assertAlmostEqual(res.max(), 1, places=0)
+
     def test_norm_xcorr(self):
         """
         Test the norm_xcorr function.
