@@ -7,12 +7,16 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import numpy as np
+import warnings
 from openhdemg.library.tools import compute_idr
 from openhdemg.library.mathtools import min_max_scaling
 
 
 def showgoodlayout(tight_layout=True, despined=False):
     """
+    **WARNING!** This function is deprecated since v0.1.1 and will be removed
+    in v0.2.0. Please use Figure_Layout_Manager(figure).set_layout() instead.
+
     Despine and show plots with a good layout.
 
     This function is called by the various plot functions contained in the
@@ -35,6 +39,13 @@ def showgoodlayout(tight_layout=True, despined=False):
             same time.
     """
 
+    # Warn for the use of a deprecated function
+    msg = (
+        "This function is deprecated since v0.1.1 and will be removed after " +
+        "v0.2.0. Please use Figure_Layout_Manager(figure).set_layout()."
+    )
+    warnings.warn(msg, DeprecationWarning, stacklevel=2)
+
     if despined is False:
         sns.despine()
     elif despined is True:
@@ -48,6 +59,549 @@ def showgoodlayout(tight_layout=True, despined=False):
 
     if tight_layout is True:
         plt.tight_layout()
+
+
+class Figure_Layout_Manager():
+    """
+    Class managing layout settings and custom settings for 2D plots.
+
+    Parameters
+    ----------
+    figure : pyplot `~.figure.Figure`
+        The matplotlib.pyplot figure to manage.
+
+    Attributes
+    ----------
+    figure : pyplot `~.figure.Figure`
+        The managed matplotlib.pyplot figure.
+    default_line2d_kwargs_ax1 : dict
+        Default kwargs for matplotlib.lines.Line2D relative to figure's axis 1.
+    default_line2d_kwargs_ax2 : dict
+        Default kwargs for matplotlib.lines.Line2D relative to figure's axis 2.
+    default_axes_kwargs : dict
+        Default kwargs for figure's axis 1.
+
+    Methods
+    -------
+    get_final_kwargs()
+        Combine default and user specified kwargs and return the final kwargs.
+    set_layout()
+        Set the figure's layout regarding spines and tight layout.
+    set_style_from_kwargs()
+        Set labels, title, ticks and grid.
+        If custom styles are needed, this method should be used after calling
+        the get_final_kwargs() method. Otherwise, the standard openhdemg
+        style will be used.
+
+    Examples
+    --------
+    Initialise the Figure_Layout_Manager.
+
+    >>> import openhdemg.library as emg
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax1 = plt.subplots()
+    >>> fig_manager = emg.Figure_Layout_Manager(figure=fig)
+
+    Access the default_axes_kwargs
+
+    >>> fig, ax1 = plt.subplots()
+    >>> fig_manager = emg.Figure_Layout_Manager(figure=fig)
+    >>> default_axes_kwargs = fig_manager.default_axes_kwargs
+
+    Print them in an easy-to-read way.
+
+    >>> import pprint
+    >>> pp = pprint.PrettyPrinter(indent=4, width=80)
+    >>> pp.pprint(default_axes_kwargs)
+    {   'grid': {  'alpha': 0.7,
+                   'axis': 'both',
+                   'color': 'gray',
+                   'linestyle': '--',
+                   'linewidth': 0.5,
+                   'visible': False},
+        'labels': {  'labelpad': 6,
+                     'title': None,
+                     'title_color': 'black',
+                     'title_pad': 14,
+                     'title_size': 12,
+                     'xlabel': None,
+                     'xlabel_color': 'black',
+                     'xlabel_size': 12,
+                     'ylabel_dx': None,
+                     'ylabel_dx_color': 'black',
+                     'ylabel_dx_size': 12,
+                     'ylabel_sx': None,
+                     'ylabel_sx_color': 'black',
+                     'ylabel_sx_size': 12},
+        'ticks_ax1': {  'axis': 'both',
+                        'colors': 'black',
+                        'direction': 'out',
+                        'labelrotation': 0,
+                        'labelsize': 10},
+        'ticks_ax2': {  'axis': 'y',
+                        'colors': 'black',
+                        'direction': 'out',
+                        'labelrotation': 0,
+                        'labelsize': 10}}
+    """
+
+    def __init__(self, figure):
+        # Init method that sets default kwargs.
+
+        self.figure = figure
+
+        self.default_line2d_kwargs_ax1 = {
+            "linewidth": 1,
+            "alpha": 1,
+        }
+
+        self.default_line2d_kwargs_ax2 = {
+            "linewidth": 2,
+            "color": '0.4',
+            "alpha": 1,
+        }
+
+        self.default_axes_kwargs = {
+            "grid": {
+                "visible": False,
+                "axis": "both",
+                "color": "gray",
+                "linestyle": "--",
+                "linewidth": 0.5,
+                "alpha": 0.7
+            },
+            "labels": {
+                "xlabel": None,
+                "ylabel_sx": None,
+                "ylabel_dx": None,
+                "title": None,
+                "xlabel_size": 12,
+                "xlabel_color": "black",
+                "ylabel_sx_size": 12,
+                "ylabel_sx_color": "black",
+                "ylabel_dx_size": 12,
+                "ylabel_dx_color": "black",
+                "labelpad": 6,
+                "title_size": 12,
+                "title_color": "black",
+                "title_pad": 14,
+            }, # Only this is allowed.
+            "ticks_ax1": {
+                "axis": "both",
+                "labelsize": 10,
+                "labelrotation": 0,
+                "direction": "out",
+                "colors": "black",
+            }, # Can be any of plt.tick_params, put some more default
+            "ticks_ax2": {
+                "axis": "y",
+                "labelsize": 10,
+                "labelrotation": 0,
+                "direction": "out",
+                "colors": "black",
+            }
+        }
+
+        # Define the final kwargs that will be used to set figures' stile
+        # unless updated with get_final_kwargs().
+        self.final_kwargs = (
+            self.default_line2d_kwargs_ax1,
+            self.default_line2d_kwargs_ax2,
+            self.default_axes_kwargs,
+        )
+
+    def get_final_kwargs(
+        self,
+        line2d_kwargs_ax1=None,
+        line2d_kwargs_ax2=None,
+        axes_kwargs=None,
+    ):
+        """
+        Update default kwarg values with user-specified kwargs.
+
+        This method merges default keyword arguments for line plots and axes
+        with user-specified arguments, allowing customization of plot
+        aesthetics.
+
+        The use of the kwargs is clarified below in the Notes section.
+
+        Parameters
+        ----------
+        line2d_kwargs_ax1 : dict, optional
+            User-specified keyword arguments for the first set of Line2D
+            objects. If None, the default values will be used.
+        line2d_kwargs_ax2 : dict, optional
+            User-specified keyword arguments for the second set of Line2D
+            objects (when twinx is used and a second Y axis is generated).
+            If None, the default values will be used.
+        axes_kwargs : dict, optional
+            User-specified keyword arguments for the axes' styling.
+            If None, the default values will be used.
+
+        Returns
+        -------
+        final_kwargs : tuple
+            A tuple containing three dictionaries:
+
+            1. Updated line2d kwargs for the first axis.
+            2. Updated line2d kwargs for the second axis.
+            3. Updated axes kwargs.
+
+        Notes
+        -----
+        The method ensures that any user-specified kwargs will override the
+        corresponding default values. If no user kwargs are provided for a
+        particular category, the defaults will be retained.
+
+        line2d_kwargs_ax1 and line2d_kwargs_ax2 and can contain any of the
+        matplotlib.lines.Line2D parameters as described at:
+        (https://matplotlib.org/stable/api/_as_gen/matplotlib.lines.Line2D.html).
+
+        axes_kwargs can contain up to 4 dictionaries ("grid", "labels",
+        "ticks_ax1", "ticks_ax2") which regulate specific styles.
+
+        - "grid" can contain any of the matplotlib.axes.Axes.grid parameters as
+        described at:
+        (https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.grid.html).
+        - "labels" can contain only specific parameters (with default values
+        below):
+
+            - "xlabel": None,
+            - "ylabel_sx": None,
+            - "ylabel_dx": None,
+            - "title": None,
+            - "xlabel_size": 12,
+            - "xlabel_color": "black",
+            - "ylabel_sx_size": 12,
+            - "ylabel_sx_color": "black",
+            - "ylabel_dx_size": 12,
+            - "ylabel_dx_color": "black",
+            - "labelpad": 6,
+            - "title_size": 12,
+            - "title_color": "black",
+            - "title_pad": 14,
+
+        - "ticks_ax1" and "ticks_ax2" can contain any of the
+        matplotlib.pyplot.tick_params as described at:
+        (https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.tick_params.html).
+
+        Examples
+        --------
+        Plot data in 2 Y axes.
+
+        >>> import openhdemg.library as emg
+        >>> import matplotlib.pyplot as plt
+        >>> fig, ax1 = plt.subplots()
+        >>> ax1.plot([1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1])
+        >>> ax2 = ax1.twinx()
+        >>> ax2.plot([6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6])
+
+        Declare custom user plotting kwargs.
+
+        >>> line2d_kwargs_ax1 = {
+        ...     "linewidth": 3,
+        ...     "alpha": 0.2,
+        ...     "marker": "d",
+        ...     "markersize": 15,
+        ... }
+        >>> line2d_kwargs_ax2 = {
+        ...     "linewidth": 1,
+        ...     "alpha": 0.2,
+        ...     "color": "red",
+        ... }
+        >>> axes_kwargs = {
+        ...     "grid": {
+        ...         "visible": True,
+        ...         "axis": "both",
+        ...         "color": "gray",
+        ...     },
+        ... }
+
+        Merge default and user kwargs.
+
+        >>> fig_manager = emg.Figure_Layout_Manager(figure=fig)
+        >>> final_kwargs = fig_manager.get_final_kwargs(
+        ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
+        ...     line2d_kwargs_ax2=line2d_kwargs_ax2,
+        ...     axes_kwargs=axes_kwargs,
+        ... )
+
+        Print them in an easy-to-read way.
+
+        >>> import pprint
+        >>> pp = pprint.PrettyPrinter(indent=4, width=40)
+        >>> pp.pprint(final_kwargs[0])
+        {   'alpha': 0.2,
+            'linewidth': 3,
+            'marker': 'd',
+            'markersize': 15}
+
+        >>> pp.pprint(final_kwargs[1])
+        {   'alpha': 0.2,
+            'color': 'red',
+            'linewidth': 1}
+
+        >>> pp.pprint(final_kwargs[2])
+        {   'grid': {   'alpha': 0.7,
+                        'axis': 'both',
+                        'color': 'gray',
+                        'linestyle': '--',
+                        'linewidth': 0.5,
+                        'visible': True},
+            'labels': {   'labelpad': 6,
+                        'title': None,
+                        'title_color': 'black',
+                        'title_pad': 14,
+                        'title_size': 12,
+                        'xlabel': None,
+                        'xlabel_color': 'black',
+                        'xlabel_size': 12,
+                        'ylabel_dx': None,
+                        'ylabel_dx_color': 'black',
+                        'ylabel_dx_size': 12,
+                        'ylabel_sx': None,
+                        'ylabel_sx_color': 'black',
+                        'ylabel_sx_size': 12},
+            'ticks_ax1': {   'axis': 'both',
+                            'colors': 'black',
+                            'direction': 'out',
+                            'labelrotation': 0,
+                            'labelsize': 10},
+            'ticks_ax2': {   'axis': 'y',
+                            'colors': 'black',
+                            'direction': 'out',
+                            'labelrotation': 0,
+                            'labelsize': 10}}
+        """
+
+        # Update default kwarg values with user-specified kwargs and return
+        # them.
+        if line2d_kwargs_ax1 is None:
+            line2d_kwargs_ax1 = {}
+        if line2d_kwargs_ax2 is None:
+            line2d_kwargs_ax2 = {}
+        if axes_kwargs is None:
+            axes_kwargs = {}
+
+        # Dictionaries
+        self.line2d_kwargs_ax1 = {
+            **self.default_line2d_kwargs_ax1, **line2d_kwargs_ax1
+        }
+        self.line2d_kwargs_ax2 = {
+            **self.default_line2d_kwargs_ax2, **line2d_kwargs_ax2
+        }
+        # Nested dictionary
+        self.axes_kwargs = {}
+        for key in self.default_axes_kwargs.keys():
+            if key in axes_kwargs.keys():
+                self.axes_kwargs[key] = {
+                    **self.default_axes_kwargs[key], **axes_kwargs[key]
+                }
+            else:
+                self.axes_kwargs[key] = self.default_axes_kwargs[key]
+
+        self.final_kwargs = (
+            self.line2d_kwargs_ax1, self.line2d_kwargs_ax2, self.axes_kwargs,
+        )
+
+        return self.final_kwargs
+
+    def set_layout(self, tight_layout=True, despine="box"):
+        """
+        Despine and show plots with a tight layout.
+
+        This method is called by the various plot functions contained in the
+        library but can also be used by the user to quickly adjust the layout
+        of custom plots.
+
+        Parameters
+        ----------
+        tight_layout : bool, default True
+            If true, plt.tight_layout() is applied to the figure.
+        despined : str {"box", "all", "1yaxis", "2yaxes"}, default "box"
+
+            ``box``
+                No side is despined.
+
+            ``all``
+                All the sides are despined.
+
+            ``1yaxis``
+                Right and top are despined.
+                This is used to show the Y axis on the left side.
+
+            ``2yaxes``
+                Only the top is despined.
+                This is used to show Y axes both on the left and right side at
+                the same time.
+
+        Examples
+        --------
+        Plot data in 2 Y axes.
+
+        >>> import openhdemg.library as emg
+        >>> import matplotlib.pyplot as plt
+        >>> fig, ax1 = plt.subplots()
+        >>> ax1.plot([1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1])
+        >>> ax2 = ax1.twinx()
+        >>> ax2.plot([6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6])
+
+        Show the figure with 2 Y axes.
+
+        >>> fig_manager = emg.Figure_Layout_Manager(figure=fig)
+        >>> fig_manager.set_layout(tight_layout=True, despine="2yaxes")
+        >>> plt.show()
+        """
+
+        if despine == "box":
+            sns.despine(
+                self.figure, top=False, bottom=False, left=False, right=False,
+            )
+        elif despine == "all":
+            sns.despine(
+                self.figure, top=True, bottom=True, left=True, right=True,
+            )
+        elif despine == "2yaxes":
+            sns.despine(
+                self.figure, top=True, bottom=False, left=False, right=False,
+            )
+        elif despine == "1yaxis":
+            sns.despine(
+                self.figure, top=True, bottom=False, left=False, right=True,
+            )
+        else:
+            raise ValueError(
+                "despine can be 'box', 'all', '2yaxes' or '1yaxes'. " +
+                f"{despine} was passed instead."
+            )
+
+        if tight_layout is True:
+            self.figure.tight_layout()
+
+    def set_style_from_kwargs(self):
+        """
+        Set the style of the figure.
+
+        This method updates the main figure with the user-specified custom
+        style, or with the standard openhdemg style if no style kwargs have
+        been set with emg.Figure_Layout_Manager(figure).get_final_kwargs().
+
+        Examples
+        --------
+        Plot data in 2 Y axes.
+
+        >>> import openhdemg.library as emg
+        >>> import matplotlib.pyplot as plt
+        >>> fig, ax1 = plt.subplots()
+        >>> ax1.plot([1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1])
+        >>> ax2 = ax1.twinx()
+        >>> ax2.plot([6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6])
+
+        Declare custom user plotting kwargs.
+
+        >>> line2d_kwargs_ax1 = {
+        ...     "linewidth": 3,
+        ...     "alpha": 0.2,
+        ...     "marker": "d",
+        ...     "markersize": 15,
+        ... }
+        >>> line2d_kwargs_ax2 = {
+        ...     "linewidth": 1,
+        ...     "alpha": 0.2,
+        ...     "color": "red",
+        ... }
+        >>> axes_kwargs = {
+        ...     "grid": {
+        ...         "visible": True,
+        ...         "axis": "both",
+        ...         "color": "gray",
+        ...     },
+        ... }
+
+        Merge default and user kwargs.
+
+        >>> fig_manager = emg.Figure_Layout_Manager(figure=fig)
+        >>> final_kwargs = fig_manager.get_final_kwargs(
+        ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
+        ...     line2d_kwargs_ax2=line2d_kwargs_ax2,
+        ...     axes_kwargs=axes_kwargs,
+        ... )
+
+        Apply the custom style.
+
+        >>> fig_manager.set_style_from_kwargs()
+
+        Show the figure.
+
+        >>> plt.show()
+        """
+
+        # Retrieve axes
+        axes = self.figure.get_axes()
+        if len(axes) == 0:
+            raise ValueError("No figure axes available.")
+        elif len(axes) == 1:
+            ax1 = axes[0]
+            ax2 = None
+        elif len(axes) == 2:
+            ax1 = axes[0]
+            ax2 = axes[1]
+        else:
+            ax1 = axes[0]
+            ax2 = axes[1]
+            warnings.warn(
+                "The Figure_Layout_Manager can set only the first 2 axes. " +
+                f"{len(axes)} axes are present."
+            )
+
+        # Set matplotlib.lines.Line2D
+        line1 = ax1.get_lines()
+        for key, value in self.final_kwargs[0].items():
+            getattr(line1[0], f"set_{key}")(value)
+        if ax2 is not None:
+            line2 = ax2.get_lines()
+            for key, value in self.final_kwargs[1].items():
+                getattr(line2[0], f"set_{key}")(value)
+
+        # Adjust labels
+        ax1.xaxis.labelpad = self.final_kwargs[2]["labels"]["labelpad"]
+        xl = ax1.xaxis.get_label()
+        if self.final_kwargs[2]["labels"]["xlabel"] is not None:
+            xl.set_text(self.final_kwargs[2]["labels"]["xlabel"])
+        xl.set_size(self.final_kwargs[2]["labels"]["xlabel_size"])
+        xl.set_color(self.final_kwargs[2]["labels"]["xlabel_color"])
+
+        ax1.yaxis.labelpad = self.final_kwargs[2]["labels"]["labelpad"]
+        ylsx = ax1.yaxis.get_label()
+        if self.final_kwargs[2]["labels"]["ylabel_sx"] is not None:
+            ylsx.set_text(self.final_kwargs[2]["labels"]["ylabel_sx"])
+        ylsx.set_size(self.final_kwargs[2]["labels"]["ylabel_sx_size"])
+        ylsx.set_color(self.final_kwargs[2]["labels"]["ylabel_sx_color"])
+
+        if ax2 is not None:
+            ax2.yaxis.labelpad = self.final_kwargs[2]["labels"]["labelpad"]
+            yldx = ax2.yaxis.get_label()
+            if self.final_kwargs[2]["labels"]["ylabel_dx"] is not None:
+                yldx.set_text(self.final_kwargs[2]["labels"]["ylabel_dx"])
+            yldx.set_size(self.final_kwargs[2]["labels"]["ylabel_dx_size"])
+            yldx.set_color(self.final_kwargs[2]["labels"]["ylabel_dx_color"])
+
+        # Set title
+        ax1.set_title(
+            self.final_kwargs[2]["labels"]["title"],
+            fontsize=self.final_kwargs[2]["labels"]["title_size"],
+            color=self.final_kwargs[2]["labels"]["title_color"],
+            pad=self.final_kwargs[2]["labels"]["title_pad"],
+        )
+
+        # Adjust ticks
+        ax1.tick_params(**self.final_kwargs[2]["ticks_ax1"])
+        if ax2 is not None:
+            ax2.tick_params(**self.final_kwargs[2]["ticks_ax2"])
+
+        # Set grid
+        if self.final_kwargs[2]["grid"]["visible"]:
+            ax1.grid(**self.final_kwargs[2]["grid"])
 
 
 def plot_emgsig(
@@ -121,7 +675,8 @@ def plot_emgsig(
         emgsig = emgfile["RAW_SIGNAL"]
     else:
         raise TypeError(
-            "RAW_SIGNAL is probably absent or it is not contained in a dataframe"
+            "RAW_SIGNAL is probably absent or it is not contained in a " +
+            "dataframe"
         )
 
     # Here we produce an x axis in seconds or samples
