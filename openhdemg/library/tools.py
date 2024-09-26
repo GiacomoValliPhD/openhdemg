@@ -502,7 +502,7 @@ def delete_mus(
         Ignore the process and return the original emgfile. (Default)
 
         ``remove``
-        Remove the MU and return the emgfile without the MU. (Default)
+        Remove the MU and return the emgfile without the MU.
         This should allow full compatibility with the use of this file
         in following processing (i.e., save/load and analyse).
     delete_delsys_muaps : Bool, default True
@@ -549,19 +549,19 @@ def delete_mus(
     """
     Need to be changed: ==>
     emgfile =   {
-                "SOURCE" : SOURCE,
-                "RAW_SIGNAL" : RAW_SIGNAL,
-                "REF_SIGNAL" : REF_SIGNAL,
-                ==> "ACCURACY" : ACCURACY
-                ==> "IPTS" : IPTS,
-                ==> "MUPULSES" : MUPULSES,
-                "FSAMP" : FSAMP,
-                "IED" : IED,
-                "EMG_LENGTH" : EMG_LENGTH,
-                ==> "NUMBER_OF_MUS" : NUMBER_OF_MUS,
-                ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
-                ==> "EXTRAS" : EXTRAS but only for DELSYS file
-                }
+        "SOURCE" : SOURCE,
+        "RAW_SIGNAL" : RAW_SIGNAL,
+        "REF_SIGNAL" : REF_SIGNAL,
+        ==> "ACCURACY" : ACCURACY
+        ==> "IPTS" : IPTS,
+        ==> "MUPULSES" : MUPULSES,
+        "FSAMP" : FSAMP,
+        "IED" : IED,
+        "EMG_LENGTH" : EMG_LENGTH,
+        ==> "NUMBER_OF_MUS" : NUMBER_OF_MUS,
+        ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
+        ==> "EXTRAS" : EXTRAS but only for DELSYS file
+    }
     """
 
     # Common part working for all the possible inputs to munumber

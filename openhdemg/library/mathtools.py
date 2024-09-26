@@ -57,8 +57,8 @@ def min_max_scaling(data=None, series_or_df=None, col_by_col=False):
 
         # Warn for the use of deprecated parameters
         msg = (
-            "The 'series_or_df' parameter is deprecated and will be removed " +
-            "in future releases. Please use 'data' instead."
+            "The 'series_or_df' parameter is deprecated since v0.1.1 and " +
+            "will be removed after v0.2.0. Please use 'data' instead."
         )
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
 

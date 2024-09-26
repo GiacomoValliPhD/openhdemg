@@ -1240,7 +1240,7 @@ class Tracking_gui():  # TODO add delete excluded pairs button
     get_results()
         Returns the results of the tracking including the MU from file 1,
         MU from file 2, the normalised cross-correlation value (XCC) and the
-        inclusion or exclusion of the MUs pair. after the GUI is closed.
+        inclusion or exclusion of the MUs pair after the GUI is closed.
 
     See also
     --------
