@@ -79,7 +79,7 @@ class Figure_Layout_Manager():
     default_line2d_kwargs_ax2 : dict
         Default kwargs for matplotlib.lines.Line2D relative to figure's axis 2.
     default_axes_kwargs : dict
-        Default kwargs for figure's axis 1.
+        Default kwargs for figure's axes.
 
     Methods
     -------
@@ -102,15 +102,10 @@ class Figure_Layout_Manager():
     >>> fig, ax1 = plt.subplots()
     >>> fig_manager = emg.Figure_Layout_Manager(figure=fig)
 
-    Access the default_axes_kwargs
-
-    >>> fig, ax1 = plt.subplots()
-    >>> fig_manager = emg.Figure_Layout_Manager(figure=fig)
-    >>> default_axes_kwargs = fig_manager.default_axes_kwargs
-
-    Print them in an easy-to-read way.
+    Access the default_axes_kwargs and print them in an easy-to-read way.
 
     >>> import pprint
+    >>> default_axes_kwargs = fig_manager.default_axes_kwargs
     >>> pp = pprint.PrettyPrinter(indent=4, width=80)
     >>> pp.pprint(default_axes_kwargs)
     {   'grid': {  'alpha': 0.7,
@@ -143,6 +138,16 @@ class Figure_Layout_Manager():
                         'direction': 'out',
                         'labelrotation': 0,
                         'labelsize': 10}}
+
+    Access the default line2d kwargs and print them in an easy-to-read way.
+
+    >>> default_line2d_kwargs_ax1 = fig_manager.default_line2d_kwargs_ax1
+    >>> pp.pprint(default_line2d_kwargs_ax1)
+    {'linewidth': 1}
+
+    >>> default_line2d_kwargs_ax2 = fig_manager.default_line2d_kwargs_ax2
+    >>> pp.pprint(default_line2d_kwargs_ax2)
+    {'color': '0.4', 'linewidth': 2}
     """
 
     def __init__(self, figure):
@@ -152,13 +157,11 @@ class Figure_Layout_Manager():
 
         self.default_line2d_kwargs_ax1 = {
             "linewidth": 1,
-            "alpha": 1,
         }
 
         self.default_line2d_kwargs_ax2 = {
             "linewidth": 2,
             "color": '0.4',
-            "alpha": 1,
         }
 
         self.default_axes_kwargs = {
@@ -185,14 +188,14 @@ class Figure_Layout_Manager():
                 "title_size": 12,
                 "title_color": "black",
                 "title_pad": 14,
-            }, # Only this is allowed.
+            },
             "ticks_ax1": {
                 "axis": "both",
                 "labelsize": 10,
                 "labelrotation": 0,
                 "direction": "out",
                 "colors": "black",
-            }, # Can be any of plt.tick_params, put some more default
+            },
             "ticks_ax2": {
                 "axis": "y",
                 "labelsize": 10,
@@ -253,17 +256,17 @@ class Figure_Layout_Manager():
         corresponding default values. If no user kwargs are provided for a
         particular category, the defaults will be retained.
 
-        line2d_kwargs_ax1 and line2d_kwargs_ax2 and can contain any of the
-        matplotlib.lines.Line2D parameters as described at:
+        ``line2d_kwargs_ax1`` and ``line2d_kwargs_ax2`` and can contain any of
+        the matplotlib.lines.Line2D parameters as described at:
         (https://matplotlib.org/stable/api/_as_gen/matplotlib.lines.Line2D.html).
 
-        axes_kwargs can contain up to 4 dictionaries ("grid", "labels",
+        ``axes_kwargs`` can contain up to 4 dictionaries ("grid", "labels",
         "ticks_ax1", "ticks_ax2") which regulate specific styles.
 
-        - "grid" can contain any of the matplotlib.axes.Axes.grid parameters as
-        described at:
+        - ``grid`` can contain any of the matplotlib.axes.Axes.grid parameters
+        as described at:
         (https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.grid.html).
-        - "labels" can contain only specific parameters (with default values
+        - ``labels`` can contain only specific parameters (with default values
         below):
 
             - "xlabel": None,
@@ -281,7 +284,7 @@ class Figure_Layout_Manager():
             - "title_color": "black",
             - "title_pad": 14,
 
-        - "ticks_ax1" and "ticks_ax2" can contain any of the
+        - ``ticks_ax1`` and ``ticks_ax2`` can contain any of the
         matplotlib.pyplot.tick_params as described at:
         (https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.tick_params.html).
 
@@ -301,8 +304,6 @@ class Figure_Layout_Manager():
         >>> line2d_kwargs_ax1 = {
         ...     "linewidth": 3,
         ...     "alpha": 0.2,
-        ...     "marker": "d",
-        ...     "markersize": 15,
         ... }
         >>> line2d_kwargs_ax2 = {
         ...     "linewidth": 1,
@@ -332,9 +333,7 @@ class Figure_Layout_Manager():
         >>> pp = pprint.PrettyPrinter(indent=4, width=40)
         >>> pp.pprint(final_kwargs[0])
         {   'alpha': 0.2,
-            'linewidth': 3,
-            'marker': 'd',
-            'markersize': 15}
+            'linewidth': 3}
 
         >>> pp.pprint(final_kwargs[1])
         {   'alpha': 0.2,
@@ -555,13 +554,15 @@ class Figure_Layout_Manager():
             )
 
         # Set matplotlib.lines.Line2D
-        line1 = ax1.get_lines()
+        lines1 = ax1.get_lines()
         for key, value in self.final_kwargs[0].items():
-            getattr(line1[0], f"set_{key}")(value)
+            for line in lines1:
+                getattr(line, f"set_{key}")(value)
         if ax2 is not None:
-            line2 = ax2.get_lines()
+            lines2 = ax2.get_lines()
             for key, value in self.final_kwargs[1].items():
-                getattr(line2[0], f"set_{key}")(value)
+                for line in lines2:
+                    getattr(line, f"set_{key}")(value)
 
         # Adjust labels
         ax1.xaxis.labelpad = self.final_kwargs[2]["labels"]["labelpad"]
@@ -607,11 +608,15 @@ class Figure_Layout_Manager():
 def plot_emgsig(
     emgfile,
     channels,
+    manual_offset=0,
     addrefsig=False,
     timeinseconds=True,
     figsize=[20, 15],
-    showimmediately=True,
     tight_layout=True,
+    line2d_kwargs_ax1=None,
+    line2d_kwargs_ax2=None,
+    axes_kwargs=None,
+    showimmediately=True,
 ):
     """
     Plot the RAW_SIGNAL. Single or multiple channels.
@@ -630,6 +635,10 @@ def plot_emgsig(
         We need the " * " operator to unpack the results of range into a list.
         channels is expected to be with base 0 (i.e., the first channel
         in the file is the number 0).
+    manual_offset : int or float, default 0
+        This parameter sets the scaling of the channels. If 0 (default), the
+        channels' amplitude is scaled automatically to fit the plotting window.
+        If > 0, the channels will be scaled based on the specified value.
     addrefsig : bool, default True
         If True, the REF_SIGNAL is plotted in front of the signal with a
         separated y-axes.
@@ -638,14 +647,20 @@ def plot_emgsig(
         or in samples (False).
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from the GUI.
     tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's
         layout is improved.
-        It is useful to set it to False when calling the function from the GUI.
+        It is useful to set it to False when calling the function from a GUI.
+    line2d_kwargs_ax1 : dict
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1.
+    line2d_kwargs_ax2 : dict
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 2.
+    axes_kwargs : dict
+        Kwargs for figure's axes.
+    showimmediately : bool, default True
+        If True (default), plt.show() is called and the figure showed to the
+        user.
+        It is useful to set it to False when calling the function from a GUI.
 
     Returns
     -------
@@ -659,14 +674,81 @@ def plot_emgsig(
     Examples
     --------
     Plot channels 0 to 12 and overlay the reference signal.
+
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.emg_from_samplefile()
     >>> emg.plot_emgsig(
     ...     emgfile=emgfile,
     ...     channels=[*range(0,13)],
     ...     addrefsig=True,
     ...     timeinseconds=True,
     ...     figsize=[20, 15],
+    ... )
+
+    Plot channels and the reference signal with a custom look.
+
+    >>> import openhdemg.library as emg
+    >>> line2d_kwargs_ax1 = {
+    ...     "linewidth": 0.5,
+    ...     "alpha": 1,
+    ... }
+    >>> line2d_kwargs_ax2 = {
+    ...     "linewidth": 2,
+    ...     "color": '0.4',
+    ...     "alpha": 1,
+    ... }
+    >>> axes_kwargs = {
+    ...     "grid": {
+    ...         "visible": True,
+    ...         "axis": "both",
+    ...         "color": "gray",
+    ...         "linestyle": "--",
+    ...         "linewidth": 0.5,
+    ...         "alpha": 0.7
+    ...     },
+    ...     "labels": {
+    ...         "xlabel": None,
+    ...         "ylabel_sx": "Channels (N°)",
+    ...         "ylabel_dx": "MVC (%)",
+    ...         "title": "Custom figure title",
+    ...         "xlabel_size": 12,
+    ...         "xlabel_color": "black",
+    ...         "ylabel_sx_size": 12,
+    ...         "ylabel_sx_color": "black",
+    ...         "ylabel_dx_size": 12,
+    ...         "ylabel_dx_color": "black",
+    ...         "labelpad": 6,
+    ...         "title_size": 12,
+    ...         "title_color": "black",
+    ...         "title_pad": 14,
+    ...     },
+    ...     "ticks_ax1": {
+    ...         "axis": "both",
+    ...         "labelsize": 10,
+    ...         "labelrotation": 0,
+    ...         "direction": "out",
+    ...         "colors": "black",
+    ...     },
+    ...     "ticks_ax2": {
+    ...         "axis": "y",
+    ...         "labelsize": 10,
+    ...         "labelrotation": 0,
+    ...         "direction": "out",
+    ...         "colors": "black",
+    ...     }
+    ... }
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> fig = emg.plot_emgsig(
+    ...     emgfile,
+    ...     channels=[*range(0, 6)],
+    ...     manual_offset=0,
+    ...     addrefsig=True,
+    ...     timeinseconds=True,
+    ...     tight_layout=True,
+    ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
+    ...     line2d_kwargs_ax2=line2d_kwargs_ax2,
+    ...     axes_kwargs=axes_kwargs,
+    ...     showimmediately=True,
     ... )
     """
 
@@ -685,6 +767,7 @@ def plot_emgsig(
     else:
         x_axis = emgsig.index
 
+    # Create figure and axis
     figname = "Channels n.{}".format(channels)
     fig, ax1 = plt.subplots(
         figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
@@ -692,53 +775,111 @@ def plot_emgsig(
     )
 
     # Check if we have a single channel or a list of channels to plot
-    if isinstance(channels, int):
-        plt.plot(x_axis, emgsig[channels])
-        plt.ylabel("Ch {}".format(channels))
-        # set_ylabel is useful because if the channe is empty it won't
-        # show the channel number
-        plt.xlabel("Time (s)" if timeinseconds else "Samples")
+    if isinstance(channels, list) and len(channels) == 1:
+        channels = channels[0]
 
-    elif isinstance(channels, list):
-        # Plot all the channels in the subplots
+    if isinstance(channels, int):
+        ax1.plot(x_axis, emgsig[channels])
+
+        ax1.set_ylabel("Ch {}".format(channels))
+        # set_ylabel is useful because if the channel is empty it won't
+        # show the channel number
+        ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+
+    # Plot all the channels
+    elif isinstance(channels, list) and manual_offset == 0:
+        # Normalise the df
+        norm_raw_all = min_max_scaling(
+                data=emgfile["RAW_SIGNAL"][channels],
+                col_by_col=False,
+            )
+
         for count, thisChannel in enumerate(channels):
-            # Normalise the series
-            norm_raw = min_max_scaling(emgfile["RAW_SIGNAL"][thisChannel])
-            # TODO option to scale all the df or the single channel
-            # Add 1 to the previous channel to avoid overlapping
-            norm_raw = norm_raw + count
-            plt.plot(x_axis, norm_raw)
+            norm_raw = norm_raw_all[thisChannel]
+
+            # Add value to the previous channel to avoid overlapping
+            norm_raw = norm_raw + (0.5 - norm_raw.mean()) + count
+            ax1.plot(x_axis, norm_raw)
 
         # Ensure correct and complete ticks on the left y axis
-        ax1.set_yticks([*range(len(channels))])
+        ax1.set_yticks(np.arange(0.5, len(channels) + 0.5, 1))
         ax1.set_yticklabels([str(x) for x in channels])
+
         # Set axes labels
         ax1.set_ylabel("Channels")
         ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
+    elif isinstance(channels, list) and manual_offset > 0:
+        # Plot all the channels
+        half_offset = manual_offset / 2
+        for count, thisChannel in enumerate(channels):
+            data = emgfile["RAW_SIGNAL"][thisChannel]
+
+            # Add offset to the previous channel to avoid overlapping
+            if count == 0:
+                data = data + half_offset
+                ax1.plot(x_axis, data)
+            else:
+                data = data + half_offset + manual_offset * count
+                ax1.plot(x_axis, data)
+
+        # Ensure correct and complete ticks on the left y axis
+        ax1.set_yticks(
+            np.arange(
+                half_offset,
+                len(channels) * manual_offset + half_offset,
+                manual_offset,
+            )
+        )
+        ax1.set_yticklabels([str(x) for x in channels])
+
+        # Set axes labels
+        ax1.set_ylabel("Channels")
+        ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+
+    elif isinstance(channels, list) and manual_offset < 0:
+        raise ValueError(
+            "When calling the plot_emgsig function, manual_offset must be >= 0"
+        )
+
     else:
         raise TypeError(
-            "While calling the plot_emgsig function, you should pass an "
+            "When calling the plot_emgsig function, you should pass an "
             + "integer or a list to channels"
         )
 
+    # Plot the ref signal
     if addrefsig:
+        if not isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
+            raise TypeError(
+                "REF_SIGNAL is probably absent or it is not contained in a " +
+                "dataframe"
+            )
+
         ax2 = ax1.twinx()
-        # Plot the ref signal
-        xref = (
-            emgfile["REF_SIGNAL"].index / emgfile["FSAMP"]
-            if timeinseconds
-            else emgfile["REF_SIGNAL"].index
-        )
-        sns.lineplot(
-            x=xref,
-            y=emgfile["REF_SIGNAL"][0],
-            color="0.4",
-            ax=ax2,
-        )
+        ax2.plot(x_axis, emgfile["REF_SIGNAL"][0])
         ax2.set_ylabel("MVC")
 
-    showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
+        # Set z-order so that ax2 is in the background
+        ax2.set_zorder(0)
+        ax1.set_zorder(1)
+        ax1.patch.set_alpha(0)
+
+    # Initialise Figure_Layout_Manager and update default kwarg values with
+    # user-specified kwargs.
+    fig_manager = Figure_Layout_Manager(figure=fig)
+    fig_manager.get_final_kwargs(
+        line2d_kwargs_ax1, line2d_kwargs_ax2, axes_kwargs,
+    )
+    # Adjust labels' size and color, title, ticks and grid
+    fig_manager.set_style_from_kwargs()
+    # Set appropriate layout
+    fig_manager.set_layout(
+        tight_layout=tight_layout,
+        despine="2yaxes" if addrefsig else "1yaxis",
+    )
+
+    # Show the figure
     if showimmediately:
         plt.show()
 
@@ -749,11 +890,15 @@ def plot_differentials(
     emgfile,
     differential,
     column="col0",
+    manual_offset=0,
     addrefsig=False,
     timeinseconds=True,
     figsize=[20, 15],
-    showimmediately=True,
     tight_layout=True,
+    line2d_kwargs_ax1=None,
+    line2d_kwargs_ax2=None,
+    axes_kwargs=None,
+    showimmediately=True,
 ):
     """
     Plot the differential derivation of the RAW_SIGNAL by matrix column.
@@ -772,6 +917,10 @@ def plot_differentials(
         The matrix column to plot.
         Options are usyally "col0", "col1", "col2", "col3", "col4".
         but might change based on the size of the matrix used.
+    manual_offset : int or float, default 0
+        This parameter sets the scaling of the channels. If 0 (default), the
+        channels' amplitude is scaled automatically to fit the plotting window.
+        If > 0, the channels will be scaled based on the specified value.
     addrefsig : bool, default True
         If True, the REF_SIGNAL is plotted in front of the signal with a
         separated y-axes.
@@ -780,14 +929,20 @@ def plot_differentials(
         or in samples (False).
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from the GUI.
     tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's
         layout is improved.
-        It is useful to set it to False when calling the function from the GUI.
+        It is useful to set it to False when calling the function from a GUI.
+    line2d_kwargs_ax1 : dict
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1.
+    line2d_kwargs_ax2 : dict
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 2.
+    axes_kwargs : dict
+        Kwargs for figure's axes.
+    showimmediately : bool, default True
+        If True (default), plt.show() is called and the figure showed to the
+        user.
+        It is useful to set it to False when calling the function from a GUI.
 
     Returns
     -------
@@ -804,12 +959,12 @@ def plot_differentials(
     Plot the differential derivation of the first matrix column (col0).
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.emg_from_samplefile()
     >>> sorted_rawemg = emg.sort_rawemg(
-    >>>     emgfile=emgfile,
-    >>>     code="GR08MM1305",
-    >>>     orientation=180,
-    >>> )
+    ...     emgfile=emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ... )
     >>> sd=emg.diff(sorted_rawemg=sorted_rawemg)
     >>> emg.plot_differentials(
     ...     emgfile=emgfile,
@@ -820,14 +975,52 @@ def plot_differentials(
     ...     figsize=[20, 15],
     ...     showimmediately=True,
     ... )
+
+    Plot the double differential derivation of the second matrix column (col1)
+    with custom styles.
+
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile=emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ... )
+    >>> sd=emg.double_diff(sorted_rawemg=sorted_rawemg)
+    >>> line2d_kwargs_ax1 = {"linewidth": 0.5}
+    >>> axes_kwargs = {
+    ...     "grid": {
+    ...         "visible": True,
+    ...         "axis": "both",
+    ...         "color": "gray",
+    ...         "linestyle": "--",
+    ...         "linewidth": 0.5,
+    ...         "alpha": 0.7
+    ...     },
+    ... }
+    >>> fig = emg.plot_differentials(
+    ...     emgfile,
+    ...     differential=sd,
+    ...     column="col1",
+    ...     manual_offset=1000,
+    ...     addrefsig=True,
+    ...     timeinseconds=True,
+    ...     tight_layout=True,
+    ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
+    ...     axes_kwargs=axes_kwargs,
+    ...     showimmediately=True,
+    ... )
+
+    For further examples on how to customise the figure's layout, refer to
+    plot_emgsig().
     """
 
-    # Check to have the RAW_SIGNAL in a pandas dataframe
+    # Check to have the signal in a pandas dataframe
     if isinstance(differential[column], pd.DataFrame):
         emgsig = differential[column]
     else:
         raise TypeError(
-            "RAW_SIGNAL is probably absent or it is not contained in a dataframe"
+            "The signal differential[column] is probably absent or it is " +
+            "not contained in a dataframe"
         )
 
     # Here we produce an x axis in seconds or samples
@@ -836,44 +1029,97 @@ def plot_differentials(
     else:
         x_axis = emgsig.index
 
+    # Create figure and axis
     figname = "Column n.{}".format(column)
     fig, ax1 = plt.subplots(
         figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
         num=figname,
     )
 
-    # Plot all the channels of every column in the subplots
-    for count, thisChannel in enumerate(emgsig.columns):
-        # Normalise the series
-        norm_raw = min_max_scaling(emgsig[thisChannel])
-        # Add 1 to the previous channel to avoid overlapping
-        norm_raw = norm_raw + count
-        plt.plot(x_axis, norm_raw)
+    # Plot all the channels
+    if manual_offset == 0:
+        # Normalise the df
+        norm_raw_all = min_max_scaling(emgsig, col_by_col=False)
 
-    # Ensure correct and complete ticks on the left y axis
-    ax1.set_yticks([*range(len(emgsig.columns))])
-    ax1.set_yticklabels([str(x) for x in emgsig.columns])
-    # Set axes labels
-    ax1.set_ylabel("Channels")
-    ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+        for count, thisChannel in enumerate(emgsig.columns):
+            norm_raw = norm_raw_all[thisChannel]
 
+            # Add value to the previous channel to avoid overlapping
+            norm_raw = norm_raw + (0.5 - norm_raw.mean()) + count
+            ax1.plot(x_axis, norm_raw)
+
+        # Ensure correct and complete ticks on the left y axis
+        ax1.set_yticks(np.arange(0.5, len(emgsig.columns) + 0.5, 1))
+        ax1.set_yticklabels([str(x) for x in emgsig.columns])
+
+        # Set axes labels
+        ax1.set_ylabel("Channels")
+        ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+
+    elif manual_offset > 0:
+        half_offset = manual_offset / 2
+        for count, thisChannel in enumerate(emgsig.columns):
+            data = emgsig[thisChannel]
+
+            # Add offset to the previous channel to avoid overlapping
+            if count == 0:
+                data = data + half_offset
+                ax1.plot(x_axis, data)
+            else:
+                data = data + half_offset + manual_offset * count
+                ax1.plot(x_axis, data)
+
+        # Ensure correct and complete ticks on the left y axis
+        ax1.set_yticks(
+            np.arange(
+                half_offset,
+                len(emgsig.columns) * manual_offset + half_offset,
+                manual_offset,
+            )
+        )
+        ax1.set_yticklabels([str(x) for x in emgsig.columns])
+
+        # Set axes labels
+        ax1.set_ylabel("Channels")
+        ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+
+    else:
+        raise ValueError(
+            "When calling the plot_differentials function, manual_offset " +
+            "must be >= 0"
+        )
+
+    # Plot the ref signal
     if addrefsig:
+        if not isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
+            raise TypeError(
+                "REF_SIGNAL is probably absent or it is not contained in a " +
+                "dataframe"
+            )
+
         ax2 = ax1.twinx()
-        # Plot the ref signal
-        xref = (
-            emgfile["REF_SIGNAL"].index / emgfile["FSAMP"]
-            if timeinseconds
-            else emgfile["REF_SIGNAL"].index
-        )
-        sns.lineplot(
-            x=xref,
-            y=emgfile["REF_SIGNAL"][0],
-            color="0.4",
-            ax=ax2,
-        )
+        ax2.plot(x_axis, emgfile["REF_SIGNAL"][0])
         ax2.set_ylabel("MVC")
 
-    showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
+        # Set z-order so that ax2 is in the background
+        ax2.set_zorder(0)
+        ax1.set_zorder(1)
+        ax1.patch.set_alpha(0)
+
+    # Initialise Figure_Layout_Manager and update default kwarg values with
+    # user-specified kwargs.
+    fig_manager = Figure_Layout_Manager(figure=fig)
+    fig_manager.get_final_kwargs(
+        line2d_kwargs_ax1, line2d_kwargs_ax2, axes_kwargs,
+    )
+    # Adjust labels' size and color, title, ticks and grid
+    fig_manager.set_style_from_kwargs()
+    # Set appropriate layout
+    fig_manager.set_layout(
+        tight_layout=tight_layout,
+        despine="2yaxes" if addrefsig else "1yaxis",
+    )
+
     if showimmediately:
         plt.show()
 
@@ -882,11 +1128,13 @@ def plot_differentials(
 
 def plot_refsig(
     emgfile,
-    ylabel="MVC",
+    ylabel="",
     timeinseconds=True,
     figsize=[20, 15],
-    showimmediately=True,
     tight_layout=True,
+    line2d_kwargs_ax1=None,
+    axes_kwargs=None,
+    showimmediately=True,
 ):
     """
     Plot the REF_SIGNAL.
@@ -899,21 +1147,27 @@ def plot_refsig(
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    ylabel : str, default "MVC"
-        The unit of measure to show on the Y axis.
+    ylabel : str
+        WARNING! This parameter is deprecated since v0.1.1 and will be removed
+        after v0.2.0. Please use axes_kwargs instead. See examples in the
+        plot_refsig documentation.
     timeinseconds : bool, default True
         Whether to show the time on the x-axes in seconds (True)
         or in samples (False).
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from the GUI.
     tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's
         layout is improved.
-        It is useful to set it to False when calling the function from the GUI.
+        It is useful to set it to False when calling the function from a GUI.
+    line2d_kwargs_ax1 : dict
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1.
+    axes_kwargs : dict
+        Kwargs for figure's axes.
+    showimmediately : bool, default True
+        If True (default), plt.show() is called and the figure showed to the
+        user.
+        It is useful to set it to False when calling the function from a GUI.
 
     Returns
     -------
@@ -924,61 +1178,114 @@ def plot_refsig(
     Plot the reference signal.
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.emg_from_samplefile()
     >>> emg.plot_refsig(emgfile=emgfile)
 
     Change Y axis label and show time in samples.
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.emg_from_samplefile()
     >>> emg.plot_refsig(
-    >>>     emgfile=emgfile,
-    >>>     ylabel="Custom unit e.g., N or kg",
-    >>>     timeinseconds=False,
-    >>> )
+    ...     emgfile=emgfile,
+    ...     timeinseconds=False,
+    ... )
+
+    Plot the reference signal with custom labels and style.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> line2d_kwargs_ax1 = {"linewidth": 1}
+    >>> axes_kwargs = {
+    ...     "grid": {
+    ...         "visible": True,
+    ...         "axis": "both",
+    ...         "color": "red",
+    ...         "linestyle": "--",
+    ...         "linewidth": 0.3,
+    ...         "alpha": 0.7
+    ...     },
+    ...     "labels": {
+    ...         "ylabel_sx": "MVC (%)",
+    ...         "title": "Custom figure title",
+    ...     },
+    ... }
+    >>> fig = emg.plot_refsig(
+    ...     emgfile,
+    ...     timeinseconds=True,
+    ...     tight_layout=True,
+    ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
+    ...     axes_kwargs=axes_kwargs,
+    ...     showimmediately=True,
+    ... )
     """
+
+    # Warn for the use of a deprecated parameter
+    if len(ylabel) > 0:
+        msg = (
+            "The ylabel parameter is deprecated since v0.1.1 and will be " +
+            "removed after v0.2.0. Please use axes_kwargs instead. " +
+            "See examples in the plot_refsig documentation."
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
 
     # Check to have the REF_SIGNAL in a pandas dataframe
     if isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
         refsig = emgfile["REF_SIGNAL"]
-
-        # Here we produce an x axis in seconds or samples
-        if timeinseconds:
-            x_axis = refsig.index / emgfile["FSAMP"]
-        else:
-            x_axis = refsig.index
-
-        fig = plt.figure(
-            "Reference signal", figsize=(figsize[0] / 2.54, figsize[1] / 2.54)
-        )
-        ax = sns.lineplot(x=x_axis, y=refsig[0])
-        ax.set_ylabel(ylabel)
-        ax.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
-
-        showgoodlayout(tight_layout)
-        if showimmediately:
-            plt.show()
-
-        return fig
-
     else:
         raise TypeError(
-            "REF_SIGNAL is probably absent or it is not contained in a dataframe"
+            "REF_SIGNAL is probably absent or it is not contained in a " +
+            "dataframe"
         )
+
+    # Here we produce an x axis in seconds or samples
+    if timeinseconds:
+        x_axis = refsig.index / emgfile["FSAMP"]
+    else:
+        x_axis = refsig.index
+
+    fig, ax1 = plt.subplots(
+        figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
+        num="Reference signal",
+    )
+
+    ax1.plot(x_axis, refsig[0])
+
+    ax1.set_ylabel("MVC")
+    ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+
+    # Initialise Figure_Layout_Manager and update default kwarg values with
+    # user-specified kwargs.
+    fig_manager = Figure_Layout_Manager(figure=fig)
+    fig_manager.get_final_kwargs(
+        line2d_kwargs_ax1, {}, axes_kwargs,
+    )
+    # Adjust labels' size and color, title, ticks and grid
+    fig_manager.set_style_from_kwargs()
+    # Set appropriate layout
+    fig_manager.set_layout(tight_layout=tight_layout, despine="1yaxis")
+
+    if showimmediately:
+        plt.show()
+
+    return fig
 
 
 def plot_mupulses(
     emgfile,
     munumber="all",
-    linewidths=0.5,
+    linewidths=0,
+    linelengths=0.9,
     addrefsig=True,
     timeinseconds=True,
     figsize=[20, 15],
-    showimmediately=True,
     tight_layout=True,
+    line2d_kwargs_ax1=None,
+    line2d_kwargs_ax2=None,
+    axes_kwargs=None,
+    showimmediately=True,
 ):
     """
-    Plot all the MUPULSES (binary representation of the firings time).
+    Plot the MUPULSES (binary representation of the firings time).
 
     Parameters
     ----------
@@ -992,12 +1299,16 @@ def plot_mupulses(
         Otherwise, a single MU (int) or multiple MUs (list of int) can be
         specified.
         The list can be passed as a manually-written list or with:
-        munumber=[*range(0, 12)].
+        munumber=[*range(0, n)].
         We need the " * " operator to unpack the results of range into a list.
         munumber is expected to be with base 0 (i.e., the first MU in the file
         is the number 0).
-    linewidths : float, default 0.5
-        The width of the vertical lines representing the MU firing.
+    linewidths : float
+        WARNING! This parameter is deprecated since v0.1.1 and will be removed
+        after v0.2.0. Please use line2d_kwargs_ax1 instead. See examples in the
+        plot_mupulses documentation.
+    linelengths : float, default 0.9
+        The vertical length of each line. This must be a value between 0 and 1.
     addrefsig : bool, default True
         If True, the REF_SIGNAL is plotted in front of the MUs pulses with a
         separated y-axes.
@@ -1006,14 +1317,20 @@ def plot_mupulses(
         or in samples (False).
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from the GUI.
     tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's
         layout is improved.
-        It is useful to set it to False when calling the function from the GUI.
+        It is useful to set it to False when calling the function from a GUI.
+    line2d_kwargs_ax1 : dict
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1.
+    line2d_kwargs_ax2 : dict
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 2.
+    axes_kwargs : dict
+        Kwargs for figure's axes.
+    showimmediately : bool, default True
+        If True (default), plt.show() is called and the figure showed to the
+        user.
+        It is useful to set it to False when calling the function from a GUI.
 
     Returns
     -------
@@ -1030,17 +1347,50 @@ def plot_mupulses(
     signal.
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> emgfile = emg.sort_mus(emgfile)
     >>> emg.plot_mupulses(
     ...     emgfile=emgfile,
-    ...     linewidths=0.5,
-    ...     order=True,
     ...     addrefsig=True,
     ...     timeinseconds=True,
     ...     figsize=[20, 15],
     ...     showimmediately=True,
+    ... ) # TODO linewidths linelengths
+
+    Plot MUs pulses based on recruitment order and adjust lines width, color
+    and length.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> emgfile = emg.sort_mus(emgfile)
+    >>> line2d_kwargs_ax1 = {
+    ...     "linewidth": 0.7,
+    ...     "color": "0.1",
+    ...     "alpha": 0.4,
+    ... }
+    >>> fig = emg.plot_mupulses(
+    ...     emgfile,
+    ...     munumber="all",
+    ...     linelengths=0.7,
+    ...     addrefsig=True,
+    ...     timeinseconds=True,
+    ...     tight_layout=True,
+    ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
+    ...     showimmediately=True,
     ... )
+
+    For further examples on how to customise the figure's layout, refer to
+    plot_emgsig().
     """
+
+    # Warn for the use of a deprecated parameter
+    if linewidths > 0:
+        msg = (
+            "The linewidths parameter is deprecated since v0.1.1 and will " +
+            "be removed after v0.2.0. Please use line2d_kwargs_ax1 instead. " +
+            "See examples in the plot_mupulses documentation."
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
 
     # Check to have the correct input
     if isinstance(emgfile["MUPULSES"], list):
@@ -1050,11 +1400,11 @@ def plot_mupulses(
             "MUPULSES is probably absent or it is not contained in a np.array"
         )
 
-    if addrefsig:
-        if not isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
-            raise TypeError(
-                "REF_SIGNAL is probably absent or it is not contained in a dataframe"
-            )
+    # Check linelengths value
+    if linelengths < 0 or linelengths > 1:
+        raise ValueError(
+            "linelengths must be a number between 0 and 1."
+        )
 
     # Check if all the MUs have to be plotted and create the y labels
     if isinstance(munumber, str):
@@ -1063,8 +1413,7 @@ def plot_mupulses(
             y_tick_lab = [*range(0, emgfile["NUMBER_OF_MUS"])]
             ylab = "Motor units"
         else:
-            y_tick_lab = []
-            ylab = "MU n. 0"
+            munumber = 0
 
     elif isinstance(munumber, int):
         mupulses = [mupulses[munumber]]
@@ -1081,7 +1430,8 @@ def plot_mupulses(
             ylab = f"MU n. {munumber[0]}"
     else:
         raise TypeError(
-            "While calling the plot_mupulses function, you should pass an integer, a list or 'all' to munumber"
+            "While calling the plot_mupulses function, you should pass an " +
+            "integer, a list or 'all' to munumber"
         )
 
     # Convert x axes in seconds if timeinseconds==True.
@@ -1089,45 +1439,69 @@ def plot_mupulses(
     # MUPULSES we need to convert the point of firing from samples to seconds.
     if timeinseconds:
         mupulses = [n / emgfile["FSAMP"] for n in mupulses]
+        x_axis = emgfile["RAW_SIGNAL"].index / emgfile["FSAMP"]
+    else:
+        x_axis = emgfile["RAW_SIGNAL"].index
 
     # Create colors list for the firings and plot them
     colors1 = ["C{}".format(i) for i in range(len(mupulses))]
 
     # Use the subplot to allow the use of twinx
     fig, ax1 = plt.subplots(
-        figsize=(figsize[0] / 2.54, figsize[1] / 2.54), num="MUs pulses"
+        figsize=(figsize[0] / 2.54, figsize[1] / 2.54), num="MUs pulses",
     )
 
     # Plot the MUPULSES.
-    ax1.eventplot(
-        mupulses,
-        linewidths=linewidths,
-        linelengths=0.9,  # Assign 90% of the space in the plot to linelengths
-        lineoffsets=1,
-        colors=colors1,
-    )
+    # Iterate over each row and plot events manually to allow the use of
+    # the Figure_Layout_Manager.
+    for i, (events, color) in enumerate(zip(mupulses, colors1)):
+        # The `y` position for this row (increasing by 1 for each new row)
+        delta = (1-linelengths) / 2
+        y_pos = i
+        # Draw each event as a vertical line
+        for event in events:
+            ax1.plot(
+                [event, event],
+                [y_pos + delta, y_pos + delta + linelengths],
+                color=color, linewidth=0.5,
+            )
 
     # Ensure correct and complete ticks on the left y axis
-    ax1.set_yticks([*range(len(mupulses))])
+    ax1.set_yticks(np.arange(0.5, len(mupulses) + 0.5, 1))
     ax1.set_yticklabels([str(mu) for mu in y_tick_lab])
     # Set axes labels
     ax1.set_ylabel(ylab)
     ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
     if addrefsig:
-        # Create the second (right) y axes
+        if not isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
+            raise TypeError(
+                "REF_SIGNAL is probably absent or it is not contained in a " +
+                "dataframe"
+            )
         ax2 = ax1.twinx()
-
-        # Plot REF_SIGNAL on the right y axes
-        xref = (
-            emgfile["REF_SIGNAL"].index / emgfile["FSAMP"]
-            if timeinseconds
-            else emgfile["REF_SIGNAL"].index
-        )
-        sns.lineplot(x=xref, y=emgfile["REF_SIGNAL"][0], color="0.4", ax=ax2)
+        ax2.plot(x_axis, emgfile["REF_SIGNAL"][0])
         ax2.set_ylabel("MVC")
 
-    showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
+        # Set z-order so that ax2 is in the background
+        ax2.set_zorder(0)
+        ax1.set_zorder(1)
+        ax1.patch.set_alpha(0)
+
+    # Initialise Figure_Layout_Manager and update default kwarg values with
+    # user-specified kwargs.
+    fig_manager = Figure_Layout_Manager(figure=fig)
+    fig_manager.get_final_kwargs(
+        line2d_kwargs_ax1, line2d_kwargs_ax2, axes_kwargs,
+    )
+    # Adjust labels' size and color, title, ticks and grid
+    fig_manager.set_style_from_kwargs()
+    # Set appropriate layout
+    fig_manager.set_layout(
+        tight_layout=tight_layout,
+        despine="2yaxes" if addrefsig else "1yaxis",
+    )
+
     if showimmediately:
         plt.show()
 
@@ -1140,8 +1514,11 @@ def plot_ipts(
     addrefsig=False,
     timeinseconds=True,
     figsize=[20, 15],
-    showimmediately=True,
     tight_layout=True,
+    line2d_kwargs_ax1=None,
+    line2d_kwargs_ax2=None,
+    axes_kwargs=None,
+    showimmediately=True,
 ):
     """
     Plot the IPTS (decomposed source).
@@ -1164,19 +1541,28 @@ def plot_ipts(
         We need the " * " operator to unpack the results of range into a list.
         munumber is expected to be with base 0 (i.e., the first MU in the file
         is the number 0).
+    addrefsig : bool, default True
+        If True, the REF_SIGNAL is plotted in front of the signal with a
+        separated y-axes.
     timeinseconds : bool, default True
-        Whether to show the time on the x-axes in seconds (True)
-        or in samples (False).
+        Whether to show the time on the x-axes in seconds (True) or in
+        samples (False).
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from the GUI.
     tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's
         layout is improved.
-        It is useful to set it to False when calling the function from the GUI.
+        It is useful to set it to False when calling the function from a GUI.
+    line2d_kwargs_ax1 : dict
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1.
+    line2d_kwargs_ax2 : dict
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 2.
+    axes_kwargs : dict
+        Kwargs for figure's axes.
+    showimmediately : bool, default True
+        If True (default), plt.show() is called and the figure showed to the
+        user.
+        It is useful to set it to False when calling the function from a GUI.
 
     Returns
     -------
@@ -1197,7 +1583,7 @@ def plot_ipts(
     Plot IPTS of all the MUs and overlay the reference signal.
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.emg_from_samplefile()
     >>> emg.plot_ipts(
     ...     emgfile=emgfile,
     ...     munumber="all",
@@ -1210,7 +1596,7 @@ def plot_ipts(
     Plot IPTS of two MUs.
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.emg_from_samplefile()
     >>> emg.plot_ipts(
     ...     emgfile=emgfile,
     ...     munumber=[1, 3],
@@ -1219,6 +1605,32 @@ def plot_ipts(
     ...     figsize=[20, 15],
     ...     showimmediately=True,
     ... )
+
+    Plot IPTS of all the MUs, the reference signal and a background grid.
+
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> axes_kwargs = {
+    ...     "grid": {
+    ...         "visible": True,
+    ...         "axis": "both",
+    ...         "color": "gray",
+    ...         "linestyle": "--",
+    ...         "linewidth": 1,
+    ...         "alpha": 0.7
+    ...     },
+    ... }
+    >>> fig = emg.plot_ipts(
+    ...     emgfile,
+    ...     munumber="all",
+    ...     addrefsig=True,
+    ...     timeinseconds=True,
+    ...     tight_layout=True,
+    ...     axes_kwargs=axes_kwargs,
+    ...     showimmediately=True,
+    ... )
+
+    For additional examples on how to customise the figure's layout, refer to
+    plot_emgsig().
     """
 
     # Check if all the MUs have to be plotted
@@ -1227,6 +1639,10 @@ def plot_ipts(
             munumber = 0
         else:
             munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
+
+    # Check if we have a single mu or a list of mus to plot
+    if isinstance(munumber, list) and len(munumber) == 1:
+        munumber = munumber[0]
 
     # Check to have the IPTS in a pandas dataframe
     if isinstance(emgfile["IPTS"], pd.DataFrame):
@@ -1250,47 +1666,70 @@ def plot_ipts(
 
     # Check if we have a single MU or a list of MUs to plot
     if isinstance(munumber, int):
-        plt.plot(x_axis, ipts[munumber])
-        plt.ylabel("MU {}".format(munumber))
+        ax1.plot(x_axis, ipts[munumber])
+
+        ax1.set_ylabel("MU {}".format(munumber))
         # Use set_ylabel because if the MU is empty,
         # the channel number won't show.
+        ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
     elif isinstance(munumber, list):
         # Plot all the MUs.
         for count, thisMU in enumerate(munumber):
-            norm_ipts = min_max_scaling(ipts[thisMU])
-            y_axis = norm_ipts + count
-            plt.plot(x_axis, y_axis)
+            norm_ipts = min_max_scaling(
+                ipts[thisMU], col_by_col=False,
+            )
 
-            # Ensure correct and complete ticks on the left y axis
-            plt.yticks([*range(len(munumber))])
-            plt.gca().set_yticklabels([str(mu) for mu in munumber])
-            plt.ylabel("Motor units")
+            # Add value to the previous channel to avoid overlapping
+            norm_ipts = norm_ipts + (0.5 - norm_ipts.mean()) + count
+            ax1.plot(x_axis, norm_ipts)
+
+        # Ensure correct and complete ticks on the left y axis
+        ax1.set_yticks(np.arange(0.5, len(munumber) + 0.5, 1))
+        ax1.set_yticklabels([str(x) for x in munumber])
+
+        # Set axes labels
+        ax1.set_ylabel("Motor units")
+        ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
     else:
         raise TypeError(
-            "While calling the plot_ipts function, you should pass an integer, a list or 'all' to munumber"
+            "While calling the plot_ipts function, you should pass an " +
+            "integer, a list or 'all' to munumber"
         )
 
-    ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
-
+    # Plot the ref signal
     if addrefsig:
+        if not isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
+            raise TypeError(
+                "REF_SIGNAL is probably absent or it is not contained in a " +
+                "dataframe"
+            )
+
         ax2 = ax1.twinx()
-        # Plot the ref signal
-        xref = (
-            emgfile["REF_SIGNAL"].index / emgfile["FSAMP"]
-            if timeinseconds
-            else emgfile["REF_SIGNAL"].index
-        )
-        sns.lineplot(
-            x=xref,
-            y=emgfile["REF_SIGNAL"][0],
-            color="0.4",
-            ax=ax2,
-        )
+        ax2.plot(x_axis, emgfile["REF_SIGNAL"][0])
         ax2.set_ylabel("MVC")
 
-    showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
+        # Set z-order so that ax2 is in the background
+        ax2.set_zorder(0)
+        ax1.set_zorder(1)
+        ax1.patch.set_alpha(0)
+
+    # Initialise Figure_Layout_Manager and update default kwarg values with
+    # user-specified kwargs.
+    fig_manager = Figure_Layout_Manager(figure=fig)
+    fig_manager.get_final_kwargs(
+        line2d_kwargs_ax1, line2d_kwargs_ax2, axes_kwargs,
+    )
+    # Adjust labels' size and color, title, ticks and grid
+    fig_manager.set_style_from_kwargs()
+    # Set appropriate layout
+    fig_manager.set_layout(
+        tight_layout=tight_layout,
+        despine="2yaxes" if addrefsig else "1yaxis",
+    )
+
+    # Show the figure
     if showimmediately:
         plt.show()
 
@@ -1303,8 +1742,11 @@ def plot_idr(
     addrefsig=True,
     timeinseconds=True,
     figsize=[20, 15],
-    showimmediately=True,
     tight_layout=True,
+    line2d_kwargs_ax1=None,
+    line2d_kwargs_ax2=None,
+    axes_kwargs=None,
+    showimmediately=True,
 ):
     """
     Plot the instantaneous discharge rate (IDR).
@@ -1333,14 +1775,20 @@ def plot_idr(
         or in samples (False).
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from the GUI.
     tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's
         layout is improved.
-        It is useful to set it to False when calling the function from the GUI.
+        It is useful to set it to False when calling the function from a GUI.
+    line2d_kwargs_ax1 : dict
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1.
+    line2d_kwargs_ax2 : dict
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 2.
+    axes_kwargs : dict
+        Kwargs for figure's axes.
+    showimmediately : bool, default True
+        If True (default), plt.show() is called and the figure showed to the
+        user.
+        It is useful to set it to False when calling the function from a GUI.
 
     Returns
     -------
@@ -1361,7 +1809,7 @@ def plot_idr(
     Plot IDR of all the MUs and overlay the reference signal.
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.emg_from_samplefile()
     >>> emg.plot_idr(
     ...     emgfile=emgfile,
     ...     munumber="all",
@@ -1374,7 +1822,7 @@ def plot_idr(
     Plot IDR of two MUs.
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.emg_from_samplefile()
     >>> emg.plot_idr(
     ...     emgfile=emgfile,
     ...     munumber=[1, 3],
@@ -1383,16 +1831,35 @@ def plot_idr(
     ...     figsize=[20, 15],
     ...     showimmediately=True,
     ... )
+
+    Plot IDR and use custom markers.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> line2d_kwargs_ax1 = {
+    ...     "marker": "D",
+    ...     "markersize": 6,
+    ...     "markeredgecolor": "tab:blue",
+    ...     "markeredgewidth": "2",
+    ...     "fillstyle": "none",
+    ...     "alpha": 0.6,
+    ... }
+    >>> fig = emg.plot_idr(
+    ...     emgfile,
+    ...     munumber=[1, 3, 4],
+    ...     addrefsig=True,
+    ...     timeinseconds=False,
+    ...     tight_layout=True,
+    ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
+    ...     showimmediately=True,
+    ... )
+
+    For additional examples on how to customise the figure's layout, refer to
+    plot_emgsig().
     """
 
     # Compute the IDR
     idr = compute_idr(emgfile=emgfile)
-
-    if addrefsig:
-        if not isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
-            raise TypeError(
-                "REF_SIGNAL is probably absent or it is not contained in a dataframe"
-            )
 
     # Check if all the MUs have to be plotted
     if isinstance(munumber, str):
@@ -1400,6 +1867,10 @@ def plot_idr(
             munumber = 0
         else:
             munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
+
+    # Check if we have a single mu or a list of mus to plot
+    if isinstance(munumber, list) and len(munumber) == 1:
+        munumber = munumber[0]
 
     # Use the subplot function to allow for the use of twinx()
     fig, ax1 = plt.subplots(
@@ -1409,66 +1880,90 @@ def plot_idr(
 
     # Check if we have a single MU or a list of MUs to plot.
     if isinstance(munumber, int):
-        ax1 = sns.scatterplot(
-            x=idr[munumber]["timesec" if timeinseconds else "mupulses"],
-            y=idr[munumber]["idr"],
-        )  # sns.scatterplot breaks if x or y are nan
+        ax1.plot(
+            idr[munumber]["timesec" if timeinseconds else "mupulses"],
+            idr[munumber]["idr"],
+            ".", markersize=12,
+        )
 
-        ax1.set_ylabel(
-            "MU {} (PPS)".format(munumber)
-        )  # Useful because if the MU is empty it won't show the channel number
+        ax1.set_ylabel("MU {} (pps)".format(munumber))
+        # Useful because if the MU is empty it won't show the channel number
         ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
     elif isinstance(munumber, list):
-        if len(munumber) > 1:
-            for count, thisMU in enumerate(munumber):
-                # Normalise the series
-                norm_idr = min_max_scaling(idr[thisMU]["idr"])
-                # Add 1 to the previous MUs to avoid overlapping of the MUs
-                norm_idr = norm_idr + count
-                sns.scatterplot(
-                    x=idr[thisMU]["timesec" if timeinseconds else "mupulses"],
-                    y=norm_idr,
-                    ax=ax1,
-                )
+        # Extract the 'idr' column from each df and create a new df of idrs
+        idr_all = pd.DataFrame({key: df['idr'] for key, df in idr.items()})
+        idr_all = idr_all[munumber]
+        # Normalise the df
+        norm_idr_all = min_max_scaling(data=idr_all, col_by_col=False)
 
-            # Ensure correct and complete ticks on the left y axis
-            ax1.set_yticks([*range(len(munumber))])
-            ax1.set_yticklabels([str(mu) for mu in munumber])
-            # Set axes labels
-            ax1.set_ylabel("Motor units")
-            ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+        for count, thisMU in enumerate(munumber):
+            norm_idr = norm_idr_all[thisMU]
 
-        elif len(munumber) == 1:
-            # TODO remove this part and check len before.
-            # See plot_smoothed_dr as a reference
-            ax1 = sns.scatterplot(
-                x=idr[munumber[0]]["timesec" if timeinseconds else "mupulses"],
-                y=idr[munumber[0]]["idr"],
+            # Add value to the previous mu to avoid overlapping
+            if norm_idr.mean() <= 0.5:
+                norm_idr = norm_idr + (0.5 - norm_idr.mean()) + count
+            else:
+                norm_idr = norm_idr - (norm_idr.mean() - 0.5) + count
+
+            ax1.plot(
+                # Ignore first nan with [1:]
+                idr[thisMU]["timesec" if timeinseconds else "mupulses"][1:],
+                norm_idr.dropna(),
+                ".", markersize=8,
             )
 
-            ax1.set_ylabel(
-                "MU {} (PPS)".format(munumber[0])
-            )  # Useful because if the MU is empty it won't show the channel n
-            ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
+        # Ensure correct and complete ticks on the left y axis
+        ax1.set_yticks(np.arange(0.5, len(munumber) + 0.5, 1))
+        ax1.set_yticklabels([str(mu) for mu in munumber])
+
+        # Set axes labels
+        ax1.set_ylabel("Motor units")
+        ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
     else:
         raise TypeError(
-            "While calling the plot_idr function, you should pass an integer, a list or 'all' to munumber"
+            "While calling the plot_idr function, you should pass an " +
+            "integer, a list or 'all' to munumber"
         )
 
+    # Plot the ref signal
     if addrefsig:
-        ax2 = ax1.twinx()
-        # Plot the ref signal
-        xref = (
+        if not isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
+            raise TypeError(
+                "REF_SIGNAL is probably absent or it is not contained in a " +
+                "dataframe"
+            )
+
+        x_axis = (
             emgfile["REF_SIGNAL"].index / emgfile["FSAMP"]
             if timeinseconds
             else emgfile["REF_SIGNAL"].index
         )
-        sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
+        ax2 = ax1.twinx()
+        ax2.plot(x_axis, emgfile["REF_SIGNAL"][0])
         ax2.set_ylabel("MVC")
 
-    showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
+        # Set z-order so that ax2 is in the background
+        ax2.set_zorder(0)
+        ax1.set_zorder(1)
+        ax1.patch.set_alpha(0)
+
+    # Initialise Figure_Layout_Manager and update default kwarg values with
+    # user-specified kwargs.
+    fig_manager = Figure_Layout_Manager(figure=fig)
+    fig_manager.get_final_kwargs(
+        line2d_kwargs_ax1, line2d_kwargs_ax2, axes_kwargs,
+    )
+    # Adjust labels' size and color, title, ticks and grid
+    fig_manager.set_style_from_kwargs()
+    # Set appropriate layout
+    fig_manager.set_layout(
+        tight_layout=tight_layout,
+        despine="2yaxes" if addrefsig else "1yaxis",
+    )
+
+    # Show the figure
     if showimmediately:
         plt.show()
 
@@ -1484,8 +1979,11 @@ def plot_smoothed_dr(
     addrefsig=True,
     timeinseconds=True,
     figsize=[20, 15],
-    showimmediately=True,
     tight_layout=True,
+    line2d_kwargs_ax1=None,
+    line2d_kwargs_ax2=None,
+    axes_kwargs=None,
+    showimmediately=True,
 ):
     """
     Plot the smoothed discharge rate.
@@ -1522,14 +2020,22 @@ def plot_smoothed_dr(
         or in samples (False).
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from the GUI.
     tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's
         layout is improved.
-        It is useful to set it to False when calling the function from the GUI.
+        It is useful to set it to False when calling the function from a GUI.
+    line2d_kwargs_ax1 : dict
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1 (in
+        this case, smoothfits and idr).
+    line2d_kwargs_ax2 : dict
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 2 (the
+        reference signal).
+    axes_kwargs : dict
+        Kwargs for figure's axes.
+    showimmediately : bool, default True
+        If True (default), plt.show() is called and the figure showed to the
+        user.
+        It is useful to set it to False when calling the function from a GUI.
 
     Returns
     -------
@@ -1547,19 +2053,16 @@ def plot_smoothed_dr(
 
     Examples
     --------
-    Smooth MUs DR using Support Vector Regression.
+    Smooth MUs DR using Support Vector Regression. Plot the stacked smoothed
+    DR of all the MUs and overlay the IDR and the reference signal.
 
     >>> import openhdemg.library as emg
     >>> import pandas as pd
     >>> emgfile = emg.emg_from_samplefile()
     >>> emgfile = emg.sort_mus(emgfile=emgfile)
     >>> svrfits = emg.compute_svr(emgfile)
-
-    Plot the stacked smoothed DR of all the MUs and overlay the IDR and the
-    reference signal.
-
     >>> smoothfits = pd.DataFrame(svrfits["gensvr"]).transpose()
-    >>> emg.plot_smoothed_dr(
+    >>> fig = emg.plot_smoothed_dr(
     >>>     emgfile,
     >>>     smoothfits=smoothfits,
     >>>     munumber="all",
@@ -1567,16 +2070,33 @@ def plot_smoothed_dr(
     >>>     stack=True,
     >>>     addrefsig=True,
     >>> )
+
+    Plot in black and white.
+
+    >>> line2d_kwargs_ax1 = {
+    ...     "linewidth": 3,
+    ...     "markerfacecolor": "0.8",
+    ...     "markeredgecolor": "k",
+    ...     "color": "k",
+    ... }
+    >>> line2d_kwargs_ax2 = {"alpha": 0.2}
+    >>> fig = emg.plot_smoothed_dr(
+    ...     emgfile,
+    ...     smoothfits=smoothfits,
+    ...     munumber="all",
+    ...     addidr=True,
+    ...     stack=True,
+    ...     addrefsig=True,
+    ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
+    ...     line2d_kwargs_ax2=line2d_kwargs_ax2,
+    ... )
+
+    For additional examples on how to customise the figure's layout, refer to
+    plot_emgsig().
     """
 
     # Compute the IDR
     idr = compute_idr(emgfile=emgfile)
-
-    if addrefsig:
-        if not isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
-            raise TypeError(
-                "REF_SIGNAL is probably absent or it is not contained in a dataframe"
-            )
 
     # Check if all the MUs have to be plotted
     if isinstance(munumber, list):
@@ -1602,68 +2122,82 @@ def plot_smoothed_dr(
     if isinstance(munumber, int):
         # Plot IDR
         if addidr:
-            sns.scatterplot(
-                x=idr[munumber]["timesec" if timeinseconds else "mupulses"],
-                y=idr[munumber]["idr"],
-                ax=ax1,
-                alpha=0.4,
-            )  # sns.scatterplot breaks if x or y are nan?
+            ax1.plot(
+                idr[munumber]["timesec" if timeinseconds else "mupulses"],
+                idr[munumber]["idr"],
+                ".", markersize=12, alpha=0.4,
+                color="C0",  # Set same color as smoothed DR
+            )
 
         # Plot smoothed DR
         if timeinseconds:
             x_smooth = np.arange(len(smoothfits[munumber])) / emgfile["FSAMP"]
         else:
             x_smooth = np.arange(len(smoothfits[munumber]))
-        ax1.plot(x_smooth, smoothfits[munumber], linewidth=2)
+        ax1.plot(x_smooth, smoothfits[munumber], linewidth=2, color="C0")
 
-        # Labels
-        ax1.set_ylabel(
-            "MU {} (PPS)".format(munumber)
-        )  # Useful because if the MU is empty it won't show the channel number
+        ax1.set_ylabel("MU {} (pps)".format(munumber))
+        # Useful because if the MU is empty it won't show the channel number
         ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
     elif isinstance(munumber, list) and stack:
+        # Extract the 'idr' column from each df and create a new df of idrs
+        idr_all = pd.DataFrame({key: df['idr'] for key, df in idr.items()})
+        idr_all = idr_all[munumber]
+
+        # Normalise 'idr' and 'smoothfits' based on common max and min
+        min_ = min(idr_all.min().min(), smoothfits.min().min())
+        max_ = max(idr_all.max().max(), smoothfits.max().max())
+        norm_idr_all = ((idr_all - min_) / (max_ - min_))
+        norm_fit_all = ((smoothfits - min_) / (max_ - min_))
+
         for count, thisMU in enumerate(munumber):
-            # Plot IDR
-            if addidr:
-                # Normalise the IDR series and add 1 to the previous MUs to
-                # avoid overlapping of the MUs.
-                norm_idr = min_max_scaling(idr[thisMU]["idr"]) + count
-                sns.scatterplot(
-                    x=idr[thisMU]["timesec" if timeinseconds else "mupulses"],
-                    y=norm_idr,
-                    ax=ax1,
-                    alpha=0.4,
-                )
-
-            # Plot smoothed DR
-            if timeinseconds:
-                x_smooth = np.arange(
-                    len(smoothfits[thisMU])
-                ) / emgfile["FSAMP"]
-            else:
-                x_smooth = np.arange(len(smoothfits[thisMU]))
+            # Get norm_fit and mean norm_fit of this MU to align yticks
+            norm_fit = norm_fit_all[thisMU]
+            norm_fit_mu_mean = norm_fit.mean()
 
             if addidr:
-                # Scale factor to match smoothed DR and IDR when stacked
-                delta = (
-                    (smoothfits[thisMU].max() - smoothfits[thisMU].min()) /
-                    (idr[thisMU]["idr"].max() - idr[thisMU]["idr"].min())
+                # Prepare IDR to plot. Add value to the previous mu to avoid
+                # overlapping.
+                norm_idr = norm_idr_all[thisMU]
+                if norm_fit_mu_mean <= 0.5:
+                    norm_idr = norm_idr + (0.5 - norm_fit_mu_mean) + count
+                else:
+                    norm_idr = norm_idr - (norm_fit_mu_mean - 0.5) + count
+
+                # Prepare smoothed fit to plot.
+                if timeinseconds:
+                    x_smooth = np.arange(
+                        len(smoothfits[thisMU])
+                    ) / emgfile["FSAMP"]
+                else:
+                    x_smooth = np.arange(len(smoothfits[thisMU]))
+                # Add value to the previous mu to avoid overlapping
+                if norm_fit_mu_mean <= 0.5:
+                    norm_fit = norm_fit + (0.5 - norm_fit_mu_mean) + count
+                else:
+                    norm_fit = norm_fit - (norm_fit_mu_mean - 0.5) + count
+
+                # Plot IDR and smoothed fit
+                ax1.plot(
+                    idr[thisMU]["timesec" if timeinseconds else "mupulses"][1:],
+                    norm_idr.dropna(),
+                    ".", markersize=12, alpha=0.4,
+                    color=f"C{count}",  # Set same color as smoothed DR
                 )
-                delta_min = (
-                    (smoothfits[thisMU].min() - idr[thisMU]["idr"].min()) /
-                    (idr[thisMU]["idr"].max() - idr[thisMU]["idr"].min())
-                )
-                norm_fit = min_max_scaling(smoothfits[thisMU])
-                norm_fit = norm_fit * delta + delta_min + count
-                ax1.plot(x_smooth, norm_fit, linewidth=2)
+                ax1.plot(x_smooth, norm_fit, linewidth=2, color=f"C{count}")
+
             else:
-                norm_fit = min_max_scaling(smoothfits[thisMU]) + count
-                ax1.plot(x_smooth, norm_fit, linewidth=2)
+                if norm_fit_mu_mean <= 0.5:
+                    norm_fit = norm_fit + (0.5 - norm_fit_mu_mean) + count
+                else:
+                    norm_fit = norm_fit - (norm_fit_mu_mean - 0.5) + count
+                ax1.plot(x_smooth, norm_fit, linewidth=2, color=f"C{count}")
 
         # Ensure correct and complete ticks on the left y axis
-        ax1.set_yticks([*range(len(munumber))])
+        ax1.set_yticks(np.arange(0.5, len(munumber) + 0.5, 1))
         ax1.set_yticklabels([str(mu) for mu in munumber])
+
         # Set axes labels
         ax1.set_ylabel("Motor units")
         ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
@@ -1672,11 +2206,11 @@ def plot_smoothed_dr(
         for count, thisMU in enumerate(munumber):
             # Plot IDR
             if addidr:
-                sns.scatterplot(
-                    x=idr[thisMU]["timesec" if timeinseconds else "mupulses"],
-                    y=idr[thisMU]["idr"],
-                    ax=ax1,
-                    alpha=0.4,
+                ax1.plot(
+                    idr[thisMU]["timesec" if timeinseconds else "mupulses"],
+                    idr[thisMU]["idr"],
+                    ".", markersize=12, alpha=0.4,
+                    color=f"C{count}",  # Set same color as smoothed DR
                 )
 
             # Plot smoothed DR
@@ -1686,29 +2220,58 @@ def plot_smoothed_dr(
                 ) / emgfile["FSAMP"]
             else:
                 x_smooth = np.arange(len(smoothfits[thisMU]))
-            ax1.plot(x_smooth, smoothfits[thisMU], linewidth=2)
+            ax1.plot(
+                x_smooth, smoothfits[thisMU], linewidth=2, color=f"C{count}",
+            )
 
         # Set axes labels
-        ax1.set_ylabel("Discharge rate (PPS)")
+        ax1.set_ylabel("Discharge rate (pps)")
         ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
 
     else:
         raise TypeError(
-            "While calling the plot_idr function, you should pass an integer, a list or 'all' to munumber"
+            "While calling the plot_idr function, you should pass an " +
+            "integer, a list or 'all' to munumber"
         )
 
+    # Plot the ref signal
     if addrefsig:
-        ax2 = ax1.twinx()
-        # Plot the ref signal
-        xref = (
+        if not isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
+            raise TypeError(
+                "REF_SIGNAL is probably absent or it is not contained in a " +
+                "dataframe"
+            )
+
+        x_axis = (
             emgfile["REF_SIGNAL"].index / emgfile["FSAMP"]
             if timeinseconds
             else emgfile["REF_SIGNAL"].index
         )
-        sns.lineplot(y=emgfile["REF_SIGNAL"][0], x=xref, color="0.4", ax=ax2)
+
+        ax2 = ax1.twinx()
+        ax2.plot(x_axis, emgfile["REF_SIGNAL"][0])
         ax2.set_ylabel("MVC")
 
-    showgoodlayout(tight_layout, despined="2yaxes" if addrefsig else False)
+        # Set z-order so that ax2 is in the background
+        ax2.set_zorder(0)
+        ax1.set_zorder(1)
+        ax1.patch.set_alpha(0)
+
+    # Initialise Figure_Layout_Manager and update default kwarg values with
+    # user-specified kwargs.
+    fig_manager = Figure_Layout_Manager(figure=fig)
+    fig_manager.get_final_kwargs(
+        line2d_kwargs_ax1, line2d_kwargs_ax2, axes_kwargs,
+    )
+    # Adjust labels' size and color, title, ticks and grid
+    fig_manager.set_style_from_kwargs()
+    # Set appropriate layout
+    fig_manager.set_layout(
+        tight_layout=tight_layout,
+        despine="2yaxes" if addrefsig else "1yaxis",
+    )
+
+    # Show the figure
     if showimmediately:
         plt.show()
 
