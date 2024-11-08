@@ -450,6 +450,8 @@ class Figure_Layout_Manager():
         >>> fig_manager = emg.Figure_Layout_Manager(figure=fig)
         >>> fig_manager.set_layout(tight_layout=True, despine="2yaxes")
         >>> plt.show()
+
+        ![](md_graphics/docstrings/plotemg/FLM_set_layout_ex_1.png)
         """
 
         if despine == "box":
@@ -533,6 +535,8 @@ class Figure_Layout_Manager():
         Show the figure.
 
         >>> plt.show()
+
+        ![](md_graphics/docstrings/plotemg/FLM_set_style_from_kwargs_ex_1.png)
         """
 
         # Retrieve axes
@@ -692,6 +696,8 @@ class Figure_Subplots_Layout_Manager():
         >>> fig_manager = emg.Figure_Subplots_Layout_Manager(figure=fig)
         >>> fig_manager.set_layout(tight_layout=True, despine="all")
         >>> plt.show()
+
+        ![](md_graphics/docstrings/plotemg/FSLM_set_layout_ex_1.png)
         """
 
         if despine == "box":
@@ -781,6 +787,8 @@ class Figure_Subplots_Layout_Manager():
         ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
         ... )
         >>> plt.show()
+
+        ![](md_graphics/docstrings/plotemg/FSLM_set_line2d_from_kwargs_ex_1.png)
         """
 
         # Retrieve axes
@@ -894,11 +902,13 @@ def plot_emgsig(
     ...     figsize=[20, 15],
     ... )
 
+    ![](md_graphics/docstrings/plotemg/plot_emgsig_ex_1.png)
+
     Plot channels and the reference signal with a custom look.
 
     >>> import openhdemg.library as emg
     >>> line2d_kwargs_ax1 = {
-    ...     "linewidth": 0.5,
+    ...     "linewidth": 0.2,
     ...     "alpha": 1,
     ... }
     >>> line2d_kwargs_ax2 = {
@@ -935,21 +945,21 @@ def plot_emgsig(
     ...         "axis": "both",
     ...         "labelsize": 10,
     ...         "labelrotation": 0,
-    ...         "direction": "out",
+    ...         "direction": "in",
     ...         "colors": "black",
     ...     },
     ...     "ticks_ax2": {
     ...         "axis": "y",
     ...         "labelsize": 10,
     ...         "labelrotation": 0,
-    ...         "direction": "out",
+    ...         "direction": "in",
     ...         "colors": "black",
     ...     }
     ... }
     >>> emgfile = emg.emg_from_samplefile()
     >>> fig = emg.plot_emgsig(
     ...     emgfile,
-    ...     channels=[*range(0, 6)],
+    ...     channels=[*range(0, 3)],
     ...     manual_offset=0,
     ...     addrefsig=True,
     ...     timeinseconds=True,
@@ -959,6 +969,8 @@ def plot_emgsig(
     ...     axes_kwargs=axes_kwargs,
     ...     showimmediately=True,
     ... )
+
+    ![](md_graphics/docstrings/plotemg/plot_emgsig_ex_2.png)
     """
 
     # Check to have the RAW_SIGNAL in a pandas dataframe
@@ -1167,7 +1179,7 @@ def plot_differentials(
 
     Examples
     --------
-    Plot the differential derivation of the first matrix column (col0).
+    Plot the differential derivation of the second matrix column (col1).
 
     >>> import openhdemg.library as emg
     >>> emgfile = emg.emg_from_samplefile()
@@ -1180,16 +1192,19 @@ def plot_differentials(
     >>> emg.plot_differentials(
     ...     emgfile=emgfile,
     ...     differential=sd,
-    ...     column="col0",
+    ...     column="col1",
     ...     addrefsig=False,
     ...     timeinseconds=True,
     ...     figsize=[20, 15],
     ...     showimmediately=True,
     ... )
 
-    Plot the double differential derivation of the second matrix column (col1)
-    with custom styles.
+    ![](md_graphics/docstrings/plotemg/plot_differentials_ex_1.png)
 
+    Plot the double differential derivation of the second matrix column (col1)
+    with custom styles (the graph shows a zoomed section).
+
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.emg_from_samplefile()
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile=emgfile,
@@ -1220,6 +1235,8 @@ def plot_differentials(
     ...     axes_kwargs=axes_kwargs,
     ...     showimmediately=True,
     ... )
+
+    ![](md_graphics/docstrings/plotemg/plot_differentials_ex_2.png)
 
     For further examples on how to customise the figure's layout, refer to
     plot_emgsig().
@@ -1393,14 +1410,7 @@ def plot_refsig(
     >>> emgfile = emg.emg_from_samplefile()
     >>> emg.plot_refsig(emgfile=emgfile)
 
-    Change Y axis label and show time in samples.
-
-    >>> import openhdemg.library as emg
-    >>> emgfile = emg.emg_from_samplefile()
-    >>> emg.plot_refsig(
-    ...     emgfile=emgfile,
-    ...     timeinseconds=False,
-    ... )
+    ![](md_graphics/docstrings/plotemg/plot_refsig_ex_1.png)
 
     Plot the reference signal with custom labels and style.
 
@@ -1429,6 +1439,8 @@ def plot_refsig(
     ...     axes_kwargs=axes_kwargs,
     ...     showimmediately=True,
     ... )
+
+    ![](md_graphics/docstrings/plotemg/plot_refsig_ex_2.png)
     """
 
     # Warn for the use of a deprecated parameter
@@ -1571,6 +1583,8 @@ def plot_mupulses(
     ...     showimmediately=True,
     ... )
 
+    ![](md_graphics/docstrings/plotemg/plot_mupulses_ex_1.png)
+
     Plot MUs pulses based on recruitment order and adjust lines width, color
     and length.
 
@@ -1592,6 +1606,8 @@ def plot_mupulses(
     ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
     ...     showimmediately=True,
     ... )
+
+    ![](md_graphics/docstrings/plotemg/plot_mupulses_ex_2.png)
 
     For further examples on how to customise the figure's layout, refer to
     plot_emgsig().
@@ -1809,6 +1825,8 @@ def plot_ipts(
     ...     showimmediately=True,
     ... )
 
+    ![](md_graphics/docstrings/plotemg/plot_ipts_ex_1.png)
+
     Plot IPTS of two MUs.
 
     >>> import openhdemg.library as emg
@@ -1822,9 +1840,14 @@ def plot_ipts(
     ...     showimmediately=True,
     ... )
 
-    Plot IPTS of all the MUs, the reference signal and a background grid.
+    ![](md_graphics/docstrings/plotemg/plot_ipts_ex_2.png)
 
+    Plot IPTS of all the MUs, the reference signal, smaller lines and a
+    background grid.
+
+    >>> import openhdemg.library as emg
     >>> emgfile = emg.emg_from_samplefile()
+    >>> line2d_kwargs_ax1 = {"linewidth": 0.5}
     >>> axes_kwargs = {
     ...     "grid": {
     ...         "visible": True,
@@ -1844,6 +1867,8 @@ def plot_ipts(
     ...     axes_kwargs=axes_kwargs,
     ...     showimmediately=True,
     ... )
+
+    ![](md_graphics/docstrings/plotemg/plot_ipts_ex_3.png)
 
     For additional examples on how to customise the figure's layout, refer to
     plot_emgsig().
@@ -2037,6 +2062,8 @@ def plot_idr(
     ...     showimmediately=True,
     ... )
 
+    ![](md_graphics/docstrings/plotemg/plot_idr_ex_1.png)
+
     Plot IDR of two MUs.
 
     >>> import openhdemg.library as emg
@@ -2049,6 +2076,8 @@ def plot_idr(
     ...     figsize=[20, 15],
     ...     showimmediately=True,
     ... )
+
+    ![](md_graphics/docstrings/plotemg/plot_idr_ex_2.png)
 
     Plot IDR and use custom markers.
 
@@ -2071,6 +2100,8 @@ def plot_idr(
     ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
     ...     showimmediately=True,
     ... )
+
+    ![](md_graphics/docstrings/plotemg/plot_idr_ex_3.png)
 
     For additional examples on how to customise the figure's layout, refer to
     plot_emgsig().
@@ -2271,8 +2302,8 @@ def plot_smoothed_dr(
 
     Examples
     --------
-    Smooth MUs DR using Support Vector Regression. Plot the stacked smoothed
-    DR of all the MUs and overlay the IDR and the reference signal.
+    Smooth MUs DR using Support Vector Regression. Plot the smoothed DR of
+    some MUs and overlay the IDR and the reference signal.
 
     >>> import openhdemg.library as emg
     >>> import pandas as pd
@@ -2281,16 +2312,47 @@ def plot_smoothed_dr(
     >>> svrfits = emg.compute_svr(emgfile)
     >>> smoothfits = pd.DataFrame(svrfits["gensvr"]).transpose()
     >>> fig = emg.plot_smoothed_dr(
-    >>>     emgfile,
-    >>>     smoothfits=smoothfits,
-    >>>     munumber="all",
-    >>>     addidr=True,
-    >>>     stack=True,
-    >>>     addrefsig=True,
-    >>> )
+    ...     emgfile,
+    ...     smoothfits=smoothfits,
+    ...     munumber=[0, 1, 3, 4],
+    ...     addidr=True,
+    ...     stack=False,
+    ...     addrefsig=True,
+    ... )
+
+    ![](md_graphics/docstrings/plotemg/plot_smoothed_dr_ex_1.png)
+
+    Stack the MUs and change line width.
+
+    >>> import openhdemg.library as emg
+    >>> import pandas as pd
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> emgfile = emg.sort_mus(emgfile=emgfile)
+    >>> svrfits = emg.compute_svr(emgfile)
+    >>> smoothfits = pd.DataFrame(svrfits["gensvr"]).transpose()
+    >>> line2d_kwargs_ax1 = {
+    ...     "linewidth": 3,
+    ... }
+    >>> fig = emg.plot_smoothed_dr(
+    ...     emgfile,
+    ...     smoothfits=smoothfits,
+    ...     munumber=[0, 1, 3, 4],
+    ...     addidr=True,
+    ...     stack=True,
+    ...     addrefsig=True,
+    ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
+    ... )
+
+    ![](md_graphics/docstrings/plotemg/plot_smoothed_dr_ex_2.png)
 
     Plot in black and white.
 
+    >>> import openhdemg.library as emg
+    >>> import pandas as pd
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> emgfile = emg.sort_mus(emgfile=emgfile)
+    >>> svrfits = emg.compute_svr(emgfile)
+    >>> smoothfits = pd.DataFrame(svrfits["gensvr"]).transpose()
     >>> line2d_kwargs_ax1 = {
     ...     "linewidth": 3,
     ...     "markerfacecolor": "0.8",
@@ -2301,13 +2363,15 @@ def plot_smoothed_dr(
     >>> fig = emg.plot_smoothed_dr(
     ...     emgfile,
     ...     smoothfits=smoothfits,
-    ...     munumber="all",
+    ...     munumber=[0, 1, 3, 4],
     ...     addidr=True,
     ...     stack=True,
     ...     addrefsig=True,
     ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
     ...     line2d_kwargs_ax2=line2d_kwargs_ax2,
     ... )
+
+    ![](md_graphics/docstrings/plotemg/plot_smoothed_dr_ex_3.png)
 
     For additional examples on how to customise the figure's layout, refer to
     plot_emgsig().
@@ -2572,7 +2636,9 @@ def plot_muaps(
     ...     firings="all",
     ...     timewindow=50,
     ... )
-    >>> emg.plot_muaps(sta_dict=sta[1])
+    >>> emg.plot_muaps(sta_dict=sta[0])
+
+    ![](md_graphics/docstrings/plotemg/plot_muaps_ex_1.png)
 
     Plot single differential derivation MUAPs of a single MU.
 
@@ -2593,6 +2659,8 @@ def plot_muaps(
     ... )
     >>> emg.plot_muaps(sta_dict=sta[1])
 
+    ![](md_graphics/docstrings/plotemg/plot_muaps_ex_2.png)
+
     Plot single differential derivation MUAPs of two MUs from the same file.
 
     >>> import openhdemg.library as emg
@@ -2610,7 +2678,9 @@ def plot_muaps(
     ...     firings="all",
     ...     timewindow=50,
     ... )
-    >>> emg.plot_muaps(sta_dict=[sta[1], sta[2]])
+    >>> emg.plot_muaps(sta_dict=[sta[2], sta[3]])
+
+    ![](md_graphics/docstrings/plotemg/plot_muaps_ex_3.png)
 
     Plot double differential derivation MUAPs of two MUs from the same file
     and change their color.
@@ -2634,9 +2704,11 @@ def plot_muaps(
     ...     "color": "tab:red",
     ... }
     >>> emg.plot_muaps(
-    ...     sta_dict=[sta[1], sta[2]],
+    ...     sta_dict=[sta[2], sta[3]],
     ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
     ... )
+
+    ![](md_graphics/docstrings/plotemg/plot_muaps_ex_4.png)
 
     Or change their color and style individually.
 
@@ -2671,6 +2743,8 @@ def plot_muaps(
     ...     sta_dict=[sta[2], sta[3]],
     ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
     ... )
+
+    ![](md_graphics/docstrings/plotemg/plot_muaps_ex_5.png)
     """
 
     if isinstance(sta_dict, dict):
@@ -2836,8 +2910,8 @@ def plot_muap(
     Examples
     --------
     Plot all the consecutive MUAPs of a single MU.
-    In this case we are plotting the matrix channel 45 which is placed in
-    column 4 ("col3" as Python numbering is base 0).
+    In this case we are plotting the matrix channel 35 which is placed in
+    column 3 ("col2" as Python numbering is base 0).
 
     >>> import openhdemg.library as emg
     >>> emgfile = emg.emg_from_samplefile()
@@ -2855,9 +2929,9 @@ def plot_muap(
     >>> emg.plot_muap(
     ...     emgfile=emgfile,
     ...     stmuap=stmuap,
-    ...     munumber=1,
-    ...     column="col3",
-    ...     channel=45,
+    ...     munumber=3,
+    ...     column="col2",
+    ...     channel=35,
     ...     channelprog=False,
     ...     average=False,
     ...     timeinseconds=True,
@@ -2869,31 +2943,20 @@ def plot_muap(
     which matrix column, we can set channelprog=True and locate the channel
     with a value ranging from 0 to the length of each column.
 
-    >>> import openhdemg.library as emg
-    >>> emgfile = emg.emg_from_samplefile()
-    >>> sorted_rawemg = emg.sort_rawemg(
-    ...     emgfile=emgfile,
-    ...     code="GR08MM1305",
-    ...     orientation=180,
-    ...     dividebycolumn=True,
-    ... )
-    >>> stmuap = emg.st_muap(
-    ...     emgfile=emgfile,
-    ...     sorted_rawemg=sorted_rawemg,
-    ...     timewindow=50,
-    ... )
     >>> emg.plot_muap(
     ...     emgfile=emgfile,
     ...     stmuap=stmuap,
-    ...     munumber=1,
-    ...     column="col3",
-    ...     channel=5,
+    ...     munumber=3,
+    ...     column="col2",
+    ...     channel=9,
     ...     channelprog=True,
     ...     average=False,
     ...     timeinseconds=True,
     ...     figsize=[20, 15],
     ...     showimmediately=True,
     ... )
+
+    ![](md_graphics/docstrings/plotemg/plot_muap_ex_2.png)
 
     It is also possible to visualise the spike triggered average
     of the MU with average=True.
@@ -2916,15 +2979,17 @@ def plot_muap(
     >>> emg.plot_muap(
     ...     emgfile=emgfile,
     ...     stmuap=stmuap,
-    ...     munumber=1,
+    ...     munumber=3,
     ...     column="col2",
-    ...     channel=6,
+    ...     channel=8,
     ...     channelprog=True,
     ...     average=True,
     ...     timeinseconds=True,
     ...     figsize=[20, 15],
     ...     showimmediately=True,
     ... )
+
+    ![](md_graphics/docstrings/plotemg/plot_muap_ex_3.png)
 
     We can also customise the look of the plot.
 
@@ -2961,9 +3026,9 @@ def plot_muap(
     >>> fig = emg.plot_muap(
     ...     emgfile=emgfile,
     ...     stmuap=stmuap,
-    ...     munumber=2,
-    ...     column="col3",
-    ...     channel=50,
+    ...     munumber=3,
+    ...     column="col2",
+    ...     channel=35,
     ...     channelprog=False,
     ...     average=True,
     ...     timeinseconds=True,
@@ -2973,6 +3038,8 @@ def plot_muap(
     ...     axes_kwargs=axes_kwargs,
     ...     showimmediately=True,
     ... )
+
+    ![](md_graphics/docstrings/plotemg/plot_muap_ex_4.png)
 
     For further examples on how to customise the figure's layout, refer to
     plot_emgsig().
@@ -3159,6 +3226,8 @@ def plot_muaps_for_cv(
     ...     showimmediately=True,
     ... )
 
+    ![](md_graphics/docstrings/plotemg/plot_muaps_for_cv_ex_1.png)
+
     Customise the look of the plot.
 
     >>> import openhdemg.library as emg
@@ -3188,6 +3257,8 @@ def plot_muaps_for_cv(
     ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
     ...     showimmediately=True,
     ... )
+
+    ![](md_graphics/docstrings/plotemg/plot_muaps_for_cv_ex_2.png)
 
     For further examples on how to customise the figure's layout, refer to
     plot_muaps().
