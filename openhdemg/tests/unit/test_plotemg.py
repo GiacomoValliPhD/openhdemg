@@ -19,14 +19,16 @@ WARNING!!! - UNTESTED FUNCTIONS: none
 import unittest
 from openhdemg.library.openfiles import emg_from_samplefile
 from openhdemg.library.plotemg import (
-    Figure_Layout_Manager, plot_emgsig, plot_differentials, plot_refsig,
-    plot_mupulses, plot_ipts, plot_idr, plot_smoothed_dr,
+    Figure_Layout_Manager, Figure_Subplots_Layout_Manager,
+    plot_emgsig, plot_differentials, plot_refsig, plot_mupulses, plot_ipts,
+    plot_idr, plot_smoothed_dr, plot_muaps, plot_muap, plot_muaps_for_cv,
 )
 from openhdemg.library.electrodes import sort_rawemg
-from openhdemg.library.muap import double_diff
+from openhdemg.library.muap import diff, double_diff, sta, st_muap, xcc_sta
 from openhdemg.library.tools import compute_svr
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 
 
 class TestPlotEMG(unittest.TestCase):
@@ -137,6 +139,11 @@ class TestPlotEMG(unittest.TestCase):
         fig_manager.set_style_from_kwargs()
         fig_manager.set_layout(tight_layout=True, despine="2yaxes")
 
+        # Test final_kwargs type
+        self.assertIsInstance(final_kwargs, tuple)
+        self.assertIsInstance(final_kwargs[0], dict)
+        self.assertIsInstance(final_kwargs[1], dict)
+        self.assertIsInstance(final_kwargs[2], dict)
         # Test that a figure was returned
         self.assertIsInstance(fig_manager.figure, plt.Figure)
         # Test that the figure has 2 axes
@@ -144,6 +151,84 @@ class TestPlotEMG(unittest.TestCase):
         # Test other plot properties
         self.assertEqual(ax1.get_ylabel(), "Channels (N°)")
         self.assertEqual(ax2.get_ylabel(), "MVC (%)")
+
+        plt.close()
+
+    def test_Figure_Subplots_Layout_Manager(self):
+        """
+        Test the Figure_Subplots_Layout_Manager class.
+        """
+
+        # Test with single line2d_kwargs_ax1
+        fig, axes = plt.subplots(nrows=3, ncols=3)
+        x = np.linspace(0, 4 * np.pi, 500)
+        base_signal = np.sin(x)
+        for row in axes:
+            for ax in row:
+                noisy_signal = base_signal + np.random.normal(
+                    scale=0.4, size=base_signal.shape,
+                )
+                ax.plot(x, noisy_signal)
+                ax.plot(x, base_signal)
+                ax.set_xticks([])
+                ax.set_yticks([])
+
+        line2d_kwargs_ax1 = {
+            "color": "tab:red",
+            "alpha": 1,
+            "linewidth": 0.2,
+        }
+
+        fig_manager = Figure_Subplots_Layout_Manager(figure=fig)
+        fig_manager.set_line2d_from_kwargs(
+            line2d_kwargs_ax1=line2d_kwargs_ax1,
+        )
+        fig_manager.set_layout(tight_layout=True, despine="2yaxes")
+
+        # Test that a figure was returned
+        self.assertIsInstance(fig_manager.figure, plt.Figure)
+        # Test that the figure has 9 axes
+        self.assertTrue(len(fig_manager.figure.axes) == 9)
+
+        plt.close()
+
+        # Test with multiple line2d_kwargs_ax1
+        fig, axes = plt.subplots(nrows=3, ncols=3)
+        x = np.linspace(0, 4 * np.pi, 500)
+        base_signal = np.sin(x)
+        for row in axes:
+            for ax in row:
+                noisy_signal = base_signal + np.random.normal(
+                    scale=0.4, size=base_signal.shape,
+                )
+                ax.plot(x, noisy_signal)
+                ax.plot(x, base_signal)
+                ax.set_xticks([])
+                ax.set_yticks([])
+
+        line2d_kwargs_ax1 = [
+            {
+                "color": "tab:red",
+                "alpha": 1,
+                "linewidth": 0.2,
+            },
+            {
+                "color": "tab:blue",
+                "linewidth": 3,
+                "alpha": 0.6,
+            },
+        ]
+
+        fig_manager = Figure_Subplots_Layout_Manager(figure=fig)
+        fig_manager.set_line2d_from_kwargs(
+            line2d_kwargs_ax1=line2d_kwargs_ax1,
+        )
+        fig_manager.set_layout(tight_layout=False, despine="all")
+
+        # Test that a figure was returned
+        self.assertIsInstance(fig_manager.figure, plt.Figure)
+        # Test that the figure has 9 axes
+        self.assertTrue(len(fig_manager.figure.axes) == 9)
 
         plt.close()
 
@@ -700,6 +785,306 @@ class TestPlotEMG(unittest.TestCase):
         self.assertTrue(len(fig.axes) == 1)
         self.assertEqual(fig.axes[0].get_xlabel(), "Time (Sec)")
         self.assertEqual(fig.axes[0].get_ylabel(), "Channels (N°)")
+
+        plt.close()
+
+    def test_plot_muaps(self):
+        """
+        Test the plot_muaps function.
+        """
+
+        sorted_rawemg = sort_rawemg(
+            emgfile=self.emgfile,
+            code="GR08MM1305",
+            orientation=180,
+            dividebycolumn=True,
+        )
+        sorted_rawemg = diff(sorted_rawemg=sorted_rawemg)
+        n_channels = sum(df.shape[1] for df in sorted_rawemg.values())
+        sta_ = sta(
+            emgfile=self.emgfile,
+            sorted_rawemg=sorted_rawemg,
+            firings="all",
+            timewindow=50,
+        )
+
+        fig = plot_muaps(
+            sta_dict=sta_[1],
+            title="MUAPs from SD STA",
+            line2d_kwargs_ax1=None,
+            showimmediately=False,
+        )
+
+        self.assertIsInstance(fig, plt.Figure)
+        self.assertTrue(len(fig.axes) == n_channels)
+
+        plt.close()
+
+        # Test multiple MUAPS
+        fig = plot_muaps(
+            sta_dict=[sta_[1], sta_[2]],
+            title="MUAPs from SD STA",
+            line2d_kwargs_ax1=None,
+            showimmediately=False,
+        )
+
+        self.assertIsInstance(fig, plt.Figure)
+        self.assertTrue(len(fig.axes) == n_channels)
+
+        plt.close()
+
+        # Test line2d_kwargs_ax1, single
+        line2d_kwargs_ax1 = {
+            "color": "tab:red",
+            "alpha": 1,
+            "linewidth": 0.2,
+        }
+        fig = plot_muaps(
+            sta_dict=[sta_[1], sta_[2]],
+            title="MUAPs from SD STA",
+            line2d_kwargs_ax1=line2d_kwargs_ax1,
+            showimmediately=False,
+        )
+
+        self.assertIsInstance(fig, plt.Figure)
+        self.assertTrue(len(fig.axes) == n_channels)
+
+        plt.close()
+
+        # Test line2d_kwargs_ax1, single, and tight layout
+        line2d_kwargs_ax1 = {
+            "color": "tab:red",
+            "alpha": 1,
+            "linewidth": 0.2,
+        }
+        fig = plot_muaps(
+            sta_dict=sta_[1],
+            title="MUAPs from SD STA",
+            line2d_kwargs_ax1=line2d_kwargs_ax1,
+            tight_layout=True,
+            showimmediately=False,
+        )
+
+        self.assertIsInstance(fig, plt.Figure)
+        self.assertTrue(len(fig.axes) == n_channels)
+
+        plt.close()
+
+        # Test line2d_kwargs_ax1, multiple
+        line2d_kwargs_ax1 = [
+            {
+                "color": "tab:red",
+                "alpha": 1,
+                "linewidth": 0.2,
+            },
+            {
+                "color": "tab:blue",
+                "linewidth": 3,
+                "alpha": 0.6,
+            },
+        ]
+        fig = plot_muaps(
+            sta_dict=[sta_[1], sta_[2]],
+            title="MUAPs from SD STA",
+            line2d_kwargs_ax1=line2d_kwargs_ax1,
+            showimmediately=False,
+        )
+
+        self.assertIsInstance(fig, plt.Figure)
+        self.assertTrue(len(fig.axes) == n_channels)
+
+        plt.close()
+
+    def test_plot_muap(self):
+        """
+        Test the plot_muap function.
+        """
+
+        sorted_rawemg = sort_rawemg(
+            emgfile=self.emgfile,
+            code="GR08MM1305",
+            orientation=180,
+            dividebycolumn=True,
+        )
+        sorted_rawemg = diff(sorted_rawemg=sorted_rawemg)
+        stmuap = st_muap(
+            emgfile=self.emgfile,
+            sorted_rawemg=sorted_rawemg,
+            timewindow=30,
+        )
+
+        fig = plot_muap(
+            emgfile=self.emgfile,
+            stmuap=stmuap,
+            munumber=2,
+            column="col3",
+            channel=8,
+            channelprog=True,
+            average=True,
+            timeinseconds=True,
+            figsize=[20, 15],
+            showimmediately=False,
+        )
+
+        self.assertIsInstance(fig, plt.Figure)
+        self.assertTrue(len(fig.axes) == 2)
+
+        plt.close()
+
+        # Test average
+        fig = plot_muap(
+            emgfile=self.emgfile,
+            stmuap=stmuap,
+            munumber=2,
+            column="col3",
+            channel=8,
+            channelprog=True,
+            average=False,
+            timeinseconds=True,
+            figsize=[20, 15],
+            showimmediately=False,
+        )
+
+        self.assertIsInstance(fig, plt.Figure)
+        self.assertTrue(len(fig.axes) == 1)
+
+        plt.close()
+
+        # Test channelprog
+        fig = plot_muap(
+            emgfile=self.emgfile,
+            stmuap=stmuap,
+            munumber=2,
+            column="col3",
+            channel=50,
+            channelprog=False,
+            average=True,
+            timeinseconds=True,
+            figsize=[20, 15],
+            showimmediately=False,
+        )
+
+        self.assertIsInstance(fig, plt.Figure)
+        self.assertTrue(len(fig.axes) == 2)
+
+        plt.close()
+
+        # Test timeinseconds
+        fig = plot_muap(
+            emgfile=self.emgfile,
+            stmuap=stmuap,
+            munumber=2,
+            column="col3",
+            channel=50,
+            channelprog=False,
+            average=True,
+            timeinseconds=False,
+            figsize=[20, 15],
+            showimmediately=False,
+        )
+
+        self.assertIsInstance(fig, plt.Figure)
+        self.assertTrue(len(fig.axes) == 2)
+
+        plt.close()
+
+        # Test kwargs
+        for average in [True, False]:
+            for line2d_kwargs_ax1 in [self.line2d_kwargs_ax1, None]:
+                for line2d_kwargs_ax2 in [self.line2d_kwargs_ax2, None]:
+                    fig = plot_muap(
+                        emgfile=self.emgfile,
+                        stmuap=stmuap,
+                        munumber=2,
+                        column="col3",
+                        channel=50,
+                        channelprog=False,
+                        average=average,
+                        timeinseconds=True,
+                        figsize=[20, 15],
+                        line2d_kwargs_ax1=line2d_kwargs_ax1,
+                        line2d_kwargs_ax2=line2d_kwargs_ax2,
+                        axes_kwargs=self.axes_kwargs,
+                        showimmediately=False,
+                    )
+
+                    self.assertIsInstance(fig, plt.Figure)
+                    self.assertTrue(
+                        len(fig.axes) == 2 if average else 1
+                    )
+
+                    plt.close()
+
+    def test_plot_muaps_for_cv(self):
+        """
+        Test the plot_muaps_for_cv function.
+        """
+
+        sorted_rawemg = sort_rawemg(
+            self.emgfile,
+            code="GR08MM1305",
+            orientation=180,
+            dividebycolumn=True
+        )
+        dd = double_diff(sorted_rawemg)
+        n_channels = sum(df.shape[1] for df in dd.values())
+        sta_ = sta(
+            emgfile=self.emgfile,
+            sorted_rawemg=dd,
+            firings="all",
+            timewindow=50,
+        )
+        xcc_sta_ = xcc_sta(sta_)
+        line2d_kwargs_ax1 = {
+            "color": "k",
+            "linewidth": 1,
+        }
+
+        fig = plot_muaps_for_cv(
+            sta_dict=sta_[0],
+            xcc_sta_dict=xcc_sta_[0],
+            tight_layout=False,
+            line2d_kwargs_ax1=line2d_kwargs_ax1,
+            showimmediately=False,
+        )
+
+        self.assertIsInstance(fig, plt.Figure)
+        self.assertTrue(len(fig.axes) == n_channels)
+
+        plt.close()
+
+        # Test tight_layout and line2d_kwargs_ax1
+        line2d_kwargs_ax1 = {
+            "color": "k",
+            "linewidth": 1,
+        }
+
+        fig = plot_muaps_for_cv(
+            sta_dict=sta_[0],
+            xcc_sta_dict=xcc_sta_[0],
+            tight_layout=True,
+            line2d_kwargs_ax1=line2d_kwargs_ax1,
+            showimmediately=False,
+        )
+
+        self.assertIsInstance(fig, plt.Figure)
+        self.assertTrue(len(fig.axes) == n_channels)
+
+        plt.close()
+
+        # Test with linear array
+        array_sta = {"col0": sta_[0]["col1"]}
+        array_xcc_sta = {"col0": xcc_sta_[0]["col1"]}
+
+        fig = plot_muaps_for_cv(
+            sta_dict=array_sta,
+            xcc_sta_dict=array_xcc_sta,
+            tight_layout=True,
+            showimmediately=False,
+        )
+
+        self.assertIsInstance(fig, plt.Figure)
+        self.assertTrue(len(fig.axes) == len(sta_[0]["col1"].columns))
 
         plt.close()
 

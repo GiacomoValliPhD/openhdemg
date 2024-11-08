@@ -63,7 +63,7 @@ def showgoodlayout(tight_layout=True, despined=False):
 
 class Figure_Layout_Manager():
     """
-    Class managing layout settings and custom settings for 2D plots.
+    Class managing custom layout and custom settings for 2D plots.
 
     Parameters
     ----------
@@ -88,7 +88,7 @@ class Figure_Layout_Manager():
     set_layout()
         Set the figure's layout regarding spines and tight layout.
     set_style_from_kwargs()
-        Set labels, title, ticks and grid.
+        Set line2d, labels, title, ticks and grid.
         If custom styles are needed, this method should be used after calling
         the get_final_kwargs() method. Otherwise, the standard openhdemg
         style will be used.
@@ -256,8 +256,8 @@ class Figure_Layout_Manager():
         corresponding default values. If no user kwargs are provided for a
         particular category, the defaults will be retained.
 
-        ``line2d_kwargs_ax1`` and ``line2d_kwargs_ax2`` and can contain any of
-        the matplotlib.lines.Line2D parameters as described at:
+        ``line2d_kwargs_ax1`` and ``line2d_kwargs_ax2`` can contain any of the
+        matplotlib.lines.Line2D parameters as described at:
         (https://matplotlib.org/stable/api/_as_gen/matplotlib.lines.Line2D.html).
 
         ``axes_kwargs`` can contain up to 4 dictionaries ("grid", "labels",
@@ -605,6 +605,213 @@ class Figure_Layout_Manager():
             ax1.grid(**self.final_kwargs[2]["grid"])
 
 
+class Figure_Subplots_Layout_Manager():
+    """
+    Class managing custom layout and custom settings for figures with multiple
+    2D subplots.
+
+    Parameters
+    ----------
+    figure : pyplot `~.figure.Figure`
+        The matplotlib.pyplot figure to manage.
+
+    Attributes
+    ----------
+    figure : pyplot `~.figure.Figure`
+        The managed matplotlib.pyplot figure.
+
+    Methods
+    -------
+    set_layout()
+        Despine and show plots with a tight layout.
+    set_line2d_from_kwargs()
+        Set line2d parameters from user kwargs.
+
+    Examples
+    --------
+    Initialise the Figure_Layout_Manager.
+
+    >>> import openhdemg.library as emg
+    >>> import matplotlib.pyplot as plt
+    >>> fig, axes = plt.subplots(nrows=5, ncols=5)
+    >>> fig_manager = emg.Figure_Subplots_Layout_Manager(figure=fig)
+    """
+
+    def __init__(self, figure):
+        # Init method that sets default kwargs.
+
+        self.figure = figure
+
+    def set_layout(self, tight_layout=True, despine="box"):
+        """
+        Despine and show plots with a tight layout.
+
+        This method is called by the various plot functions contained in the
+        library but can also be used by the user to quickly adjust the layout
+        of custom plots.
+
+        Parameters
+        ----------
+        tight_layout : bool, default True
+            If true, plt.tight_layout() is applied to the figure.
+        despined : str {"box", "all", "1yaxis", "2yaxes"}, default "box"
+
+            ``box``
+                No side is despined.
+
+            ``all``
+                All the sides are despined.
+
+            ``1yaxis``
+                Right and top are despined.
+                This is used to show the Y axis on the left side.
+
+            ``2yaxes``
+                Only the top is despined.
+                This is used to show Y axes both on the left and right side at
+                the same time.
+
+        Examples
+        --------
+        Plot sine waves in a 3x3 grid of subplots.
+
+        >>> import openhdemg.library as emg
+        >>> import matplotlib.pyplot as plt
+        >>> import numpy as np
+        >>> fig, axes = plt.subplots(nrows=3, ncols=3)
+        >>> x = np.linspace(0, 4 * np.pi, 500)
+        >>> base_signal = np.sin(x)
+        >>> for row in axes:
+        >>>     for ax in row:
+        >>>         ax.plot(x, base_signal)
+        >>>         ax.set_xticks([])
+        >>>         ax.set_yticks([])
+
+        Despine the figure and apply a tight layout.
+
+        >>> fig_manager = emg.Figure_Subplots_Layout_Manager(figure=fig)
+        >>> fig_manager.set_layout(tight_layout=True, despine="all")
+        >>> plt.show()
+        """
+
+        if despine == "box":
+            sns.despine(
+                self.figure, top=False, bottom=False, left=False, right=False,
+            )
+        elif despine == "all":
+            sns.despine(
+                self.figure, top=True, bottom=True, left=True, right=True,
+            )
+        elif despine == "2yaxes":
+            sns.despine(
+                self.figure, top=True, bottom=False, left=False, right=False,
+            )
+        elif despine == "1yaxis":
+            sns.despine(
+                self.figure, top=True, bottom=False, left=False, right=True,
+            )
+        else:
+            raise ValueError(
+                "despine can be 'box', 'all', '2yaxes' or '1yaxes'. " +
+                f"{despine} was passed instead."
+            )
+
+        if tight_layout is True:
+            self.figure.tight_layout()
+
+    def set_line2d_from_kwargs(self, line2d_kwargs_ax1=None):
+        """
+        Set the line2d style of the figure.
+
+        This method updates the main figure with the user-specified custom
+        line2d style.
+
+        Parameters
+        ----------
+        line2d_kwargs_ax1 : dict or list, optional
+            User-specified keyword arguments for sets of Line2D objects.
+            This can be a list of dictionaries containing the kwargs for each
+            Line2D, or a single dictionary. If a single dictionary is passed,
+            the same style will be applied to all the lines.
+
+        Notes
+        -----
+        ``line2d_kwargs_ax1`` can contain any of the matplotlib.lines.Line2D
+        parameters as described at:
+        (https://matplotlib.org/stable/api/_as_gen/matplotlib.lines.Line2D.html).
+
+        Examples
+        --------
+        Plot sine waves in a 3x3 grid of subplots with and without noise.
+
+        >>> import openhdemg.library as emg
+        >>> import matplotlib.pyplot as plt
+        >>> import numpy as np
+        >>> fig, axes = plt.subplots(nrows=3, ncols=3)
+        >>> x = np.linspace(0, 4 * np.pi, 500)
+        >>> base_signal = np.sin(x)
+        >>> for row in axes:
+        >>>     for ax in row:
+        >>>         noisy_signal = base_signal + np.random.normal(
+        ...             scale=0.4, size=base_signal.shape,
+        ...         )
+        >>>         ax.plot(x, noisy_signal)
+        >>>         ax.plot(x, base_signal)
+        >>>         ax.set_xticks([])
+        >>>         ax.set_yticks([])
+
+        Set up the layout manager with custom styling for the 2 line2D
+        (relative to the signal with and without noise, respectively).
+
+        >>> line2d_kwargs_ax1 = [
+        ...     {
+        ...         "color": "tab:red",
+        ...         "alpha": 1,
+        ...         "linewidth": 0.2,
+        ...     },
+        ...     {
+        ...         "color": "tab:blue",
+        ...         "linewidth": 3,
+        ...         "alpha": 0.6,
+        ...     },
+        ... ]
+        >>> fig_manager = emg.Figure_Subplots_Layout_Manager(figure=fig)
+        >>> fig_manager.set_layout(despine="all")
+        >>> fig_manager.set_line2d_from_kwargs(
+        ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
+        ... )
+        >>> plt.show()
+        """
+
+        # Retrieve axes
+        axes = self.figure.get_axes()
+        if len(axes) == 0:
+            raise ValueError("No figure axes available.")
+
+        # Set matplotlib.lines.Line2D
+        if isinstance(line2d_kwargs_ax1, list):
+            for ax in axes:
+                lines1 = ax.get_lines()
+                # Check if the number of line kwargs corresponds to the number
+                # of lines.
+                if len(line2d_kwargs_ax1) != len(lines1):
+                    raise ValueError(
+                        "The number of line2d_kwargs_ax1 is different from " +
+                        "the number of Line2D"
+                    )
+                else:
+                    # Set kwargs
+                    for pos, line in enumerate(lines1):
+                        for key, value in line2d_kwargs_ax1[pos].items():
+                            getattr(line, f"set_{key}")(value)
+        else:
+            for ax in axes:
+                lines1 = ax.get_lines()
+                for key, value in line2d_kwargs_ax1.items():
+                    for line in lines1:
+                        getattr(line, f"set_{key}")(value)
+
+
 def plot_emgsig(
     emgfile,
     channels,
@@ -651,11 +858,13 @@ def plot_emgsig(
         If True (default), the plt.tight_layout() is called and the figure's
         layout is improved.
         It is useful to set it to False when calling the function from a GUI.
-    line2d_kwargs_ax1 : dict
-        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1.
-    line2d_kwargs_ax2 : dict
-        Kwargs for matplotlib.lines.Line2D relative to figure's axis 2.
-    axes_kwargs : dict
+    line2d_kwargs_ax1 : dict, optional
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1 (the
+        EMG signal).
+    line2d_kwargs_ax2 : dict, optional
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 2 (the
+        reference signal).
+    axes_kwargs : dict, optional
         Kwargs for figure's axes.
     showimmediately : bool, default True
         If True (default), plt.show() is called and the figure showed to the
@@ -933,11 +1142,13 @@ def plot_differentials(
         If True (default), the plt.tight_layout() is called and the figure's
         layout is improved.
         It is useful to set it to False when calling the function from a GUI.
-    line2d_kwargs_ax1 : dict
-        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1.
-    line2d_kwargs_ax2 : dict
-        Kwargs for matplotlib.lines.Line2D relative to figure's axis 2.
-    axes_kwargs : dict
+    line2d_kwargs_ax1 : dict, optional
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1 (the
+        EMG signal).
+    line2d_kwargs_ax2 : dict, optional
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 2 (the
+        reference signal).
+    axes_kwargs : dict, optional
         Kwargs for figure's axes.
     showimmediately : bool, default True
         If True (default), plt.show() is called and the figure showed to the
@@ -1160,9 +1371,10 @@ def plot_refsig(
         If True (default), the plt.tight_layout() is called and the figure's
         layout is improved.
         It is useful to set it to False when calling the function from a GUI.
-    line2d_kwargs_ax1 : dict
-        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1.
-    axes_kwargs : dict
+    line2d_kwargs_ax1 : dict, optional
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1 (the
+        reference signal).
+    axes_kwargs : dict, optional
         Kwargs for figure's axes.
     showimmediately : bool, default True
         If True (default), plt.show() is called and the figure showed to the
@@ -1321,11 +1533,13 @@ def plot_mupulses(
         If True (default), the plt.tight_layout() is called and the figure's
         layout is improved.
         It is useful to set it to False when calling the function from a GUI.
-    line2d_kwargs_ax1 : dict
-        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1.
-    line2d_kwargs_ax2 : dict
-        Kwargs for matplotlib.lines.Line2D relative to figure's axis 2.
-    axes_kwargs : dict
+    line2d_kwargs_ax1 : dict, optional
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1 (the
+        MUPULSES).
+    line2d_kwargs_ax2 : dict, optional
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 2 (the
+        reference signal).
+    axes_kwargs : dict, optional
         Kwargs for figure's axes.
     showimmediately : bool, default True
         If True (default), plt.show() is called and the figure showed to the
@@ -1355,7 +1569,7 @@ def plot_mupulses(
     ...     timeinseconds=True,
     ...     figsize=[20, 15],
     ...     showimmediately=True,
-    ... ) # TODO linewidths linelengths
+    ... )
 
     Plot MUs pulses based on recruitment order and adjust lines width, color
     and length.
@@ -1553,11 +1767,13 @@ def plot_ipts(
         If True (default), the plt.tight_layout() is called and the figure's
         layout is improved.
         It is useful to set it to False when calling the function from a GUI.
-    line2d_kwargs_ax1 : dict
-        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1.
-    line2d_kwargs_ax2 : dict
-        Kwargs for matplotlib.lines.Line2D relative to figure's axis 2.
-    axes_kwargs : dict
+    line2d_kwargs_ax1 : dict, optional
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1 (the
+        IPTS).
+    line2d_kwargs_ax2 : dict, optional
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 2 (the
+        reference signal).
+    axes_kwargs : dict, optional
         Kwargs for figure's axes.
     showimmediately : bool, default True
         If True (default), plt.show() is called and the figure showed to the
@@ -1779,11 +1995,13 @@ def plot_idr(
         If True (default), the plt.tight_layout() is called and the figure's
         layout is improved.
         It is useful to set it to False when calling the function from a GUI.
-    line2d_kwargs_ax1 : dict
-        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1.
-    line2d_kwargs_ax2 : dict
-        Kwargs for matplotlib.lines.Line2D relative to figure's axis 2.
-    axes_kwargs : dict
+    line2d_kwargs_ax1 : dict, optional
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1 (the
+        IDR).
+    line2d_kwargs_ax2 : dict, optional
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 2 (the
+        reference signal).
+    axes_kwargs : dict, optional
         Kwargs for figure's axes.
     showimmediately : bool, default True
         If True (default), plt.show() is called and the figure showed to the
@@ -2024,13 +2242,13 @@ def plot_smoothed_dr(
         If True (default), the plt.tight_layout() is called and the figure's
         layout is improved.
         It is useful to set it to False when calling the function from a GUI.
-    line2d_kwargs_ax1 : dict
+    line2d_kwargs_ax1 : dict, optional
         Kwargs for matplotlib.lines.Line2D relative to figure's axis 1 (in
         this case, smoothfits and idr).
-    line2d_kwargs_ax2 : dict
+    line2d_kwargs_ax2 : dict, optional
         Kwargs for matplotlib.lines.Line2D relative to figure's axis 2 (the
         reference signal).
-    axes_kwargs : dict
+    axes_kwargs : dict, optional
         Kwargs for figure's axes.
     showimmediately : bool, default True
         If True (default), plt.show() is called and the figure showed to the
@@ -2156,6 +2374,14 @@ def plot_smoothed_dr(
             norm_fit = norm_fit_all[thisMU]
             norm_fit_mu_mean = norm_fit.mean()
 
+            # Get x axis for smoothed fit
+            if timeinseconds:
+                x_smooth = np.arange(
+                    len(smoothfits[thisMU])
+                ) / emgfile["FSAMP"]
+            else:
+                x_smooth = np.arange(len(smoothfits[thisMU]))
+
             if addidr:
                 # Prepare IDR to plot. Add value to the previous mu to avoid
                 # overlapping.
@@ -2165,14 +2391,8 @@ def plot_smoothed_dr(
                 else:
                     norm_idr = norm_idr - (norm_fit_mu_mean - 0.5) + count
 
-                # Prepare smoothed fit to plot.
-                if timeinseconds:
-                    x_smooth = np.arange(
-                        len(smoothfits[thisMU])
-                    ) / emgfile["FSAMP"]
-                else:
-                    x_smooth = np.arange(len(smoothfits[thisMU]))
-                # Add value to the previous mu to avoid overlapping
+                # Prepare smoothed fit to plot. Add value to the previous mu
+                # to avoid overlapping
                 if norm_fit_mu_mean <= 0.5:
                     norm_fit = norm_fit + (0.5 - norm_fit_mu_mean) + count
                 else:
@@ -2282,8 +2502,9 @@ def plot_muaps(
     sta_dict,
     title="MUAPs from STA",
     figsize=[20, 15],
-    showimmediately=True,
     tight_layout=False,
+    line2d_kwargs_ax1=None,
+    showimmediately=True,
 ):
     """
     Plot MUAPs obtained from STA from one or multiple MUs.
@@ -2299,15 +2520,20 @@ def plot_muaps(
         Title of the plot.
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from the GUI.
     tight_layout : bool, default False
         If True (default), the plt.tight_layout() is called and the figure's
         layout is improved.
-        It is useful to set it to False when calling the function from the GUI
+        It is useful to set it to False when calling the function from a GUI
         or if the final layout is not correct.
+    line2d_kwargs_ax1 : dict or list, optional
+        User-specified keyword arguments for sets of Line2D objects.
+        This can be a list of dictionaries containing the kwargs for each
+        Line2D, or a single dictionary. If a single dictionary is passed,
+        the same style will be applied to all the lines. See examples.
+    showimmediately : bool, default True
+        If True (default), plt.show() is called and the figure showed to the
+        user.
+        It is useful to set it to False when calling the function from a GUI.
 
     Returns
     -------
@@ -2333,7 +2559,7 @@ def plot_muaps(
     Plot MUAPs of a single MU.
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.emg_from_samplefile()
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile=emgfile,
     ...     code="GR08MM1305",
@@ -2351,7 +2577,7 @@ def plot_muaps(
     Plot single differential derivation MUAPs of a single MU.
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.emg_from_samplefile()
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile=emgfile,
     ...     code="GR08MM1305",
@@ -2370,7 +2596,7 @@ def plot_muaps(
     Plot single differential derivation MUAPs of two MUs from the same file.
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.emg_from_samplefile()
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile=emgfile,
     ...     code="GR08MM1305",
@@ -2385,83 +2611,151 @@ def plot_muaps(
     ...     timewindow=50,
     ... )
     >>> emg.plot_muaps(sta_dict=[sta[1], sta[2]])
+
+    Plot double differential derivation MUAPs of two MUs from the same file
+    and change their color.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile=emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ...     dividebycolumn=True,
+    ... )
+    >>> sorted_rawemg = emg.double_diff(sorted_rawemg=sorted_rawemg)
+    >>> sta = emg.sta(
+    ...     emgfile=emgfile,
+    ...     sorted_rawemg=sorted_rawemg,
+    ...     firings="all",
+    ...     timewindow=50,
+    ... )
+    >>> line2d_kwargs_ax1 = {
+    ...     "color": "tab:red",
+    ... }
+    >>> emg.plot_muaps(
+    ...     sta_dict=[sta[1], sta[2]],
+    ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
+    ... )
+
+    Or change their color and style individually.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile=emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ...     dividebycolumn=True,
+    ... )
+    >>> sorted_rawemg = emg.double_diff(sorted_rawemg=sorted_rawemg)
+    >>> sta = emg.sta(
+    ...     emgfile=emgfile,
+    ...     sorted_rawemg=sorted_rawemg,
+    ...     firings="all",
+    ...     timewindow=30,
+    ... )
+    >>> line2d_kwargs_ax1 = [
+    ...     {
+    ...         "color": "tab:red",
+    ...         "linewidth": 3,
+    ...         "alpha": 0.6,
+    ...     },
+    ...     {
+    ...         "color": "tab:blue",
+    ...         "linewidth": 3,
+    ...         "alpha": 0.6,
+    ...     },
+    ... ]
+    >>> emg.plot_muaps(
+    ...     sta_dict=[sta[2], sta[3]],
+    ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
+    ... )
     """
 
     if isinstance(sta_dict, dict):
         sta_dict = [sta_dict]
 
-    if isinstance(sta_dict, list):
-        # Find the largest and smallest value to define y axis limits.
-        xmax = 0
-        xmin = 0
-        # Loop each sta_dict and MU, c means matrix columns
-        for thisdict in sta_dict:
-            for c in thisdict:
-                max_ = thisdict[c].max().max()
-                min_ = thisdict[c].min().min()
-                if max_ > xmax:
-                    xmax = max_
-                if min_ < xmin:
-                    xmin = min_
+    if not isinstance(sta_dict, list):
+        raise TypeError("sta_dict must be dict or list")
 
-        # Obtain number of columns and rows
-        cols = len(sta_dict[0])
-        rows = len(sta_dict[0]["col0"].columns)
-        fig, axs = plt.subplots(
-            rows,
-            cols,
-            figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-            num=title,
-            sharex=True,
+    # Find the largest and smallest value to define common y axis limits.
+    xmax = 0
+    xmin = 0
+    # Loop each sta_dict and MU, c means matrix columns
+    for thisdict in sta_dict:
+        for c in thisdict:
+            max_ = thisdict[c].max().max()
+            min_ = thisdict[c].min().min()
+            if max_ > xmax:
+                xmax = max_
+            if min_ < xmin:
+                xmin = min_
+
+    # Obtain number of columns and rows
+    cols = len(sta_dict[0])
+    rows = len(sta_dict[0][next(iter(sta_dict[0]))].columns)
+    fig, axs = plt.subplots(
+        rows,
+        cols,
+        figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
+        num=title,
+    )
+
+    # Manage exception of arrays instead of matrices and check that they
+    # are correctly oriented.
+    if cols > 1 and rows > 1:
+        # Matrices
+        for thisdict in sta_dict:
+            # Plot all the MUAPs, c means matrix columns, r rows
+            for r in range(rows):
+                for pos, c in enumerate(thisdict.keys()):
+                    axs[r, pos].plot(thisdict[c].iloc[:, r])
+
+                    axs[r, pos].set_ylim(xmin, xmax)
+                    axs[r, pos].xaxis.set_visible(False)
+                    axs[r, pos].set(yticklabels=[])
+                    axs[r, pos].tick_params(left=False)
+
+    elif cols == 1 and rows > 1:
+        # Arrays
+        for thisdict in sta_dict:
+            # Plot all the MUAPs, c means matrix columns, r rows
+            for r in range(rows):
+                for pos, c in enumerate(thisdict.keys()):
+                    axs[r].plot(thisdict[c].iloc[:, r])
+
+                    axs[r].set_ylim(xmin, xmax)
+                    axs[r].xaxis.set_visible(False)
+                    axs[r].set(yticklabels=[])
+                    axs[r].tick_params(left=False)
+
+    elif cols > 1 and rows == 1:
+        raise ValueError(
+            "Arrays should be organised as 1 column, multiple rows. " +
+            "Not as 1 row, multiple columns."
         )
 
-        # Manage exception of arrays instead of matrices and check that they
-        # are correctly oriented.
-        if cols > 1 and rows > 1:
-            # Matrices
-            for thisdict in sta_dict:
-                # Plot all the MUAPs, c means matrix columns, r rows
-                for r in range(rows):
-                    for pos, c in enumerate(thisdict.keys()):
-                        axs[r, pos].plot(thisdict[c].iloc[:, r])
-
-                        axs[r, pos].set_ylim(xmin, xmax)
-                        axs[r, pos].xaxis.set_visible(False)
-                        axs[r, pos].set(yticklabels=[])
-                        axs[r, pos].tick_params(left=False)
-
-        elif cols == 1 and rows > 1:
-            # Arrays
-            for thisdict in sta_dict:
-                # Plot all the MUAPs, c means matrix columns, r rows
-                for r in range(rows):
-                    for pos, c in enumerate(thisdict.keys()):
-                        axs[r].plot(thisdict[c].iloc[:, r])
-
-                        axs[r].set_ylim(xmin, xmax)
-                        axs[r].xaxis.set_visible(False)
-                        axs[r].set(yticklabels=[])
-                        axs[r].tick_params(left=False)
-
-        elif cols > 1 and rows == 1:
-            raise ValueError(
-                "Arrays should be organised as 1 column, multiple rows. " +
-                "Not as 1 row, multiple columns."
-            )
-
-        else:
-            raise ValueError(
-                "Unacceptable number of rows and columns to plot"
-            )
-
-        showgoodlayout(tight_layout=tight_layout, despined=True)
-        if showimmediately:
-            plt.show()
-
-        return fig
-
     else:
-        raise TypeError("sta_dict must be dict or list")
+        raise ValueError(
+            "Unacceptable number of rows and columns to plot"
+        )
+
+    # Initialise Figure_Subplots_Layout_Manager and update the figure if
+    # needed.
+    fig_manager = Figure_Subplots_Layout_Manager(figure=fig)
+    if line2d_kwargs_ax1 is not None:
+        fig_manager.set_line2d_from_kwargs(
+            line2d_kwargs_ax1=line2d_kwargs_ax1,
+        )
+    # Set appropriate layout
+    fig_manager.set_layout(tight_layout=tight_layout, despine="all")
+
+    # Show the figure
+    if showimmediately:
+        plt.show()
+
+    return fig
 
 
 def plot_muap(
@@ -2474,8 +2768,11 @@ def plot_muap(
     average=True,
     timeinseconds=True,
     figsize=[20, 15],
-    showimmediately=True,
     tight_layout=True,
+    line2d_kwargs_ax1=None,
+    line2d_kwargs_ax2=None,
+    axes_kwargs=None,
+    showimmediately=True,
 ):
     """
     Plot the MUAPs of a specific matrix channel.
@@ -2509,14 +2806,22 @@ def plot_muap(
         or in samples (False).
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from the GUI.
     tight_layout : bool, default True
         If True (default), the plt.tight_layout() is called and the figure's
         layout is improved.
-        It is useful to set it to False when calling the function from the GUI.
+        It is useful to set it to False when calling the function from a GUI.
+    line2d_kwargs_ax1 : dict, optional
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 1 (the
+        single MUAPs).
+    line2d_kwargs_ax2 : dict, optional
+        Kwargs for matplotlib.lines.Line2D relative to figure's axis 2 (the
+        average MUAP).
+    axes_kwargs : dict, optional
+        Kwargs for figure's axes.
+    showimmediately : bool, default True
+        If True (default), plt.show() is called and the figure showed to the
+        user.
+        It is useful to set it to False when calling the function from a GUI.
 
     Returns
     -------
@@ -2535,7 +2840,7 @@ def plot_muap(
     column 4 ("col3" as Python numbering is base 0).
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.emg_from_samplefile()
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile,
     ...     code="GR08MM1305",
@@ -2565,7 +2870,7 @@ def plot_muap(
     with a value ranging from 0 to the length of each column.
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.emg_from_samplefile()
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile=emgfile,
     ...     code="GR08MM1305",
@@ -2595,7 +2900,7 @@ def plot_muap(
     In this example the single differential derivation is used.
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.emg_from_samplefile()
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile=emgfile,
     ...     code="GR08MM1305",
@@ -2620,14 +2925,64 @@ def plot_muap(
     ...     figsize=[20, 15],
     ...     showimmediately=True,
     ... )
+
+    We can also customise the look of the plot.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile=emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ...     dividebycolumn=True,
+    ... )
+    >>> sorted_rawemg = emg.diff(sorted_rawemg=sorted_rawemg)
+    >>> stmuap = emg.st_muap(
+    ...     emgfile=emgfile,
+    ...     sorted_rawemg=sorted_rawemg,
+    ...     timewindow=30,
+    ... )
+    >>> line2d_kwargs_ax1 = {"linewidth": 0.5}
+    >>> line2d_kwargs_ax2 = {"linewidth": 3, "color": '0.4'}
+    >>> axes_kwargs = {
+    ...     "grid": {
+    ...         "visible": True,
+    ...         "axis": "both",
+    ...         "color": "gray",
+    ...         "linestyle": "--",
+    ...         "linewidth": 0.5,
+    ...         "alpha": 0.7
+    ...     },
+    ...     "labels": {
+    ...         "xlabel_size": 16,
+    ...         "ylabel_sx_size": 16,
+    ...     },
+    ... }
+    >>> fig = emg.plot_muap(
+    ...     emgfile=emgfile,
+    ...     stmuap=stmuap,
+    ...     munumber=2,
+    ...     column="col3",
+    ...     channel=50,
+    ...     channelprog=False,
+    ...     average=True,
+    ...     timeinseconds=True,
+    ...     figsize=[20, 15],
+    ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
+    ...     line2d_kwargs_ax2=line2d_kwargs_ax2,
+    ...     axes_kwargs=axes_kwargs,
+    ...     showimmediately=True,
+    ... )
+
+    For further examples on how to customise the figure's layout, refer to
+    plot_emgsig().
     """
 
     # Check if munumber is within the number of MUs
     if munumber >= emgfile["NUMBER_OF_MUS"]:
         raise ValueError(
-            "munumber exceeds the the number of MUs in the emgfile ({})".format(
-                emgfile["NUMBER_OF_MUS"]
-            )
+            "munumber exceeds the the number of MUs in the emgfile " +
+            f"({emgfile['NUMBER_OF_MUS']})"
         )
 
     # Get the MUAPs to plot
@@ -2637,7 +2992,8 @@ def plot_muap(
         # Check that the specified channel is within the matrix column range
         if channel >= len(keys):
             raise ValueError(
-                "Channel exceeds the the length of the matrix column, verify the use of channelprog"
+                "Channel exceeds the the length of the matrix column, " +
+                "verify the use of channelprog"
             )
 
         my_muap = stmuap[munumber][column][keys[channel]]
@@ -2649,7 +3005,7 @@ def plot_muap(
         # Check that the specified channel is within the matrix channels
         if channel not in keys:
             raise ValueError(
-                "Channel is not included in this matrix column, please check"
+                "Channel is not included in this matrix column"
             )
 
         my_muap = stmuap[munumber][column][channel]
@@ -2672,16 +3028,57 @@ def plot_muap(
 
     # Plot all the MUAPs
     if average:
-        plt.plot(x_axis, my_muap, color="0.6", linewidth=0.2)
-        plt.plot(x_axis, my_muap.mean(axis="columns"), color="red")
+        # Create a second axis for custom look
+        ax2 = ax1.twiny()
+        ax2.xaxis.set_visible(False)
+        ax2.yaxis.set_visible(False)
 
+        ax1.plot(x_axis, my_muap)
+        ax2.plot(x_axis, my_muap.mean(axis="columns"))
     else:
-        plt.plot(x_axis, my_muap, linewidth=0.2)
+        ax1.plot(x_axis, my_muap, linewidth=0.2)
 
     ax1.set_ylabel("Amplitude")
     ax1.set_xlabel("Time (ms)" if timeinseconds else "Samples")
 
-    showgoodlayout(tight_layout)
+    # Initialise Figure_Layout_Manager and update default kwarg values with
+    # user-specified kwargs.
+    fig_manager = Figure_Layout_Manager(figure=fig)
+    # If not specified, set default line kwargs for decent plotting
+    if average:
+        def_line2d_kwargs_ax1 = {"color": "0.6", "linewidth": 0.2}
+        def_line2d_kwargs_ax2 = {"color": "red"}
+    else:
+        def_line2d_kwargs_ax1 = {"linewidth": 0.2}
+        def_line2d_kwargs_ax2 = {}
+
+    if line2d_kwargs_ax1 is not None:
+        line2d_kwargs_ax1 = {
+            **def_line2d_kwargs_ax1, **line2d_kwargs_ax1
+        }
+    else:
+        line2d_kwargs_ax1 = def_line2d_kwargs_ax1
+
+    if line2d_kwargs_ax2 is not None:
+        line2d_kwargs_ax2 = {
+            **def_line2d_kwargs_ax2, **line2d_kwargs_ax2
+        }
+    else:
+        line2d_kwargs_ax2 = def_line2d_kwargs_ax2
+
+    fig_manager.get_final_kwargs(
+        line2d_kwargs_ax1, line2d_kwargs_ax2, axes_kwargs,
+    )
+
+    # Adjust labels' size and color, title, ticks and grid
+    fig_manager.set_style_from_kwargs()
+    # Set appropriate layout
+    fig_manager.set_layout(
+        tight_layout=tight_layout,
+        despine="1yaxis",
+    )
+
+    # Show the figure
     if showimmediately:
         plt.show()
 
@@ -2693,8 +3090,9 @@ def plot_muaps_for_cv(
     xcc_sta_dict,
     title="MUAPs for CV",
     figsize=[20, 15],
-    showimmediately=True,
     tight_layout=False,
+    line2d_kwargs_ax1=None,
+    showimmediately=True,
 ):
     """
     Visualise MUAPs on which to calculate MUs CV.
@@ -2714,15 +3112,20 @@ def plot_muaps_for_cv(
         Title of the plot.
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
-    showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from the GUI.
     tight_layout : bool, default False
         If True (default), the plt.tight_layout() is called and the figure's
         layout is improved.
-        It is useful to set it to False when calling the function from the GUI
+        It is useful to set it to False when calling the function from a GUI
         or if the final layout is not correct.
+    line2d_kwargs_ax1 : dict or list, optional
+        User-specified keyword arguments for sets of Line2D objects.
+        This can be a list of dictionaries containing the kwargs for each
+        Line2D, or a single dictionary. If a single dictionary is passed,
+        the same style will be applied to all the lines. See examples.
+    showimmediately : bool, default True
+        If True (default), plt.show() is called and the figure showed to the
+        user.
+        It is useful to set it to False when calling the function from a GUI.
 
     Returns
     -------
@@ -2734,7 +3137,8 @@ def plot_muaps_for_cv(
     for the first MU (0).
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> emgfile = emg.filter_rawemg(emgfile)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile,
     ...     code="GR08MM1305",
@@ -2754,12 +3158,46 @@ def plot_muaps_for_cv(
     ...     xcc_sta_dict=xcc_sta[0],
     ...     showimmediately=True,
     ... )
+
+    Customise the look of the plot.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> emgfile = emg.filter_rawemg(emgfile)
+    >>> sorted_rawemg = emg.sort_rawemg(
+    ...     emgfile,
+    ...     code="GR08MM1305",
+    ...     orientation=180,
+    ...     dividebycolumn=True
+    ... )
+    >>> dd = emg.double_diff(sorted_rawemg)
+    >>> sta = emg.sta(
+    ...     emgfile=emgfile,
+    ...     sorted_rawemg=dd,
+    ...     firings="all",
+    ...     timewindow=50,
+    ... )
+    >>> xcc_sta = emg.xcc_sta(sta)
+    >>> line2d_kwargs_ax1 = {
+    ...     "color": "k",
+    ...     "linewidth": 1,
+    ... }
+    >>> fig = emg.plot_muaps_for_cv(
+    ...     sta_dict=sta[0],
+    ...     xcc_sta_dict=xcc_sta[0],
+    ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
+    ...     showimmediately=True,
+    ... )
+
+    For further examples on how to customise the figure's layout, refer to
+    plot_muaps().
     """
 
     if not isinstance(sta_dict, dict):
         raise TypeError("sta_dict must be a dict")
 
-    # Find the largest and smallest value to define y axis limits.
+    # Find the largest and smallest value to define common y axis limits.
+    # This is much faster than using sharey.
     ymax = 0
     ymin = 0
     # Loop each column (c)
@@ -2780,16 +3218,13 @@ def plot_muaps_for_cv(
         cols,
         figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
         num=title,
-        sharex=True,
     )
 
-    # Plot all the MUAPs, c means matrix columns, r rows
-    keys = list(sta_dict.keys())
     # Manage exception of arrays instead of matrices and check that they
     # are correctly oriented.
     if cols > 1 and rows > 1:
         for r in range(rows):
-            for pos, c in enumerate(keys):
+            for pos, c in enumerate(sta_dict.keys()):
                 axs[r, pos].plot(sta_dict[c].iloc[:, r])
 
                 axs[r, pos].set_ylim(ymin, ymax)
@@ -2799,10 +3234,9 @@ def plot_muaps_for_cv(
 
                 if r != 0:
                     xcc = round(xcc_sta_dict[c].iloc[:, r].iloc[0], 2)
-                    title = xcc
                     color = "k" if xcc >= 0.8 else "r"
                     axs[r, pos].set_title(
-                        title, fontsize=8, color=color, loc="left", pad=3
+                        xcc, fontsize=8, color=color, loc="left", pad=3,
                     )
 
                 else:
@@ -2812,7 +3246,7 @@ def plot_muaps_for_cv(
 
     elif cols == 1 and rows > 1:
         for r in range(rows):
-            for pos, c in enumerate(keys):
+            for pos, c in enumerate(sta_dict.keys()):
                 axs[r].plot(sta_dict[c].iloc[:, r])
 
                 axs[r].set_ylim(ymin, ymax)
@@ -2822,10 +3256,9 @@ def plot_muaps_for_cv(
 
                 if r != 0:
                     xcc = round(xcc_sta_dict[c].iloc[:, r].iloc[0], 2)
-                    title = xcc
                     color = "k" if xcc >= 0.8 else "r"
                     axs[r].set_title(
-                        title, fontsize=8, color=color, loc="left", pad=3
+                        xcc, fontsize=8, color=color, loc="left", pad=3,
                     )
 
                 else:
@@ -2844,7 +3277,17 @@ def plot_muaps_for_cv(
             "Unacceptable number of rows and columns to plot"
         )
 
-    showgoodlayout(tight_layout=False, despined=True)
+    # Initialise Figure_Subplots_Layout_Manager and update the figure if
+    # needed.
+    fig_manager = Figure_Subplots_Layout_Manager(figure=fig)
+    if line2d_kwargs_ax1 is not None:
+        fig_manager.set_line2d_from_kwargs(
+            line2d_kwargs_ax1=line2d_kwargs_ax1,
+        )
+    # Set appropriate layout
+    fig_manager.set_layout(tight_layout=tight_layout, despine="all")
+
+    # Show the figure
     if showimmediately:
         plt.show()
 
