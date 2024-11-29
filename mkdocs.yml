@@ -32,7 +32,7 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
-extra_css: [docs/custom.css]
+extra_css: [docs/overrides/custom.css]
 
 # Select a plugin to get the docs from docstrings and setup the numpy stile as
 # the default style.
@@ -74,7 +74,9 @@ nav:
     - Basics: gui_basics.md
     - Advanced: gui_advanced.md
     - Settings: gui_settings.md
-  - What's New: what's-new.md
+  - Releases:
+    - Release notes: what's-new.md
+    - Browse versions: https://www.giacomovalli.com/openhdemg/versions/
   - Contacts: contacts.md
   - Cite us: cite-us.md
   - Contribute: contribute.md
@@ -90,6 +92,7 @@ nav:
     - electrodes: api_electrodes.md
     - info: api_info.md
     - compatibility: api_compatibility.md
+
     
 # Extensions
 markdown_extensions:
@@ -145,8 +148,6 @@ extra:
       link: https://twitter.com/openhdemg
     - icon: fontawesome/brands/youtube 
       link: https://www.youtube.com/@openhdemg
-#  version:
-#    provider: mike # TODO versioning
 
 # Need to have or pip install:
 # mkdocs
@@ -155,4 +156,3 @@ extra:
 # mkdocs-material-extensions
 # mkdocstrings
 # mkdocstrings-python
-# mike

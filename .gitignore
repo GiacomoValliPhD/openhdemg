@@ -4,6 +4,7 @@ __pycache__*
 .vs/
 .DS_Store
 docs/.DS_Store
+site/
 dist/
 openhdemg.egg-info/
 openhdemg/.DS_Store
