@@ -84,7 +84,7 @@ class TestTools(unittest.TestCase):
         self.assertIsInstance(res[0], np.ndarray)
         self.assertTrue(len(res) == self.emgfile["NUMBER_OF_MUS"])
         for pulses in res:
-            self.assertEqual(pulses.dtype, np.int32)
+            self.assertEqual(pulses.dtype, int)
             self.assertTrue(
                 np.min(pulses) >= 0 and
                 np.max(pulses) < self.emgfile["EMG_LENGTH"]

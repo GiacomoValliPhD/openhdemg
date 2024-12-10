@@ -327,8 +327,8 @@ class TestMuap(unittest.TestCase):
         # Prepare different emgfiles
         emgfile1_less_mus = delete_mus(self.emgfile, munumber=0)
         emgfile2_noisy = copy.deepcopy(self.emgfile)
-        emgfile2_noisy["ACCURACY"][0][0] = 0.6
-        emgfile2_noisy["ACCURACY"][0][1] = 0.6
+        emgfile2_noisy["ACCURACY"].iloc[0, 0] = 0.6
+        emgfile2_noisy["ACCURACY"].iloc[1, 0] = 0.6
 
         # Test which
         res1, res2, tracking_res = remove_duplicates_between(
