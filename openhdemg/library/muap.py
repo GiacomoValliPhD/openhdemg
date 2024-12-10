@@ -1254,9 +1254,11 @@ class Tracking_gui():  # TODO add delete excluded pairs button
     >>> import openhdemg.library as emg
     >>> emgfile_1 = emg.askopenfile(filesource="OPENHDEMG")
     >>> emgfile_2 = emg.askopenfile(filesource="OPENHDEMG")
-    >>> tracking_res = emg.tracking(emgfile_1, emgfile_2, timewindow=50)
+    >>> tracking_res = emg.tracking(
+    ...     emgfile_1, emgfile_2, timewindow=50, gui=False,
+    ... )
 
-    Obtained required variables for Tracking_gui(). Pay attention to use the
+    Obtain required variables for Tracking_gui(). Pay attention to use the
     same derivation specified during tracking and to use an appropriate MUAPs
     timewindow, according to the align_muaps option in Tracking_gui().
 
@@ -1324,7 +1326,7 @@ class Tracking_gui():  # TODO add delete excluded pairs button
             "gui_files",
             "Icon_transp.ico"
         )
-        self.root.iconbitmap(iconpath)
+        self.root.iconbitmap(iconpath, iconpath)
 
         # Create outer frames, assign structure and minimum spacing
         # Top
@@ -1519,7 +1521,8 @@ class Tracking_gui():  # TODO add delete excluded pairs button
             addrefsig=self.addrefsig,
             figsize=[3, 3],
             showimmediately=False,
-            tight_layout=False,
+            tight_layout=True,
+            axes_kwargs={"labels": {"title": "File 1"}}
         )
 
         if hasattr(self, 'idr_mu1_canvas'):
@@ -1542,6 +1545,8 @@ class Tracking_gui():  # TODO add delete excluded pairs button
             figsize=[3, 3],
             showimmediately=False,
             tight_layout=False,
+            line2d_kwargs_ax1={"color": plt.get_cmap("tab10")(1)},
+            axes_kwargs={"labels": {"title": "File 2"}}
         )  # TODO plot orange as MUAPs
 
         if hasattr(self, 'idr_mu2_canvas'):
@@ -2162,7 +2167,7 @@ class MUcv_gui():
             "gui_files",
             "Icon_transp.ico"
         )
-        self.root.iconbitmap(iconpath)
+        self.root.iconbitmap(iconpath, iconpath)
 
         # Create outer frames, assign structure and minimum spacing
         # Left
