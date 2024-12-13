@@ -4,6 +4,7 @@ This module contains functions to produce and analyse MUs anction potentials
 """
 
 import pandas as pd
+import sys
 from openhdemg.library.tools import delete_mus
 from openhdemg.library.mathtools import (
     norm_twod_xcorr,
@@ -1326,7 +1327,10 @@ class Tracking_gui():  # TODO add delete excluded pairs button
             "gui_files",
             "Icon_transp.ico"
         )
-        self.root.iconbitmap(iconpath, iconpath)
+        if sys.platform.startswith("darwin"):  # macOS
+            self.root.iconbitmap(iconpath)
+        else:  # Windows
+            self.root.iconbitmap(iconpath, iconpath)
 
         # Create outer frames, assign structure and minimum spacing
         # Top
@@ -2167,7 +2171,11 @@ class MUcv_gui():
             "gui_files",
             "Icon_transp.ico"
         )
-        self.root.iconbitmap(iconpath, iconpath)
+        if sys.platform.startswith("darwin"):  # macOS
+            self.root.iconbitmap(iconpath)
+        else:  # Windows
+            self.root.iconbitmap(iconpath, iconpath)
+        
 
         # Create outer frames, assign structure and minimum spacing
         # Left
