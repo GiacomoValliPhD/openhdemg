@@ -1525,7 +1525,7 @@ class Tracking_gui():  # TODO add delete excluded pairs button
             addrefsig=self.addrefsig,
             figsize=[3, 3],
             showimmediately=False,
-            tight_layout=True,
+            tight_layout=False,
             axes_kwargs={"labels": {"title": "File 1"}}
         )
 
@@ -1551,7 +1551,7 @@ class Tracking_gui():  # TODO add delete excluded pairs button
             tight_layout=False,
             line2d_kwargs_ax1={"color": plt.get_cmap("tab10")(1)},
             axes_kwargs={"labels": {"title": "File 2"}}
-        )  # TODO plot orange as MUAPs
+        )
 
         if hasattr(self, 'idr_mu2_canvas'):
             self.idr_mu2_canvas.get_tk_widget().destroy()
@@ -2306,6 +2306,16 @@ class MUcv_gui():
             index=self.all_mus,
             columns=["CV", "RMS", "XCC", "Column", "From_Row", "To_Row"],
         )
+        # Set the dtypes for each column
+        self.res_df = self.res_df.astype({
+            "CV": "float64",
+            "RMS": "float64",
+            "XCC": "float64",
+            "Column": "string",
+            "From_Row": "int64",
+            "To_Row": "int64",
+        })
+        # Set values
         self.textbox = tk.Text(right_frm, width=25)
         self.textbox.pack(side=tk.TOP, expand=True, fill="y")
         self.textbox.insert(
@@ -2393,9 +2403,9 @@ class MUcv_gui():
         xcc = self.sta_xcc[mu][self.col_cb.get()].iloc[:, xcc_col_list].mean().mean()
         self.res_df.loc[mu, "XCC"] = xcc
 
-        self.res_df.loc[mu, "Column"] = self.col_cb.get()
-        self.res_df.loc[mu, "From_Row"] = self.start_cb.get()
-        self.res_df.loc[mu, "To_Row"] = self.stop_cb.get()
+        self.res_df.loc[mu, "Column"] = str(self.col_cb.get())
+        self.res_df.loc[mu, "From_Row"] = int(self.start_cb.get())
+        self.res_df.loc[mu, "To_Row"] = int(self.stop_cb.get())
 
         self.textbox.replace(
             '1.0',

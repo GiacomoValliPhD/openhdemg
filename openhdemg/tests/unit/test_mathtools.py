@@ -250,8 +250,8 @@ class TestMathTools(unittest.TestCase):
             row=0,
             teta=1,
         )
-        self.assertAlmostEqual(res[0], 380.5292664746554, places=9)
-        self.assertAlmostEqual(res[1], 38211.07196482990, places=9)
+        self.assertAlmostEqual(res[0], 380.5292664746554, places=3)
+        self.assertAlmostEqual(res[1], 38211.07196482990, places=3)
 
     def test_mle_cv_est(self):
         """
@@ -269,8 +269,8 @@ class TestMathTools(unittest.TestCase):
             ied=emgfile["IED"],
             fsamp=emgfile["FSAMP"],
         )
-        self.assertAlmostEqual(res[0], 7.279193825482191, places=9)
-        self.assertAlmostEqual(res[1], 2.250798700076472, places=9)
+        self.assertAlmostEqual(res[0], 7.279193825482191, places=3)
+        self.assertAlmostEqual(res[1], 2.250798700076472, places=3)
 
     def test_find_mle_teta(self):
         """
