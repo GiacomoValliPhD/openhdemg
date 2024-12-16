@@ -8,7 +8,9 @@ site_description: >-
 repo_name: openhdemg
 repo_url: https://github.com/GiacomoValliPhD/openhdemg
 
-copyright: Copyright &copy; 2022 - 2024. The openhdemg community
+copyright: >
+  Copyright &copy; 2022 - 2024. The openhdemg community -
+  <a href="#__consent">Change cookie settings</a>
 
 theme:
   name: material
@@ -148,6 +150,15 @@ extra:
       link: https://twitter.com/openhdemg
     - icon: fontawesome/brands/youtube 
       link: https://www.youtube.com/@openhdemg
+  consent:
+    title: Cookie consent
+    description: >- 
+      We use only the minimum cookies required by GitHub to ensure our website functions smoothly.
+      You can disable them anytime, because your privacy is our priority!
+    actions:
+      - accept
+      - manage
+      # - reject
 
 # Need to have or pip install:
 # mkdocs
