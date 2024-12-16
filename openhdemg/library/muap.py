@@ -1206,7 +1206,8 @@ def tracking(
         return tracking_res
 
 
-class Tracking_gui():  # TODO add delete excluded pairs button
+# TODO add delete excluded pairs button
+class Tracking_gui():
     """
     GUI for the visual inspection and manual selection of the tracking results.
 
@@ -1291,6 +1292,7 @@ class Tracking_gui():  # TODO add delete excluded pairs button
     2          2         1  0.923901  Included
     3          4         8  0.893922  Included
     """
+
     def __init__(
         self,
         emgfile1,
@@ -2175,7 +2177,6 @@ class MUcv_gui():
             self.root.iconbitmap(iconpath)
         else:  # Windows
             self.root.iconbitmap(iconpath, iconpath)
-        
 
         # Create outer frames, assign structure and minimum spacing
         # Left
