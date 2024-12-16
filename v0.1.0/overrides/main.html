@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+<!--{% block extrahead %}
+  <link rel="stylesheet" type="text/css" href="{{ config.site_url }}/custom.css">
+{% endblock %}-->
+
+{% block header %}
+<!-- Custom Banner -->
+<div style="
+    display: flex;               /* Enable flexbox */
+    justify-content: center;     /* Center content horizontally */
+    align-items: center;         /* Center content vertically */
+    height: 50px;                /* Set the height of the banner */
+    position: sticky;            /* Make the banner stick to the top */
+    top: 0;                      /* Position the banner at the top of the page */
+    left: 0;                     /* Align the banner to the left edge */
+    width: 100%;                 /* Stretch the banner to full width */
+    z-index: 1;                  /* Ensure the banner appears above other content */
+    text-align: center;          /* Center-align text */
+    background-color: rgb(215, 215, 101);
+    font-size: 0.6rem;
+">
+  <p style="color:black; display:inline;">
+    ⚠️ You are viewing an outdated version of the documentation. 
+    For the most recent release, please refer to the 
+    <a href="https://www.giacomovalli.com/openhdemg/" style="color:black; text-decoration: underline;">latest version</a>.
+  </p>
+</div>
+
+<!-- Original Header -->
+{% include "partials/header.html" %}
+
+{% endblock %}
