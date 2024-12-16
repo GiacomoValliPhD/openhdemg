@@ -238,7 +238,7 @@ class PlotEmg:
 
             # Define Linewidth for plot
             self.linewidth = StringVar()
-            linewidth_entry_values = ("0.25", "0.5", "0.75", "1")
+            linewidth_entry_values = ("0.5", "1", "2")
             linewidth_entry = ctk.CTkComboBox(
                 self.head,
                 width=15,
@@ -648,10 +648,10 @@ class PlotEmg:
             # Plot motor unit pulses
             openhdemg.plot_mupulses(
                 emgfile=self.parent.resdict,
-                linewidths=float(self.linewidth.get()),
                 addrefsig=eval(self.ref_but.get()),
                 timeinseconds=eval(self.time_sec.get()),
                 figsize=figsize,
+                line2d_kwargs_ax1={"linewidth": float(self.linewidth.get())}
             )
 
         except ValueError as e:

@@ -97,6 +97,7 @@ import gzip
 import warnings
 import os
 import fnmatch
+from io import StringIO
 
 
 # --------------------------------------------------------------------- #
@@ -1832,18 +1833,27 @@ def emg_from_json(filepath):
         # df are stored in json as a dictionary, it can be directly extracted
         # and converted into a pd.DataFrame.
         # index and columns are imported as str, we need to convert it to int.
-        raw_signal = pd.read_json(jsonemgfile["RAW_SIGNAL"], orient='split')
+        raw_signal = pd.read_json(
+            StringIO(jsonemgfile["RAW_SIGNAL"]),
+            orient='split',
+        )
         # Check dtypes for safety, little computational cost
         raw_signal.columns = raw_signal.columns.astype(int)
         raw_signal.index = raw_signal.index.astype(int)
         raw_signal.sort_index(inplace=True)
         # REF_SIGNAL
-        ref_signal = pd.read_json(jsonemgfile["REF_SIGNAL"], orient='split')
+        ref_signal = pd.read_json(
+            StringIO(jsonemgfile["REF_SIGNAL"]),
+            orient='split',
+        )
         ref_signal.columns = ref_signal.columns.astype(int)
         ref_signal.index = ref_signal.index.astype(int)
         ref_signal.sort_index(inplace=True)
         # ACCURACY
-        accuracy = pd.read_json(jsonemgfile["ACCURACY"], orient='split')
+        accuracy = pd.read_json(
+            StringIO(jsonemgfile["ACCURACY"]),
+            orient='split',
+        )
         try:
             accuracy.columns = accuracy.columns.astype(int)
         except Exception:
@@ -1856,7 +1866,7 @@ def emg_from_json(filepath):
         accuracy.index = accuracy.index.astype(int)
         accuracy.sort_index(inplace=True)
         # IPTS
-        ipts = pd.read_json(jsonemgfile["IPTS"], orient='split')
+        ipts = pd.read_json(StringIO(jsonemgfile["IPTS"]), orient='split')
         ipts.columns = ipts.columns.astype(int)
         ipts.index = ipts.index.astype(int)
         ipts.sort_index(inplace=True)
@@ -1877,7 +1887,7 @@ def emg_from_json(filepath):
         number_of_mus = int(json.loads(jsonemgfile["NUMBER_OF_MUS"]))
         # BINARY_MUS_FIRING
         binary_mus_firing = pd.read_json(
-            jsonemgfile["BINARY_MUS_FIRING"],
+            StringIO(jsonemgfile["BINARY_MUS_FIRING"]),
             orient='split',
         )
         binary_mus_firing.columns = binary_mus_firing.columns.astype(int)
@@ -1885,7 +1895,7 @@ def emg_from_json(filepath):
         binary_mus_firing.sort_index(inplace=True)
         # EXTRAS
         # Don't alter index and columns as these could contain anything.
-        extras = pd.read_json(jsonemgfile["EXTRAS"], orient='split')
+        extras = pd.read_json(StringIO(jsonemgfile["EXTRAS"]), orient='split')
 
         emgfile = {
             "SOURCE": source,
@@ -1907,12 +1917,15 @@ def emg_from_json(filepath):
         # FSAMP
         fsamp = float(json.loads(jsonemgfile["FSAMP"]))
         # REF_SIGNAL
-        ref_signal = pd.read_json(jsonemgfile["REF_SIGNAL"], orient='split')
+        ref_signal = pd.read_json(
+            StringIO(jsonemgfile["REF_SIGNAL"]),
+            orient='split',
+        )
         ref_signal.columns = ref_signal.columns.astype(int)
         ref_signal.index = ref_signal.index.astype(int)
         ref_signal.sort_index(inplace=True)
         # EXTRAS
-        extras = pd.read_json(jsonemgfile["EXTRAS"], orient='split')
+        extras = pd.read_json(StringIO(jsonemgfile["EXTRAS"]), orient='split')
 
         emgfile = {
             "SOURCE": source,

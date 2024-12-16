@@ -3,7 +3,9 @@ __pycache__*
 .vscode/
 .vs/
 .DS_Store
+.tox/
 docs/.DS_Store
+site/
 dist/
 openhdemg.egg-info/
 openhdemg/.DS_Store

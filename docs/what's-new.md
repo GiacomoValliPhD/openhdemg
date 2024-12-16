@@ -1,3 +1,49 @@
+## :octicons-tag-24: 0.1.1
+:octicons-clock-24: December 2024
+
+This release is aimed at increasing the flexibility and customizability of the library's functions, improving its robustness through a comprehensive set of testing functions, and extending support for Python versions 3.12 and 3.13.
+
+### Backward Compatibility
+
+This version is fully backward compatible with v0.1.0 although some parameters and functions have been deprecated.
+
+### Major Achievements
+- **Enhanced flexibility and robustness**
+- **Extended compatibility**
+
+### Major Changes
+
+- **Test modules**:
+
+    - Complete suite of unit-test modules with over 60 testing functions and hundreds of unit tests to ensure robustness of the library.
+    - Tox automation for standardised and extensive unit testing across the 4 most recent Python versions.
+
+- **Versioning**:
+
+    - Website and documentation versioning to allow the users to always access documentation corresponding to previous stable releases.
+
+- **New classes**:
+  
+    - The class	`Figure_Layout_Manager` provides a comprehensive layout management system for figures, replacing the deprecated showgoodlayouty. It offers a more flexible approach to figure customization.
+    - The class	`Figure_Subplots_Layout_Manager`offers a more flexible approach to figure customization, but specifically for subplots.
+
+- **Updated classes**:
+  
+    - The class `Tracking_gui` now color codes motor unit action potentials and discharge rate profiles for easy association of which action potentials correspond to which motor unit.
+
+- **Updated functions**:
+  
+    - The `min_max_scaling` function now supports both column-wise and global scaling, global scaling is supported also for n-dimensional arrays.
+    - All plotting functions now support extensive customization of the figure's appearance and have an improved y-axis alignment.
+    - The `plot_emgsig` function now allows for common channel scaling, individual channel scaling or custom offset scaling.
+    - The execution of the `plot_muaps` and `plot_muaps_for_cv` is now 30-40% faster. 
+
+### Known issues
+  
+A list of known issues can be found [here](https://github.com/GiacomoValliPhD/openhdemg/issues/69){:target="_blank"}.
+
+<br>
+
 ## :octicons-tag-24: 0.1.0
 :octicons-clock-24: June 2024
 

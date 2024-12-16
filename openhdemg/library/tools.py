@@ -294,8 +294,7 @@ def resize_emgfile(
     # Double check that start_, end_ are within the real range.
     if start_ < 0:
         start_ = 0
-    if end_ > emgfile["RAW_SIGNAL"].shape[0]:
-        end_ = emgfile["RAW_SIGNAL"].shape[0]
+    # Continued inside if...
 
     # Create the object to store the resized emgfile.
     rs_emgfile = copy.deepcopy(emgfile)
@@ -318,6 +317,10 @@ def resize_emgfile(
             ==> "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
         }
         """
+
+        # Double check that start_, end_ are within the real range.
+        if end_ > emgfile["RAW_SIGNAL"].shape[0]:
+            end_ = emgfile["RAW_SIGNAL"].shape[0]
 
         # Resize the reference signal and identify the first value of the
         # index to resize the mupulses. Then, reset the index.
@@ -374,6 +377,10 @@ def resize_emgfile(
         return rs_emgfile, start_, end_
 
     elif emgfile["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]:
+        # Double check that start_, end_ are within the real range.
+        if end_ > emgfile["REF_SIGNAL"].shape[0]:
+            end_ = emgfile["REF_SIGNAL"].shape[0]
+
         rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
         rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].reset_index(drop=True)
 
@@ -495,7 +502,7 @@ def delete_mus(
         Ignore the process and return the original emgfile. (Default)
 
         ``remove``
-        Remove the MU and return the emgfile without the MU. (Default)
+        Remove the MU and return the emgfile without the MU.
         This should allow full compatibility with the use of this file
         in following processing (i.e., save/load and analyse).
     delete_delsys_muaps : Bool, default True
@@ -542,19 +549,19 @@ def delete_mus(
     """
     Need to be changed: ==>
     emgfile =   {
-                "SOURCE" : SOURCE,
-                "RAW_SIGNAL" : RAW_SIGNAL,
-                "REF_SIGNAL" : REF_SIGNAL,
-                ==> "ACCURACY" : ACCURACY
-                ==> "IPTS" : IPTS,
-                ==> "MUPULSES" : MUPULSES,
-                "FSAMP" : FSAMP,
-                "IED" : IED,
-                "EMG_LENGTH" : EMG_LENGTH,
-                ==> "NUMBER_OF_MUS" : NUMBER_OF_MUS,
-                ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
-                ==> "EXTRAS" : EXTRAS but only for DELSYS file
-                }
+        "SOURCE" : SOURCE,
+        "RAW_SIGNAL" : RAW_SIGNAL,
+        "REF_SIGNAL" : REF_SIGNAL,
+        ==> "ACCURACY" : ACCURACY
+        ==> "IPTS" : IPTS,
+        ==> "MUPULSES" : MUPULSES,
+        "FSAMP" : FSAMP,
+        "IED" : IED,
+        "EMG_LENGTH" : EMG_LENGTH,
+        ==> "NUMBER_OF_MUS" : NUMBER_OF_MUS,
+        ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
+        ==> "EXTRAS" : EXTRAS but only for DELSYS file
+    }
     """
 
     # Common part working for all the possible inputs to munumber
