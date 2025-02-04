@@ -1291,9 +1291,9 @@ def compute_svr(
         # to second pulse.
         ytmp = idr[mu].idr[1:].to_numpy()
         # Time between discharges, will use for discontinuity calc
-        xdiff = idr[mu].diff_mupulses[1:].values
+        xdiff = idr[mu].diff_mupulses[2:].values
         # Motor unit pulses, samples
-        mup = np.array(idr[mu].mupulses)
+        mup = np.array(idr[mu].mupulses[1:].values)
 
         # Defining weight vector. A scaling applied to the regularization
         # parameter, per sample.
@@ -1313,7 +1313,7 @@ def compute_svr(
         # Defining prediction vector
         # TODO need to add custom range.
         # From the second firing to the end of firing, in samples.
-        predind = np.arange(mup[1], mup[-1]+1)
+        predind = np.arange(mup[0], mup[-1]+1)
         predtime = (predind/emgfile["FSAMP"]).reshape(-1, 1)  # In time (s)
         # Initialise nan vector for tracking fits aligned in time. Usefull for
         # later quant metrics.
@@ -1325,42 +1325,49 @@ def compute_svr(
         ]
         bkpnt = bkpnt[np.where(bkpnt != mup[-1])]
 
+        if len(bkpnt) == 1:
+            if bkpnt[0] == mup[0]:  # When first firing is the only discontinuity
+                bkpnt = []
+                predind = np.arange(mup[1], mup[-1]+1)
+                predtime = (predind/emgfile["FSAMP"]).reshape(-1, 1)
+
         # Make predictions on the data
-        if bkpnt.size > 0:  # If there is a point of discontinuity
+        if len(bkpnt) > 0:  # If there is a point of discontinuity
             if bkpnt[0] == mup[0]:  # When first firing is discontinuity
                 smoothfit = np.nan*np.ones(1)
                 newtm = np.nan*np.ones(1)
-                bkpnt = bkpnt[1:]       
-            else:
-                tmptm = predtime[
-                    0: np.where(
-                        (bkpnt[0] >= predind[0:-1]) & (bkpnt[0] < predind[1:])
-                    )[0][0]
-                ]  # Break up time vector for first continous range of firing
-                smoothfit = svr.predict(tmptm)  # Predict with svr model
-                newtm = tmptm  # Track new time vector
+                bkpnt = bkpnt[1:]
 
-                tmpind = predind[
-                    0: np.where(
-                        (bkpnt[0] >= predind[0:-1]) & (bkpnt[0] < predind[1:])
-                    )[0][0]
-                ]  # Sample vector of first continous range of firing
-                # Fill corresponding sample indices with svr fit
-                gen_svr[tmpind.astype(np.int64)] = smoothfit
+            tmptm = predtime[
+                0: np.where(
+                    (bkpnt[0] >= predind[0:-1]) & (bkpnt[0] < predind[1:])
+                )[0][0]
+            ]  # Break up time vector for first continous range of firing
+            smoothfit = svr.predict(tmptm)  # Predict with svr model
+            newtm = tmptm  # Track new time vector
+
+            tmpind = predind[
+                0: np.where(
+                    (bkpnt[0] >= predind[0:-1]) & (bkpnt[0] < predind[1:])
+                )[0][0]
+            ]  # Sample vector of first continous range of firing
+               
+            # Fill corresponding sample indices with svr fit
+            gen_svr[tmpind.astype(np.int64)] = smoothfit
             # Add last firing as discontinuity
             bkpnt = np.append(bkpnt, mup[-1])
-            for ii in range(bkpnt.size-1):  # All instances of discontinuity
+            for ii in range(len(bkpnt)-1):  # All instances of discontinuity
                 curind = np.where(
-                    (bkpnt[ii] >= predind[0:-1]) & (bkpnt[ii] < predind[1:])
+                    (bkpnt[ii] > predind[0:-1]) & (bkpnt[ii] <= predind[1:])
                 )[0][0]  # Current index of discontinuity
                 nextind = np.where(
-                    (bkpnt[ii+1] >= predind[0:-1]) & (bkpnt[ii+1] <= predind[1:])
+                    (bkpnt[ii+1] > predind[0:-1]) & (bkpnt[ii+1] <= predind[1:])
                 )[0][0]  # Next index of discontinuity
 
                 # MU firing before discontinuity
                 curmup = np.where(mup == bkpnt[ii])[0][0]
                 curind_nmup = np.where(
-                    (mup[curmup+1] >= predind[0:-1]) & (mup[curmup+1] <= predind[1:])
+                    (mup[curmup+1] > predind[0:-1]) & (mup[curmup+1] <= predind[1:])
                 )[0][0]  # MU firing after discontinuity
 
                 # If the next discontinuity is the next MU firing, nan fill
