@@ -1315,6 +1315,7 @@ def compute_svr(
         # From the second firing to the end of firing, in samples.
         predind = np.arange(mup[0], mup[-1]+1)
         predtime = (predind/emgfile["FSAMP"]).reshape(-1, 1)  # In time (s)
+        newtm = []
         # Initialise nan vector for tracking fits aligned in time. Usefull for
         # later quant metrics.
         gen_svr = np.nan*np.ones(emgfile["EMG_LENGTH"])
@@ -1341,10 +1342,10 @@ def compute_svr(
             tmptm = predtime[
                 0: np.where(
                     (bkpnt[0] >= predind[0:-1]) & (bkpnt[0] < predind[1:])
-                )[0][0]
+                )[0][0],
             ]  # Break up time vector for first continous range of firing
             smoothfit = svr.predict(tmptm)  # Predict with svr model
-            newtm = tmptm  # Track new time vector
+            newtm = np.append(newtm,tmptm,)  # Track new time vector
 
             tmpind = predind[
                 0: np.where(
@@ -1387,7 +1388,7 @@ def compute_svr(
                         newtm,
                         np.nan*np.ones(len(predtime[curind:curind_nmup])-2),
                     )
-                    newtm = np.append(newtm, predtime[curind_nmup:nextind])
+                    newtm = np.append(newtm, predtime[curind_nmup:nextind],)
                     gen_svr[predind[curind_nmup:nextind]] = svr.predict(
                         predtime[curind_nmup:nextind]
                     )
@@ -1398,7 +1399,7 @@ def compute_svr(
 
         # Append fits, new time vect, time aligned fits
         svrfit_acm.append(smoothfit.copy())
-        svrtime_acm.append(newtm.copy())
+        svrtime_acm.append(np.squeeze(newtm.copy()))
         gensvr_acm.append(gen_svr.copy())
 
     svrfits = {
