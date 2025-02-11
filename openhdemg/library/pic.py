@@ -47,7 +47,6 @@ def compute_deltaf(
 
         ``all``
             This returns all possible MU pairs
-
     normalisation : str {"False", "ctrl_max_desc"}, default "False"
         The method for deltaF nomalization.
 
@@ -55,7 +54,6 @@ def compute_deltaf(
             Whether to normalise deltaF values to control unit descending
             range during test unit firing. See Skarabot et. al., 2023:
             https://www.biorxiv.org/content/10.1101/2023.10.16.562612v1
-
     recruitment_difference_cutoff : float, default 1
         An exlusion criteria corresponding to the necessary difference between
         control and test MU recruitement in seconds.
@@ -88,7 +86,6 @@ def compute_deltaf(
     Quantify delta F using svr fits.
 
     >>> import openhdemg.library as emg
-    >>> import numpy as np
     >>> emgfile = emg.emg_from_samplefile()
     >>> emgfile = emg.sort_mus(emgfile=emgfile)
     >>> svrfits = emg.compute_svr(emgfile)

@@ -1,26 +1,24 @@
-# Copyright (C) 2023 Giacomo Valli, Paul Ritsche
+# Copyright (C) 2022 - 2024. The openhdemg community.
 
-# For the openhdemg version
 # To read the content of the README or description file
 from pathlib import Path
 
 # To install required dependencies
 from setuptools import setup
 
-import openhdemg as emg
+import openhdemg
 
 INSTALL_REQUIRES = [
-    "customtkinter==5.2.1",
-    "CTkMessagebox==2.5",
-    "matplotlib==3.8.1",
-    "numpy==1.26.1",
-    "openpyxl==3.1.2",
-    "pandas==2.0.3",
+    "customtkinter==5.2.2",
+    "CTkMessagebox==2.7",
+    "matplotlib==3.9.3",
+    "numpy<=2.2.0",
+    "openpyxl==3.1.5",
+    "pandas==2.2.3",
     "pandastable==0.13.1",
-    "scipy==1.11.3",
-    "seaborn==0.13.0",
-    "joblib==1.3.2",
-    # "pre-commit==3.7.0",
+    "scipy<=1.14.1",
+    "seaborn==0.13.2",
+    "scikit-learn==1.5.2",
 ]
 
 PACKAGES = [
@@ -39,9 +37,10 @@ PACKAGES = [
 
 CLASSIFIERS = [
     "Intended Audience :: Science/Research",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Human Machine Interfaces",
     "Topic :: Scientific/Engineering :: Medical Science Apps.",
@@ -68,7 +67,7 @@ if __name__ == "__main__":
             "Source Code": "https://github.com/GiacomoValliPhD/openhdemg",
             "Bug Tracker": "https://github.com/GiacomoValliPhD/openhdemg/issues",
         },
-        version=emg.__version__,
+        version=openhdemg.__version__,
         install_requires=INSTALL_REQUIRES,
         include_package_data=True,
         packages=PACKAGES,

@@ -294,8 +294,7 @@ def resize_emgfile(
     # Double check that start_, end_ are within the real range.
     if start_ < 0:
         start_ = 0
-    if end_ > emgfile["REF_SIGNAL"].shape[0]:
-        end_ = emgfile["REF_SIGNAL"].shape[0]
+    # Continued inside if...
 
     # Create the object to store the resized emgfile.
     rs_emgfile = copy.deepcopy(emgfile)
@@ -319,6 +318,10 @@ def resize_emgfile(
         }
         """
 
+        # Double check that start_, end_ are within the real range.
+        if end_ > emgfile["RAW_SIGNAL"].shape[0]:
+            end_ = emgfile["RAW_SIGNAL"].shape[0]
+
         # Resize the reference signal and identify the first value of the
         # index to resize the mupulses. Then, reset the index.
         rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
@@ -333,7 +336,14 @@ def resize_emgfile(
         )
 
         for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
-            # Mask the array based on a filter and return the values in an array
+            # Mask the array based on a filter and return the values in an
+            # array. However, make sure that all the numbers are int32 to
+            # prevent falling to int16 when small sections are resized.
+            # This may cause overflow.
+            rs_emgfile["MUPULSES"][mu] = rs_emgfile["MUPULSES"][mu].astype(
+                np.int32
+            )
+
             rs_emgfile["MUPULSES"][mu] = (
                 rs_emgfile["MUPULSES"][mu][
                     (rs_emgfile["MUPULSES"][mu] >= start_)
@@ -374,6 +384,10 @@ def resize_emgfile(
         return rs_emgfile, start_, end_
 
     elif emgfile["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]:
+        # Double check that start_, end_ are within the real range.
+        if end_ > emgfile["REF_SIGNAL"].shape[0]:
+            end_ = emgfile["REF_SIGNAL"].shape[0]
+
         rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
         rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].reset_index(drop=True)
 
@@ -495,7 +509,7 @@ def delete_mus(
         Ignore the process and return the original emgfile. (Default)
 
         ``remove``
-        Remove the MU and return the emgfile without the MU. (Default)
+        Remove the MU and return the emgfile without the MU.
         This should allow full compatibility with the use of this file
         in following processing (i.e., save/load and analyse).
     delete_delsys_muaps : Bool, default True
@@ -542,19 +556,19 @@ def delete_mus(
     """
     Need to be changed: ==>
     emgfile =   {
-                "SOURCE" : SOURCE,
-                "RAW_SIGNAL" : RAW_SIGNAL,
-                "REF_SIGNAL" : REF_SIGNAL,
-                ==> "ACCURACY" : ACCURACY
-                ==> "IPTS" : IPTS,
-                ==> "MUPULSES" : MUPULSES,
-                "FSAMP" : FSAMP,
-                "IED" : IED,
-                "EMG_LENGTH" : EMG_LENGTH,
-                ==> "NUMBER_OF_MUS" : NUMBER_OF_MUS,
-                ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
-                ==> "EXTRAS" : EXTRAS but only for DELSYS file
-                }
+        "SOURCE" : SOURCE,
+        "RAW_SIGNAL" : RAW_SIGNAL,
+        "REF_SIGNAL" : REF_SIGNAL,
+        ==> "ACCURACY" : ACCURACY
+        ==> "IPTS" : IPTS,
+        ==> "MUPULSES" : MUPULSES,
+        "FSAMP" : FSAMP,
+        "IED" : IED,
+        "EMG_LENGTH" : EMG_LENGTH,
+        ==> "NUMBER_OF_MUS" : NUMBER_OF_MUS,
+        ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
+        ==> "EXTRAS" : EXTRAS but only for DELSYS file
+    }
     """
 
     # Common part working for all the possible inputs to munumber
@@ -1255,26 +1269,22 @@ def compute_svr(
     Quantify svr fits.
 
     >>> import openhdemg.library as emg
-    >>> import numpy as np
-    >>> import matplotlib.pyplot as plt
+    >>> import pandas as pd
     >>> emgfile = emg.emg_from_samplefile()
     >>> emgfile = emg.sort_mus(emgfile=emgfile)
     >>> svrfits = emg.compute_svr(emgfile)
 
     Quick plot showing the results.
 
-    >>> scl = 12  # offset MUs for viz
-    >>> idr = emg.compute_idr(emgfile)
-    >>> for ii in range(len(svrfits["svrfit"])):
-    ...     xtmp = np.transpose([idr[ii].timesec[1:]])
-    ...     ytmp = idr[ii].idr[1:].to_numpy()
-    ...     plt.scatter(xtmp, ytmp+scl*(ii), color='darkorange')
-    ...     plt.plot(
-    ...         svrfits["svrtime"][ii],
-    ...         svrfits["svrfit"][ii]+scl*(ii),
-    ...         color='cornflowerblue',
-    ...     )
-    >>> plt.show()
+    >>> smoothfits = pd.DataFrame(svrfits["gensvr"]).transpose()
+    >>> emg.plot_smoothed_dr(
+    >>>     emgfile,
+    >>>     smoothfits=smoothfits,
+    >>>     munumber="all",
+    >>>     addidr=False,
+    >>>     stack=True,
+    >>>     addrefsig=True,
+    >>> )
     """
 
     # TODO input checking and edge cases

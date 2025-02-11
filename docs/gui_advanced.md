@@ -8,13 +8,14 @@ Please note, the `Advanced Tools` might not be available for all the files, as s
 
 ## Start a Specific Tool
 
-So far, we have included three advanced analyses in the *openhdemg* GUI.
+So far, we have included four advanced analyses in the *openhdemg* GUI.
 
 - `Motor Unit Tracking`
 - `Duplicate Removal`
 - `Conduction Velocity Estimation`
+- `Persistent Inward Currents`
 
-For all of those, the specification of a `Matrix Code` and a `Matrix Orientation` is required.
+For some of these analyses, the specification of a `Matrix Code` and a `Matrix Orientation` is required.
 
 The `Matrix Code` must be specified according to the one you used during acquisition. So far, the implemented codes are:
 
@@ -32,6 +33,8 @@ In case you selected `None`, the entrybox `Rows, Columns` will appear. Please sp
 Rows, Columns: 13, 5
 ```
 means that your File has 65 channels organised over 13 rows and 5 columns.
+
+The use of `None` is suggested anytime your loaded file contains already sorted EMG channels and you want to avoid further sorting.
 
 If you selected one of the built-in sorting orders (e.g., `GR08MM1305`, `GR04MM1305`, `GR10MM0808`), you need to specify also the `Orientation` in row two and column four in the left side of the `Plot Window`. The `Orientaion` must match the one of your matrix during acquisition. You can find a reference image for the `Orientation` at the bottom in the right side of the `Plot Window`. `Orientation` is ignored when `Matrix Code` is `None` or `Custom order`.
 
@@ -66,7 +69,7 @@ When you want to track MUs across two different files, you need to select the `M
 
 7. The `Show` checkbox indicates whether to plot the spike triggered average of pairs of MUs with cross-correlation above `Threshold`.
 
-8. By clicking the `Track` button, you can start the analysis. The tracking results will be displayed in the `MUs Tracking Resul` output in the right side of the `MUs Tracking Window`.
+8. By clicking the `Track` button, you can start the analysis. The tracking results will be displayed in the `MUs Tracking Result` output in the right side of the `MUs Tracking Window`.
 
 ## Duplicate Removal
 
@@ -110,6 +113,24 @@ Prior to calculation of the `Conduction Velocity` you need to load a file in the
 --------------------------------------
 
 We are now at the end of describing the advanced functions included in the *openhdemg* GUI. If you want to take a look at more basic stuff, check out the [basic](gui_basics.md).
+
+## Persistent Inward Currents
+
+When you want to estimate Persistent Inward Currents, you need to select the `Persistent Inward Currents` option. In this case, `Matrix Code` and `Matrix Orentation` will be locked, as these are not needed for the analysis. Once you clicked the `Advanced Analysis` button, the `Persistent Inward Currents Window` will pop-up.
+
+![persistent_inward_currents](md_graphics/gui/pics_window.png)
+
+Please note that it is suggested to [sort the MUs](gui_basics.md/#motor-unit-sorting) based on recruitment order before performing the PICs estimation. This can be done in the main GUI window.
+
+1. In row 1 of this window you can select the smoothing tecnique to adopt (at the time of writing, only the `Support Vector Regression` is available, but more are under development).
+
+2. Select the `Average Method` to use for test MU deltaF value.
+
+3. Select the method for deltaF  `Normalisation`.
+
+4. Select the `Clean` option if you want to remove values that do not meet exclusion criteria.
+
+5. By clicking the `Compute PIC` button, you can start the analysis. The results will be displayed in the right side of the `Persistent Inward Currents Window`.
 
 ## More questions?
 

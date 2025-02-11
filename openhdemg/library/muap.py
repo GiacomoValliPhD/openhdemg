@@ -4,15 +4,15 @@ This module contains functions to produce and analyse MUs anction potentials
 """
 
 import pandas as pd
+import sys
 from openhdemg.library.tools import delete_mus
 from openhdemg.library.mathtools import (
-    norm_twod_xcorr,
-    norm_xcorr,
-    find_mle_teta,
-    mle_cv_est,
+    norm_twod_xcorr, norm_xcorr, find_mle_teta, mle_cv_est,
 )
 from openhdemg.library.electrodes import sort_rawemg
-from openhdemg.library.plotemg import plot_idr, plot_muaps, plot_muaps_for_cv
+from openhdemg.library.plotemg import (
+    plot_idr, plot_muaps, plot_muaps_for_cv, get_unique_fig_name,
+)
 from scipy import signal
 import matplotlib.pyplot as plt
 from functools import reduce
@@ -834,7 +834,8 @@ def tracking(
         containing the MUAPs of the MUs from 2 different files. These
         dictionaries should be structured as the output of the ``sta``
         function. If custom MUAPs are passed, all the previous parameters
-        (except for ``emgfile1`` and ``emgfile2`` can be ignored).
+        (except for ``emgfile1``, ``emgfile2`` and ``threshold`` can be
+        ignored).
         If custom MUAPs are provided, these are not aligned by the algorithm,
         contrary to what is done for MUAPs obtained via spike triggered
         averaging.
@@ -868,11 +869,6 @@ def tracking(
         MU from file 2 and the normalised cross-correlation value (XCC).
         If gui=True, an additional column indicating the inclusion/exclusion
         of the MUs pairs will also be present in tracking_res.
-
-    Warns
-    -----
-    UserWarning
-        If the number of plots to show exceeds that of available cores.
 
     See also
     --------
@@ -1174,16 +1170,14 @@ def tracking(
                     tracking_res["MU_file2"].loc[ind],
                     round(tracking_res["XCC"].loc[ind], 2),
                 )
+                title = get_unique_fig_name(title)
                 plot_muaps(
                     sta_dict=[aligned_sta1, aligned_sta2],
                     title=title,
                     showimmediately=False
                 )
 
-            if ind == tracking_res.index[-1]:
-                plt.show(block=True)
-            else:
-                plt.show(block=False)
+    plt.show()
 
     # Call the GUI and return the tracking_res
     if gui:
@@ -1209,7 +1203,8 @@ def tracking(
         return tracking_res
 
 
-class Tracking_gui():  # TODO add delete excluded pairs button
+# TODO add delete excluded pairs button
+class Tracking_gui():
     """
     GUI for the visual inspection and manual selection of the tracking results.
 
@@ -1244,7 +1239,7 @@ class Tracking_gui():  # TODO add delete excluded pairs button
     get_results()
         Returns the results of the tracking including the MU from file 1,
         MU from file 2, the normalised cross-correlation value (XCC) and the
-        inclusion or exclusion of the MUs pair. after the GUI is closed.
+        inclusion or exclusion of the MUs pair after the GUI is closed.
 
     See also
     --------
@@ -1258,9 +1253,11 @@ class Tracking_gui():  # TODO add delete excluded pairs button
     >>> import openhdemg.library as emg
     >>> emgfile_1 = emg.askopenfile(filesource="OPENHDEMG")
     >>> emgfile_2 = emg.askopenfile(filesource="OPENHDEMG")
-    >>> tracking_res = emg.tracking(emgfile_1, emgfile_2, timewindow=50)
+    >>> tracking_res = emg.tracking(
+    ...     emgfile_1, emgfile_2, timewindow=50, gui=False,
+    ... )
 
-    Obtained required variables for Tracking_gui(). Pay attention to use the
+    Obtain required variables for Tracking_gui(). Pay attention to use the
     same derivation specified during tracking and to use an appropriate MUAPs
     timewindow, according to the align_muaps option in Tracking_gui().
 
@@ -1292,6 +1289,7 @@ class Tracking_gui():  # TODO add delete excluded pairs button
     2          2         1  0.923901  Included
     3          4         8  0.893922  Included
     """
+
     def __init__(
         self,
         emgfile1,
@@ -1328,7 +1326,10 @@ class Tracking_gui():  # TODO add delete excluded pairs button
             "gui_files",
             "Icon_transp.ico"
         )
-        self.root.iconbitmap(iconpath)
+        if sys.platform.startswith("darwin"):  # macOS
+            self.root.iconbitmap(iconpath)
+        else:  # Windows
+            self.root.iconbitmap(iconpath, iconpath)
 
         # Create outer frames, assign structure and minimum spacing
         # Top
@@ -1431,8 +1432,10 @@ class Tracking_gui():  # TODO add delete excluded pairs button
         # Plot the first MU pair
         self.gui_plot()
 
-        # Bring back the GUI in in the foreground
+        # Bring back the GUI in the foreground
         self.root.lift()
+        self.root.attributes('-topmost', True)
+        self.root.after_idle(self.root.attributes, '-topmost', False)
 
         # Start mainloop
         self.root.mainloop()
@@ -1522,6 +1525,7 @@ class Tracking_gui():  # TODO add delete excluded pairs button
             figsize=[3, 3],
             showimmediately=False,
             tight_layout=False,
+            axes_kwargs={"labels": {"title": "File 1"}}
         )
 
         if hasattr(self, 'idr_mu1_canvas'):
@@ -1544,7 +1548,9 @@ class Tracking_gui():  # TODO add delete excluded pairs button
             figsize=[3, 3],
             showimmediately=False,
             tight_layout=False,
-        )  # TODO plot orange as MUAPs
+            line2d_kwargs_ax1={"color": plt.get_cmap("tab10")(1)},
+            axes_kwargs={"labels": {"title": "File 2"}}
+        )
 
         if hasattr(self, 'idr_mu2_canvas'):
             self.idr_mu2_canvas.get_tk_widget().destroy()
@@ -1596,7 +1602,6 @@ class Tracking_gui():  # TODO add delete excluded pairs button
         return self.tracking_res
 
 
-# TODO add GUI?
 def remove_duplicates_between(
     emgfile1,
     emgfile2,
@@ -1611,7 +1616,11 @@ def remove_duplicates_between(
     custom_sorting_order=None,
     custom_muaps=None,
     filter=True,
+    multiprocessing=True,
     show=False,
+    gui=True,
+    gui_addrefsig=True,
+    gui_csv_separator="\t",
     which="munumber",
 ):
     """
@@ -1695,8 +1704,20 @@ def remove_duplicates_between(
     filter : bool, default True
         If true, when the same MU has a match of XCC > threshold with
         multiple MUs, only the match with the highest XCC is returned.
+    multiprocessing : bool, default True
+        If True (default) parallel processing will be used to reduce execution
+        time.
     show : bool, default False
         Whether to plot the STA of pairs of MUs with XCC above threshold.
+    gui : bool, default True
+        If True (default) a GUI for the visual inspection and manual selection
+        of the tracking results will be called.
+    gui_addrefsig : bool, default True
+        If True, the REF_SIGNAL is plotted in front of the IDR with a
+        separated y-axes. This is used only when gui=True.
+    gui_csv_separator : str, default "\t"
+        The field delimiter used by the GUI to create the .csv copied to the
+        clipboard. This is used only when gui=True.
     which : str {"munumber", "accuracy"}, default "munumber"
         How to remove the duplicated MUs.
 
@@ -1713,6 +1734,8 @@ def remove_duplicates_between(
     tracking_res : pd.DataFrame
         The results of the tracking including the MU from file 1,
         MU from file 2 and the normalised cross-correlation value (XCC).
+        If gui=True, an additional column indicating the inclusion/exclusion
+        of the MUs pairs will also be present in tracking_res.
 
     See also
     --------
@@ -1723,7 +1746,29 @@ def remove_duplicates_between(
 
     Examples
     --------
-    Remove duplicated MUs between two OTB files and save the emgfiles
+    Remove duplicated MUs between two OPENHDEMG files and inspect the tracking
+    outcome via a convenient GUI. Then Save the emgfiles without duplicates.
+    Of the 2 duplicated MUs, the one with the lowest accuracy is removed.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile1 = emg.askopenfile(filesource="OPENHDEMG")
+    >>> emgfile2 = emg.askopenfile(filesource="OPENHDEMG")
+    >>> emgfile1, emgfile2, tracking_res = emg.remove_duplicates_between(
+    ...     emgfile1,
+    ...     emgfile2,
+    ...     firings="all",
+    ...     derivation="mono",
+    ...     timewindow=50,
+    ...     threshold=0.9,
+    ...     matrixcode="GR08MM1305",
+    ...     orientation=180,
+    ...     gui=True,
+    ...     which="accuracy",
+    ... )
+    >>> emg.asksavefile(emgfile1)
+    >>> emg.asksavefile(emgfile2)
+
+    Remove duplicated MUs between two OTB files and directly save the emgfiles
     without duplicates. The duplicates are removed from the file with
     more MUs.
 
@@ -1743,16 +1788,18 @@ def remove_duplicates_between(
     ...     n_cols=None,
     ...     filter=True,
     ...     show=False,
+    ...     gui=False,
     ...     which="munumber",
     ... )
     >>> emg.asksavefile(emgfile1)
     >>> emg.asksavefile(emgfile2)
 
     Remove duplicated MUs between two files where channels are sorted with a
-    custom order and save the emgfiles without duplicates. Of the 2 duplicated
-    MUs, the one with the lowest accuracy is removed.
+    custom order and directly save the emgfiles without duplicates. Of the 2
+    duplicated MUs, the one with the lowest accuracy is removed.
 
     >>> import openhdemg.library as emg
+    >>> import numpy as np
     >>> emgfile1 = emg.askopenfile(filesource="CUSTOMCSV")
     >>> emgfile2 = emg.askopenfile(filesource="CUSTOMCSV")
     >>> custom_sorting_order = [
@@ -1776,6 +1823,7 @@ def remove_duplicates_between(
     ...     custom_sorting_order=custom_sorting_order,
     ...     filter=True,
     ...     show=False,
+    ...     gui=False,
     ...     which="accuracy",
     ... )
     >>> emg.asksavefile(emgfile1)
@@ -1802,14 +1850,27 @@ def remove_duplicates_between(
         custom_muaps=custom_muaps,
         exclude_belowthreshold=True,
         filter=filter,
+        multiprocessing=multiprocessing,
         show=show,
+        gui=gui,
+        gui_addrefsig=gui_addrefsig,
+        gui_csv_separator=gui_csv_separator,
     )
+
+    # If the tracking gui has been used to include/exclude pairs, use the
+    # included pairs only.
+    if gui:
+        tracking_res_cleaned = tracking_res[
+            tracking_res["Inclusion"] == "Included"
+        ]
+    else:
+        tracking_res_cleaned = tracking_res
 
     # Identify how to remove MUs
     if which == "munumber":
         if emgfile1["NUMBER_OF_MUS"] >= emgfile2["NUMBER_OF_MUS"]:
             # Remove MUs from emgfile1
-            mus_to_remove = list(tracking_res["MU_file1"])
+            mus_to_remove = list(tracking_res_cleaned["MU_file1"])
             emgfile1 = delete_mus(
                 emgfile=emgfile1, munumber=mus_to_remove, if_single_mu="remove"
             )
@@ -1818,7 +1879,7 @@ def remove_duplicates_between(
 
         else:
             # Remove MUs from emgfile2
-            mus_to_remove = list(tracking_res["MU_file2"])
+            mus_to_remove = list(tracking_res_cleaned["MU_file2"])
 
             emgfile2 = delete_mus(
                 emgfile=emgfile2, munumber=mus_to_remove, if_single_mu="remove"
@@ -1831,7 +1892,7 @@ def remove_duplicates_between(
         # on ACCURACY value.
         to_remove1 = []
         to_remove2 = []
-        for i, row in tracking_res.iterrows():
+        for i, row in tracking_res_cleaned.iterrows():
             acc1 = emgfile1["ACCURACY"].loc[int(row["MU_file1"])]
             acc2 = emgfile2["ACCURACY"].loc[int(row["MU_file2"])]
 
@@ -1974,8 +2035,8 @@ def estimate_cv_via_mle(emgfile, signal):
     >>> dd = emg.double_diff(sorted_rawemg=sorted_rawemg)
     >>> sta = emg.sta(
     ...     emgfile=emgfile,
-    ...     sorted_rawemg=sorted_rawemg,
-    ...     firings=[0,50],
+    ...     sorted_rawemg=dd,
+    ...     firings=[0, 50],
     ...     timewindow=50,
     ... )
 
@@ -1985,11 +2046,6 @@ def estimate_cv_via_mle(emgfile, signal):
     >>> cv = estimate_cv_via_mle(emgfile=emgfile, signal=signal)
     """
 
-    """
-    sta_mu is a pandas dataframe containing the signals where to estimate CV
-    sta = emg.sta(emgfile, dd)
-    sta_mu = sta[0]["col2"].loc[:, 31:34]
-    """
     ied = emgfile["IED"]
     fsamp = emgfile["FSAMP"]
 
@@ -2114,7 +2170,10 @@ class MUcv_gui():
             "gui_files",
             "Icon_transp.ico"
         )
-        self.root.iconbitmap(iconpath)
+        if sys.platform.startswith("darwin"):  # macOS
+            self.root.iconbitmap(iconpath)
+        else:  # Windows
+            self.root.iconbitmap(iconpath, iconpath)
 
         # Create outer frames, assign structure and minimum spacing
         # Left
@@ -2245,6 +2304,16 @@ class MUcv_gui():
             index=self.all_mus,
             columns=["CV", "RMS", "XCC", "Column", "From_Row", "To_Row"],
         )
+        # Set the dtypes for each column
+        self.res_df = self.res_df.astype({
+            "CV": "float64",
+            "RMS": "float64",
+            "XCC": "float64",
+            "Column": "string",
+            "From_Row": "int64",
+            "To_Row": "int64",
+        })
+        # Set values
         self.textbox = tk.Text(right_frm, width=25)
         self.textbox.pack(side=tk.TOP, expand=True, fill="y")
         self.textbox.insert(
@@ -2258,8 +2327,10 @@ class MUcv_gui():
         # this will move the GUI in the background ??.
         self.gui_plot()
 
-        # Bring back the GUI in in the foreground
+        # Bring back the GUI in the foreground
         self.root.lift()
+        self.root.attributes('-topmost', True)
+        self.root.after_idle(self.root.attributes, '-topmost', False)
 
         # Start the main loop
         self.root.mainloop()
@@ -2330,9 +2401,9 @@ class MUcv_gui():
         xcc = self.sta_xcc[mu][self.col_cb.get()].iloc[:, xcc_col_list].mean().mean()
         self.res_df.loc[mu, "XCC"] = xcc
 
-        self.res_df.loc[mu, "Column"] = self.col_cb.get()
-        self.res_df.loc[mu, "From_Row"] = self.start_cb.get()
-        self.res_df.loc[mu, "To_Row"] = self.stop_cb.get()
+        self.res_df.loc[mu, "Column"] = str(self.col_cb.get())
+        self.res_df.loc[mu, "From_Row"] = int(self.start_cb.get())
+        self.res_df.loc[mu, "To_Row"] = int(self.stop_cb.get())
 
         self.textbox.replace(
             '1.0',

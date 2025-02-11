@@ -18,9 +18,9 @@ WARNING!!! - UNTESTED FUNCTIONS: askopenfile, asksavefile
 
 
 import unittest
-from openhdemg.tests.unit.functions_for_unit_test import get_directories as getd
 from openhdemg.tests.unit.functions_for_unit_test import (
-    validate_emgfile_content, validate_emg_refsig_content,
+    get_directories as getd, validate_emgfile_content,
+    validate_emg_refsig_content,
 )
 from openhdemg.library.openfiles import (
     emg_from_demuse, emg_from_otb, refsig_from_otb, emg_from_delsys,

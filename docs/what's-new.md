@@ -1,3 +1,93 @@
+## :octicons-tag-24: 0.1.1
+:octicons-clock-24: December 2024
+
+This release is aimed at increasing the flexibility and customizability of the library's functions, improving its robustness through a comprehensive set of testing functions, and extending support for Python versions 3.12 and 3.13.
+
+### Backward Compatibility
+
+This version is fully backward compatible with v0.1.0 although some parameters and functions have been deprecated.
+
+### Major Achievements
+- **Enhanced flexibility and robustness**
+- **Extended compatibility**
+
+### Major Changes
+
+- **Test modules**:
+
+    - Complete suite of unit-test modules with over 60 testing functions and hundreds of unit tests to ensure robustness of the library.
+    - Tox automation for standardised and extensive unit testing across the 4 most recent Python versions.
+
+- **Versioning**:
+
+    - Website and documentation versioning to allow the users to always access documentation corresponding to previous stable releases.
+
+- **New classes**:
+  
+    - The class	`Figure_Layout_Manager` provides a comprehensive layout management system for figures, replacing the deprecated showgoodlayouty. It offers a more flexible approach to figure customization.
+    - The class	`Figure_Subplots_Layout_Manager`offers a more flexible approach to figure customization, but specifically for subplots.
+
+- **Updated classes**:
+  
+    - The class `Tracking_gui` now color codes motor unit action potentials and discharge rate profiles for easy association of which action potentials correspond to which motor unit.
+
+- **Updated functions**:
+  
+    - The `min_max_scaling` function now supports both column-wise and global scaling, global scaling is supported also for n-dimensional arrays.
+    - All plotting functions now support extensive customization of the figure's appearance and have an improved y-axis alignment.
+    - The `plot_emgsig` function now allows for common channel scaling, individual channel scaling or custom offset scaling.
+    - The execution of the `plot_muaps` and `plot_muaps_for_cv` is now 30-40% faster. 
+
+### Known issues
+  
+A list of known issues can be found [here](https://github.com/GiacomoValliPhD/openhdemg/issues/69){:target="_blank"}.
+
+<br>
+
+## :octicons-tag-24: 0.1.0
+:octicons-clock-24: June 2024
+
+This release is aimed at expanding the functionalities of the library with new and improved analysis tools. It also marks the exit from the beta phase!
+
+### Backward Compatibility
+
+This version is fully backward compatible with v0.1.0-beta.3 and 4.
+
+### Major Achievements
+- **More functionalities**
+
+### Major Changes
+
+- **New modules**:
+  
+    - With this release, we introduce the module `pic`. A module dedicated to Persistent Inward Currents estimation. It now allows to estimate PICs via Delta F and will be enriched with new functionalities in the near future.
+
+- **New classes**:
+  
+    - The class `Tracking_gui` provides a convenient interface for the visual inspection of the tracking results, improving the flexibility and accuracy of MUs tracking based on MUAPs shape.
+
+- **Updated classes**:
+  
+    - The class `MUcv_gui` has been optimised to reduce RAM memory usage and can now be expanded to full-screen. Furthermore, it now accepts custom separators for copying the results and pasting them into Excel (or any other text/tabular document).
+
+- **New functions**:
+  
+    - The function `compute_svr` allows to fit MU discharge rates with Support Vector Regression, nonlinear regression.
+    - The function `compute_deltaf` allows to quantify delta F via paired motor unit analysis.
+    - The function `plot_smoothed_dr` allows to visualise the smoothed discharge rate, with or without IDR and with or without stacking MUs.
+
+- **Updated functions**:
+  
+    - The functions `tracking()` and `remove_duplicates_between()` now allow to directly show the `Tracking_gui` after completing the tracking procedure for additional inspection of the results. They also allow to select whether to use parallel processing to improve execution speed.
+    - The functions `plot_muaps` and `plot_muaps_for_cv` now allow to use a tight layout for the output figure.
+    - The functions `compute_dr`, `compute_drvariability`, `compute_covisi` and `basic_mus_properties` now allow to exclude firings outside a custom range of frequencies.
+
+- **GUI updates**:
+  
+    - The openhdemg GUI allows access to the `Tracking_gui` during MUs tracking (not after duplicates removal) and to perform PICs estimation via the advanced tools window. It also allows tuning the behaviour of these functionalities through the settings window.
+
+<br>
+
 ## :octicons-tag-24: 0.1.0-beta.4
 :octicons-clock-24: April 2024 
 
