@@ -336,7 +336,14 @@ def resize_emgfile(
         )
 
         for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
-            # Mask the array based on a filter and return the values in an array
+            # Mask the array based on a filter and return the values in an
+            # array. However, make sure that all the numbers are int32 to
+            # prevent falling to int16 when small sections are resized.
+            # This may cause overflow.
+            rs_emgfile["MUPULSES"][mu] = rs_emgfile["MUPULSES"][mu].astype(
+                np.int32
+            )
+
             rs_emgfile["MUPULSES"][mu] = (
                 rs_emgfile["MUPULSES"][mu][
                     (rs_emgfile["MUPULSES"][mu] >= start_)
