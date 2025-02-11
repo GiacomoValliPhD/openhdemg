@@ -7,13 +7,12 @@ import pandas as pd
 import sys
 from openhdemg.library.tools import delete_mus
 from openhdemg.library.mathtools import (
-    norm_twod_xcorr,
-    norm_xcorr,
-    find_mle_teta,
-    mle_cv_est,
+    norm_twod_xcorr, norm_xcorr, find_mle_teta, mle_cv_est,
 )
 from openhdemg.library.electrodes import sort_rawemg
-from openhdemg.library.plotemg import plot_idr, plot_muaps, plot_muaps_for_cv
+from openhdemg.library.plotemg import (
+    plot_idr, plot_muaps, plot_muaps_for_cv, get_unique_fig_name,
+)
 from scipy import signal
 import matplotlib.pyplot as plt
 from functools import reduce
@@ -1171,16 +1170,14 @@ def tracking(
                     tracking_res["MU_file2"].loc[ind],
                     round(tracking_res["XCC"].loc[ind], 2),
                 )
+                title = get_unique_fig_name(title)
                 plot_muaps(
                     sta_dict=[aligned_sta1, aligned_sta2],
                     title=title,
                     showimmediately=False
                 )
 
-            if ind == tracking_res.index[-1]:
-                plt.show(block=True)
-            else:
-                plt.show(block=False)
+    plt.show()
 
     # Call the GUI and return the tracking_res
     if gui:
