@@ -1046,10 +1046,10 @@ def plot_emgsig(
 
         # Ensure correct and complete ticks on the left y axis
         ax1.set_yticks(
-            np.arange(
-                half_offset,
-                len(channels) * manual_offset + half_offset,
-                manual_offset,
+            np.linspace(
+                start=half_offset,
+                stop=len(channels) * manual_offset + half_offset - manual_offset,
+                num=len(channels),
             )
         )
         ax1.set_yticklabels([str(x) for x in channels])
@@ -1124,7 +1124,7 @@ def plot_differentials(
     """
     Plot the differential derivation of the RAW_SIGNAL by matrix column.
 
-    Both the single and the double differencials can be plotted.
+    Both the single and the double differentials can be plotted.
     This function is used to plot also the sorted RAW_SIGNAL.
 
     Parameters
@@ -1298,11 +1298,18 @@ def plot_differentials(
                 ax1.plot(x_axis, data)
 
         # Ensure correct and complete ticks on the left y axis
-        ax1.set_yticks(
+        """ ax1.set_yticks(
             np.arange(
                 half_offset,
                 len(emgsig.columns) * manual_offset + half_offset,
                 manual_offset,
+            )
+        ) """
+        ax1.set_yticks(
+            np.linspace(
+                start=half_offset,
+                stop=len(emgsig.columns) * manual_offset + half_offset - manual_offset,
+                num=len(emgsig.columns),
             )
         )
         ax1.set_yticklabels([str(x) for x in emgsig.columns])
