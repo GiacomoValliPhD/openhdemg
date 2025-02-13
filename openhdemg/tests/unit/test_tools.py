@@ -402,6 +402,32 @@ class TestTools(unittest.TestCase):
 
         self.assertTrue(np.allclose(expected_values, res.values[0], atol=1e-5))
 
+    def test_compute_svr(self):
+        """
+        Test the compute_svr function.
+        """
+
+        # TODO these tests need to be expanded to assess all the parameters
+        # and their values
+
+        # Test initial discontonuity and output dimensionality
+        emgfile = emg_from_samplefile()
+        emgfile["MUPULSES"][1] = np.insert(
+            arr=emgfile["MUPULSES"][1],
+            obj=0,
+            values=int(emgfile["MUPULSES"][1][0] - emgfile["FSAMP"] * 2),
+        )  # 2 sec discontinuity at the beginning on MU 1
+
+        res = compute_svr(self.emgfile, discontfiring_dur=1)
+
+        self.assertSetEqual(set(res.keys()), {'svrfit', 'svrtime', 'gensvr'})
+        for fits in res.values():
+            self.assertIsInstance(fits, list)
+            self.assertEqual(len(fits), self.emgfile["NUMBER_OF_MUS"])
+            for mu_fit in fits:
+                self.assertIsInstance(mu_fit, np.ndarray)
+                self.assertEqual(mu_fit.ndim, 1)
+
 
 if __name__ == '__main__':
     unittest.main()
