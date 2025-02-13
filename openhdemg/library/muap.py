@@ -4,6 +4,7 @@ This module contains functions to produce and analyse MUs anction potentials
 """
 
 import pandas as pd
+import sys
 from openhdemg.library.tools import delete_mus
 from openhdemg.library.mathtools import (
     norm_twod_xcorr,
@@ -834,7 +835,8 @@ def tracking(
         containing the MUAPs of the MUs from 2 different files. These
         dictionaries should be structured as the output of the ``sta``
         function. If custom MUAPs are passed, all the previous parameters
-        (except for ``emgfile1`` and ``emgfile2`` can be ignored).
+        (except for ``emgfile1``, ``emgfile2`` and ``threshold`` can be
+        ignored).
         If custom MUAPs are provided, these are not aligned by the algorithm,
         contrary to what is done for MUAPs obtained via spike triggered
         averaging.
@@ -868,11 +870,6 @@ def tracking(
         MU from file 2 and the normalised cross-correlation value (XCC).
         If gui=True, an additional column indicating the inclusion/exclusion
         of the MUs pairs will also be present in tracking_res.
-
-    Warns
-    -----
-    UserWarning
-        If the number of plots to show exceeds that of available cores.
 
     See also
     --------
@@ -1209,7 +1206,8 @@ def tracking(
         return tracking_res
 
 
-class Tracking_gui():  # TODO add delete excluded pairs button
+# TODO add delete excluded pairs button
+class Tracking_gui():
     """
     GUI for the visual inspection and manual selection of the tracking results.
 
@@ -1244,7 +1242,7 @@ class Tracking_gui():  # TODO add delete excluded pairs button
     get_results()
         Returns the results of the tracking including the MU from file 1,
         MU from file 2, the normalised cross-correlation value (XCC) and the
-        inclusion or exclusion of the MUs pair. after the GUI is closed.
+        inclusion or exclusion of the MUs pair after the GUI is closed.
 
     See also
     --------
@@ -1258,9 +1256,11 @@ class Tracking_gui():  # TODO add delete excluded pairs button
     >>> import openhdemg.library as emg
     >>> emgfile_1 = emg.askopenfile(filesource="OPENHDEMG")
     >>> emgfile_2 = emg.askopenfile(filesource="OPENHDEMG")
-    >>> tracking_res = emg.tracking(emgfile_1, emgfile_2, timewindow=50)
+    >>> tracking_res = emg.tracking(
+    ...     emgfile_1, emgfile_2, timewindow=50, gui=False,
+    ... )
 
-    Obtained required variables for Tracking_gui(). Pay attention to use the
+    Obtain required variables for Tracking_gui(). Pay attention to use the
     same derivation specified during tracking and to use an appropriate MUAPs
     timewindow, according to the align_muaps option in Tracking_gui().
 
@@ -1292,6 +1292,7 @@ class Tracking_gui():  # TODO add delete excluded pairs button
     2          2         1  0.923901  Included
     3          4         8  0.893922  Included
     """
+
     def __init__(
         self,
         emgfile1,
@@ -1328,7 +1329,10 @@ class Tracking_gui():  # TODO add delete excluded pairs button
             "gui_files",
             "Icon_transp.ico"
         )
-        self.root.iconbitmap(iconpath)
+        if sys.platform.startswith("darwin"):  # macOS
+            self.root.iconbitmap(iconpath)
+        else:  # Windows
+            self.root.iconbitmap(iconpath, iconpath)
 
         # Create outer frames, assign structure and minimum spacing
         # Top
@@ -1524,6 +1528,7 @@ class Tracking_gui():  # TODO add delete excluded pairs button
             figsize=[3, 3],
             showimmediately=False,
             tight_layout=False,
+            axes_kwargs={"labels": {"title": "File 1"}}
         )
 
         if hasattr(self, 'idr_mu1_canvas'):
@@ -1546,7 +1551,9 @@ class Tracking_gui():  # TODO add delete excluded pairs button
             figsize=[3, 3],
             showimmediately=False,
             tight_layout=False,
-        )  # TODO plot orange as MUAPs
+            line2d_kwargs_ax1={"color": plt.get_cmap("tab10")(1)},
+            axes_kwargs={"labels": {"title": "File 2"}}
+        )
 
         if hasattr(self, 'idr_mu2_canvas'):
             self.idr_mu2_canvas.get_tk_widget().destroy()
@@ -2031,8 +2038,8 @@ def estimate_cv_via_mle(emgfile, signal):
     >>> dd = emg.double_diff(sorted_rawemg=sorted_rawemg)
     >>> sta = emg.sta(
     ...     emgfile=emgfile,
-    ...     sorted_rawemg=sorted_rawemg,
-    ...     firings=[0,50],
+    ...     sorted_rawemg=dd,
+    ...     firings=[0, 50],
     ...     timewindow=50,
     ... )
 
@@ -2042,11 +2049,6 @@ def estimate_cv_via_mle(emgfile, signal):
     >>> cv = estimate_cv_via_mle(emgfile=emgfile, signal=signal)
     """
 
-    """
-    sta_mu is a pandas dataframe containing the signals where to estimate CV
-    sta = emg.sta(emgfile, dd)
-    sta_mu = sta[0]["col2"].loc[:, 31:34]
-    """
     ied = emgfile["IED"]
     fsamp = emgfile["FSAMP"]
 
@@ -2171,7 +2173,10 @@ class MUcv_gui():
             "gui_files",
             "Icon_transp.ico"
         )
-        self.root.iconbitmap(iconpath)
+        if sys.platform.startswith("darwin"):  # macOS
+            self.root.iconbitmap(iconpath)
+        else:  # Windows
+            self.root.iconbitmap(iconpath, iconpath)
 
         # Create outer frames, assign structure and minimum spacing
         # Left
@@ -2302,6 +2307,16 @@ class MUcv_gui():
             index=self.all_mus,
             columns=["CV", "RMS", "XCC", "Column", "From_Row", "To_Row"],
         )
+        # Set the dtypes for each column
+        self.res_df = self.res_df.astype({
+            "CV": "float64",
+            "RMS": "float64",
+            "XCC": "float64",
+            "Column": "string",
+            "From_Row": "int64",
+            "To_Row": "int64",
+        })
+        # Set values
         self.textbox = tk.Text(right_frm, width=25)
         self.textbox.pack(side=tk.TOP, expand=True, fill="y")
         self.textbox.insert(
@@ -2389,9 +2404,9 @@ class MUcv_gui():
         xcc = self.sta_xcc[mu][self.col_cb.get()].iloc[:, xcc_col_list].mean().mean()
         self.res_df.loc[mu, "XCC"] = xcc
 
-        self.res_df.loc[mu, "Column"] = self.col_cb.get()
-        self.res_df.loc[mu, "From_Row"] = self.start_cb.get()
-        self.res_df.loc[mu, "To_Row"] = self.stop_cb.get()
+        self.res_df.loc[mu, "Column"] = str(self.col_cb.get())
+        self.res_df.loc[mu, "From_Row"] = int(self.start_cb.get())
+        self.res_df.loc[mu, "To_Row"] = int(self.stop_cb.get())
 
         self.textbox.replace(
             '1.0',
