@@ -25,7 +25,7 @@ from openhdemg.library.plotemg import (
 )
 from openhdemg.library.electrodes import sort_rawemg
 from openhdemg.library.muap import diff, double_diff, sta, st_muap, xcc_sta
-from openhdemg.library.tools import compute_svr
+from openhdemg.library.tools import compute_svr, delete_mus
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -495,6 +495,43 @@ class TestPlotEMG(unittest.TestCase):
 
         plt.close()
 
+        # Test munumber with a single MU
+        emgfile = emg_from_samplefile()
+        emgfile = delete_mus(
+            emgfile, munumber=[*range(1, emgfile["NUMBER_OF_MUS"])],
+        )
+        fig = plot_mupulses(
+            emgfile, munumber="all", linelengths=0.9, addrefsig=False,
+            timeinseconds=True, tight_layout=True,
+            line2d_kwargs_ax1=self.line2d_kwargs_ax1,
+            line2d_kwargs_ax2=self.line2d_kwargs_ax2,
+            axes_kwargs=self.axes_kwargs,
+            showimmediately=False,
+        )
+        self.assertIsInstance(fig, plt.Figure)
+        self.assertTrue(len(fig.axes) == 1)
+
+        plt.close()
+
+        # Test munumber with a single empty MU
+        emgfile = emg_from_samplefile()
+        emgfile["MUPULSES"][0] = np.empty(0)
+        emgfile = delete_mus(
+            emgfile, munumber=[*range(1, emgfile["NUMBER_OF_MUS"])],
+        )
+        fig = plot_mupulses(
+            emgfile, munumber="all", linelengths=0.9, addrefsig=False,
+            timeinseconds=True, tight_layout=True,
+            line2d_kwargs_ax1=self.line2d_kwargs_ax1,
+            line2d_kwargs_ax2=self.line2d_kwargs_ax2,
+            axes_kwargs=self.axes_kwargs,
+            showimmediately=False,
+        )
+        self.assertIsInstance(fig, plt.Figure)
+        self.assertTrue(len(fig.axes) == 1)
+
+        plt.close()
+
     def test_plot_ipts(self):
         """
         Test the plot_ipts function.
@@ -895,6 +932,37 @@ class TestPlotEMG(unittest.TestCase):
 
         plt.close()
 
+        # Test with an empty MU
+        emgfile = emg_from_samplefile()
+        emgfile["MUPULSES"][0] = np.empty(0)
+
+        sorted_rawemg = sort_rawemg(
+            emgfile=emgfile,
+            code="GR08MM1305",
+            orientation=180,
+            dividebycolumn=True,
+        )
+        sorted_rawemg = diff(sorted_rawemg=sorted_rawemg)
+        n_channels = sum(df.shape[1] for df in sorted_rawemg.values())
+        sta_ = sta(
+            emgfile=emgfile,
+            sorted_rawemg=sorted_rawemg,
+            firings="all",
+            timewindow=50,
+        )
+
+        fig = plot_muaps(
+            sta_dict=sta_[0],
+            title="MUAPs from SD STA",
+            line2d_kwargs_ax1=None,
+            showimmediately=False,
+        )
+
+        self.assertIsInstance(fig, plt.Figure)
+        self.assertTrue(len(fig.axes) == n_channels)
+
+        plt.close()
+
     def test_plot_muap(self):
         """
         Test the plot_muap function.
@@ -1015,6 +1083,41 @@ class TestPlotEMG(unittest.TestCase):
 
                     plt.close()
 
+        # Test with an empty MU
+        emgfile = emg_from_samplefile()
+        emgfile["MUPULSES"][0] = np.empty(0)
+
+        sorted_rawemg = sort_rawemg(
+            emgfile=emgfile,
+            code="GR08MM1305",
+            orientation=180,
+            dividebycolumn=True,
+        )
+        sorted_rawemg = diff(sorted_rawemg=sorted_rawemg)
+        stmuap = st_muap(
+            emgfile=emgfile,
+            sorted_rawemg=sorted_rawemg,
+            timewindow=30,
+        )
+
+        fig = plot_muap(
+            emgfile=emgfile,
+            stmuap=stmuap,
+            munumber=0,
+            column="col3",
+            channel=8,
+            channelprog=True,
+            average=True,
+            timeinseconds=True,
+            figsize=[20, 15],
+            showimmediately=False,
+        )
+
+        self.assertIsInstance(fig, plt.Figure)
+        self.assertTrue(len(fig.axes) == 2)
+
+        plt.close()
+
     def test_plot_muaps_for_cv(self):
         """
         Test the plot_muaps_for_cv function.
@@ -1085,6 +1188,43 @@ class TestPlotEMG(unittest.TestCase):
 
         self.assertIsInstance(fig, plt.Figure)
         self.assertTrue(len(fig.axes) == len(sta_[0]["col1"].columns))
+
+        plt.close()
+
+        # Test with an empty MU
+        emgfile = emg_from_samplefile()
+        emgfile["MUPULSES"][0] = np.empty(0)
+
+        sorted_rawemg = sort_rawemg(
+            emgfile,
+            code="GR08MM1305",
+            orientation=180,
+            dividebycolumn=True
+        )
+        dd = double_diff(sorted_rawemg)
+        n_channels = sum(df.shape[1] for df in dd.values())
+        sta_ = sta(
+            emgfile=emgfile,
+            sorted_rawemg=dd,
+            firings="all",
+            timewindow=50,
+        )
+        xcc_sta_ = xcc_sta(sta_)
+        line2d_kwargs_ax1 = {
+            "color": "k",
+            "linewidth": 1,
+        }
+
+        fig = plot_muaps_for_cv(
+            sta_dict=sta_[0],
+            xcc_sta_dict=xcc_sta_[0],
+            tight_layout=False,
+            line2d_kwargs_ax1=line2d_kwargs_ax1,
+            showimmediately=False,
+        )
+
+        self.assertIsInstance(fig, plt.Figure)
+        self.assertTrue(len(fig.axes) == n_channels)
 
         plt.close()
 
