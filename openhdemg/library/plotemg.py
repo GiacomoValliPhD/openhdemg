@@ -1687,10 +1687,11 @@ def plot_mupulses(
         if emgfile["NUMBER_OF_MUS"] > 1:
             y_tick_lab = [*range(0, emgfile["NUMBER_OF_MUS"])]
             ylab = "Motor units"
+            munumber = [*range(emgfile["NUMBER_OF_MUS"])]
         else:
             munumber = 0
 
-    elif isinstance(munumber, int):
+    if isinstance(munumber, int):
         mupulses = [mupulses[munumber]]
         y_tick_lab = []
         ylab = f"MU n. {munumber}"
@@ -2801,17 +2802,21 @@ def plot_muaps(
         raise TypeError("sta_dict must be dict or list")
 
     # Find the largest and smallest value to define common y axis limits.
-    xmax = 0
-    xmin = 0
+    ymax = 0
+    ymin = 0
     # Loop each sta_dict and MU, c means matrix columns
     for thisdict in sta_dict:
         for c in thisdict:
             max_ = thisdict[c].max().max()
             min_ = thisdict[c].min().min()
-            if max_ > xmax:
-                xmax = max_
-            if min_ < xmin:
-                xmin = min_
+            if max_ > ymax:
+                ymax = max_
+            if min_ < ymin:
+                ymin = min_
+    # Manage exception of singular transformation
+    if ymax == 0 and ymin == 0:
+        ymax = 1
+        ymin = -1
 
     # Obtain number of columns and rows
     cols = len(sta_dict[0])
@@ -2835,7 +2840,7 @@ def plot_muaps(
                 for pos, c in enumerate(thisdict.keys()):
                     axs[r, pos].plot(thisdict[c].iloc[:, r])
 
-                    axs[r, pos].set_ylim(xmin, xmax)
+                    axs[r, pos].set_ylim(ymin, ymax)
                     axs[r, pos].xaxis.set_visible(False)
                     axs[r, pos].set(yticklabels=[])
                     axs[r, pos].tick_params(left=False)
@@ -2848,7 +2853,7 @@ def plot_muaps(
                 for pos, c in enumerate(thisdict.keys()):
                     axs[r].plot(thisdict[c].iloc[:, r])
 
-                    axs[r].set_ylim(xmin, xmax)
+                    axs[r].set_ylim(ymin, ymax)
                     axs[r].xaxis.set_visible(False)
                     axs[r].set(yticklabels=[])
                     axs[r].tick_params(left=False)
@@ -3329,6 +3334,10 @@ def plot_muaps_for_cv(
             ymax = max_
         if min_ < ymin:
             ymin = min_
+    # Manage exception of singular transformation
+    if ymax == 0 and ymin == 0:
+        ymax = 1
+        ymin = -1
 
     # Obtain number of columns and rows, this changes if we use different
     # matrices.
