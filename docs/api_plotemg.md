@@ -25,6 +25,13 @@ This module contains all the functions used to visualise the content of the impo
 
 <br/>
 
+::: openhdemg.library.plotemg.get_unique_fig_name
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
 ::: openhdemg.library.plotemg.plot_emgsig
     options:
         show_root_full_path: False
