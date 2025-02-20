@@ -128,6 +128,40 @@ class TestMuap(unittest.TestCase):
         self.assertAlmostEqual(res[0]["col0"][0][0], -6.154379, places=6)
         self.assertTrue(np.isnan(res[0]["col2"][29][0]))
 
+        # Test with an empty MU
+        emgfile = emg_from_samplefile()
+        emgfile["MUPULSES"][1] = np.empty(0)
+        sorted_rawemg = sort_rawemg(
+            emgfile,
+            code="Custom order",
+            dividebycolumn=True,
+            custom_sorting_order=self.custom_sorting_order,
+        )
+        res = sta(
+            emgfile,
+            sorted_rawemg=sorted_rawemg,
+            firings=[0, 50],
+            timewindow=50,
+        )
+        self.assertIsInstance(res, dict)
+        self.assertIsInstance(res[1], dict)
+        self.assertIsInstance(res[1]["col0"], pd.DataFrame)
+        self.assertAlmostEqual(res[1]["col0"][3][0], 0, places=1)
+        self.assertTrue(np.isnan(res[1]["col2"][29][0]))
+
+        # Test with an empty MU, all the firings and odd timewindow
+        res = sta(
+            emgfile,
+            sorted_rawemg=sorted_rawemg,
+            firings="all",
+            timewindow=77,
+        )
+        self.assertIsInstance(res, dict)
+        self.assertIsInstance(res[1], dict)
+        self.assertIsInstance(res[1]["col0"], pd.DataFrame)
+        self.assertAlmostEqual(res[1]["col0"][3][0], 0, places=1)
+        self.assertTrue(np.isnan(res[1]["col2"][29][0]))
+
     def test_st_muap(self):
         """
         Test the st_muap function.
@@ -145,6 +179,27 @@ class TestMuap(unittest.TestCase):
         self.assertIsInstance(res[0]["col0"][0], pd.DataFrame)
         self.assertAlmostEqual(res[0]["col0"][0][0][0], 57.9834, places=4)
         self.assertTrue(np.isnan(res[0]["col2"][29][0][0]))
+
+        # Test with an empty MU and timewindow
+        emgfile = emg_from_samplefile()
+        emgfile["MUPULSES"][1] = np.empty(0)
+        sorted_rawemg = sort_rawemg(
+            emgfile,
+            code="Custom order",
+            dividebycolumn=True,
+            custom_sorting_order=self.custom_sorting_order,
+        )
+        res = st_muap(
+            emgfile,
+            sorted_rawemg=sorted_rawemg,
+            timewindow=47,
+        )
+        self.assertIsInstance(res, dict)
+        self.assertIsInstance(res[1], dict)
+        self.assertIsInstance(res[1]["col0"], dict)
+        self.assertIsInstance(res[1]["col0"][0], pd.DataFrame)
+        self.assertAlmostEqual(res[1]["col0"][0][0][0], 0, places=1)
+        self.assertTrue(np.isnan(res[1]["col2"][29][0][0]))
 
     def test_unpack_sta_and_pack_sta(self):
         """
@@ -319,6 +374,32 @@ class TestMuap(unittest.TestCase):
         self.assertTrue(len(res) == 38)
         self.assertTrue(res["XCC"].mean() > 0.99)
 
+        # Test with an empty MU and timewindow
+        emgfile = emg_from_samplefile()
+        emgfile["MUPULSES"][1] = np.empty(0)
+        res = tracking(
+            emgfile1=emgfile,
+            emgfile2=self.emgfile,
+            firings=[0, 100],
+            derivation="sd",
+            timewindow=81,
+            threshold=0.6,
+            matrixcode="GR08MM1305",
+            orientation=180,
+            n_rows=None,
+            n_cols=None,
+            custom_sorting_order=None,
+            custom_muaps=None,
+            exclude_belowthreshold=True,
+            filter=False,
+            multiprocessing=True,
+            show=False,
+            gui=False,
+        )
+        self.assertTrue(len(res) == 13)
+        self.assertAlmostEqual(res["XCC"][1], 0.622998, places=6)
+        self.assertTrue(1 not in res["MU_file1"].values)
+
     def test_remove_duplicates_between(self):
         """
         Test the remove_duplicates_between function.
@@ -370,6 +451,29 @@ class TestMuap(unittest.TestCase):
         self.assertAlmostEqual(res[0]["col0"][1][0], 0.982674, places=6)
         self.assertTrue(np.isnan(res[0]["col0"][6][0]))
 
+        # Test with an empty MU
+        emgfile = emg_from_samplefile()
+        emgfile["MUPULSES"][1] = np.empty(0)
+        sorted_rawemg = sort_rawemg(
+            emgfile,
+            code="Custom order",
+            dividebycolumn=True,
+            custom_sorting_order=self.custom_sorting_order,
+        )
+        sta_ = sta(
+            emgfile,
+            sorted_rawemg=sorted_rawemg,
+            firings=[0, 50],
+            timewindow=50,
+        )
+        res = xcc_sta(sta=sta_)
+        self.assertIsInstance(res, dict)
+        self.assertIsInstance(res[1], dict)
+        self.assertIsInstance(res[1]["col0"], pd.DataFrame)
+        self.assertTrue(np.isnan(res[1]["col0"][0][0]))
+        self.assertAlmostEqual(res[1]["col0"][1][0], 0, places=1)
+        self.assertTrue(np.isnan(res[1]["col0"][6][0]))
+
     def test_estimate_cv_via_mle(self):
         """
         Test the estimate_cv_via_mle function.
@@ -387,6 +491,26 @@ class TestMuap(unittest.TestCase):
         res = estimate_cv_via_mle(emgfile=self.emgfile, signal=signal)
 
         self.assertAlmostEqual(res, 4.3530717224189805, places=6)
+
+        # Test with an empty MU
+        emgfile = emg_from_samplefile()
+        emgfile["MUPULSES"][1] = np.empty(0)
+        sorted_rawemg = sort_rawemg(
+            emgfile,
+            code="Custom order",
+            dividebycolumn=True,
+            custom_sorting_order=self.custom_sorting_order,
+        )
+        dd = double_diff(sorted_rawemg=sorted_rawemg)
+        sta_ = sta(
+            emgfile=emgfile,
+            sorted_rawemg=dd,
+            firings=[0, 50],
+            timewindow=50,
+        )
+        signal = sta_[1]["col2"].loc[:, 32:36]
+        res = estimate_cv_via_mle(emgfile=emgfile, signal=signal)
+        self.assertAlmostEqual(res, 1.21, places=2)
 
 
 if __name__ == '__main__':

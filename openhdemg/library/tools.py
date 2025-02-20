@@ -25,6 +25,9 @@ def showselect(emgfile, how="ref_signal", title="", titlesize=12, nclic=2):
     in the keyboard, wrong points can be removed by pressing the right mouse
     button. Once finished, press enter to continue.
 
+    This function does not check whether the selected points are within the
+    effective file duration. This should be done based on user's need.
+
     Parameters
     ----------
     emgfile : dict
@@ -100,7 +103,7 @@ def showselect(emgfile, how="ref_signal", title="", titlesize=12, nclic=2):
         )
 
     # Show the signal for the selection
-    plt.figure(num="Fig_ginput")
+    plt.figure()
     plt.plot(data_to_plot)
     plt.xlabel("Samples")
     plt.ylabel(y_label)
@@ -395,6 +398,830 @@ def resize_emgfile(
 
     else:
         raise ValueError("\nFile source not recognised\n")
+
+
+class EMGFileSectionsIterator:
+    """
+    An iterator for splitting a file into sections and performing actions.
+
+    This iterator can be used to split the emgfile (or emg_refsig file) in
+    multiple sections, to apply specific funtions to each of these sections
+    and to gather their results.
+
+    This class has a number of methods that help in the splitting process,
+    in the iteration of the various sections, and in merging the results.
+
+    Parameters
+    ----------
+    file : dict
+        The dictionary containing the emgfile (or emg_refsig file).
+
+    Attributes
+    ----------
+    file : dict
+        The dictionary containing the file to split and iterate.
+    file_length : int
+        The file duration in samples.
+    split_points : list of int
+        A list of sample indices where the file should be split into sections.
+    sections : list
+        A list of sections of the file, created based on split_points.
+    results : list
+        A list to store the results of operations applied to each section of
+        the file.
+
+    Methods
+    -------
+    set_split_points_by_showselect()
+        Manually set the points used to split the emgfile.
+    set_split_points_by_equal_spacing()
+        Set the points used to split the emgfile into equal sections.
+    set_split_points_by_time()
+        Set the points used to split the emgfile based on a fixed time window.
+    set_split_points_by_samples()
+        Set the points used to split the emgfile based on a samples window.
+    set_split_points_by_list()
+        Set the points used to split the emgfile based on a provided list of
+        sample indices.
+    split()
+        Splits the file into sections using the set split points.
+    iterate()
+        Apply a collection of functions to the split sections, each with its
+        own arguments.
+    merge_dataframes()
+        Merge a list of result DataFrames using the specified method.
+    """
+
+    def __init__(self, file):
+        # Initializes the iterator for an emgfile.
+
+        self.file = file
+        self.split_points = []
+        self.sections = []
+        self.results = []
+        self.file_length = 0
+
+        # Get file duration based on wether we have an emgfile or an
+        # emg_refsig file.
+        if "EMG_LENGTH" in self.file:  # Standard emgfile
+            self.file_length = self.file["EMG_LENGTH"]
+        elif "RAW_SIGNAL" in self.file:  # Fallback
+            self.file_length = self.file["RAW_SIGNAL"].shape[0]
+        elif "REF_SIGNAL" in self.file:  # Standard emg_refsig
+            self.file_length = self.file["REF_SIGNAL"].shape[0]
+        else:
+            raise ValueError(
+                "Impossible to determine file length. None of EMG_LENGTH, " +
+                "RAW_SIGNAL and REF_SIGNAL are available in the file."
+            )
+        self.file_length = int(self.file_length)
+
+    def set_split_points_by_showselect(
+        self,
+        how="ref_signal",
+        title="",
+        titlesize=10,
+        nclic=-1,
+    ):
+        """
+        Manually set the points used to split the emgfile.
+
+        Calls the emg.showselect() function to manually select the split points
+        based on the visualisation of the reference signal or of the EMG
+        signal amplitude.
+
+        Points can be added by pressing keyboard letters while hovering over
+        the point to resize. Right mouse click removes the point. Press 'enter'
+        to confirm the selection. Sections are cut starting from the first
+        point and then on the consecutove points.
+
+        Parameters
+        ----------
+        how : str {"ref_signal", "mean_emg"}, default "ref_signal"
+            What to display in the figure used to visually select the area to
+            resize.
+
+            ``ref_signal``
+                Visualise the reference signal to select the area to resize.
+
+            ``mean_emg``
+                Visualise the mean EMG signal to select the area to resize.
+        title : str
+            The title of the plot. It is optional but strongly recommended.
+            It should describe the task to do. A default title is provided when
+            title="".
+        titlesize : int, default 12
+            The font size of the title.
+        nclic: int, default -1
+            The number of clics to be collected. If nclic < 1, all the clicks
+            are collected.
+
+        Returns
+        -------
+        None
+            Stores the split points in `self.split_points`.
+
+        Raises
+        ------
+        ValueError
+            When the user clicked a wrong number of inputs in the GUI.
+
+        Examples
+        --------
+        Manually set the points to resize the file by visualising the reference
+        signal.
+
+        >>> import openhdemg.library as emg
+        >>> emgfile = emg.emg_from_samplefile()
+        >>> iterator = emg.EMGFileSectionsIterator(file=emgfile)
+        >>> iterator.set_split_points_by_showselect(how="ref_signal")
+        >>> split_points = iterator.split_points
+        >>> split_points
+        [0, 6562, 19552, 41546, 55273, 62802]
+
+        Manually set the points to resize the file by visualising the mean
+        EMG signal amplitude.
+
+        >>> import openhdemg.library as emg
+        >>> emgfile = emg.emg_from_samplefile()
+        >>> iterator = emg.EMGFileSectionsIterator(file=emgfile)
+        >>> iterator.set_split_points_by_showselect(how="mean_emg")
+        >>> split_points = iterator.split_points
+        >>> split_points
+        [5381, 23094, 38889, 50107]
+        """
+
+        # Fallback title
+        if len(title) == 0:
+            title = (
+                "Select the points where to resize by hovering the mouse" +
+                "\nand pressing the 'a'-key. Wrong points can be removed " +
+                "with right\nclick or canc/delete keys. When ready, press " +
+                "enter."
+            )
+
+        split_points = showselect(
+            emgfile=self.file, how=how, title=title, titlesize=titlesize,
+            nclic=nclic,
+        )
+
+        # Double check that split_points are within the real range.
+        points_below = [x for x in split_points if x < 0]
+        if len(points_below) > 1:
+            raise ValueError(
+                "More than 1 point has been selected below 0."
+            )
+        elif len(points_below) == 1:
+            if split_points[0] < 0:
+                split_points[0] = 0
+            else:
+                raise ValueError(
+                    "There are points below 0 different from the firt " +
+                    "element of the list, check points beeing sorted."
+                )
+
+        points_above = [x for x in split_points if x > self.file_length]
+        if len(points_above) > 1:
+            raise ValueError(
+                "More than 1 point has been selected after the end of the " +
+                "signal."
+            )
+        elif len(points_above) == 1:
+            if split_points[-1] > self.file_length:
+                split_points[-1] = self.file_length
+            else:
+                raise ValueError(
+                    "There are points after the end of the file different " +
+                    "from the firt element of the list, check points beeing " +
+                    "sorted."
+                )
+
+        self.split_points = split_points
+
+    def set_split_points_by_equal_spacing(self, n_sections):
+        """
+        Set the points used to split the emgfile into equal sections.
+
+        All the sections will have approximately the same length (length
+        rounding may apply), which is calculated based on n_sections.
+
+        Parameters
+        ----------
+        n_sections : int
+            The number of sections to divide the emgfile into.
+
+        Returns
+        -------
+        None
+            Stores the split points in `self.split_points`.
+
+        Examples
+        --------
+        Divide the file in 3 sections of the same length.
+
+        >>> import openhdemg.library as emg
+        >>> emgfile = emg.emg_from_samplefile()
+        >>> iterator = EMGFileSectionsIterator(file=emgfile)
+        >>> iterator.set_split_points_by_equal_spacing(n_sections=3)
+        >>> split_points = iterator.split_points
+        >>> split_points
+        [0, 22186, 44373, 66560]
+        """
+
+        space = self.file_length
+        self.split_points = list(
+            np.linspace(0, space, n_sections + 1, dtype=int)
+        )
+
+    def set_split_points_by_time(self, time_window, drop_shorter=False):
+        """
+        Set the points used to split the emgfile based on a fixed time window.
+
+
+        Parameters
+        ----------
+        time_window : float
+            The duration of each section in seconds.
+        drop_shorter : bool, default False
+            If True, the last section is discarded if it is shorter than
+            `time_window`. If False, the last section will include the
+            remaining samples even if it is shorter than `time_window`.
+
+        Returns
+        -------
+        None
+            Stores the split points in `self.split_points`.
+
+        Examples
+        --------
+        Divide the file into consecutive 9-second sections, with any remaining
+        data forming a final shorter section.
+
+        >>> import openhdemg.library as emg
+        >>> emgfile = emg.emg_from_samplefile()
+        >>> iterator = emg.EMGFileSectionsIterator(file=emgfile)
+        >>> iterator.set_split_points_by_time(
+        ...     time_window=9,
+        ...     drop_shorter=False,
+        ... )
+        >>> split_points = iterator.split_points
+        >>> split_points
+        [0, 18432, 36864, 55296, 66560]
+
+        Divide the file into consecutive 9-second sections, discarding any
+        remaining data if it is shorter than the specified duration.
+
+        >>> import openhdemg.library as emg
+        >>> emgfile = emg.emg_from_samplefile()
+        >>> iterator = emg.EMGFileSectionsIterator(file=emgfile)
+        >>> iterator.set_split_points_by_time(
+        ...     time_window=9,
+        ...     drop_shorter=True,
+        ... )
+        >>> split_points = iterator.split_points
+        >>> split_points
+        [0, 18432, 36864, 55296]
+        """
+
+        fsamp = self.file["FSAMP"]
+        space = self.file_length
+
+        step = int(round(time_window * fsamp))
+        self.split_points = list(range(0, space + 1, step))
+
+        # Append the last point if it's missing and drop_shorter is False
+        if self.split_points[-1] != space:
+            if not drop_shorter:
+                self.split_points.append(space)
+
+    def set_split_points_by_samples(self, samples_window, drop_shorter=False):
+        """
+        Set the points used to split the emgfile based on a samples window.
+
+        Parameters
+        ----------
+        samples_window : int
+            The duration of each section in samples.
+        drop_shorter : bool, default False
+            If True, the last section is discarded if it is shorter than
+            `samples_window`. If False, the last section will include the
+            remaining samples even if it is shorter than `samples_window`.
+
+        Returns
+        -------
+        None
+            Stores the split points in `self.split_points`.
+
+        Examples
+        --------
+        Divide the file into consecutive 9-second sections, with any remaining
+        data forming a final shorter section.
+
+        >>> import openhdemg.library as emg
+        >>> emgfile = emg.emg_from_samplefile()
+        >>> iterator = emg.EMGFileSectionsIterator(file=emgfile)
+        >>> iterator.set_split_points_by_samples(
+        ...     samples_window=10000,
+        ...     drop_shorter=False,
+        ... )
+        >>> split_points = iterator.split_points
+        >>> split_points
+        [0, 10000, 20000, 30000, 40000, 50000, 60000, 66560]
+
+        Divide the file into consecutive 9-second sections, discarding any
+        remaining data if it is shorter than the specified duration.
+
+        >>> import openhdemg.library as emg
+        >>> emgfile = emg.emg_from_samplefile()
+        >>> iterator = emg.EMGFileSectionsIterator(file=emgfile)
+        >>> iterator.set_split_points_by_samples(
+        ...     samples_window=10000,
+        ...     drop_shorter=True,
+        ... )
+        >>> split_points = iterator.split_points
+        >>> split_points
+        [0, 10000, 20000, 30000, 40000, 50000, 60000]
+        """
+
+        space = self.file_length
+        step = samples_window
+        self.split_points = list(range(0, space + 1, step))
+
+        # Append the last point if it's missing and drop_shorter is False
+        if self.split_points[-1] != space:
+            if not drop_shorter:
+                self.split_points.append(space)
+
+    def set_split_points_by_list(self, split_points):
+        """
+        Set the points used to split the emgfile based on a provided list of
+        sample indices.
+
+        Parameters
+        ----------
+        split_points : list of int
+            A list containing the sample indices at which to split the emgfile.
+            These indices should correspond to the points where the data will
+            be divided into sections.
+
+        Returns
+        -------
+        None
+            Stores the split points in `self.split_points`.
+
+        Examples
+        --------
+        >>> import openhdemg.library as emg
+        >>> emgfile = emg.emg_from_samplefile()
+        >>> iterator = emg.EMGFileSectionsIterator(file=emgfile)
+        >>> iterator.set_split_points_by_list(split_points=[0, 18432, 36864])
+        >>> split_points = iterator.split_points
+        >>> split_points
+        [0, 18432, 36864]
+        """
+
+        self.split_points = split_points
+
+    def split(self, accuracy="recalculate", ignore_negative_ipts=False):
+        """
+        Splits the file into sections using the set split points.
+
+        Parameters
+        ----------
+        accuracy : str {"recalculate", "maintain"}, default "recalculate"
+
+            ``recalculate``
+                The Silhouette score is computed in the new resized file. This
+                can be done only if IPTS is present.
+
+            ``maintain``
+                The original accuracy measure already contained in the emgfile
+                is returned without any computation.
+        ignore_negative_ipts : bool, default False
+            This parameter determines the silhouette score estimation. If True,
+            only positive ipts values are used during peak-noise clustering.
+            This is particularly important for compensating sources with large
+            negative components. This parameter is considered only if
+            accuracy=="recalculate".
+
+        Returns
+        -------
+        None
+            Stores the split sections in `self.sections`.
+
+        Examples
+        --------
+        >>> import openhdemg.library as emg
+        >>> emgfile = emg.emg_from_samplefile()
+        >>> iterator = emg.EMGFileSectionsIterator(file=emgfile)
+        >>> iterator.set_split_points_by_equal_spacing(n_sections=4)
+        >>> iterator.split()
+        >>> sections = iterator.sections
+        >>> len(sections)
+        4
+        """
+
+        self.sections = []
+        for start, end in zip(self.split_points[:-1], self.split_points[1:]):
+            rs_emgfile, _, _ = resize_emgfile(
+                self.file, area=[start, end],
+                accuracy=accuracy,
+                ignore_negative_ipts=ignore_negative_ipts,
+            )
+            self.sections.append(rs_emgfile)
+
+    def iterate(self, funcs=[], args_list=[[]], kwargs_list=[{}], **kwargs):
+        """
+        Apply a collection of functions to the split sections, each with its
+        own arguments.
+
+        Parameters
+        ----------
+        funcs : list of callables
+            A list of functions to apply to each section. If multiple functions
+            are provided, their count must match the number of sections. If
+            only one function is given, it will be applied to all sections.
+            IMPORTANT! Each function must take `file` as the first parameter.
+        args_list : list of lists
+            A list where each element is a list of positional arguments to be
+            passed to the corresponding function in `funcs`. Must have the same
+            length as `funcs`.
+        kwargs_list : list of dicts, optional
+            A list where each element is a dictionary of keyword arguments to
+            be passed to the corresponding function in `funcs`. Must have the
+            same length as `funcs`.
+        **kwargs
+            Additional keyword arguments that are passed to all functions in
+            `funcs`. If `funcs` contains only 1 function, **kwargs can be used
+            instead of kwargs_list for simpler syntax.
+
+        Returns
+        -------
+        None
+            Stores the results in `self.results`, where each function's output
+            is collected.
+
+        Examples
+        --------
+        Split the file in 3 sections and apply a custom function to each
+        section to count the number of firings in each MU. Then visualise the
+        results for the first section.
+
+        >>> import openhdemg.library as emg
+        >>> import pandas as pd
+        >>> def count_firings(emgfile):
+        ...     res = [len(mu_firings) for mu_firings in emgfile["MUPULSES"]]
+        ...     return pd.DataFrame(res)
+        >>> emgfile = emg.emg_from_samplefile()
+        >>> iterator = emg.EMGFileSectionsIterator(file=emgfile)
+        >>> iterator.set_split_points_by_equal_spacing(n_sections=3)
+        >>> iterator.split()
+        >>> iterator.iterate(funcs=[count_firings])
+        >>> results = iterator.results
+        >>> results[0]
+            0
+        0  48
+        1  43
+        2  63
+        3  94
+        4  95
+
+        Split the file in 3 sections and calculate the discharge rate of each
+        MU over the first 20 discharges.
+
+        >>> import openhdemg.library as emg
+        >>> emgfile = emg.emg_from_samplefile()
+        >>> iterator = emg.EMGFileSectionsIterator(file=emgfile)
+        >>> iterator.set_split_points_by_equal_spacing(n_sections=3)
+        >>> iterator.split()
+        >>> iterator.iterate(
+        ...     funcs=[emg.compute_dr],
+        ...     event_="rec",
+        ...     n_firings_RecDerec=20,
+        ... )
+        >>> results = iterator.results
+        >>> results[0]
+             DR_rec     DR_all
+        0  7.468962   7.714276
+        1  7.091045   7.390155
+        2  7.673784   8.583193
+        3  9.004878  11.042002
+        4  9.705901  11.202489
+        """
+
+        # Extensive input checking to help using the iterate function.
+        if not isinstance(funcs, list):
+            raise ValueError("Funcs must be a list")
+        if not isinstance(args_list, list):
+            raise ValueError("args_list must be a list")
+        if not isinstance(kwargs_list, list):
+            raise ValueError("kwargs_list must be a list")
+
+        # Manage multiple functions
+        if len(funcs) > 1:
+            if len(funcs) != len(self.sections):
+                raise ValueError(
+                    "funcs must be a list containing 1 function to be " +
+                    "applied to all the sections or 1 function for each " +
+                    "section."
+                )
+            if len(args_list) > 0:
+                if not isinstance(args_list[0], list):
+                    raise ValueError(
+                        "args_list must be a list containing 1 list of " +
+                        "arguments for each function."
+                    )
+                if len(args_list) != len(self.sections):
+                    raise ValueError(
+                        "args_list must be a list containing 1 list of " +
+                        "arguments for each function."
+                    )
+            if len(kwargs_list) > 0:
+                if not isinstance(kwargs_list[0], dict):
+                    raise ValueError(
+                        "kwargs_list must be a list containing 1 dict of " +
+                        "keyword arguments for each function."
+                    )
+                if len(kwargs_list) != len(self.sections):
+                    raise ValueError(
+                        "kwargs_list must be a list containing 1 dict of " +
+                        "keyword arguments for each function."
+                    )
+
+        elif len(funcs) == 1:
+            if len(args_list) == 1:
+                if not isinstance(args_list[0], list):
+                    raise ValueError(
+                        "args_list must be a list containing 1 list of " +
+                        "arguments for each function."
+                    )
+            elif len(args_list) > 1:
+                raise ValueError(
+                    "args_list must be a list containing 1 list of " +
+                    "arguments for each function."
+                )
+
+            if len(kwargs_list) == 1:
+                if not isinstance(kwargs_list[0], dict):
+                    raise ValueError(
+                        "kwargs_list must be a list containing 1 dict of " +
+                        "keyword arguments for each function."
+                    )
+            elif len(kwargs_list) > 1:
+                raise ValueError(
+                    "kwargs_list must be a list containing 1 dict of " +
+                    "keyword arguments for each function."
+                )
+
+        else:
+            raise ValueError("No function provided to iterate")
+
+        # Proagate single function to fit the number of sections
+        if len(funcs) == 1 and len(self.sections) > 1:
+            funcs = [funcs[0] for _ in self.sections]
+            args_list = [args_list[0] for _ in self.sections]
+            kwargs_list = [kwargs_list[0] for _ in self.sections]
+
+        # Calculate the results for each section
+        for idx, section in enumerate(self.sections):
+            func = funcs[idx]
+            func_args = args_list[idx]
+            func_kwargs = kwargs_list[idx]
+            combined_kwargs = {**func_kwargs, **kwargs}
+            result = func(section, *func_args, **combined_kwargs)
+            self.results.append(result)
+
+    def merge_dataframes(self, method="long", fillna=None, agg_func=None):
+        """
+        Merge a list of result DataFrames using the specified method.
+
+        Parameters
+        ----------
+        method : str, default "long"
+            The merging method. When using built-in methods (except for
+            `custom`), all DataFrames must have the same structure (i.e.,
+            aligned columns and index).
+
+            ``average``
+                Computes the mean across all DataFrames.
+
+            ``median``
+                Computes the median across all DataFrames.
+
+            ``sum``
+                Computes the sum across all DataFrames.
+
+            ``min``
+                Takes the minimum value across all DataFrames.
+
+            ``max``
+                Takes the maximum value across all DataFrames.
+
+            ``std``
+                Computes the standard deviation across all DataFrames.
+
+            ``cv``
+                Computes the coefficient of variation (CV = std / mean).
+
+            ``long``
+                Stacks all DataFrames with an additional 'source_idx' column.
+
+            ``custom``
+                Uses a user-defined aggregation function provided via
+                `agg_func`.
+        fillna : float or None
+            If specified, fills missing values (NaN) with this value before
+            merging.
+        agg_func : callable or None
+            A custom aggregation function to apply when method="custom". The
+            function should take a list of DataFrames and return a single
+            DataFrame.
+
+        Returns
+        -------
+        merged_df : pd.DataFrame
+            The merged DataFrame.
+
+        Raises
+        ------
+        ValueError
+            If `self.results` is empty or contains non-DataFrame elements;
+            or, `method` is unknown; or `agg_func` is missing when
+            method="custom".
+
+        Examples
+        --------
+        Merge all the results in a long format DataFrame. Best for statistical
+        analyses.
+
+        >>> import openhdemg.library as emg
+        >>> emgfile = emg.emg_from_samplefile()
+        >>> iterator = emg.EMGFileSectionsIterator(file=emgfile)
+        >>> iterator.set_split_points_by_equal_spacing(n_sections=3)
+        >>> iterator.split()
+        >>> iterator.iterate(funcs=[emg.compute_dr], event_="rec")
+        >>> merged_results = iterator.merge_dataframes()
+        >>> merged_results
+            source_idx  original_idx     DR_rec     DR_all
+        0            0             0   3.341579   7.714276
+        1            0             1   5.701081   7.390155
+        2            0             2   5.699017   8.583193
+        3            0             3   7.548770  11.042002
+        4            0             4   8.344515  11.202489
+        5            1             0  10.235710   8.155868
+        6            1             1   6.769358   6.758350
+        7            1             2   8.193645   8.054868
+        8            1             3  10.952495  11.151536
+        9            1             4  11.012249  10.691432
+        10           2             0   6.430406   6.899233
+        11           2             1   6.714442   6.274404
+        12           2             2   7.057244   6.881602
+        13           2             3  10.577538   9.578987
+        14           2             4   9.708064   9.562182
+
+        Apply a custom function to each section to count the number of firings
+        in each MU, then get the mean and STD values across the 3 sections
+        (just for didactical purposes).
+
+        >>> import openhdemg.library as emg
+        >>> import pandas as pd
+        >>> def count_firings(emgfile):
+        ...     res = [len(mu_firings) for mu_firings in emgfile["MUPULSES"]]
+        ...     return pd.DataFrame(res)
+        >>> emgfile = emg.emg_from_samplefile()
+        >>> iterator = emg.EMGFileSectionsIterator(file=emgfile)
+        >>> iterator.set_split_points_by_equal_spacing(n_sections=3)
+        >>> iterator.split()
+        >>> iterator.iterate(funcs=[count_firings])
+        >>> mean_values = iterator.merge_dataframes(
+        ...     method="average",
+        ...     fillna=0,
+        ... )
+        >>> std_values = iterator.merge_dataframes(
+        ...     method="std",
+        ...     fillna=0,
+        ... )
+        >>> mean_values
+                   0
+        0  45.666667
+        1  51.333333
+        2  65.666667
+        3  97.666667
+        4  97.333333
+        >>> std_values
+                   0
+        0   4.932883
+        1  18.009257
+        2  20.132892
+        3  20.744477
+        4  16.623277
+
+        Apply a custom method by providing an external aggregation function
+        which finds the maximum value at each position and the index of the
+        DataFrame containing it.
+
+        >>> import openhdemg.library as emg
+        >>> import pandas as pd
+        >>> def max_with_source(results_dataframes):
+        ...     stacked = pd.concat(
+        ...         results_dataframes, keys=range(len(results_dataframes))
+        ...     )
+        ...     max_values = stacked.groupby(level=1).max()
+        ...     max_indices = stacked.groupby(level=1).idxmax().iloc[:, 0]
+        ...     max_values["source_idx"] = max_indices.map(lambda x: x[0])
+        ...     return max_values
+        >>> emgfile = emg.emg_from_samplefile()
+        >>> iterator = emg.EMGFileSectionsIterator(file=emgfile)
+        >>> iterator.set_split_points_by_equal_spacing(n_sections=3)
+        >>> iterator.split()
+        >>> iterator.iterate(funcs=[emg.compute_dr], event_="rec")
+        >>> max_values_with_source = iterator.merge_dataframes(
+        ...     method="custom",
+        ...     fillna=0,
+        ...     agg_func=max_with_source,
+        ... )
+        >>> max_values_with_source
+              DR_rec     DR_all  source_idx
+        0  10.235710   8.155868           1
+        1   6.769358   7.390155           1
+        2   8.193645   8.583193           1
+        3  10.952495  11.151536           1
+        4  11.012249  11.202489           1
+        """
+
+        if not self.results:
+            raise ValueError("The list of dataframes is empty.")
+
+        if not all(isinstance(df, pd.DataFrame) for df in self.results):
+            raise ValueError(
+                "All elements in `self.results` must be pd.DataFrames."
+            )
+
+        # Optionally fill NaN values
+        if fillna is not None:
+            self.results = [df.fillna(fillna) for df in self.results]
+
+        # Stack DataFrames along axis=0 for operations like std and cv
+        merged_stack = pd.concat(
+            self.results, axis=0, keys=range(len(self.results)),
+        )
+
+        if method == "average":
+            merged_df = merged_stack.groupby(level=1).mean()
+
+        elif method == "median":
+            merged_df = merged_stack.groupby(level=1).median()
+
+        elif method == "sum":
+            merged_df = merged_stack.groupby(level=1).sum()
+
+        elif method == "min":
+            merged_df = merged_stack.groupby(level=1).min()
+
+        elif method == "max":
+            merged_df = merged_stack.groupby(level=1).max()
+
+        elif method == "std":
+            merged_df = merged_stack.groupby(level=1).std()
+
+        elif method == "cv":
+            mean_df = merged_stack.groupby(level=1).mean()
+            std_df = merged_stack.groupby(level=1).std()
+            merged_df = std_df / mean_df
+
+        elif method == "long":
+            # Preserve original index (often indicating the MU number) by
+            # renaming it to 'original_idx', and assign source index to detect
+            # from which DataFrame the results come from.
+            merged_df = pd.concat(
+                [
+                    df.reset_index().rename(
+                        columns={"index": "original_idx"}
+                    ).assign(source_idx=i)
+                    for i, df in enumerate(self.results)
+                ],
+                ignore_index=True
+            )
+
+            # Ensure consistent column order
+            cols = ["source_idx", "original_idx"] + [
+                col for col in merged_df.columns if col not in [
+                    "source_idx", "original_idx"
+                ]
+            ]
+            merged_df = merged_df[cols]
+
+        elif method == "custom":
+            if agg_func is None:
+                raise ValueError(
+                    "When using method='custom', `agg_func` must be provided."
+                )
+            merged_df = agg_func(self.results)
+
+        else:
+            raise ValueError(f"Unknown method '{method}'")
+
+        return merged_df
 
 
 def compute_idr(emgfile):
