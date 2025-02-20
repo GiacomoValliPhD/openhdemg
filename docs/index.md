@@ -1,9 +1,9 @@
 # Welcome to openhdemg
 <p align="left">
-    <a href="https://pypi.python.org/pypi/openhdemg/" alt="openhdemg version" target="_blank">
-        <img alt="PyPI" src="https://img.shields.io/pypi/v/openhdemg?label=pip&logo=PyPI&logoColor=gold&color=blue"></a>
-    <a href="https://pypi.org/project/openhdemg" alt="Python version" target="_blank">
-        <img alt="PyPI" src="https://img.shields.io/pypi/pyversions/openhdemg?logo=Python&logoColor=gold&color=blue"></a>
+    <a href="https://pypi.python.org/pypi/openhdemg/0.1.2/" alt="openhdemg version" target="_blank">
+        <img alt="PyPI" src="https://img.shields.io/pypi/v/openhdemg/0.1.2?label=pip&logo=PyPI&logoColor=gold&color=blue"></a>
+    <a href="https://pypi.org/project/openhdemg/0.1.2/" alt="Python version" target="_blank">
+        <img alt="PyPI" src="https://img.shields.io/pypi/pyversions/openhdemg/0.1.2?logo=Python&logoColor=gold&color=blue"></a>
     <a href="https://www.youtube.com/@openhdemg" alt="YouTube" target="_blank">
         <img src="https://img.shields.io/badge/youtube-Watch_videos-red.svg?color=blue&logoColor=gold&logo=youtube" /></a>
     <a href="https://twitter.com/openhdemg" alt="Twitter" target="_blank">

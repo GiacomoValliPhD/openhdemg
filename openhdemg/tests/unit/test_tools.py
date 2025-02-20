@@ -25,11 +25,12 @@ from openhdemg.tests.unit.functions_for_unit_test import (
 from openhdemg.library.openfiles import (
     emg_from_samplefile, refsig_from_otb, emg_from_delsys,
 )
+from openhdemg.library.analysis import compute_dr
 from openhdemg.library.tools import (
     showselect, create_binary_firings, mupulses_from_binary, resize_emgfile,
-    compute_idr, delete_mus, delete_empty_mus, sort_mus, compute_covsteady,
-    filter_rawemg, filter_refsig, remove_offset, get_mvc, compute_rfd,
-    compute_svr,
+    EMGFileSectionsIterator, compute_idr, delete_mus, delete_empty_mus,
+    sort_mus, compute_covsteady, filter_rawemg, filter_refsig, remove_offset,
+    get_mvc, compute_rfd, compute_svr,
 )
 import pandas as pd
 import numpy as np
@@ -126,6 +127,144 @@ class TestTools(unittest.TestCase):
                 )
 
         validate_emg_refsig_content(self, rs_emgfile)
+
+    def test_EMGFileSectionsIterator(self):
+        """
+        Test the EMGFileSectionsIterator class.
+        """
+
+        iterator = EMGFileSectionsIterator(self.emgfile)
+
+        self.assertEqual(
+            iterator.file_length, self.emgfile["RAW_SIGNAL"].shape[0],
+        )
+
+        # Test set_split_points_by_equal_spacing
+        iterator.set_split_points_by_equal_spacing(n_sections=4)
+        self.assertEqual(len(iterator.split_points), 5)
+        iterator.split_points = []
+
+        # Test set_split_points_by_time
+        iterator.set_split_points_by_time(time_window=7, drop_shorter=True)
+        self.assertEqual(len(iterator.split_points), 5)
+        iterator.split_points = []
+
+        iterator.set_split_points_by_time(time_window=7, drop_shorter=False)
+        self.assertEqual(len(iterator.split_points), 6)
+        iterator.split_points = []
+
+        # Test set_split_points_by_samples
+        iterator.set_split_points_by_samples(
+            samples_window=15000, drop_shorter=True,
+        )
+        self.assertEqual(len(iterator.split_points), 5)
+        iterator.split_points = []
+
+        iterator.set_split_points_by_samples(
+            samples_window=15000, drop_shorter=False,
+        )
+        self.assertEqual(len(iterator.split_points), 6)
+        iterator.split_points = []
+
+        # Test set_split_points_by_list
+        iterator.set_split_points_by_list(split_points=[0, 25000, 60000])
+        self.assertEqual(len(iterator.split_points), 3)
+        iterator.split_points = []
+
+        # Test split
+        iterator.set_split_points_by_equal_spacing(n_sections=3)
+        iterator.split()
+        for file in iterator.sections:
+            validate_emgfile_content(self, file)
+        iterator.sections = []
+        iterator.split_points = []
+
+        # Test iterate raises
+        iterator.set_split_points_by_equal_spacing(n_sections=3)
+        iterator.split()
+        with self.assertRaises(ValueError):
+            iterator.iterate(
+                funcs="not a list", args_list=[[]], kwargs_list=[{}],
+            )
+        with self.assertRaises(ValueError):
+            iterator.iterate(
+                funcs=[compute_dr], args_list=["not a list"], kwargs_list=[{}],
+            )
+        with self.assertRaises(ValueError):
+            iterator.iterate(
+                funcs=[compute_dr], args_list=[[]], kwargs_list=["not a dict"],
+            )
+        with self.assertRaises(ValueError):
+            iterator.iterate(
+                funcs=[compute_dr, compute_dr],
+                args_list=[[], [], []], kwargs_list=[{}, {}, {}],
+            )
+        with self.assertRaises(ValueError):
+            iterator.iterate(
+                funcs=[compute_dr, compute_dr, compute_dr],
+                args_list=[[]], kwargs_list=[{}, {}, {}],
+            )
+        with self.assertRaises(ValueError):
+            iterator.iterate(
+                funcs=[compute_dr, compute_dr, compute_dr],
+                args_list=[[], [], []], kwargs_list=[{}],
+            )
+        iterator.sections = []
+        iterator.split_points = []
+        iterator.results = []
+
+        # Test iterate successful
+        iterator.set_split_points_by_equal_spacing(n_sections=3)
+        iterator.split()
+        iterator.iterate(
+            funcs=[compute_dr, compute_dr, compute_dr],
+            args_list=[[], [], []],
+            kwargs_list=[
+                {"event_": "rec"}, {"event_": "rec"}, {"event_": "rec"}
+            ],
+        )
+        self.assertGreater(len(iterator.results), 0)
+        for df in iterator.results:
+            self.assertIsInstance(df, pd.DataFrame)
+        iterator.sections = []
+        iterator.split_points = []
+        iterator.results = []
+
+        # Test merge_dataframes
+        iterator.set_split_points_by_equal_spacing(n_sections=3)
+        iterator.split()
+        iterator.iterate(
+            funcs=[compute_dr, compute_dr, compute_dr],
+            args_list=[[], [], []],
+            kwargs_list=[
+                {"event_": "rec"}, {"event_": "rec"}, {"event_": "rec"}
+            ],
+        )
+        results = iterator.results  # Store to test merge_dataframes
+        for method in ["average", "median", "sum", "min", "max", "std", "cv"]:
+            merged_df = iterator.merge_dataframes(method=method, fillna=0)
+            self.assertIsInstance(merged_df, pd.DataFrame)
+            self.assertEqual(results[0].shape, merged_df.shape)
+
+        merged_long = iterator.merge_dataframes(method="long", fillna=0)
+        total_rows = 0
+        total_idxs = []
+        for df in results:
+            total_rows += df.shape[0]
+            total_idxs += list(df.index)
+        self.assertEqual(merged_long.columns[0], "source_idx")
+        self.assertEqual(merged_long.columns[1], "original_idx")
+        self.assertEqual(merged_long.shape[0], total_rows)
+        self.assertListEqual(merged_long["original_idx"].tolist(), total_idxs)
+
+        def custom_agg(dfs):
+            if len(dfs) != 3:
+                raise ValueError("Expected exactly 3 DataFrames")
+            return dfs[0] + dfs[1] + dfs[2]
+        merged_custom = iterator.merge_dataframes(
+            method="custom", fillna=0, agg_func=custom_agg,
+        )
+        self.assertIsInstance(merged_custom, pd.DataFrame)
 
     def test_compute_idr(self):
         """
@@ -401,6 +540,32 @@ class TestTools(unittest.TestCase):
         expected_values = np.array([4.760742, 3.768921, 4.760742, 4.66156])
 
         self.assertTrue(np.allclose(expected_values, res.values[0], atol=1e-5))
+
+    def test_compute_svr(self):
+        """
+        Test the compute_svr function.
+        """
+
+        # TODO these tests need to be expanded to assess all the parameters
+        # and their values
+
+        # Test initial discontonuity and output dimensionality
+        emgfile = emg_from_samplefile()
+        emgfile["MUPULSES"][1] = np.insert(
+            arr=emgfile["MUPULSES"][1],
+            obj=0,
+            values=int(emgfile["MUPULSES"][1][0] - emgfile["FSAMP"] * 2),
+        )  # 2 sec discontinuity at the beginning on MU 1
+
+        res = compute_svr(self.emgfile, discontfiring_dur=1)
+
+        self.assertSetEqual(set(res.keys()), {'svrfit', 'svrtime', 'gensvr'})
+        for fits in res.values():
+            self.assertIsInstance(fits, list)
+            self.assertEqual(len(fits), self.emgfile["NUMBER_OF_MUS"])
+            for mu_fit in fits:
+                self.assertIsInstance(mu_fit, np.ndarray)
+                self.assertEqual(mu_fit.ndim, 1)
 
 
 if __name__ == '__main__':

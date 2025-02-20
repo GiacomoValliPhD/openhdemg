@@ -48,6 +48,7 @@ plugins:
           docstring_style: 'numpy'
           docstring_section_style: 'spacy'
           show_source: false
+          members_order: "source"
           docstring_options:
             ignore_init_summary: True
 - search:
