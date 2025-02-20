@@ -1114,7 +1114,12 @@ def tracking(
         if pos == 0:
             tracking_res = pd.DataFrame(i)
         else:
-            tracking_res = pd.concat([tracking_res, pd.DataFrame(i)])
+            new_tracking_res = pd.DataFrame(i)
+            # Check for empty df
+            if tracking_res.empty and not new_tracking_res.empty:
+                tracking_res = new_tracking_res
+            if not tracking_res.empty and not new_tracking_res.empty:
+                tracking_res = pd.concat([tracking_res, new_tracking_res])
     tracking_res.reset_index(drop=True, inplace=True)
 
     # Filter the results
