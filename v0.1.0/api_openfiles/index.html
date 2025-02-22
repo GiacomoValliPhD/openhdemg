@@ -1,0 +1,4042 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="All you need to know about openhdemg">
+      
+      
+        <meta name="author" content="Giacomo Valli & Paul Ritsche">
+      
+      
+      
+        <link rel="prev" href="../isek_jek_tutorials/">
+      
+      
+        <link rel="next" href="../api_plotemg/">
+      
+      
+      <link rel="icon" href="../yml_graphics/transp_icon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.46">
+    
+    
+      
+        <title>openfiles - openhdemg</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.6f8fc17f.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../docs/overrides/custom.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  <link rel="stylesheet" type="text/css" href="None/custom.css">
+
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#description" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+<!-- Custom Banner -->
+<div style="
+    display: flex;               /* Enable flexbox */
+    justify-content: center;     /* Center content horizontally */
+    align-items: center;         /* Center content vertically */
+    height: 50px;                /* Set the height of the banner */
+    position: sticky;            /* Make the banner stick to the top */
+    top: 0;                      /* Position the banner at the top of the page */
+    left: 0;                     /* Align the banner to the left edge */
+    width: 100%;                 /* Stretch the banner to full width */
+    z-index: 1;                  /* Ensure the banner appears above other content */
+    text-align: center;          /* Center-align text */
+    background-color: rgb(215, 215, 101);
+    font-size: 0.6rem;
+">
+  <p style="color:black; display:inline;">
+    ⚠️ You are viewing an outdated version of the documentation. 
+    For the most recent release, please refer to the 
+    <a href="https://www.giacomovalli.com/openhdemg/" style="color:black; text-decoration: underline;">latest version</a>.
+  </p>
+</div>
+
+<!-- Original Header -->
+
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="openhdemg" class="md-header__button md-logo" aria-label="openhdemg" data-md-component="logo">
+      
+  <img src="../yml_graphics/transp_icon.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            openhdemg
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              openfiles
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/GiacomoValliPhD/openhdemg" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    openhdemg
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+
+
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="openhdemg" class="md-nav__button md-logo" aria-label="openhdemg" data-md-component="logo">
+      
+  <img src="../yml_graphics/transp_icon.png" alt="logo">
+
+    </a>
+    openhdemg
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/GiacomoValliPhD/openhdemg" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    openhdemg
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Welcome
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about-us/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    About us
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quick-start/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quick-Start
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Tutorials
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_1" id="__nav_4_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    For new users
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_1">
+            <span class="md-nav__icon md-icon"></span>
+            For new users
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/setup_working_env/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Setup working environment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Basics of openhdemg
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Basics of openhdemg
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/emgfile_structure/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Structure of the emgfile
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/import_from_other_software/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Import from other software
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Move to newer versions
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            Move to newer versions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/convert_old_json_files/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Convert old .json files
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Graphical Interface
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Graphical Interface
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gui_intro/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Intro
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gui_basics/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Basics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gui_advanced/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Advanced
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gui_settings/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Settings
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Releases
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Releases
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../what%27s-new/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Release notes
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://www.giacomovalli.com/openhdemg/versions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Browse versions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contacts/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contacts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cite-us/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cite us
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contribute/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contribute
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../isek_jek_tutorials/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ISEK-JEK Tutorials
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    API Reference
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    openfiles
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    openfiles
+  </span>
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#functions-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      Function's scope
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.emg_from_samplefile" class="md-nav__link">
+    <span class="md-ellipsis">
+      emg_from_samplefile
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.emg_from_otb" class="md-nav__link">
+    <span class="md-ellipsis">
+      emg_from_otb
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.emg_from_demuse" class="md-nav__link">
+    <span class="md-ellipsis">
+      emg_from_demuse
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.emg_from_delsys" class="md-nav__link">
+    <span class="md-ellipsis">
+      emg_from_delsys
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.emg_from_customcsv" class="md-nav__link">
+    <span class="md-ellipsis">
+      emg_from_customcsv
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.refsig_from_otb" class="md-nav__link">
+    <span class="md-ellipsis">
+      refsig_from_otb
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.refsig_from_delsys" class="md-nav__link">
+    <span class="md-ellipsis">
+      refsig_from_delsys
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.refsig_from_customcsv" class="md-nav__link">
+    <span class="md-ellipsis">
+      refsig_from_customcsv
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.save_json_emgfile" class="md-nav__link">
+    <span class="md-ellipsis">
+      save_json_emgfile
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.emg_from_json" class="md-nav__link">
+    <span class="md-ellipsis">
+      emg_from_json
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.askopenfile" class="md-nav__link">
+    <span class="md-ellipsis">
+      askopenfile
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.asksavefile" class="md-nav__link">
+    <span class="md-ellipsis">
+      asksavefile
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_plotemg/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    plotemg
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_analysis/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    analysis
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_pic/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pic
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_tools/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    tools
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_mathtools/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    mathtools
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_muap/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    muap
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_electrodes/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    electrodes
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_info/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    info
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_compatibility/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    compatibility
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#functions-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      Function's scope
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.emg_from_samplefile" class="md-nav__link">
+    <span class="md-ellipsis">
+      emg_from_samplefile
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.emg_from_otb" class="md-nav__link">
+    <span class="md-ellipsis">
+      emg_from_otb
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.emg_from_demuse" class="md-nav__link">
+    <span class="md-ellipsis">
+      emg_from_demuse
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.emg_from_delsys" class="md-nav__link">
+    <span class="md-ellipsis">
+      emg_from_delsys
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.emg_from_customcsv" class="md-nav__link">
+    <span class="md-ellipsis">
+      emg_from_customcsv
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.refsig_from_otb" class="md-nav__link">
+    <span class="md-ellipsis">
+      refsig_from_otb
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.refsig_from_delsys" class="md-nav__link">
+    <span class="md-ellipsis">
+      refsig_from_delsys
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.refsig_from_customcsv" class="md-nav__link">
+    <span class="md-ellipsis">
+      refsig_from_customcsv
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.save_json_emgfile" class="md-nav__link">
+    <span class="md-ellipsis">
+      save_json_emgfile
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.emg_from_json" class="md-nav__link">
+    <span class="md-ellipsis">
+      emg_from_json
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.askopenfile" class="md-nav__link">
+    <span class="md-ellipsis">
+      askopenfile
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openhdemg.library.openfiles.asksavefile" class="md-nav__link">
+    <span class="md-ellipsis">
+      asksavefile
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+  <h1>openfiles</h1>
+
+<h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
+<p>This module contains all the functions that are necessary to open or save MATLAB (.mat), text (.txt), JSON (.json) or custom (.csv) files. MATLAB files are used to store data from the DEMUSE, OTBiolab+ and Delsys software while JSON files are used to save and load files from this library.<br>
+The choice of saving files in the open standard JSON file format was preferred over the MATLAB file format since it has a better integration with Python and has a very high cross-platform compatibility.</p>
+<h2 id="functions-scope">Function's scope<a class="headerlink" href="#functions-scope" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>emg_from_samplefile</strong>:<br>
+    Used to load the sample file provided with the library.</li>
+<li><strong>emg_from_otb</strong> and <strong>emg_from_demuse</strong>:<br>
+    Used to load .mat files coming from the DEMUSE or the OTBiolab+ software. Demuse has a fixed file structure while the OTB file, in order to be compatible with this library should be exported with a strict structure as described in the function emg_from_otb. In both cases, the input file is a .mat file.</li>
+<li><strong>emg_from_delsys</strong>:<br>
+    Used to load a combination of .mat and .txt files exported by the Delsys Neuromap and Neuromap explorer software containing the raw EMG signal and the decomposition outcome.</li>
+<li><strong>emg_from_customcsv</strong>:<br>
+    Used to load custom file formats contained in .csv files.</li>
+<li><strong>refsig_from_otb</strong>, <strong>refsig_from_delsys</strong> and <strong>refsig_from_customcsv</strong>:<br>
+    Used to load files from the OTBiolab+ (.mat) and the Delsys Neuromap software (.mat) or from a custom .csv file that contain only the reference signal.</li>
+<li><strong>save_json_emgfile</strong>, <strong>emg_from_json</strong>:<br>
+    Used to save the working file to a .json file or to load the .json file.</li>
+<li><strong>askopenfile</strong>, <strong>asksavefile</strong>:<br>
+    A quick GUI implementation that allows users to select the file to open or save.</li>
+</ul>
+<h2 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h2>
+<p>Once opened, the file is returned as a dictionary with key-value pairs:<br></p>
+<p>"SOURCE" : source of the file (i.e., "CUSTOMCSV", "DEMUSE", "OTB", "DELSYS")<br>
+"FILENAME" : the name of the opened file<br>
+"RAW_SIGNAL" : the raw EMG signal<br>
+"REF_SIGNAL" : the reference signal<br>
+"ACCURACY" : accuracy score (depending on source file type)<br>
+"IPTS" : pulse train (decomposed source, depending on source file type)<br>
+"MUPULSES" : instants of firing<br>
+"FSAMP" : sampling frequency<br>
+"IED" : interelectrode distance<br>
+"EMG_LENGTH" : length of the emg file (in samples)<br>
+"NUMBER_OF_MUS" : total number of MUs<br>
+"BINARY_MUS_FIRING" : binary representation of MUs firings<br>
+"EXTRAS" : additional custom values<br></p>
+<p>The only exception is when files are loaded with just the reference signal:</p>
+<p>"SOURCE" : source of the file (i.e., "CUSTOMCSV_REFSIG", "OTB_REFSIG", "DELSYS_REFSIG")<br>
+"FILENAME" : the name of the opened file<br>
+"FSAMP" : sampling frequency<br>
+"REF_SIGNAL" : the reference signal<br>
+"EXTRAS" : additional custom values<br></p>
+<p>Additional informations can be found in the
+<a href="../api_info/#openhdemg.library.info.info.data">info module</a> and in the
+function's description.</p>
+<p>Furthermore, all the users are encouraged to read the dedicated tutorial <a href="../tutorials/emgfile_structure/">Structure of the emgfile</a>.</p>
+<p><br/></p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="openhdemg.library.openfiles.emg_from_samplefile" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">emg_from_samplefile</span><span class="p">()</span></code>
+
+<a href="#openhdemg.library.openfiles.emg_from_samplefile" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Load the sample file. This file has been decomposed with the OTBiolab+
+software and contains some reference MUs together with the force/reference
+signal.</p>
+<p>This file contains only few MUs for storage reasons.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>emgfile</code>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>The dictionary containing the emgfile.</p>
+              </div>
+                <p>
+                  <span class="doc-returns-annotation">
+                    <b>TYPE:</b>
+                      <code>dict</code>
+                  </span>
+                </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div><p><br/></p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="openhdemg.library.openfiles.emg_from_otb" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">emg_from_otb</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">ext_factor</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">refsig</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;fullsampled&#39;</span><span class="p">],</span> <span class="n">version</span><span class="o">=</span><span class="s1">&#39;1.5.9.3&#39;</span><span class="p">,</span> <span class="n">extras</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ignore_negative_ipts</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+<a href="#openhdemg.library.openfiles.emg_from_otb" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Import the .mat file exportable from OTBiolab+.</p>
+<p>This function is used to import the .mat file exportable by the OTBiolab+
+software as a dictionary of Python objects (mainly pandas dataframes).</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>filepath</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The directory and the name of the file to load
+(including file extension .mat).
+This can be a simple string, the use of Path is not necessary.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str or Path</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ext_factor</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The extension factor used for the decomposition in OTbiolab+.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>int</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>8</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>refsig</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Whether to seacrh also for the REF_SIGNAL and whether to load the full
+or sub-sampled one. The list is composed as [bool, str]. str can be
+"fullsampled" or "subsampled". Please read notes section.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>list</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>[True, &#34;fullsampled&#34;]</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>version</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Version of the OTBiolab+ software used (4 points).
+Tested versions are:
+    "1.5.3.0",
+    "1.5.4.0",
+    "1.5.5.0",
+    "1.5.6.0",
+    "1.5.7.2",
+    "1.5.7.3",
+    "1.5.8.0",
+    "1.5.9.3",
+If your specific version is not available in the tested versions,
+trying with the closer one usually works.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#34;1.5.9.3&#34;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>extras</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Extras is used to store additional custom values. These information
+will be stored in a pd.DataFrame with columns named as in the .mat
+file. If not None, pass a regex pattern unequivocally identifying the
+variable in the .mat file to load as extras.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>None or str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>None</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ignore_negative_ipts</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>This parameter determines the silhouette score estimation. If True,
+only positive ipts values are used during peak and noise clustering.
+This is particularly important for compensating sources with large
+negative components.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>bool</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>False</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>emgfile</code>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>A dictionary containing all the useful variables.</p>
+              </div>
+                <p>
+                  <span class="doc-returns-annotation">
+                    <b>TYPE:</b>
+                      <code>dict</code>
+                  </span>
+                </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="see-also" open>
+  <summary>See also</summary>
+  <ul>
+<li>refsig_from_otb : import REF_SIGNAL in the .mat file exportable from
+    OTBiolab+.</li>
+<li>emg_from_demuse : import the .mat file used in DEMUSE.</li>
+<li>emg_from_customcsv : Import custom data from a .csv file.</li>
+<li>askopenfile : Select and open files with a GUI.</li>
+</ul>
+</details>
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RAISES</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+              <span class="doc-raises-annotation">
+                  <code>ValueError</code>
+              </span>
+            </td>
+            <td class="doc-raises-details">
+              <div class="doc-md-description">
+                <p>When a wrong value is passed to version=.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The returned file is called <code>emgfile</code> for convention.</p>
+<p>The input .mat file exported from the OTBiolab+ software must have a
+specific content:</p>
+<ul>
+<li>The reference signal is optional but, if present, there should be the
+    fullsampled or the subsampled version (in OTBioLab+ the "performed
+    path" refers to the subsampled signal, the "acquired data" to the
+    fullsampled signal), REF_SIGNAL is expected to be expressed as % of
+    the MVC (but not compulsory).</li>
+<li>Both the IPTS ('Source for decomposition...' in OTBioLab+) and the
+    BINARY_MUS_FIRING ('Decomposition of...' in OTBioLab+) must be
+    present.</li>
+<li>The raw EMG signal must be present (it has no specific name in
+    OTBioLab+) with all the channels. Don't exclude unwanted channels
+    before exporting the .mat file.</li>
+<li>NO OTHER ELEMENTS SHOULD BE PRESENT, unless an appropriate regex pattern
+is passed to 'extras='!</li>
+</ul>
+<p>Structure of the returned emgfile:</p>
+<div class="language-text highlight"><pre><span></span><code>emgfile = {
+    &quot;SOURCE&quot;: SOURCE,
+    &quot;FILENAME&quot;: FILENAME,
+    &quot;RAW_SIGNAL&quot;: RAW_SIGNAL,
+    &quot;REF_SIGNAL&quot;: REF_SIGNAL,
+    &quot;ACCURACY&quot;: SIL,
+    &quot;IPTS&quot;: IPTS,
+    &quot;MUPULSES&quot;: MUPULSES,
+    &quot;FSAMP&quot;: FSAMP,
+    &quot;IED&quot;: IED,
+    &quot;EMG_LENGTH&quot;: EMG_LENGTH,
+    &quot;NUMBER_OF_MUS&quot;: NUMBER_OF_MUS,
+    &quot;BINARY_MUS_FIRING&quot;: BINARY_MUS_FIRING,
+    &quot;EXTRAS&quot;: EXTRAS,
+}
+</code></pre></div>
+<p>For OTBiolab+ files, the accuracy is estimated with the silhouette (SIL)
+score.</p>
+</details>
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <p>For an extended explanation of the imported emgfile use:</p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">openhdemg.library</span> <span class="k">as</span> <span class="nn">emg</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">emgfile</span> <span class="o">=</span> <span class="n">emg</span><span class="o">.</span><span class="n">emg_from_otb</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;path/filename.mat&quot;</span><span class="p">)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span> <span class="o">=</span> <span class="n">emg</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span><span class="o">.</span><span class="n">data</span><span class="p">(</span><span class="n">emgfile</span><span class="p">)</span>
+</span></code></pre></div>
+
+    </div>
+
+</div><p><br/></p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="openhdemg.library.openfiles.emg_from_demuse" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">emg_from_demuse</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">ignore_negative_ipts</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+<a href="#openhdemg.library.openfiles.emg_from_demuse" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Import the .mat file decomposed in DEMUSE.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>filepath</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The directory and the name of the file to load
+(including file extension .mat).
+This can be a simple string, the use of Path is not necessary.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str or Path</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ignore_negative_ipts</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>This parameter determines the silhouette score estimation. If True,
+only positive ipts values are used during peak and noise clustering.
+This is particularly important for compensating sources with large
+negative components.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>bool</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>False</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>emgfile</code>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>A dictionary containing all the useful variables.</p>
+              </div>
+                <p>
+                  <span class="doc-returns-annotation">
+                    <b>TYPE:</b>
+                      <code>dict</code>
+                  </span>
+                </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="see-also" open>
+  <summary>See also</summary>
+  <ul>
+<li>emg_from_otb : import the decomposed .mat file exportable by OTBiolab+.</li>
+<li>refsig_from_otb : import REF_SIGNAL in the .mat file exportable by
+    OTBiolab+.</li>
+<li>emg_from_customcsv : Import custom data from a .csv file.</li>
+<li>askopenfile : Select and open files with a GUI.</li>
+</ul>
+</details>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The returned file is called <code>emgfile</code> for convention.</p>
+<p>The demuse file contains 65 raw EMG channels (1 empty) instead of 64
+(as for OTB matrix standards) in the case of a 64 electrodes matrix.</p>
+<p>Structure of the emgfile:</p>
+<div class="language-text highlight"><pre><span></span><code>emgfile = {
+    &quot;SOURCE&quot;: SOURCE,
+    &quot;FILENAME&quot;: FILENAME,
+    &quot;RAW_SIGNAL&quot;: RAW_SIGNAL,
+    &quot;REF_SIGNAL&quot;: REF_SIGNAL,
+    &quot;ACCURACY&quot;: SIL
+    &quot;IPTS&quot;: IPTS,
+    &quot;MUPULSES&quot;: MUPULSES,
+    &quot;FSAMP&quot;: FSAMP,
+    &quot;IED&quot;: IED,
+    &quot;EMG_LENGTH&quot;: EMG_LENGTH,
+    &quot;NUMBER_OF_MUS&quot;: NUMBER_OF_MUS,
+    &quot;BINARY_MUS_FIRING&quot;: BINARY_MUS_FIRING,
+    &quot;EXTRAS&quot;: EXTRAS,
+}
+</code></pre></div>
+<p>For DEMUSE files, the accuracy is estimated with the silhouette (SIL)
+score.</p>
+</details>
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <p>For an extended explanation of the imported emgfile:</p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">openhdemg.library</span> <span class="k">as</span> <span class="nn">emg</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">emgfile</span> <span class="o">=</span> <span class="n">emg</span><span class="o">.</span><span class="n">emg_from_demuse</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;path/filename.mat&quot;</span><span class="p">)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span> <span class="o">=</span> <span class="n">emg</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span><span class="o">.</span><span class="n">data</span><span class="p">(</span><span class="n">emgfile</span><span class="p">)</span>
+</span></code></pre></div>
+
+    </div>
+
+</div><p><br/></p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="openhdemg.library.openfiles.emg_from_delsys" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">emg_from_delsys</span><span class="p">(</span><span class="n">rawemg_filepath</span><span class="p">,</span> <span class="n">mus_directory</span><span class="p">,</span> <span class="n">emg_sensor_name</span><span class="o">=</span><span class="s1">&#39;Galileo sensor&#39;</span><span class="p">,</span> <span class="n">refsig_sensor_name</span><span class="o">=</span><span class="s1">&#39;Trigno Load Cell&#39;</span><span class="p">,</span> <span class="n">filename_from</span><span class="o">=</span><span class="s1">&#39;mus_directory&#39;</span><span class="p">)</span></code>
+
+<a href="#openhdemg.library.openfiles.emg_from_delsys" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Import the .mat and .txt files exportable from Delsys softwares.</p>
+<p>This function is used to load .mat files from the Delsys Neuromap software
+(containing the RAW EMG signal and the reference signal) and .txt files
+from the Delsys Neuromap Explorer software (containing the decomposition
+outcome, accuracy measure and MUAPs).</p>
+<p>We currenlty support only recordings performed with the "Galileo sensor"
+(4-pin). Support for the 5-pin sensor will be provided in the next
+releases.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>rawemg_filepath</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The directory and the name of the file containing the raw EMG data to
+load (including file extension .mat).
+This can be a simple string, the use of Path is not necessary.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str or Path</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>mus_directory</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The directory (path to the folder) containing .txt files with firing
+times, MUAPs, and accuracy data.
+This can be a simple string, the use of Path is not necessary.
+The .txt files should all be contained in the same folder and should
+follow the standard Deslys naming convention (e.g., the file
+containing accuracy data will have the string "Stats" in its name).</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str or Path</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>emg_sensor_name</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The name of the EMG sensor used to collect the data. We currently
+support only the "Galileo sensor" (4-pin).</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#34;Galileo sensor&#34;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>refsig_sensor_name</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The name of the sensor used to record the reference signal. This is by
+default "Trigno Load Cell". However, since this can have any name (and
+can also be renamed by the user), here you should pass the effective
+name (or regex pattern) by which you identify the sensor.
+Ignore if no reference signal was recorded.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#34;Trigno Load Cell&#34;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filename_from</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The source by which the imported file will be named. This can either be
+the same name of the file containing the raw EMG signal or of the
+folder containing the decomposition outcome.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str {&#34;rawemg_file&#34;, &#34;mus_directory&#34;}</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#34;mus_directory&#34;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>emgfile</code>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>A dictionary containing all the useful variables.</p>
+              </div>
+                <p>
+                  <span class="doc-returns-annotation">
+                    <b>TYPE:</b>
+                      <code>dict</code>
+                  </span>
+                </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="see-also" open>
+  <summary>See also</summary>
+  <ul>
+<li>refsig_from_delsys : Import the reference signal exportable from Delsys.</li>
+<li>askopenfile : Select and open files with a GUI.</li>
+</ul>
+</details>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The returned file is called <code>emgfile</code> for convention.</p>
+<p>Structure of the returned emgfile:</p>
+<div class="language-text highlight"><pre><span></span><code>emgfile = {
+    &quot;SOURCE&quot;: SOURCE,
+    &quot;FILENAME&quot;: FILENAME,
+    &quot;RAW_SIGNAL&quot;: RAW_SIGNAL,
+    &quot;REF_SIGNAL&quot;: REF_SIGNAL,
+    &quot;ACCURACY&quot;: PROPRIETARY ACCURACY MEASURE,
+    &quot;IPTS&quot;: IPTS,
+    &quot;MUPULSES&quot;: MUPULSES,
+    &quot;FSAMP&quot;: FSAMP,
+    &quot;IED&quot;: IED,
+    &quot;EMG_LENGTH&quot;: EMG_LENGTH,
+    &quot;NUMBER_OF_MUS&quot;: NUMBER_OF_MUS,
+    &quot;BINARY_MUS_FIRING&quot;: BINARY_MUS_FIRING,
+    &quot;EXTRAS&quot;: EXTRAS,
+}
+</code></pre></div>
+<p>For Delsys files, the accuracy is the one provided after the decomposition
+and it is not computed internally, being this a proprietary measure.</p>
+<p>We collect the raw EMG and the reference signal from the .mat file because
+the .csv doesn't contain the information about sampling frequency.
+Similarly, we collect the firing times, MUAPs and accuracy from the .txt
+files because in the .mat file, the accuracy is contained in a table,
+which is not compatible with Python.</p>
+</details>
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <p>For an extended explanation of the imported emgfile use:</p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">openhdemg.library</span> <span class="k">as</span> <span class="nn">emg</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">emgfile</span> <span class="o">=</span> <span class="n">emg</span><span class="o">.</span><span class="n">emg_from_delsys</span><span class="p">(</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">... </span>    <span class="n">rawemg_filepath</span><span class="o">=</span><span class="s2">&quot;path/filename.mat&quot;</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">... </span>    <span class="n">mus_directory</span><span class="o">=</span><span class="s2">&quot;/directory&quot;</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">... </span><span class="p">)</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span> <span class="o">=</span> <span class="n">emg</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span><span class="o">.</span><span class="n">data</span><span class="p">(</span><span class="n">emgfile</span><span class="p">)</span>
+</span></code></pre></div>
+
+    </div>
+
+</div><p><br/></p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="openhdemg.library.openfiles.emg_from_customcsv" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">emg_from_customcsv</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">ref_signal</span><span class="o">=</span><span class="s1">&#39;REF_SIGNAL&#39;</span><span class="p">,</span> <span class="n">raw_signal</span><span class="o">=</span><span class="s1">&#39;RAW_SIGNAL&#39;</span><span class="p">,</span> <span class="n">ipts</span><span class="o">=</span><span class="s1">&#39;IPTS&#39;</span><span class="p">,</span> <span class="n">mupulses</span><span class="o">=</span><span class="s1">&#39;MUPULSES&#39;</span><span class="p">,</span> <span class="n">binary_mus_firing</span><span class="o">=</span><span class="s1">&#39;BINARY_MUS_FIRING&#39;</span><span class="p">,</span> <span class="n">accuracy</span><span class="o">=</span><span class="s1">&#39;ACCURACY&#39;</span><span class="p">,</span> <span class="n">extras</span><span class="o">=</span><span class="s1">&#39;EXTRAS&#39;</span><span class="p">,</span> <span class="n">fsamp</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span> <span class="n">ied</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span></code>
+
+<a href="#openhdemg.library.openfiles.emg_from_customcsv" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Import the emgfile from a custom .csv file.</p>
+<p>The variables of interest should be contained in columns. The name of the
+columns containing each variable can be specified by the user if different
+from the default values.</p>
+<p>This function detects the content of the .csv by parsing the .csv columns.
+For parsing, column labels should be provided. A label is a term common
+to all the columns containing the same information.
+For example, if the raw signal is contained in the columns 'RAW_SIGNAL_1',
+'RAW_SIGNAL_2', ... , 'RAW_SIGNAL_n', the label of the columns should be
+'RAW_SIGNAL'.
+If the parameters in input are not present in the .csv file, the user
+should leave the original inputs.</p>
+<p>The .csv file must contain at least the raw_signal and one of 'mupulses' or
+'binary_mus_firing'. If 'mupulses' is absent, it will be calculated from
+'binary_mus_firing' and viceversa.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>filepath</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The directory and the name of the file to load
+(including file extension .mat).
+This can be a simple string, the use of Path is not necessary.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str or Path</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ref_signal</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Label of the column containing the reference signal.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#39;REF_SIGNAL&#39;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>raw_signal</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Label of the column(s) containing the raw emg signal.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#39;RAW_SIGNAL&#39;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ipts</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Label of the column(s) containing the pulse train (decomposed source).</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#39;IPTS&#39;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>mupulses</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Label of the column(s) containing the times of firing.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#39;MUPULSES&#39;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>binary_mus_firing</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Label of the column(s) containing the binary representation
+of the MUs firings.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#39;BINARY_MUS_FIRING&#39;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>accuracy</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Label of the column(s) containing the accuracy score of the MUs
+firings.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#39;ACCURACY&#39;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>extras</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Label of the column(s) containing custom values. This information will
+be stored in a pd.DataFrame with columns named as in the .csv file.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#39;EXTRAS&#39;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fsamp</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Tha sampling frequency.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>int or float</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>2048</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ied</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The inter-electrode distance in mm.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>int or float</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>8</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>emgfile</code>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>A dictionary containing all the useful variables.</p>
+              </div>
+                <p>
+                  <span class="doc-returns-annotation">
+                    <b>TYPE:</b>
+                      <code>dict</code>
+                  </span>
+                </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="see-also" open>
+  <summary>See also</summary>
+  <ul>
+<li>emg_from_demuse : import the .mat file used in DEMUSE.</li>
+<li>emg_from_otb : import the .mat file exportable by OTBiolab+.</li>
+<li>refsig_from_otb : import reference signal in the .mat file exportable by
+    OTBiolab+.</li>
+<li>refsig_from_customcsv : Import the reference signal from a custom .csv.</li>
+<li>askopenfile : Select and open files with a GUI.</li>
+</ul>
+</details>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The returned file is called <code>emgfile</code> for convention.</p>
+<p>Structure of the emgfile:</p>
+<div class="language-text highlight"><pre><span></span><code>emgfile = {
+    &quot;SOURCE&quot;: SOURCE,
+    &quot;FILENAME&quot;: FILENAME,
+    &quot;RAW_SIGNAL&quot;: RAW_SIGNAL,
+    &quot;REF_SIGNAL&quot;: REF_SIGNAL,
+    &quot;ACCURACY&quot;: ACCURACY,
+    &quot;IPTS&quot;: IPTS,
+    &quot;MUPULSES&quot;: MUPULSES,
+    &quot;FSAMP&quot;: FSAMP,
+    &quot;IED&quot;: IED,
+    &quot;EMG_LENGTH&quot;: EMG_LENGTH,
+    &quot;NUMBER_OF_MUS&quot;: NUMBER_OF_MUS,
+    &quot;BINARY_MUS_FIRING&quot;: BINARY_MUS_FIRING,
+    &quot;EXTRAS&quot;: EXTRAS,
+}
+</code></pre></div>
+</details>
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <p>An example of the .csv file to load:</p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt;</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="go">REF_SIGNAL  RAW_SIGNAL (1)  RAW_SIGNAL (2)  RAW_SIGNAL (3)  RAW_SIGNAL (4)  ...  MUPULSES (2)  BINARY_MUS_FIRING (1)  BINARY_MUS_FIRING (2)  ACCURACY (1)  ACCURACY (2)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="go">         1        0.100000        0.100000        0.100000        0.100000  ...           1.0                      0                      0          0.89          0.95</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">         2        2.000000        2.000000        2.000000        2.000000  ...           2.0                      0                      0                                  </span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">         3        0.500000        0.500000        0.500000        0.500000  ...           9.0                      0                      0                                  </span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">         4        0.150000        0.150000        0.150000        0.150000  ...          15.0                      0                      1                                  </span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">         5        0.350000        0.350000        0.350000        0.350000  ...          18.0                      1                      1                                  </span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="go">         6        0.215000        0.215000        0.215000        0.215000  ...          22.0                      1                      0                            </span>
+</span></code></pre></div>
+    <p>For an extended explanation of the imported emgfile use:</p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">openhdemg.library</span> <span class="k">as</span> <span class="nn">emg</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">emgfile</span> <span class="o">=</span> <span class="n">emg_from_customcsv</span><span class="p">(</span><span class="n">filepath</span> <span class="o">=</span> <span class="s2">&quot;mypath/file.csv&quot;</span><span class="p">)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span> <span class="o">=</span> <span class="n">emg</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span><span class="o">.</span><span class="n">data</span><span class="p">(</span><span class="n">emgfile</span><span class="p">)</span>
+</span></code></pre></div>
+
+    </div>
+
+</div><p><br/></p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="openhdemg.library.openfiles.refsig_from_otb" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">refsig_from_otb</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">refsig</span><span class="o">=</span><span class="s1">&#39;fullsampled&#39;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s1">&#39;1.5.9.3&#39;</span><span class="p">,</span> <span class="n">extras</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#openhdemg.library.openfiles.refsig_from_otb" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Import the reference signal in the .mat file exportable by OTBiolab+.</p>
+<p>This function is used to import the .mat file exportable by the OTBiolab+
+software as a dictionary of Python objects (mainly pandas dataframes).
+Compared to the function emg_from_otb, this function only imports the
+REF_SIGNAL and, therefore, it can be used for special cases where only the
+REF_SIGNAL is necessary. This will allow for a faster execution of the
+script and to avoid exceptions for missing data.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>filepath</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The directory and the name of the file to load (including file
+extension .mat). This can be a simple string, the use of Path is not
+necessary.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str or Path</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>refsig</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Whether to load the full or sub-sampled one.
+Please read notes section.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str {&#34;fullsampled&#34;, &#34;subsampled&#34;}</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#34;fullsampled&#34;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>version</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Version of the OTBiolab+ software used (4 points).
+Tested versions are:
+    "1.5.3.0",
+    "1.5.4.0",
+    "1.5.5.0",
+    "1.5.6.0",
+    "1.5.7.2",
+    "1.5.7.3",
+    "1.5.8.0",
+    "1.5.9.3",
+If your specific version is not available in the tested versions,
+trying with the closer one usually works, but please double check the
+results.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#34;1.5.9.3&#34;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>extras</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Extras is used to store additional custom values. These information
+will be stored in a pd.DataFrame with columns named as in the .mat
+file. If not None, pass a regex pattern unequivocally identifying the
+variable in the .mat file to load as extras.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>None or str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>None</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>emg_refsig</code>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>A dictionary containing all the useful variables.</p>
+              </div>
+                <p>
+                  <span class="doc-returns-annotation">
+                    <b>TYPE:</b>
+                      <code>dict</code>
+                  </span>
+                </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="see-also" open>
+  <summary>See also</summary>
+  <ul>
+<li>emg_from_otb : import the .mat file exportable by OTBiolab+.</li>
+<li>emg_from_demuse : import the .mat file used in DEMUSE.</li>
+<li>emg_from_customcsv : Import custom data from a .csv file.</li>
+<li>refsig_from_customcsv : Import the reference signal from a custom .csv.</li>
+<li>askopenfile : Select and open files with a GUI.</li>
+</ul>
+</details>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The returned file is called <code>emg_refsig</code> for convention.</p>
+<p>The input .mat file exported from the OTBiolab+ software must contain:</p>
+<ul>
+<li>Reference signal: there must be the fullsampled or the subsampled
+    version (in OTBioLab+ the "performed path" refers to the subsampled
+    signal, the "acquired data" to the fullsampled signal), REF_SIGNAL is
+    expected to be expressed as % of the MVC (but not compulsory).</li>
+<li>NO OTHER ELEMENTS SHOULD BE PRESENT, unless an appropriate regex pattern
+is passed to 'extras='!</li>
+</ul>
+<p>Structure of the returned emg_refsig:</p>
+<div class="language-text highlight"><pre><span></span><code>emg_refsig = {
+    &quot;SOURCE&quot;: SOURCE,
+    &quot;FILENAME&quot;: FILENAME,
+    &quot;FSAMP&quot;: FSAMP,
+    &quot;REF_SIGNAL&quot;: REF_SIGNAL,
+    &quot;EXTRAS&quot;: EXTRAS,
+}
+</code></pre></div>
+</details>
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <p>For an extended explanation of the imported emgfile use:</p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">openhdemg.library</span> <span class="k">as</span> <span class="nn">emg</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">emgfile</span> <span class="o">=</span> <span class="n">emg</span><span class="o">.</span><span class="n">refsig_from_otb</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;path/filename.mat&quot;</span><span class="p">)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span> <span class="o">=</span> <span class="n">emg</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span><span class="o">.</span><span class="n">data</span><span class="p">(</span><span class="n">emgfile</span><span class="p">)</span>
+</span></code></pre></div>
+
+    </div>
+
+</div><p><br/></p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="openhdemg.library.openfiles.refsig_from_delsys" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">refsig_from_delsys</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">refsig_sensor_name</span><span class="o">=</span><span class="s1">&#39;Trigno Load Cell&#39;</span><span class="p">)</span></code>
+
+<a href="#openhdemg.library.openfiles.refsig_from_delsys" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Import the reference signal in the .mat file exportable by Delsys Neuromap.</p>
+<p>This function is used to import the .mat file exportable by the Delsys
+Neuromap software as a dictionary of Python objects (mainly pandas
+dataframes). Compared to the function emg_from_delsys, this function only
+imports the REF_SIGNAL and, therefore, it can be used for special cases
+where only the REF_SIGNAL is necessary. This will allow for a faster
+execution of the script and to avoid exceptions for missing data.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>filepath</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The directory and the name of the file to load (including file
+extension .mat). This can be a simple string, the use of Path is not
+necessary.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str or Path</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>refsig_sensor_name</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The name of the sensor used to record the reference signal. This is by
+default "Trigno Load Cell". However, since this can have any name (and
+can also be renamed by the user), here you should pass the effective
+name (or regex pattern) by which you identify the sensor.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#34;Trigno Load Cell&#34;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>emg_refsig</code>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>A dictionary containing all the useful variables.</p>
+              </div>
+                <p>
+                  <span class="doc-returns-annotation">
+                    <b>TYPE:</b>
+                      <code>dict</code>
+                  </span>
+                </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="see-also" open>
+  <summary>See also</summary>
+  <ul>
+<li>emg_from_delsys : Import the Delsys decomposition outcome.</li>
+<li>askopenfile : Select and open files with a GUI.</li>
+</ul>
+</details>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The returned file is called <code>emg_refsig</code> for convention.</p>
+<p>Structure of the returned emg_refsig:</p>
+<div class="language-text highlight"><pre><span></span><code>emg_refsig = {
+    &quot;SOURCE&quot;: SOURCE,
+    &quot;FILENAME&quot;: FILENAME,
+    &quot;FSAMP&quot;: FSAMP,
+    &quot;REF_SIGNAL&quot;: REF_SIGNAL,
+    &quot;EXTRAS&quot;: EXTRAS,
+}
+</code></pre></div>
+</details>
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <p>For an extended explanation of the imported emgfile use:</p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">openhdemg.library</span> <span class="k">as</span> <span class="nn">emg</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">emgfile</span> <span class="o">=</span> <span class="n">emg</span><span class="o">.</span><span class="n">refsig_from_delsys</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;path/filename.mat&quot;</span><span class="p">)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span> <span class="o">=</span> <span class="n">emg</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span><span class="o">.</span><span class="n">data</span><span class="p">(</span><span class="n">emgfile</span><span class="p">)</span>
+</span></code></pre></div>
+
+    </div>
+
+</div><p><br/></p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="openhdemg.library.openfiles.refsig_from_customcsv" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">refsig_from_customcsv</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">ref_signal</span><span class="o">=</span><span class="s1">&#39;REF_SIGNAL&#39;</span><span class="p">,</span> <span class="n">extras</span><span class="o">=</span><span class="s1">&#39;EXTRAS&#39;</span><span class="p">,</span> <span class="n">fsamp</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span></code>
+
+<a href="#openhdemg.library.openfiles.refsig_from_customcsv" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Import the reference signal from a custom .csv file.</p>
+<p>Compared to the function emg_from_customcsv, this function only imports the
+REF_SIGNAL and, therefore, it can be used for special cases where only the
+REF_SIGNAL is necessary. This will allow for a faster execution of the
+script and to avoid exceptions for missing data.</p>
+<p>This function detects the content of the .csv by parsing the .csv columns.
+For parsing, column labels should be provided. A label is a term common
+to all the columns containing the same information.
+For example, if the ref signal is contained in the column 'REF_SIGNAL', the
+label of the columns should be 'REF_SIGNAL' or a part of it (e.g., 'REF').
+If the parameters in input are not present in the .csv file (e.g.,
+'EXTRAS'), the user should leave the original inputs.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>filepath</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The directory and the name of the file to load
+(including file extension .mat).
+This can be a simple string, the use of Path is not necessary.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str or Path</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ref_signal</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Label of the column containing the reference signal.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#39;REF_SIGNAL&#39;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>extras</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Label of the column(s) containing custom values. These information
+will be stored in a pd.DataFrame with columns named as in the .csv
+file.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#39;EXTRAS&#39;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fsamp</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Tha sampling frequency.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>int or float</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>2048</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>emg_refsig</code>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>A dictionary containing all the useful variables.</p>
+              </div>
+                <p>
+                  <span class="doc-returns-annotation">
+                    <b>TYPE:</b>
+                      <code>dict</code>
+                  </span>
+                </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="see-also" open>
+  <summary>See also</summary>
+  <ul>
+<li>emg_from_customcsv : Import the emgfile from a custom .csv file.</li>
+<li>askopenfile : Select and open files with a GUI.</li>
+</ul>
+</details>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The returned file is called <code>emg_refsig</code> for convention.</p>
+<p>Structure of the returned emg_refsig:</p>
+<div class="language-text highlight"><pre><span></span><code>emg_refsig = {
+    &quot;SOURCE&quot;: SOURCE,
+    &quot;FILENAME&quot;: FILENAME,
+    &quot;FSAMP&quot;: FSAMP,
+    &quot;REF_SIGNAL&quot;: REF_SIGNAL,
+    &quot;EXTRAS&quot;: EXTRAS,
+}
+</code></pre></div>
+</details>
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <p>An example of the .csv file to load:</p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt;</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="go">REF_SIGNAL  EXTRAS (1)  EXTRAS (2)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="go">         1         0.1           0</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">         2         0.2           0</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">         3         0.3           0</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">         4         0.4           0</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">         5         0.5           1</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="go">         6         0.6           1</span>
+</span></code></pre></div>
+    <p>For an extended explanation of the imported emgfile use:</p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">openhdemg.library</span> <span class="k">as</span> <span class="nn">emg</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">emgfile</span> <span class="o">=</span> <span class="n">refsig_from_customcsv</span><span class="p">(</span><span class="n">filepath</span> <span class="o">=</span> <span class="s2">&quot;mypath/file.csv&quot;</span><span class="p">)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span> <span class="o">=</span> <span class="n">emg</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span><span class="o">.</span><span class="n">data</span><span class="p">(</span><span class="n">emgfile</span><span class="p">)</span>
+</span></code></pre></div>
+
+    </div>
+
+</div><p><br/></p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="openhdemg.library.openfiles.save_json_emgfile" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">save_json_emgfile</span><span class="p">(</span><span class="n">emgfile</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">compresslevel</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></code>
+
+<a href="#openhdemg.library.openfiles.save_json_emgfile" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Save the emgfile or emg_refsig as a JSON file.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>emgfile</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The dictionary containing the emgfile.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>dict</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filepath</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The directory and the name of the file to save (including file
+extension .json).
+This can be a simple string; The use of Path is not necessary.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str or Path</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>compresslevel</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>An int from 0 to 9, where 0 is no compression and nine maximum
+compression. Compressed files will take less space, but will require
+more computation. The relationship between compression level and time
+required for the compression is not linear. For optimised performance,
+we suggest values between 2 and 6, with 4 providing the best balance.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>int</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>4</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div><p><br/></p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="openhdemg.library.openfiles.emg_from_json" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">emg_from_json</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span></code>
+
+<a href="#openhdemg.library.openfiles.emg_from_json" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Load the emgfile or emg_refsig stored in json format.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>filepath</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The directory and the name of the file to load (including file
+extension .json).
+This can be a simple string, the use of Path is not necessary.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str or Path</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>emgfile</code>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>The dictionary containing the emgfile.</p>
+              </div>
+                <p>
+                  <span class="doc-returns-annotation">
+                    <b>TYPE:</b>
+                      <code>dict</code>
+                  </span>
+                </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="see-also" open>
+  <summary>See also</summary>
+  <ul>
+<li>save_json_emgfile : Save the emgfile or emg_refsig as a JSON file.</li>
+<li>askopenfile : Select and open files with a GUI.</li>
+</ul>
+</details>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The returned file is called <code>emgfile</code> for convention
+(or <code>emg_refsig</code> if SOURCE in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]).</p>
+</details>
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <p>For an extended explanation of the imported emgfile use:</p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">openhdemg.library</span> <span class="k">as</span> <span class="nn">emg</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">emgfile</span> <span class="o">=</span> <span class="n">emg</span><span class="o">.</span><span class="n">emg_from_json</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;path/filename.json&quot;</span><span class="p">)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span> <span class="o">=</span> <span class="n">emg</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span><span class="o">.</span><span class="n">data</span><span class="p">(</span><span class="n">emgfile</span><span class="p">)</span>
+</span></code></pre></div>
+
+    </div>
+
+</div><p><br/></p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="openhdemg.library.openfiles.askopenfile" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">askopenfile</span><span class="p">(</span><span class="n">initialdir</span><span class="o">=</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="n">filesource</span><span class="o">=</span><span class="s1">&#39;OPENHDEMG&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+<a href="#openhdemg.library.openfiles.askopenfile" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Select and open files with a GUI.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>initialdir</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The directory of the file to load (excluding file name).
+This can be a simple string, the use of Path is not necessary.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str or Path</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#34;/&#34;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filesource</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The source of the file. See notes for how files should be exported
+from other softwares or platforms.</p>
+<p><code>OPENHDEMG</code>
+    File saved from openhdemg (.json).</p>
+<p><code>DEMUSE</code>
+    File saved from DEMUSE (.mat).</p>
+<p><code>OTB</code>
+    File exported from OTB with decomposition and EMG signal.
+    (.mat).</p>
+<p><code>DELSYS</code>
+    Files exported from Delsys Neuromap and Neuromap explorer with
+    decomposition and EMG signal (.mat + .txt).</p>
+<p><code>CUSTOMCSV</code>
+    Custom file format (.csv) with decomposition and EMG signal.</p>
+<p><code>OTB_REFSIG</code>
+    File exported from OTB with only the reference signal (.mat).</p>
+<p><code>DELSYS_REFSIG</code>
+    File exported from DELSYS Neuromap with the reference signal
+    (.mat).</p>
+<p><code>CUSTOMCSV_REFSIG</code>
+    Custom file format (.csv) containing only the reference signal.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str {&#34;OPENHDEMG&#34;, &#34;DEMUSE&#34;, &#34;OTB&#34;, &#34;DELSYS&#34;, &#34;CUSTOMCSV&#34;, &#34;OTB_REFSIG&#34;, &#34;DELSYS_REFSIG&#34;, CUSTOMCSV_REFSIG}</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#34;OPENHDEMG&#34;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ignore_negative_ipts</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>This parameter determines the silhouette score estimation. If True,
+only positive ipts values are used during peak and noise clustering.
+This is particularly important for compensating sources with large
+negative components. Currently, this parameter is used when loading
+files decomposed in DEMUSE or OTB.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>bool</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>False</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>otb_ext_factor</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The extension factor used for the decomposition in the OTbiolab+
+software.
+Ignore if loading other files.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>int</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>8</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>otb_refsig_type</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Whether to seacrh also for the REF_SIGNAL and whether to load the full
+or sub-sampled one. The list is composed as [bool, str]. str can be
+"fullsampled" or "subsampled".
+Ignore if loading other files.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>list</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>[True, &#34;fullsampled&#34;]</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>otb_version</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Version of the OTBiolab+ software used (4 points).
+Tested versions are:
+    "1.5.3.0",
+    "1.5.4.0",
+    "1.5.5.0",
+    "1.5.6.0",
+    "1.5.7.2",
+    "1.5.7.3",
+    "1.5.8.0",
+    "1.5.9.3",
+If your specific version is not available in the tested versions,
+trying with the closer one usually works, but please double check the
+results. Ignore if loading other files.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#34;1.5.9.3&#34;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>otb_extras</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Extras is used to store additional custom values. These information
+will be stored in a pd.DataFrame with columns named as in the .mat
+file. If not None, pass a regex pattern unequivocally identifying the
+variable in the .mat file to load as extras.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>None or str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>None</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>delsys_emg_sensor_name</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The name of the EMG sensor used to collect the data. We currently
+support only the "Galileo sensor".
+Ignore if loading other files or only the reference signal.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#34;Galileo sensor&#34;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>delsys_refsig_sensor_name</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The name of the sensor used to record the reference signal. This is by
+default "Trigno Load Cell". However, since this can have any name (and
+can also be renamed by the user), here you should pass the effective
+name (or regex pattern) by which you identify the sensor.
+Ignore if loading other files or if no reference signal was recorded.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#34;Trigno Load Cell&#34;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>delsys_filename_from</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The source by which the imported file will be named. This can either be
+the same name of the file containing the raw EMG signal or of the
+folder containing the decomposition outcome.
+Ignore if loading other files or only the reference signal.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str {&#34;rawemg_file&#34;, &#34;mus_directory&#34;}</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#34;mus_directory&#34;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>custom_ref_signal</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Label of the column(s) containing the reference signal of the custom
+file.
+This and the following arguments are needed only for custom files.
+Ignore if loading other files.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#39;REF_SIGNAL&#39;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>custom_raw_signal</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Label of the column(s) containing the raw emg signal of the custom
+file. Ignore if loading other files.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#39;RAW_SIGNAL&#39;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>custom_ipts</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Label of the column(s) containing the pulse train of the custom file.
+Ignore if loading other files.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#39;IPTS&#39;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>custom_mupulses</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Label of the column(s) containing the times of firing of the custom
+file. Ignore if loading other files.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#39;MUPULSES&#39;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>custom_binary_mus_firing</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Label of the column(s) containing the binary representation
+of the MUs firings of the custom file.
+Ignore if loading other files.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#39;BINARY_MUS_FIRING&#39;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>custom_accuracy</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Label of the column(s) containing the accuracy score of the
+decomposed MUs in the custom file.
+Ignore if loading other files.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#39;ACCURACY&#39;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>custom_extras</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Label of the column(s) containing custom values in the custom file.
+This information will be stored in a pd.DataFrame with columns named
+as in the .csv file.
+Ignore if loading other files.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>str</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#39;EXTRAS&#39;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>custom_fsamp</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Tha sampling frequency of the custom file.
+Ignore if loading other files.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>int</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>2048</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>custom_ied</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The inter-electrode distance in mm of the custom file.
+Ignore if loading other files.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>int</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>8</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>emgfile</code>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>The dictionary containing the emgfile.</p>
+              </div>
+                <p>
+                  <span class="doc-returns-annotation">
+                    <b>TYPE:</b>
+                      <code>dict</code>
+                  </span>
+                </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="see-also" open>
+  <summary>See also</summary>
+  <ul>
+<li>asksavefile : select where to save files with a GUI.</li>
+</ul>
+</details>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The returned file is called <code>emgfile</code> for convention (or <code>emg_refsig</code>
+if SOURCE in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]).</p>
+<p>The input .mat file exported from the OTBiolab+ software should have a
+specific content:</p>
+<ul>
+<li>refsig signal is optional but, if present, there should be both the
+    fullsampled and the subsampled version (in OTBioLab+ the "performed
+    path" refers to the subsampled signal, the "acquired data" to the
+    fullsampled signal), REF_SIGNAL is expected to be expressed as % of
+    the MViF (but not compulsory).</li>
+<li>Both the IPTS ('Source for decomposition...' in OTBioLab+) and the
+    BINARY_MUS_FIRING ('Decomposition of...' in OTBioLab+) should be
+    present.</li>
+<li>The raw EMG signal should be present (it has no specific name in
+    OTBioLab+) with all the channels. Don't exclude unwanted channels
+    before exporting the .mat file.</li>
+<li>NO OTHER ELEMENTS SHOULD BE PRESENT! unless an appropriate regex pattern
+is passed to 'extras='!</li>
+</ul>
+<p>For Delsys files:
+We collect the raw EMG and the reference signal from the .mat file
+exported from the Delsys Neuromap software because the .csv doesn't
+contain the information about sampling frequency.
+Similarly, we collect the firing times, MUAPs and accuracy from the .txt
+files exported from the Delsys Neuromap Explorer software because in the
+.mat file, the accuracy is contained in a table, which is not compatible
+with Python.</p>
+<p>For custom .csv files:
+The variables of interest should be contained in columns. The name of the
+columns containing each variable can be specified by the user if different
+from the default values.
+This function detects the content of the .csv by parsing the .csv columns.
+For parsing, column labels should be provided. A label is a term common
+to all the columns containing the same information.
+For example, if the raw signal is contained in the columns 'RAW_SIGNAL_1',
+'RAW_SIGNAL_2', ... , 'RAW_SIGNAL_n', the label of the columns should be
+'RAW_SIGNAL'.
+If the parameters in input are not present in the .csv file, the user
+can simply leave the original inputs.
+Please see the documentation of the function emg_from_customcsv for
+additional informations.
+The .csv file must contain all the variables. The only admitted exceptions
+are 'ref_signal' and 'ipts'.</p>
+<p>Structure of the returned emgfile:</p>
+<div class="language-text highlight"><pre><span></span><code>emgfile = {
+    &quot;SOURCE&quot;: SOURCE,
+    &quot;FILENAME&quot;: FILENAME,
+    &quot;RAW_SIGNAL&quot;: RAW_SIGNAL,
+    &quot;REF_SIGNAL&quot;: REF_SIGNAL,
+    &quot;ACCURACY&quot;: accuracy score (depending on source file type),
+    &quot;IPTS&quot;: IPTS (depending on source file type),
+    &quot;MUPULSES&quot;: MUPULSES,
+    &quot;FSAMP&quot;: FSAMP,
+    &quot;IED&quot;: IED,
+    &quot;EMG_LENGTH&quot;: EMG_LENGTH,
+    &quot;NUMBER_OF_MUS&quot;: NUMBER_OF_MUS,
+    &quot;BINARY_MUS_FIRING&quot;: BINARY_MUS_FIRING,
+    &quot;EXTRAS&quot;: EXTRAS,
+}
+</code></pre></div>
+<p>Structure of the returned emg_refsig:</p>
+<div class="language-text highlight"><pre><span></span><code>emg_refsig = {
+    &quot;SOURCE&quot;: SOURCE,
+    &quot;FILENAME&quot;: FILENAME,
+    &quot;FSAMP&quot;: FSAMP,
+    &quot;REF_SIGNAL&quot;: REF_SIGNAL,
+    &quot;EXTRAS&quot;: EXTRAS,
+}
+</code></pre></div>
+</details>
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <p>For an extended explanation of the imported emgfile use:</p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">openhdemg.library</span> <span class="k">as</span> <span class="nn">emg</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">emgfile</span> <span class="o">=</span> <span class="n">emg</span><span class="o">.</span><span class="n">askopenfile</span><span class="p">(</span><span class="n">filesource</span><span class="o">=</span><span class="s2">&quot;OPENHDEMG&quot;</span><span class="p">)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span> <span class="o">=</span> <span class="n">emg</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span><span class="o">.</span><span class="n">data</span><span class="p">(</span><span class="n">emgfile</span><span class="p">)</span>
+</span></code></pre></div>
+
+    </div>
+
+</div><p><br/></p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="openhdemg.library.openfiles.asksavefile" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">asksavefile</span><span class="p">(</span><span class="n">emgfile</span><span class="p">,</span> <span class="n">compresslevel</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></code>
+
+<a href="#openhdemg.library.openfiles.asksavefile" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Select where to save files with a GUI.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>emgfile</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The dictionary containing the emgfile to save.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>dict</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>compresslevel</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>An int from 0 to 9, where 0 is no compression and nine maximum
+compression. Compressed files will take less space, but will require
+more computation. The relationship between compression level and time
+required for the compression is not linear. For optimised performance,
+we suggest values between 2 and 6, with 4 providing the best balance.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code>int</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>4</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="see-also" open>
+  <summary>See also</summary>
+  <ul>
+<li>askopenfile : select and open files with a GUI.</li>
+</ul>
+</details>
+    </div>
+
+</div><p><br/></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2022 - 2024. The openhdemg community
+    </div>
+  
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/GiacomoValliPhD/openhdemg" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://twitter.com/openhdemg" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.youtube.com/@openhdemg" target="_blank" rel="noopener" title="www.youtube.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305m-317.51 213.508V175.185l142.739 81.205z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy", "announce.dismiss", "navigation.top"], "search": "../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.83f73b43.min.js"></script>
+      
+    
+  </body>
+</html>
