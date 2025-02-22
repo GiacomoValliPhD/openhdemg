@@ -24,7 +24,8 @@ This version is fully backward compatible with v0.1.1 and with v0.1.0, although 
     - All the functions (plotting and analyses) using spike triggered averaging can now handle empty MUs.
     - The `norm_twod_xcorr` function now works with both pandas DataFrames and NumPy arrays.
     - The `resize_emgfile` function has standardised MUPULSES dtype conversion to avoid overflow errors.
-    - The `compute_svr` function has improved handling of firing discontinuity at the beginning of the discharge pattern to avoid SVR fitting errors, and standardised dimensionality of the returned fits.
+    - The `compute_svr` function has improved handling of firing discontinuity at the beginning of the discharge pattern to avoid SVR fitting errors, and standardised dimensionality of the returned fits. It now also works on files containing empty MUs.
+    - The `compute_deltaf`function now also works on files containing empty MUs.
     - The `plot_emgsig` function has improved handling of the manual offset for small offset values which caused a mismatch between locators and labels.
 
 ### Known issues
