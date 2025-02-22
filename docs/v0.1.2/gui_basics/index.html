@@ -1,0 +1,2244 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="All you need to know about openhdemg">
+      
+      
+        <meta name="author" content="Giacomo Valli & Paul Ritsche">
+      
+      
+      
+        <link rel="prev" href="../gui_intro/">
+      
+      
+        <link rel="next" href="../gui_advanced/">
+      
+      
+      <link rel="icon" href="../yml_graphics/transp_icon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.4">
+    
+    
+      
+        <title>Basics - openhdemg</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.8608ea7d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../docs/overrides/custom.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  <link rel="stylesheet" type="text/css" href="None/custom.css">
+
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#graphical-interface" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+<!-- Custom Banner -->
+<div style="
+    display: flex;               /* Enable flexbox */
+    justify-content: center;     /* Center content horizontally */
+    align-items: center;         /* Center content vertically */
+    height: 50px;                /* Set the height of the banner */
+    position: sticky;            /* Make the banner stick to the top */
+    top: 0;                      /* Position the banner at the top of the page */
+    left: 0;                     /* Align the banner to the left edge */
+    width: 100%;                 /* Stretch the banner to full width */
+    z-index: 1;                  /* Ensure the banner appears above other content */
+    text-align: center;          /* Center-align text */
+    background-color: rgb(215, 215, 101);
+    font-size: 0.6rem;
+">
+  <p style="color:black; display:inline;">
+    ⚠️ You are viewing an outdated version of the documentation. 
+    For the most recent release, please refer to the 
+    <a href="https://www.giacomovalli.com/openhdemg/" style="color:black; text-decoration: underline;">latest version</a>.
+  </p>
+</div>
+
+<!-- Original Header -->
+
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="openhdemg" class="md-header__button md-logo" aria-label="openhdemg" data-md-component="logo">
+      
+  <img src="../yml_graphics/transp_icon.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            openhdemg
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Basics
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/GiacomoValliPhD/openhdemg" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    openhdemg
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+
+
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="openhdemg" class="md-nav__button md-logo" aria-label="openhdemg" data-md-component="logo">
+      
+  <img src="../yml_graphics/transp_icon.png" alt="logo">
+
+    </a>
+    openhdemg
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/GiacomoValliPhD/openhdemg" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    openhdemg
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Welcome
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about-us/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    About us
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quick-start/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quick-Start
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Tutorials
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_1" id="__nav_4_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    For new users
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_1">
+            <span class="md-nav__icon md-icon"></span>
+            For new users
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/setup_working_env/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Setup working environment
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Basics of openhdemg
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Basics of openhdemg
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/emgfile_structure/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Structure of the emgfile
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/import_from_other_software/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Import from other software
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Move to newer versions
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            Move to newer versions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/convert_old_json_files/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Convert old .json files
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Graphical Interface
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Graphical Interface
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gui_intro/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Intro
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Basics
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Basics
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#motor-unit-sorting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Motor Unit Sorting
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remove-motor-units" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remove Motor Units
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#signal-editing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Signal Editing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Signal Editing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#emg-signal-filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+      EMG Signal Filtering
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reference-signal-editing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reference Signal Editing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resize-emg-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resize EMG File
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#analyse-force-signal" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analyse Force Signal
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Analyse Force Signal">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#maximum-voluntary-contraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Maximum voluntary contraction
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rate-of-force-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rate Of Force Development
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#motor-unit-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Motor Unit Properties
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Motor Unit Properties">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compute-motor-unit-threshold" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compute Motor Unit Threshold
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compute-motor-unit-discharge-rate" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compute Motor Unit Discharge Rate
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#basic-motor-unit-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Motor Unit Properties
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plot-motor-units" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plot Motor Units
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Plot Motor Units">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plot-raw-emg-signal" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plot Raw EMG Signal
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plot-reference-signal" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plot Reference Signal
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plot-motor-unit-pulses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plot Motor Unit Pulses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plot-the-decomposed-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plot the Decomposed Source
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plot-instanteous-discharge-rate" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plot Instanteous Discharge rate
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plot-differential-derivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plot Differential Derivation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plot-motor-unit-action-potentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plot Motor Unit Action Potentials
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#saving-your-analysis-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Saving Your Analysis File
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#saving-your-analysis-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Saving Your Analysis Results
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resetting-your-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resetting Your Analysis
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#more-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      More questions?
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gui_advanced/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Advanced
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gui_settings/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Settings
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Releases
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Releases
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../what%27s-new/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Release notes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://www.giacomovalli.com/openhdemg/versions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Browse versions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contacts/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contacts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cite-us/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cite us
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contribute/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contribute
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../isek_jek_tutorials/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ISEK-JEK Tutorials
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_openfiles/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    openfiles
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_plotemg/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    plotemg
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_analysis/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_pic/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pic
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_tools/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    tools
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_mathtools/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    mathtools
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_muap/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    muap
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_electrodes/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    electrodes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_info/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    info
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_compatibility/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    compatibility
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#motor-unit-sorting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Motor Unit Sorting
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remove-motor-units" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remove Motor Units
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#signal-editing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Signal Editing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Signal Editing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#emg-signal-filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+      EMG Signal Filtering
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reference-signal-editing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reference Signal Editing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resize-emg-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resize EMG File
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#analyse-force-signal" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analyse Force Signal
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Analyse Force Signal">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#maximum-voluntary-contraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Maximum voluntary contraction
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rate-of-force-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rate Of Force Development
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#motor-unit-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Motor Unit Properties
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Motor Unit Properties">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compute-motor-unit-threshold" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compute Motor Unit Threshold
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compute-motor-unit-discharge-rate" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compute Motor Unit Discharge Rate
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#basic-motor-unit-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Motor Unit Properties
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plot-motor-units" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plot Motor Units
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Plot Motor Units">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plot-raw-emg-signal" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plot Raw EMG Signal
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plot-reference-signal" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plot Reference Signal
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plot-motor-unit-pulses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plot Motor Unit Pulses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plot-the-decomposed-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plot the Decomposed Source
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plot-instanteous-discharge-rate" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plot Instanteous Discharge rate
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plot-differential-derivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plot Differential Derivation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plot-motor-unit-action-potentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plot Motor Unit Action Potentials
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#saving-your-analysis-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Saving Your Analysis File
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#saving-your-analysis-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Saving Your Analysis Results
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resetting-your-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resetting Your Analysis
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#more-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      More questions?
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="graphical-interface">Graphical Interface<a class="headerlink" href="#graphical-interface" title="Permanent link">&para;</a></h1>
+<p>This is the basic introduction to the <em>openhdemg</em> GUI. In the next few sections, we will go through the basic analysis functions embedded in the GUI. For the advanced stuff, take a look at the <a href="../gui_advanced/">advanced</a> chapter. We will start with how to sort the motor units (MUs) included in your analysis file, go over force and MU property analysis, take a detour on plotting, and take a look at how to save and reset your analysis. Have fun!</p>
+<hr />
+<h2 id="motor-unit-sorting">Motor Unit Sorting<a class="headerlink" href="#motor-unit-sorting" title="Permanent link">&para;</a></h2>
+<p>To sort the MUs included in your analysis file in order of their recruitement, we implemented a sorting algorithm. The MUs are sorted based on their recruitement order in an ascending manner.</p>
+<ol>
+<li>
+<p>Load a file. Take a look at the <a href="../gui_intro/#specifying-an-analysis-file">intro</a> section on how to do so.</p>
+</li>
+<li>
+<p>On the left hand side in the main window of the GUI, you can find the <code>Sort MUs</code> button. It is located in row three, column two. Once you press the button, the MUs will be sorted based on recruitment order. </p>
+</li>
+</ol>
+<h2 id="remove-motor-units">Remove Motor Units<a class="headerlink" href="#remove-motor-units" title="Permanent link">&para;</a></h2>
+<p>To remove MUs included in your analysis file, you can click the <code>Remove MUs</code> button. The button is located on the left hand side in the main window of the GUI in column one of row four.</p>
+<p><img alt="remove_mus" src="../md_graphics/gui/remove_mu_window_v2.png" /></p>
+<ol>
+<li>
+<p>Click the <code>Remove MUs</code> button, and a file is loaded, a pop-up window will open. </p>
+</li>
+<li>
+<p>Select the MU you want to delete from the analysis file from the <code>Select MU:</code>dropdown.</p>
+<p><div class="language-Python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">Select</span> <span class="n">MU</span><span class="p">:</span> <span class="mi">1</span>
+</span></code></pre></div>
+will result in the second MU to be deleted (Python is base 0).</p>
+</li>
+<li>
+<p>Click the <code>Remove MU</code> button to remove the MU.</p>
+</li>
+</ol>
+<p>Alternatively, you can click the <code>Remove empty MUs</code> button to delete all the MUs without discharge times. These can be present in the <em>emgfile</em> as the result of decomposed duplicates that have not been fully removed.</p>
+<h2 id="signal-editing">Signal Editing<a class="headerlink" href="#signal-editing" title="Permanent link">&para;</a></h2>
+<p>It is often necessary to edit (e.g., filter or convert) the signals. In the <em>openhdemg</em> GUI this can be done from the <code>Signal Editing Window</code>. In order to open this window, click the <code>Signal Editing</code> button.</p>
+<p><img alt="signal_editing" src="../md_graphics/gui/signal_editing_window.png" /></p>
+<h3 id="emg-signal-filtering">EMG Signal Filtering<a class="headerlink" href="#emg-signal-filtering" title="Permanent link">&para;</a></h3>
+<p>It is common practice to filter the EMG signal before decomposition. However, if your <em>emgfile</em> contains the raw (unfiltered) signal, this can be easily filtered from the <code>Signal Editing Window</code>.</p>
+<ol>
+<li>
+<p>Click the <code>Signal Editing</code> button located in row five and column one, a new pop-up window opens. In the <code>Signal Editing Window</code>, you can band-pass filter the EMG signal and process the reference signal (see next paragraph).</p>
+</li>
+<li>
+<p>When you click the <code>Filter EMG signal</code> button, the EMG signal is band-pass filtered (Zero-lag, Butterworth) according to values specified in the <code>Filter Order</code> and <code>BandPass Freq</code> textboxes. In example, specifiying </p>
+<p><div class="language-Python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">Filter</span> <span class="n">Order</span><span class="p">:</span> <span class="mi">2</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">BandPass</span> <span class="n">Freq</span><span class="p">:</span> <span class="mi">20</span><span class="o">-</span><span class="mi">500</span>
+</span></code></pre></div>
+will allow only frequencies between 20 and 500 Hz to pass trough.</p>
+</li>
+</ol>
+<h3 id="reference-signal-editing">Reference Signal Editing<a class="headerlink" href="#reference-signal-editing" title="Permanent link">&para;</a></h3>
+<p>The <em>openhdemg</em> GUI also allows you to edit and filter reference signals contained in your analysis file (this can be either a file containing both the MUs and the reference signal or a file containing only the reference signal).</p>
+<ol>
+<li>
+<p>Click the <code>Signal Editing</code> button located in row five and column one, a new pop-up window opens. In the <code>Signal Editing Window</code>, you can low-pass filter the reference signal as well as remove any signal offset. Additionally, you can also convert your reference signal by a specific factor (amplification factor) or convert it from absolute to percentage (relative or normalised) values.</p>
+</li>
+<li>
+<p>When you click the <code>Filter RefSig</code> button, the reference signal is low-pass filtered (Zero-lag, Butterworth) according to values specified in the <code>Filter Order</code> and <code>Cutoff Freq</code> textboxes. In example, specifiying </p>
+<p><div class="language-Python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">Filter</span> <span class="n">Order</span><span class="p">:</span> <span class="mi">4</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">Cutoff</span> <span class="n">Freq</span><span class="p">:</span> <span class="mi">15</span>
+</span></code></pre></div>
+will allow only frequencies below 15 Hz to pass trough.</p>
+</li>
+<li>
+<p>When you click the <code>Remove Offset</code> button, the reference signal's offset will be removed according to the values specified in the <code>Offset Value</code> and <code>Automatic Offset</code> textboxes. In example, specifying</p>
+<p><div class="language-Python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">Offset</span> <span class="n">Value</span> <span class="p">:</span> <span class="mi">4</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">Automatic</span><span class="p">:</span> <span class="mi">0</span>
+</span></code></pre></div>
+will result in an offset correction by -4 in y-axis direction. Furthermore, specifying</p>
+<p><div class="language-Python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">Offset</span> <span class="n">Value</span> <span class="p">:</span> <span class="mi">0</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">Automatic</span><span class="p">:</span> <span class="o">!=</span> <span class="mi">0</span>
+</span></code></pre></div>
+will result in automatic offset removal. In this case, the offset value is determined as the mean value of n samples at the beginning of the contraction (where n is equal to the value passed to Automatic). Moreover, specifying</p>
+<p><div class="language-Python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">Offset</span> <span class="n">Value</span> <span class="p">:</span> <span class="mi">0</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">Automatic</span><span class="p">:</span> <span class="mi">0</span>
+</span></code></pre></div>
+will allow you to manually correct the offset in a new pop-up plot. You just need to follow the instructions on the plot.</p>
+</li>
+<li>
+<p>When you click the <code>Convert</code> button, the reference signal will be multiplied or divided (depending on <code>Operator</code>) by the <code>Factor</code>. In example, specifying</p>
+<p><div class="language-Python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">Operator</span> <span class="p">:</span> <span class="s2">&quot;Multiply&quot;</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">Factor</span><span class="p">:</span> <span class="mf">2.5</span>
+</span></code></pre></div>
+will amplify the reference signal 2.5 times.</p>
+<p>While:</p>
+<p><div class="language-Python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">Operator</span> <span class="p">:</span> <span class="s2">&quot;Multiply&quot;</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">Factor</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span>
+</span></code></pre></div>
+will make your negative reference signal become positive.</p>
+</li>
+<li>
+<p>When you click the <code>To Percent</code> button, the reference signal in absolute values is converted to percentage (relative or normalised) values based on the provided <code>MVC Value</code>. <strong>This step should be performed before any analysis, because <em>openhdemg</em> is designed to work with a normalised reference signal.</strong> In example, a file with a reference signal in absolute values ranging from 0 to 100 will be normalised from 0 to 20 if</p>
+<div class="language-Python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">MVC</span> <span class="n">Value</span> <span class="p">:</span> <span class="mi">500</span>
+</span></code></pre></div>
+</li>
+</ol>
+<h2 id="resize-emg-file">Resize EMG File<a class="headerlink" href="#resize-emg-file" title="Permanent link">&para;</a></h2>
+<p>Sometimes, resizing of your analysis file is unevitable. Luckily, <em>openhdemg</em> provides an easy solution. In row five and column two in the left side of the GUI, you can find the <code>Resize File</code> button. </p>
+<p><img alt="resize_emg" src="../md_graphics/gui/resize_window.png" /></p>
+<ol>
+<li>
+<p>View the MUs using the <code>View MUs</code> button prior to file resizing, you can directly see what is happening.</p>
+</li>
+<li>
+<p>Clicking the <code>Resize File</code> button will open a new pop-up plot of your analysis file. </p>
+</li>
+<li>
+<p>Follow the instructions in the plot to resize the file. Simply click in the signal twice (once for start-point, once for end-point) to specify the resizing region and press enter to confirm your choice.</p>
+</li>
+</ol>
+<h2 id="analyse-force-signal">Analyse Force Signal<a class="headerlink" href="#analyse-force-signal" title="Permanent link">&para;</a></h2>
+<p>In order to analyse the force signal in your analysis file, you can press the <code>Analyse Force</code> button located in row six and column one in the left side of the GUI. A new pop-up window will open where you can analyse the maximum voluntary contraction (MVC) value as well as the rate of force development (RFD). </p>
+<p><img alt="force_analysis" src="../md_graphics/gui/force_analysis_window_v2.png" /></p>
+<h3 id="maximum-voluntary-contraction">Maximum voluntary contraction<a class="headerlink" href="#maximum-voluntary-contraction" title="Permanent link">&para;</a></h3>
+<ol>
+<li>In order to get the MVC value, simply press the <code>Get MVC</code> button. A pop-up plot opens and you can select the area where you suspect the MVC to be. </li>
+<li>Click once to specify the start-point and once to specify the end-point. </li>
+<li>Press enter to confirm you choice. You will then see a <code>Result Output</code> appearing at the bottom of the main window of the GUI. There you can find the actual result of your MVC analysis. </li>
+<li>You can edit or copy any value in the <code>Result Output</code>, however, you need to close the top-level <code>Force Analysis Window</code> first.</li>
+</ol>
+<h3 id="rate-of-force-development">Rate Of Force Development<a class="headerlink" href="#rate-of-force-development" title="Permanent link">&para;</a></h3>
+<ol>
+<li>To calculate the RFD values you can press the <code>Get RFD</code> button. </li>
+<li>A pop-up plot appears and you need to specify the starting point of the rise in the force signal by clicking and subsequenlty pressing enter. </li>
+<li>
+<p>The respective RFD values between the stated timepoint ranges (ms) in the <code>RFD miliseconds</code> textinput are displayed in the <code>Result Output</code>. In example, specifying</p>
+<p><div class="language-Python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">RFD</span> <span class="n">miliseconds</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">150</span><span class="p">,</span><span class="mi">200</span>
+</span></code></pre></div>
+will result in RFD value calculation between the intervals 0-50ms, 0-100ms, 0-150ms and 0-200ms. You can also specify less or more values in the <code>RFD miliseconds</code> textbox. </p>
+</li>
+<li>
+<p>You can edit or copy any value in the <code>Result Output</code>, however, you need to close the top-level <code>Force Analysis Window</code> first.</p>
+</li>
+</ol>
+<h2 id="motor-unit-properties">Motor Unit Properties<a class="headerlink" href="#motor-unit-properties" title="Permanent link">&para;</a></h2>
+<p>When you press the <code>MU Properties</code> button in row six and column two, the <code>Motor Unit Properties</code> Window will pop up. In this window, you have the option to analyse several MUs propierties such as the MUs recruitement threshold or the MUs discharge rate. </p>
+<p><img alt="mus_properties" src="../md_graphics/gui/mu_properties_window_v2.png" /></p>
+<ol>
+<li>
+<p>Specify your priorly calculated MVC in the <code>Enter MVC [N]:</code> textbox, like</p>
+<div class="language-Python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">Enter</span> <span class="n">MVC</span> <span class="p">[</span><span class="n">N</span><span class="p">]:</span> <span class="mi">424</span>
+</span></code></pre></div>
+</li>
+</ol>
+<h3 id="compute-motor-unit-threshold">Compute Motor Unit Threshold<a class="headerlink" href="#compute-motor-unit-threshold" title="Permanent link">&para;</a></h3>
+<p>Subsequently to specifying the MVC, you can compute the MUs recruitement threshold by specifying the respective event and type in the <code>Event</code> and <code>Type</code> dropdown list. </p>
+<ol>
+<li>
+<p>Specify the <code>Event</code> dropdown and choose: </p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>&quot;rt_dert&quot; : Both recruitment and derecruitment thresholds will be calculated.
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>&quot;rt&quot; : Only recruitment thresholds will be calculated.
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>&quot;dert&quot; : Only derecruitment thresholds will be calculated.
+</span></code></pre></div>
+</li>
+<li>
+<p>Specify the <code>Type</code> dropdown and choose:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>&quot;abs_rel&quot; : Both absolute and relative thresholds will be calculated.
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>&quot;rel&quot; : Only relative thresholds will be calculated.
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>&quot;abs&quot; : Only absolute thresholds will be calculated.
+</span></code></pre></div>
+</li>
+<li>
+<p>Once you click the <code>Compute threshold</code> button, the recruitement threshold will be computed. </p>
+</li>
+<li>The recruitement threshold for each inluded MU in the analysis file will be displayed in the <code>Result Output</code> of the GUI.</li>
+<li>You can edit or copy any value in the <code>Result Output</code>, however, you need to close the top-level <code>Motor Unit Properties Window</code> first.</li>
+</ol>
+<h3 id="compute-motor-unit-discharge-rate">Compute Motor Unit Discharge Rate<a class="headerlink" href="#compute-motor-unit-discharge-rate" title="Permanent link">&para;</a></h3>
+<p>Subsequently to specifying the MVC, you can compute the MUs discharge rate by entering the respective firing rates and event.</p>
+<ol>
+<li>Specify the number of firings at recruitment and derecruitment to consider for the calculation in the <code>Firings at Rec</code> textbox. </li>
+<li>
+<p>Enter the number of firings over which to calculate the discharge rate at the start and end of the steady-state phase in the <code>Firings Start/End Steady</code> textbox.</p>
+<p>For example:
+<div class="language-Python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">Firings</span> <span class="n">at</span> <span class="n">Rec</span><span class="p">:</span> <span class="mi">4</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">Firings</span> <span class="n">Start</span><span class="o">/</span><span class="n">End</span> <span class="n">Steady</span><span class="p">:</span> <span class="mi">10</span>
+</span></code></pre></div></p>
+</li>
+<li>
+<p>Lastly you need to specify the computation <code>Event</code>. From the <code>Event</code> dropdown list, you can choose:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>&quot;rec_derec_steady&quot; : Discharge rate is calculated at recruitment, derecruitment and during the steady-state phase.
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>&quot;rec&quot; : Discharge rate is calculated at recruitment.
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>&quot;derec&quot; : Discharge rate is calculated at derecruitment.
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>&quot;rec_derec&quot; : Discharge rate is calculated at recruitment and derecruitment.
+</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>&quot;steady&quot; : Discharge rate is calculated during the steady-state phase.
+</span></code></pre></div>
+</li>
+<li>
+<p>Once you press the <code>Compute discharge rate</code> button, the discharge rate will be calculated. </p>
+</li>
+<li>The discharge rate for each inluded MU in the analysis file at the stated event as well a for all the contraction will be displayed in the <code>Result Output</code> of the GUI. </li>
+<li>You can edit or copy any value in the <code>Result Output</code>, however, you need to close the top-level <code>Motor Unit Properties Window</code> first.</li>
+</ol>
+<h3 id="basic-motor-unit-properties">Basic Motor Unit Properties<a class="headerlink" href="#basic-motor-unit-properties" title="Permanent link">&para;</a></h3>
+<p>Subsequently to specifying the MVC, you can calculate a number of basic MUs properties with one click. These include</p>
+<ul>
+<li>The absolute/relative recruitment/derecruitment thresholds</li>
+<li>The discharge rate at recruitment, derecruitment, during the steady-state phase and during the entire contraction</li>
+<li>The individual and average accuracy</li>
+<li>The coefficient of variation of interspike interval</li>
+<li>The coefficient of variation of force signal</li>
+</ul>
+<p>and are all displayed in the <code>Result Output</code> once the analysis in completed. </p>
+<ol>
+<li>Specify the number of firings at recruitment and derecruitment to consider for the calculation of discharge rate in the <code>Firings at Rec</code> textbox. </li>
+<li>
+<p>Enter the number of firings over which to calculate the discharge rate at the start and end of the steady-state phase in the <code>Firings Start/End Steady</code> textbox. For example,</p>
+<div class="language-Python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">Firings</span> <span class="n">at</span> <span class="n">Rec</span><span class="p">:</span> <span class="mi">4</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="n">Firings</span> <span class="n">Start</span><span class="o">/</span><span class="n">End</span> <span class="n">Steady</span><span class="p">:</span> <span class="mi">10</span>
+</span></code></pre></div>
+</li>
+<li>
+<p>The basic MUs properties will be displayed in the <code>Result Output</code> of the GUI. </p>
+</li>
+<li>You can edit or copy any value in the <code>Result Output</code>, however, you need to close the top-level <code>Motor Unit Properties Window</code> first.</li>
+</ol>
+<h2 id="plot-motor-units">Plot Motor Units<a class="headerlink" href="#plot-motor-units" title="Permanent link">&para;</a></h2>
+<p>In <em>openhdemg</em> we have implemented options to plot your analysis file ... a lot of options!
+Upon clicking the <code>Plot MUs</code> button, the <code>Plot Window</code> will pop up. In the top right corner of the window, you can find an information button forwarding you directly to this tutorial. </p>
+<p><img alt="plot_mus" src="../md_graphics/gui/plot_window_v2.png" /></p>
+<p>You can choose between the follwing plotting options:</p>
+<ul>
+<li>Plot the raw emg signal. Single or multiple channels. (Plot EMGSig)</li>
+<li>Plot the reference signal. (Plot RefSig)</li>
+<li>Plot all the MUs pulses (binary representation of the firings time). (Plot MUPulses)</li>
+<li>Plot the decomposed source. (Plot Source)</li>
+<li>Plot the instantaneous discharge rate (IDR). (Plot IDR)</li>
+<li>Plot the differential derivation of the raw emg signal by matrix column. (Plot Derivation)</li>
+<li>Plot motor unit action potentials (MUAPs) obtained from spike-triggered average (STA) from one or multiple MUs. Please note that for Delsys files, the displayed MUAPs are those computed in the Delsys software and not those obtained via STA. (Plot MUAPs)</li>
+</ul>
+<p>Prior to plotting you can <strong>optionally</strong> select a few options on the left side of the <code>Plot Window</code>. </p>
+<ol>
+<li>When you want the reference signal to be displayed in the plots you can select the <code>Reference Signal</code> checkbox in row one and column two in the left side of the <code>Plot Window</code>. </li>
+<li>You can specify wheter you want the x-axis of the plots to be scaled in seconds by selecting the <code>Time in seconds</code> checkbox in row two and column two in the left side of the <code>Plot Window</code>. </li>
+<li>
+<p>You can change the size of the plot as well, by inputting your prefered height and width in the <code>Figure in size in cm (h,w)</code> textbox in row three and column two in the left side of the <code>Plot Window</code>. For example, if you want your plot to have a height of 6 and a width of 8, your input should look like this</p>
+<div class="language-Python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">Figure</span> <span class="ow">in</span> <span class="n">size</span> <span class="ow">in</span> <span class="n">cm</span> <span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="n">w</span><span class="p">):</span> <span class="mi">6</span><span class="p">,</span><span class="mi">8</span>
+</span></code></pre></div>
+</li>
+</ol>
+<p>These three setting options are universally used in all plots. There are two more specification options on the right side of the <code>Plot Window</code> only relevant when using the <code>Plot Derivation</code> or <code>Plot MUAP</code> buttons. </p>
+<ol>
+<li>
+<p>The <code>Matrix Code</code> must be specified in row one and column four in the right side of the <code>Plot Window</code> according to the one you used during acquisition. So far, implemented codes are:</p>
+<ul>
+<li><code>Custom order</code></li>
+<li><code>None</code></li>
+<li><code>GR08MM1305</code></li>
+<li><code>GR04MM1305</code></li>
+<li><code>GR10MM0808</code></li>
+<li><code>Trigno Galileo Sensor</code></li>
+</ul>
+<p>In case you selected <code>Custom order</code>, you must also specify the custom order in the GUI settings. Please refer to <a href="../gui_settings/#electrodes">this tutorial</a> for further instructions on how to do so.</p>
+<p>In case you selected <code>None</code>, the entrybox <code>Rows, Columns</code> will appear. Please specify the number of rows and columns of your used matrix since you now bypass included matrix codes. In example, specifying</p>
+<p><div class="language-Python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="n">Rows</span><span class="p">,</span> <span class="n">Columns</span><span class="p">:</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">5</span>
+</span></code></pre></div>
+means that your File has 65 channels organised over 13 rows and 5 columns.</p>
+</li>
+<li>
+<p>If you selected one of the built-in sorting orders (e.g., <code>GR08MM1305</code>, <code>GR04MM1305</code>, <code>GR10MM0808</code>), you need to specify also the <code>Orientation</code> in row two and column four in the left side of the <code>Plot Window</code>. The <code>Orientaion</code> must match the one of your matrix during acquisition. You can find a reference image for the <code>Orientation</code> at the bottom in the right side of the <code>Plot Window</code>. <code>Orientation</code> is ignored when <code>Matrix Code</code> is <code>None</code>, <code>Custom order</code> or <code>Trigno Galileo Sensor</code>.</p>
+</li>
+</ol>
+<h3 id="plot-raw-emg-signal">Plot Raw EMG Signal<a class="headerlink" href="#plot-raw-emg-signal" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Click the <code>Plot EMGsig</code> button in row four and column one in the left side of the <code>Plot Window</code>, to plot the raw emg signal of your analysis file. </li>
+<li>Enter or select a <code>Channel Number</code> in / from the dropdown list. For example, if you want to plot <code>Channel Number</code> one enter <em>0</em> in the dropdown. If you want to plot <code>Channel Numbers</code> one, two and three enter <em>0,1,2</em> in the dropdown. </li>
+<li>Once you have clicked the <code>Plot EMGsig</code> button, a pop-up plot will appear. </li>
+</ol>
+<h3 id="plot-reference-signal">Plot Reference Signal<a class="headerlink" href="#plot-reference-signal" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Click the <code>Plot RefSig</code> button in row five and column one in the left side of the <code>Plot Window</code>, to plot the reference signal. </li>
+<li>Once you have clicked the <code>Plot RefSig</code> button, a pop-up plot will appear. </li>
+</ol>
+<h3 id="plot-motor-unit-pulses">Plot Motor Unit Pulses<a class="headerlink" href="#plot-motor-unit-pulses" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Click the <code>Plot MUpulses</code> button in row six and column one in the left side of the <code>Plot Window</code>, to plot the single pulses of the MUs in your analysis file.</li>
+<li>Enter/select a pulse <code>Linewidth</code> in/from the dropdown list. For example, if you want to use a <code>Linewidth</code> of one, enter <em>1</em> in the dropdown. </li>
+<li>Once you have clicked the <code>Plot MUpulses</code> button, a pop-up plot will appear. </li>
+</ol>
+<h3 id="plot-the-decomposed-source">Plot the Decomposed Source<a class="headerlink" href="#plot-the-decomposed-source" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Click the <code>Plot Source</code> button in row seven and column one in the left side of the <code>Plot Window</code>, to plot the Source of the decomposed MUs in your analysis file. </li>
+<li>Enter/select a <code>MU Number</code> in/from the dropdown list. For example, if you want to plot the source for <code>MU Number</code> one enter <em>0</em> in the dropdown. If you want to plot the sources for <code>MU Number</code> one, two and three enter <em>0,1,2,</em> in the dropdown. You can also set <code>MU Number</code> to "all" to plot the sources for all included MUs in the analysis file.</li>
+<li>Once you have clicked the <code>Plot Source</code> button, a pop-up plot will appear. </li>
+</ol>
+<h3 id="plot-instanteous-discharge-rate">Plot Instanteous Discharge rate<a class="headerlink" href="#plot-instanteous-discharge-rate" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Click the <code>Plot IDR</code> button in row eight and column one in the left side of the <code>Plot Window</code>, to plot the IDR of the MUs in your analysis file. </li>
+<li>Enter/select a <code>MU Number</code> in/from the dropdown list. For example, if you want to plot the IDR of <code>MU Number</code> one enter <em>0</em> in the dropdown. If you want to plot the IDR of <code>MU Number</code> one, two and three enter <em>0,1,2</em> in the dropdown. You can also set <code>MU Number</code> to "all" to plot the IDR of all included MUs in the analysis file.</li>
+<li>Once you have clicked the <code>Plot IDR</code> button, a pop-up plot will appear. </li>
+</ol>
+<h3 id="plot-differential-derivation">Plot Differential Derivation<a class="headerlink" href="#plot-differential-derivation" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Click the <code>Plot Derivation</code> button in row four and column three in the right side of the <code>Plot Window</code>, to plot the differential derivation of the MUs in your analysis file. </li>
+<li>Specify the <code>Configuration</code> for the calculation first. You can choose from:<ul>
+<li><code>Single differential</code> (Calculate single differential of raw signal on matrix rows)</li>
+<li><code>Double differential</code>(Calculate double differential of raw signal on matrix rows)</li>
+</ul>
+</li>
+<li>Specify the respective <code>Matrix Column</code> you want to plot. You can choose one from the <code>Matrix Column</code> dropdown list. </li>
+<li>Once you have clicked the <code>Plot Derivation</code> button, a new pop-up plot appears. </li>
+</ol>
+<h3 id="plot-motor-unit-action-potentials">Plot Motor Unit Action Potentials<a class="headerlink" href="#plot-motor-unit-action-potentials" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Click the <code>Plot MUAPs</code> button in row five and column three in the right side of the <code>Plot Window</code>, you can plot the action potential of the MUs in your analysis file. </li>
+<li>Specify the <code>Configuration</code> for  calculation first. You can choose from:<ul>
+<li><code>Monopolar</code></li>
+<li><code>Single differential</code> (Calculate single differential of raw signal on matrix rows)</li>
+<li><code>Double differential</code>(Calculate double differential of raw signal on matrix rows)</li>
+</ul>
+</li>
+<li>Specify the respective <code>MU Number</code> you want to plot. You can choose one from the <code>MU Number</code> dropdown list. </li>
+<li>Specify the <code>Timewindow</code> of the plots. You can choose from the <code>Timewindow</code> dropdown list or enter any integer. </li>
+<li>Once you have clicked the <code>Plot MUAPs</code> button, a new pop-up plot appears.</li>
+</ol>
+<p>Please note, if you are using the Delsys decomposition outcome, the plotted MUAPs will be those calculated bu the Delsys software.</p>
+<h2 id="saving-your-analysis-file">Saving Your Analysis File<a class="headerlink" href="#saving-your-analysis-file" title="Permanent link">&para;</a></h2>
+<p>Subsequently to analysing your emg-file in the <em>openhdemg</em> GUI, it is beneficial to save it. Otherwise, all changes will be lost when the GUI is closed. </p>
+<ol>
+<li>Click the <code>Save File</code> button in row two and column two in the left side of the main window. </li>
+<li>Specify a filename and a location and confirm! That's it!</li>
+</ol>
+<h2 id="saving-your-analysis-results">Saving Your Analysis Results<a class="headerlink" href="#saving-your-analysis-results" title="Permanent link">&para;</a></h2>
+<p>Some analyses included in the <em>openhdemg</em> GUI return values that are displayed in the <code>Result Output</code> of the GUI. Of course, you can simply copy-paste them, but it might be more convenient to directly save your analysis results. Additionally, all the values in the <code>Results Output</code> will be overwritten by new analyses or deleted in case of closing the GUI. </p>
+<ol>
+<li>click the <code>Save Results</code> button in row two and column two in the left side of the main window. </li>
+<li>Specify a location where to save the file and confirm. You can find the file there with the name of your analysis file. </li>
+</ol>
+<h2 id="resetting-your-analysis">Resetting Your Analysis<a class="headerlink" href="#resetting-your-analysis" title="Permanent link">&para;</a></h2>
+<p>We all make mistakes! But, most likely, we are also able to correct them. In case you have made a mistake in the analysis of your emgfile in the <em>openhdemg</em> GUI, we have implemented a reset button for you. Click the <code>Reset Analysis</code> button in row eight and column two in the lef side of the main window to  reset any analysis you previously performed since opening the GUI and inputting an analysis file. Your analysis file is reset to the original file and all the changes are discarded. So, no need to be perfect!</p>
+<hr />
+<p>If you want to proceed to the advanced stuff now, take a look at the <a href="../gui_advanced/">advanced</a> tab on the left side of the webpage.</p>
+<h2 id="more-questions">More questions?<a class="headerlink" href="#more-questions" title="Permanent link">&para;</a></h2>
+<p>We hope that this tutorial was useful. If you need any additional information, do not hesitate to read the answers or ask a question in the <a href="https://github.com/GiacomoValliPhD/openhdemg/discussions" target="_blank"><em>openhdemg</em> discussion section</a>. If you are not familiar with GitHub discussions, please read this <a href="https://github.com/GiacomoValliPhD/openhdemg/discussions/42" target="_blank">post</a>. This will allow the <em>openhdemg</em> community to answer your questions.</p>
+<p>Moreover, if you noticed an error that was not properly catched by the GUI, please <a href="https://github.com/GiacomoValliPhD/openhdemg/issues" target="_blank">report the issue</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2022 - 2024. The openhdemg community - <a href="#__consent">Change cookie settings</a>
+
+    </div>
+  
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/GiacomoValliPhD/openhdemg" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://twitter.com/openhdemg" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.youtube.com/@openhdemg" target="_blank" rel="noopener" title="www.youtube.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305m-317.51 213.508V175.185l142.739 81.205z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+      <div class="md-consent" data-md-component="consent" id="__consent" hidden>
+        <div class="md-consent__overlay"></div>
+        <aside class="md-consent__inner">
+          <form class="md-consent__form md-grid md-typeset" name="consent">
+            
+
+
+  
+    
+  
+
+
+
+
+<h4>Cookie consent</h4>
+<p>We use only the minimum cookies required by GitHub to ensure our website functions smoothly. You can disable them anytime, because your privacy is our priority!</p>
+<input class="md-toggle" type="checkbox" id="__settings" >
+<div class="md-consent__settings">
+  <ul class="task-list">
+    
+      
+      
+        
+        
+      
+      <li class="task-list-item">
+        <label class="task-list-control">
+          <input type="checkbox" name="github" checked>
+          <span class="task-list-indicator"></span>
+          GitHub
+        </label>
+      </li>
+    
+  </ul>
+</div>
+<div class="md-consent__controls">
+  
+    
+      <button class="md-button md-button--primary">Accept</button>
+    
+    
+    
+  
+    
+    
+    
+      <label class="md-button" for="__settings">Manage settings</label>
+    
+  
+</div>
+          </form>
+        </aside>
+      </div>
+      <script>var consent=__md_get("__consent");if(consent)for(var input of document.forms.consent.elements)input.name&&(input.checked=consent[input.name]||!1);else"file:"!==location.protocol&&setTimeout((function(){document.querySelector("[data-md-component=consent]").hidden=!1}),250);var form=document.forms.consent;for(var action of["submit","reset"])form.addEventListener(action,(function(e){if(e.preventDefault(),"reset"===e.type)for(var n of document.forms.consent.elements)n.name&&(n.checked=!1);__md_set("__consent",Object.fromEntries(Array.from(new FormData(form).keys()).map((function(e){return[e,!0]})))),location.hash="",location.reload()}))</script>
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy", "announce.dismiss", "navigation.top"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.f1b6f286.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -47,7 +47,7 @@ The only exception is when files are loaded with just the reference signal:
 "EXTRAS" : additional custom values<br>
 
 Additional informations can be found in the
-[info module](api_info.md#openhdemg.library.info.info.data) and in the
+[info module](api_info.md#openhdemg.library.info.data) and in the
 function's description.
 
 Furthermore, all the users are encouraged to read the dedicated tutorial [Structure of the emgfile](tutorials/emgfile_structure.md).

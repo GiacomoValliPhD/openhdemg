@@ -15,7 +15,7 @@ This version is fully backward compatible with v0.1.1 and with v0.1.0, although 
 
 - **New functions**:
   
-    - The `get_unique_fig _name` function returns a unique (numbered) canvas’ name for the figure if another figure with the same name already exists. This allows to automate plotting of multiple figures in the background, with the same name, before calling plt.show(). This functionality has been integrated in all the plotting functions.
+    - The `get_unique_fig_name` function returns a unique (numbered) canvas’ name for the figure if another figure with the same name already exists. This allows to automate plotting of multiple figures in the background, with the same name, before calling plt.show(). This functionality has been integrated in all the plotting functions.
 
 - **Updated functions**:
 
