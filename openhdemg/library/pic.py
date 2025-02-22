@@ -152,13 +152,19 @@ def compute_deltaf(
         mucombo.append((mu1_id, mu2_id))
 
         # First MU firings, recruitment, and decrecruitment
-        mu1_times = np.where(emgfile["BINARY_MUS_FIRING"][mu1_id] == 1)[0]
-        mu1_rcrt, mu1_drcrt = mu1_times[1], mu1_times[-1]
+        if np.size(np.where(emgfile["BINARY_MUS_FIRING"][mu1_id] == 1)) == 0:
+            mu1_rcrt, mu1_drcrt = 0, 0
+        else:
+            mu1_times = np.where(emgfile["BINARY_MUS_FIRING"][mu1_id] == 1)[0]
+            mu1_rcrt, mu1_drcrt = mu1_times[1], mu1_times[-1]
         # Skip first since idr is defined on second
 
         # Second MU firings, recruitment, and decrecruitment
-        mu2_times = np.where(emgfile["BINARY_MUS_FIRING"][mu2_id] == 1)[0]
-        mu2_rcrt, mu2_drcrt = mu2_times[1], mu2_times[-1]
+        if np.size(np.where(emgfile["BINARY_MUS_FIRING"][mu2_id] == 1)) == 0:
+            mu2_rcrt, mu2_drcrt = 0, 0
+        else:
+            mu2_times = np.where(emgfile["BINARY_MUS_FIRING"][mu2_id] == 1)[0]
+            mu2_rcrt, mu2_drcrt = mu2_times[1], mu2_times[-1]
         # Skip first since idr is defined on second
 
         # Region of MU overlap
