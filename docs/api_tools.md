@@ -14,6 +14,20 @@ shortcuts necessary to operate with the HD-EMG recordings.
 
 <br/>
 
+::: openhdemg.library.tools.resize_emgfile
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
+::: openhdemg.library.tools.EMGFileSectionsIterator
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
 ::: openhdemg.library.tools.create_binary_firings
     options:
         show_root_full_path: False
@@ -22,13 +36,6 @@ shortcuts necessary to operate with the HD-EMG recordings.
 <br/>
 
 ::: openhdemg.library.tools.mupulses_from_binary
-    options:
-        show_root_full_path: False
-        show_root_heading: True
-
-<br/>
-
-::: openhdemg.library.tools.resize_emgfile
     options:
         show_root_full_path: False
         show_root_heading: True

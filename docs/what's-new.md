@@ -1,3 +1,39 @@
+## :octicons-tag-24: 0.1.2
+:octicons-clock-24: February 2025
+
+This release introduces new functionalities for analyzing concatenated files and includes bug fixes.
+
+### Backward Compatibility
+
+This version is fully backward compatible with v0.1.1 and with v0.1.0, although some parameters and functions have been deprecated.
+
+### Major Changes
+
+- **New classes**:
+  
+    - The class	`EMGFileSectionsIterator` provides an iterator instance that allows to quickly segment the file in multiple sections, apply specific functions to each of them and to gather the results. This class is aimed at facilitating the analysis of concatenated files.
+
+- **New functions**:
+  
+    - The `get_unique_fig _name` function returns a unique (numbered) canvas’ name for the figure if another figure with the same name already exists. This allows to automate plotting of multiple figures in the background, with the same name, before calling plt.show(). This functionality has been integrated in all the plotting functions.
+
+- **Updated functions**:
+
+    - The `sta` function now works also for files containing empty MUs. This facilitates matching MU numbers across different analyses involving STA (which previously required the removal of empty MUs, e.g., MU tracking and conduction velocity estimation) and other analyses  performed including also the empty MU placeholders (e.g., discharge rate).
+    - The `st_muap` function also works on files containing empty MUs.
+    - All the functions (plotting and analyses) using spike triggered averaging can now handle empty MUs.
+    - The `norm_twod_xcorr` function now works with both pandas DataFrames and NumPy arrays.
+    - The `resize_emgfile` function has standardised MUPULSES dtype conversion to avoid overflow errors.
+    - The `compute_svr` function has improved handling of firing discontinuity at the beginning of the discharge pattern to avoid SVR fitting errors, and standardised dimensionality of the returned fits. It now also works on files containing empty MUs.
+    - The `compute_deltaf`function now also works on files containing empty MUs.
+    - The `plot_emgsig` function has improved handling of the manual offset for small offset values which caused a mismatch between locators and labels.
+
+### Known issues
+  
+A list of known issues can be found [here](https://github.com/GiacomoValliPhD/openhdemg/issues/69){:target="_blank"}.
+
+<br>
+
 ## :octicons-tag-24: 0.1.1
 :octicons-clock-24: December 2024
 

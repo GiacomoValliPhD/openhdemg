@@ -7,13 +7,12 @@ import pandas as pd
 import sys
 from openhdemg.library.tools import delete_mus
 from openhdemg.library.mathtools import (
-    norm_twod_xcorr,
-    norm_xcorr,
-    find_mle_teta,
-    mle_cv_est,
+    norm_twod_xcorr, norm_xcorr, find_mle_teta, mle_cv_est,
 )
 from openhdemg.library.electrodes import sort_rawemg
-from openhdemg.library.plotemg import plot_idr, plot_muaps, plot_muaps_for_cv
+from openhdemg.library.plotemg import (
+    plot_idr, plot_muaps, plot_muaps_for_cv, get_unique_fig_name,
+)
 from scipy import signal
 import matplotlib.pyplot as plt
 from functools import reduce
@@ -25,6 +24,7 @@ import os
 import tkinter as tk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import warnings
 
 
 def diff(sorted_rawemg):
@@ -381,9 +381,7 @@ def sta(
         # Check if there are firings in this MU
         tot_firings = len(emgfile["MUPULSES"][mu])
         if tot_firings == 0:
-            raise ValueError(
-                "Empty MU in sta(). First use delete_empty_mus()."
-            )
+            warnings.warn(f"Empty MU {mu} in sta(). It will be set to 0.")
 
         # Set firings if firings="all"
         if firings == "all":
@@ -402,11 +400,19 @@ def sta(
                 emg_array = sorted_rawemg[col][row].to_numpy()
                 # Calculate STA using NumPy vectorized operations
                 sta_values = []
-                for pulse in thismups:
-                    ls = emg_array[pulse - halftime: pulse + halftime]
-                    # Avoid incomplete muaps
-                    if len(ls) == tottime:
-                        sta_values.append(ls)
+                if len(thismups) > 0:  # Manage exception of no firings
+                    for pulse in thismups:
+                        ls = emg_array[pulse - halftime: pulse + halftime]
+                        # Avoid incomplete muaps
+                        if len(ls) == tottime:
+                            sta_values.append(ls)
+                else:
+                    # If no firings, set STA to zeros (while preserving the
+                    # empty channel.
+                    if np.all(np.isnan(emg_array)):
+                        sta_values.append(np.full((tottime, ), np.nan))
+                    else:
+                        sta_values.append(np.full((tottime, ), 0))
                 row_dict[row] = np.mean(sta_values, axis=0)
             sorted_rawemg_sta[col] = pd.DataFrame(row_dict)
         sta_dict[mu] = sorted_rawemg_sta
@@ -491,11 +497,8 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
     # Calculate ST on sorted_rawemg for every mu and put it into sta_dict[mu]
     for mu in sta_dict.keys():
         # Check if there are firings in this MU
-        tot_firings = len(emgfile["MUPULSES"][mu])
-        if tot_firings == 0:
-            raise ValueError(
-                "Empty MU in sta(). First use delete_empty_mus()."
-            )
+        if len(emgfile["MUPULSES"][mu]) == 0:
+            warnings.warn(f"Empty MU {mu} in st_muap(). It will be set to 0.")
 
         # Container for the st of each MUs' matrix column.
         sta_dict_cols = {}
@@ -506,15 +509,23 @@ def st_muap(emgfile, sorted_rawemg, timewindow=50):
             # Container for the st of each channel (row) in that matrix column.
             sta_dict_crows = {}
             for row in sorted_rawemg[col].columns:
-                this_emgsig = sorted_rawemg[col][row].to_numpy()
+                emg_array = sorted_rawemg[col][row].to_numpy()
                 # Container for the pd.DataFrame with MUAPs of each channel.
                 crow_muaps = {}
                 # Calculate ST using NumPy vectorized operations
-                for pos, pulse in enumerate(thismups):
-                    muap = this_emgsig[pulse - halftime: pulse + halftime]
-                    # Avoid incomplete muaps
-                    if len(muap) == tottime:
-                        crow_muaps[pos] = muap
+                if len(thismups) > 0:  # Manage exception of no firings
+                    for pos, pulse in enumerate(thismups):
+                        muap = emg_array[pulse - halftime: pulse + halftime]
+                        # Avoid incomplete muaps
+                        if len(muap) == tottime:
+                            crow_muaps[pos] = muap
+                else:
+                    # If no firings, set STA to zeros (while preserving the
+                    # empty channel.
+                    if np.all(np.isnan(emg_array)):
+                        crow_muaps[0] = np.full((tottime, ), np.nan)
+                    else:
+                        crow_muaps[0] = np.full((tottime, ), 0)
                 sta_dict_crows[row] = pd.DataFrame(crow_muaps)
             sta_dict_cols[col] = sta_dict_crows
         sta_dict[mu] = sta_dict_cols
@@ -576,7 +587,7 @@ def pack_sta(df_sta, keys):
     -------
     packed_sta : dict
         dict containing STA of the input pd.DataFrame divided by matrix column.
-        Dict columns are "col0", col1", "col2", "col3", "col4".
+        Dict columns are, for example, "col0", col1", "col2", ...
 
     See also
     --------
@@ -1103,7 +1114,12 @@ def tracking(
         if pos == 0:
             tracking_res = pd.DataFrame(i)
         else:
-            tracking_res = pd.concat([tracking_res, pd.DataFrame(i)])
+            new_tracking_res = pd.DataFrame(i)
+            # Check for empty df
+            if tracking_res.empty and not new_tracking_res.empty:
+                tracking_res = new_tracking_res
+            if not tracking_res.empty and not new_tracking_res.empty:
+                tracking_res = pd.concat([tracking_res, new_tracking_res])
     tracking_res.reset_index(drop=True, inplace=True)
 
     # Filter the results
@@ -1177,10 +1193,7 @@ def tracking(
                     showimmediately=False
                 )
 
-            if ind == tracking_res.index[-1]:
-                plt.show(block=True)
-            else:
-                plt.show(block=False)
+    plt.show()
 
     # Call the GUI and return the tracking_res
     if gui:

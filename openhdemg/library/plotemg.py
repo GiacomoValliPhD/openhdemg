@@ -820,6 +820,43 @@ class Figure_Subplots_Layout_Manager():
                         getattr(line, f"set_{key}")(value)
 
 
+def get_unique_fig_name(base_name):
+    """
+    Generate a unique figure name if base_name is already in use.
+
+    This allows to plot multiple figures in the background, with the same name,
+    before calling plt.show().
+
+    Parameters
+    ----------
+    base_name : str
+        The name to use in the figure.
+
+    Returns
+    -------
+    new_name : str
+        The new, unique name. If base_name is not used in other figures,
+        new_name == base_name.
+    """
+
+    existing_titles = [
+        plt.figure(num).canvas.manager.get_window_title(
+        ) for num in plt.get_fignums()
+    ]
+
+    if base_name not in existing_titles:
+        return base_name  # Name is unique
+
+    # If the name exists, append a number to make it unique
+    counter = 1
+    new_name = f"{base_name} ({counter})"
+    while new_name in existing_titles:
+        counter += 1
+        new_name = f"{base_name} ({counter})"
+
+    return new_name
+
+
 def plot_emgsig(
     emgfile,
     channels,
@@ -989,7 +1026,7 @@ def plot_emgsig(
         x_axis = emgsig.index
 
     # Create figure and axis
-    figname = "Channels n.{}".format(channels)
+    figname = get_unique_fig_name("Channels n.{}".format(channels))
     fig, ax1 = plt.subplots(
         figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
         num=figname,
@@ -1046,10 +1083,10 @@ def plot_emgsig(
 
         # Ensure correct and complete ticks on the left y axis
         ax1.set_yticks(
-            np.arange(
-                half_offset,
-                len(channels) * manual_offset + half_offset,
-                manual_offset,
+            np.linspace(
+                start=half_offset,
+                stop=len(channels) * manual_offset + half_offset - manual_offset,
+                num=len(channels),
             )
         )
         ax1.set_yticklabels([str(x) for x in channels])
@@ -1124,7 +1161,7 @@ def plot_differentials(
     """
     Plot the differential derivation of the RAW_SIGNAL by matrix column.
 
-    Both the single and the double differencials can be plotted.
+    Both the single and the double differentials can be plotted.
     This function is used to plot also the sorted RAW_SIGNAL.
 
     Parameters
@@ -1258,7 +1295,7 @@ def plot_differentials(
         x_axis = emgsig.index
 
     # Create figure and axis
-    figname = "Column n.{}".format(column)
+    figname = get_unique_fig_name("Column n.{}".format(column))
     fig, ax1 = plt.subplots(
         figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
         num=figname,
@@ -1298,11 +1335,18 @@ def plot_differentials(
                 ax1.plot(x_axis, data)
 
         # Ensure correct and complete ticks on the left y axis
-        ax1.set_yticks(
+        """ ax1.set_yticks(
             np.arange(
                 half_offset,
                 len(emgsig.columns) * manual_offset + half_offset,
                 manual_offset,
+            )
+        ) """
+        ax1.set_yticks(
+            np.linspace(
+                start=half_offset,
+                stop=len(emgsig.columns) * manual_offset + half_offset - manual_offset,
+                num=len(emgsig.columns),
             )
         )
         ax1.set_yticklabels([str(x) for x in emgsig.columns])
@@ -1467,9 +1511,10 @@ def plot_refsig(
     else:
         x_axis = refsig.index
 
+    figname = get_unique_fig_name("Reference signal")
     fig, ax1 = plt.subplots(
         figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-        num="Reference signal",
+        num=figname,
     )
 
     ax1.plot(x_axis, refsig[0])
@@ -1642,10 +1687,11 @@ def plot_mupulses(
         if emgfile["NUMBER_OF_MUS"] > 1:
             y_tick_lab = [*range(0, emgfile["NUMBER_OF_MUS"])]
             ylab = "Motor units"
+            munumber = [*range(emgfile["NUMBER_OF_MUS"])]
         else:
             munumber = 0
 
-    elif isinstance(munumber, int):
+    if isinstance(munumber, int):
         mupulses = [mupulses[munumber]]
         y_tick_lab = []
         ylab = f"MU n. {munumber}"
@@ -1677,8 +1723,9 @@ def plot_mupulses(
     colors1 = ["C{}".format(i) for i in range(len(mupulses))]
 
     # Use the subplot to allow the use of twinx
+    figname = get_unique_fig_name("MUs pulses")
     fig, ax1 = plt.subplots(
-        figsize=(figsize[0] / 2.54, figsize[1] / 2.54), num="MUs pulses",
+        figsize=(figsize[0] / 2.54, figsize[1] / 2.54), num=figname,
     )
 
     # Plot the MUPULSES.
@@ -1900,9 +1947,9 @@ def plot_ipts(
         x_axis = ipts.index
 
     # Use the subplot function to allow for the use of twinx()
+    figname = get_unique_fig_name("IPTS")
     fig, ax1 = plt.subplots(
-        figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-        num="IPTS",
+        figsize=(figsize[0] / 2.54, figsize[1] / 2.54), num=figname,
     )
 
     # Check if we have a single MU or a list of MUs to plot
@@ -2122,9 +2169,9 @@ def plot_idr(
         munumber = munumber[0]
 
     # Use the subplot function to allow for the use of twinx()
+    figname = get_unique_fig_name("IDR")
     fig, ax1 = plt.subplots(
-        figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-        num="IDR",
+        figsize=(figsize[0] / 2.54, figsize[1] / 2.54), num=figname,
     )
 
     # Check if we have a single MU or a list of MUs to plot.
@@ -2395,9 +2442,10 @@ def plot_smoothed_dr(
         raise TypeError("smoothfits must be a pd.DataFrame")
 
     # Use the subplot function to allow for the use of twinx()
+    figname = get_unique_fig_name("Smoothed DR")
     fig, ax1 = plt.subplots(
         figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-        num="Smoothed DR",
+        num=figname,
     )
 
     # Check if we have a single MU or a list of MUs to plot.
@@ -2581,7 +2629,7 @@ def plot_muaps(
         If a list is passed, different MUs are overlayed. This is useful for
         visualisation of MUAPs during tracking or duplicates removal.
     title : str, default "MUAPs from STA"
-        Title of the plot.
+        Title of the plot canva.
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     tight_layout : bool, default False
@@ -2754,26 +2802,32 @@ def plot_muaps(
         raise TypeError("sta_dict must be dict or list")
 
     # Find the largest and smallest value to define common y axis limits.
-    xmax = 0
-    xmin = 0
+    ymax = 0
+    ymin = 0
     # Loop each sta_dict and MU, c means matrix columns
     for thisdict in sta_dict:
         for c in thisdict:
             max_ = thisdict[c].max().max()
             min_ = thisdict[c].min().min()
-            if max_ > xmax:
-                xmax = max_
-            if min_ < xmin:
-                xmin = min_
+            if max_ > ymax:
+                ymax = max_
+            if min_ < ymin:
+                ymin = min_
+    # Manage exception of singular transformation
+    if ymax == 0 and ymin == 0:
+        ymax = 1
+        ymin = -1
 
     # Obtain number of columns and rows
     cols = len(sta_dict[0])
     rows = len(sta_dict[0][next(iter(sta_dict[0]))].columns)
+
+    figname = get_unique_fig_name(title)
     fig, axs = plt.subplots(
         rows,
         cols,
         figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-        num=title,
+        num=figname,
     )
 
     # Manage exception of arrays instead of matrices and check that they
@@ -2786,7 +2840,7 @@ def plot_muaps(
                 for pos, c in enumerate(thisdict.keys()):
                     axs[r, pos].plot(thisdict[c].iloc[:, r])
 
-                    axs[r, pos].set_ylim(xmin, xmax)
+                    axs[r, pos].set_ylim(ymin, ymax)
                     axs[r, pos].xaxis.set_visible(False)
                     axs[r, pos].set(yticklabels=[])
                     axs[r, pos].tick_params(left=False)
@@ -2799,7 +2853,7 @@ def plot_muaps(
                 for pos, c in enumerate(thisdict.keys()):
                     axs[r].plot(thisdict[c].iloc[:, r])
 
-                    axs[r].set_ylim(xmin, xmax)
+                    axs[r].set_ylim(ymin, ymax)
                     axs[r].xaxis.set_visible(False)
                     axs[r].set(yticklabels=[])
                     axs[r].tick_params(left=False)
@@ -3088,6 +3142,7 @@ def plot_muap(
     figname = "ST MUAPs of MU {}, column {}, channel {}".format(
         munumber, column, channelnumb
     )
+    figname = get_unique_fig_name(figname)
     fig, ax1 = plt.subplots(
         figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
         num=figname,
@@ -3279,16 +3334,21 @@ def plot_muaps_for_cv(
             ymax = max_
         if min_ < ymin:
             ymin = min_
+    # Manage exception of singular transformation
+    if ymax == 0 and ymin == 0:
+        ymax = 1
+        ymin = -1
 
     # Obtain number of columns and rows, this changes if we use different
     # matrices.
     cols = len(sta_dict)
     rows = len(sta_dict["col0"].columns)
+    figname = get_unique_fig_name(title)
     fig, axs = plt.subplots(
         rows,
         cols,
         figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-        num=title,
+        num=figname,
     )
 
     # Manage exception of arrays instead of matrices and check that they
