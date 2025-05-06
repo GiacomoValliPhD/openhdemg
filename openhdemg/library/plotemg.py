@@ -3,62 +3,15 @@ This module contains all the functions used to visualise the content of the
 imported EMG file, the MUs properties or to save figures.
 """
 
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
-import numpy as np
 import warnings
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+
 from openhdemg.library.tools import compute_idr
 from openhdemg.library.mathtools import min_max_scaling
-
-
-def showgoodlayout(tight_layout=True, despined=False):
-    """
-    **WARNING!** This function is deprecated since v0.1.1 and will be removed
-    in v0.2.0. Please use Figure_Layout_Manager(figure).set_layout() instead.
-
-    Despine and show plots with a good layout.
-
-    This function is called by the various plot functions contained in the
-    library but can also be used by the user to quickly adjust the layout of
-    custom plots.
-
-    Parameters
-    ----------
-    tight_layout : bool, default True
-        If true (default), plt.tight_layout() is applied to the figure.
-    despined : bool or str {"2yaxes"}, default False
-
-        False: left and bottom is not despined (standard plotting).
-
-        True: all the sides are despined.
-
-        ``2yaxes``
-            Only the top is despined.
-            This is used to show y axes both on the right and left side at the
-            same time.
-    """
-
-    # Warn for the use of a deprecated function
-    msg = (
-        "This function is deprecated since v0.1.1 and will be removed after " +
-        "v0.2.0. Please use Figure_Layout_Manager(figure).set_layout()."
-    )
-    warnings.warn(msg, DeprecationWarning, stacklevel=2)
-
-    if despined is False:
-        sns.despine()
-    elif despined is True:
-        sns.despine(top=True, bottom=True, left=True, right=True)
-    elif despined == "2yaxes":
-        sns.despine(top=True, bottom=False, left=False, right=False)
-    else:
-        raise ValueError(
-            f"despined can be True, False or 2yaxes. {despined} was passed instead"
-        )
-
-    if tight_layout is True:
-        plt.tight_layout()
 
 
 class Figure_Layout_Manager():
@@ -454,27 +407,32 @@ class Figure_Layout_Manager():
         ![](md_graphics/docstrings/plotemg/FLM_set_layout_ex_1.png)
         """
 
-        if despine == "box":
-            sns.despine(
-                self.figure, top=False, bottom=False, left=False, right=False,
-            )
-        elif despine == "all":
-            sns.despine(
-                self.figure, top=True, bottom=True, left=True, right=True,
-            )
-        elif despine == "2yaxes":
-            sns.despine(
-                self.figure, top=True, bottom=False, left=False, right=False,
-            )
-        elif despine == "1yaxis":
-            sns.despine(
-                self.figure, top=True, bottom=False, left=False, right=True,
-            )
-        else:
-            raise ValueError(
-                "despine can be 'box', 'all', '2yaxes' or '1yaxes'. " +
-                f"{despine} was passed instead."
-            )
+        for ax in self.figure.axes:
+            if despine == "box":
+                ax.spines["top"].set_visible(True)
+                ax.spines["bottom"].set_visible(True)
+                ax.spines["left"].set_visible(True)
+                ax.spines["right"].set_visible(True)
+            elif despine == "all":
+                ax.spines["top"].set_visible(False)
+                ax.spines["bottom"].set_visible(False)
+                ax.spines["left"].set_visible(False)
+                ax.spines["right"].set_visible(False)
+            elif despine == "2yaxes":
+                ax.spines["top"].set_visible(False)
+                ax.spines["bottom"].set_visible(True)
+                ax.spines["left"].set_visible(True)
+                ax.spines["right"].set_visible(True)
+            elif despine == "1yaxis":
+                ax.spines["top"].set_visible(False)
+                ax.spines["bottom"].set_visible(True)
+                ax.spines["left"].set_visible(True)
+                ax.spines["right"].set_visible(False)
+            else:
+                raise ValueError(
+                    "despine can be 'box', 'all', '2yaxes' or '1yaxes'. " +
+                    f"{despine} was passed instead."
+                )
 
         if tight_layout is True:
             self.figure.tight_layout()
@@ -700,27 +658,32 @@ class Figure_Subplots_Layout_Manager():
         ![](md_graphics/docstrings/plotemg/FSLM_set_layout_ex_1.png)
         """
 
-        if despine == "box":
-            sns.despine(
-                self.figure, top=False, bottom=False, left=False, right=False,
-            )
-        elif despine == "all":
-            sns.despine(
-                self.figure, top=True, bottom=True, left=True, right=True,
-            )
-        elif despine == "2yaxes":
-            sns.despine(
-                self.figure, top=True, bottom=False, left=False, right=False,
-            )
-        elif despine == "1yaxis":
-            sns.despine(
-                self.figure, top=True, bottom=False, left=False, right=True,
-            )
-        else:
-            raise ValueError(
-                "despine can be 'box', 'all', '2yaxes' or '1yaxes'. " +
-                f"{despine} was passed instead."
-            )
+        for ax in self.figure.axes:
+            if despine == "box":
+                ax.spines["top"].set_visible(True)
+                ax.spines["bottom"].set_visible(True)
+                ax.spines["left"].set_visible(True)
+                ax.spines["right"].set_visible(True)
+            elif despine == "all":
+                ax.spines["top"].set_visible(False)
+                ax.spines["bottom"].set_visible(False)
+                ax.spines["left"].set_visible(False)
+                ax.spines["right"].set_visible(False)
+            elif despine == "2yaxes":
+                ax.spines["top"].set_visible(False)
+                ax.spines["bottom"].set_visible(True)
+                ax.spines["left"].set_visible(True)
+                ax.spines["right"].set_visible(True)
+            elif despine == "1yaxis":
+                ax.spines["top"].set_visible(False)
+                ax.spines["bottom"].set_visible(True)
+                ax.spines["left"].set_visible(True)
+                ax.spines["right"].set_visible(False)
+            else:
+                raise ValueError(
+                    "despine can be 'box', 'all', '2yaxes' or '1yaxes'. " +
+                    f"{despine} was passed instead."
+                )
 
         if tight_layout is True:
             self.figure.tight_layout()
@@ -857,6 +820,103 @@ def get_unique_fig_name(base_name):
     return new_name
 
 
+def _create_figure(figsize, use_plt, figname=None):
+    """
+    Standardised figure creation process with or without pyplot.
+
+    Only for internal use.
+
+    Parameters
+    ----------
+    figsize : list,
+        Size of the figure [a, b].
+    use_plt : bool, default True
+        Whether to use pyplot (`plt.subplots`) or plain
+        `matplotlib.figure.Figure` objects to build the figure. Use of pyplot
+        is generally for interactive workflows.
+    figname : None or str, default None
+        Optional name assigned to the figure. Used only if `use_plt` is True;
+        it helps manage and identify figures via pyplot's global state.
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        The created figure object.
+    ax : matplotlib.axes.Axes
+        The main axes of the figure.
+    """
+
+    figsize = (figsize[0], figsize[1])
+
+    if use_plt:
+        if figname is not None:
+            figname = get_unique_fig_name(figname)
+            fig, ax = plt.subplots(figsize=figsize, num=figname)
+        else:
+            fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = Figure(figsize=figsize)
+        ax = fig.add_subplot(111)
+
+    return fig, ax
+
+
+def _create_figure_with_subplots(
+    rows,
+    cols,
+    figsize,
+    use_plt=True,
+    figname=None,
+):
+    """
+    Standardised subplot figure creation with or without pyplot.
+
+    Only for internal use.
+
+    Parameters
+    ----------
+    figsize : figsize : list,
+        Size of the figure [a, b].
+    rows : int
+        Number of subplot rows.
+    cols : int
+        Number of subplot columns.
+    use_plt : bool, default True
+        Whether to use pyplot (`plt.subplots`) or plain
+        `matplotlib.figure.Figure` objects to build the figure. Use of pyplot
+        is generally for interactive workflows.
+    figname : None or str, default None
+        Optional name assigned to the figure. Used only if `use_plt` is True;
+        it helps manage and identify figures via pyplot's global state.
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        The created figure object.
+    axes : np.ndarray of matplotlib.axes.Axes
+        A NumPy array of subplot Axes.
+    """
+
+    figsize = (figsize[0], figsize[1])
+
+    if use_plt:
+        if figname is not None:
+            figname = get_unique_fig_name(figname)
+            fig, axes = plt.subplots(rows, cols, figsize=figsize, num=figname)
+        else:
+            fig, axes = plt.subplots(rows, cols, figsize=figsize)
+    else:
+        fig = Figure(figsize=figsize)
+        axes = np.empty((rows, cols), dtype=object)
+        for i in range(rows):
+            for j in range(cols):
+                index = i * cols + j + 1
+                axes[i, j] = fig.add_subplot(rows, cols, index)
+
+    return fig, axes
+
+
+# TODO take care of destroying plt interactive plots during areas selection or others
 def plot_emgsig(
     emgfile,
     channels,
@@ -869,6 +929,7 @@ def plot_emgsig(
     line2d_kwargs_ax2=None,
     axes_kwargs=None,
     showimmediately=True,
+    use_plt=True,
 ):
     """
     Plot the RAW_SIGNAL. Single or multiple channels.
@@ -900,7 +961,7 @@ def plot_emgsig(
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     tight_layout : bool, default True
-        If True (default), the plt.tight_layout() is called and the figure's
+        If True (default), fig.tight_layout() is called and the figure's
         layout is improved.
         It is useful to set it to False when calling the function from a GUI.
     line2d_kwargs_ax1 : dict, optional
@@ -912,9 +973,15 @@ def plot_emgsig(
     axes_kwargs : dict, optional
         Kwargs for figure's axes.
     showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from a GUI.
+        If True (default), `plt.show()` is called to display the figure to the
+        user. This has an effect only if `use_plt` is True. Set to False when
+        using the function within a GUI or when managing figure display
+        manually.
+    use_plt : bool, default True
+        Whether to use the `pyplot` interface (`plt.subplots`) or the
+        object-oriented `matplotlib.figure.Figure` API to create the figure.
+        Set to False in GUI applications or headless environments to avoid the
+        persistent pyplot's global state.
 
     Returns
     -------
@@ -1026,10 +1093,10 @@ def plot_emgsig(
         x_axis = emgsig.index
 
     # Create figure and axis
-    figname = get_unique_fig_name("Channels n.{}".format(channels))
-    fig, ax1 = plt.subplots(
+    figname = "Channels n.{}".format(channels)
+    fig, ax1 = _create_figure(
         figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-        num=figname,
+        use_plt=use_plt, figname=figname,
     )
 
     # Check if we have a single channel or a list of channels to plot
@@ -1157,6 +1224,7 @@ def plot_differentials(
     line2d_kwargs_ax2=None,
     axes_kwargs=None,
     showimmediately=True,
+    use_plt=True,
 ):
     """
     Plot the differential derivation of the RAW_SIGNAL by matrix column.
@@ -1188,7 +1256,7 @@ def plot_differentials(
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     tight_layout : bool, default True
-        If True (default), the plt.tight_layout() is called and the figure's
+        If True (default), fig.tight_layout() is called and the figure's
         layout is improved.
         It is useful to set it to False when calling the function from a GUI.
     line2d_kwargs_ax1 : dict, optional
@@ -1200,9 +1268,15 @@ def plot_differentials(
     axes_kwargs : dict, optional
         Kwargs for figure's axes.
     showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from a GUI.
+        If True (default), `plt.show()` is called to display the figure to the
+        user. This has an effect only if `use_plt` is True. Set to False when
+        using the function within a GUI or when managing figure display
+        manually.
+    use_plt : bool, default True
+        Whether to use the `pyplot` interface (`plt.subplots`) or the
+        object-oriented `matplotlib.figure.Figure` API to create the figure.
+        Set to False in GUI applications or headless environments to avoid the
+        persistent pyplot's global state.
 
     Returns
     -------
@@ -1295,10 +1369,10 @@ def plot_differentials(
         x_axis = emgsig.index
 
     # Create figure and axis
-    figname = get_unique_fig_name("Column n.{}".format(column))
-    fig, ax1 = plt.subplots(
+    figname = "Column n.{}".format(column)
+    fig, ax1 = _create_figure(
         figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-        num=figname,
+        use_plt=use_plt, figname=figname,
     )
 
     # Plot all the channels
@@ -1335,13 +1409,6 @@ def plot_differentials(
                 ax1.plot(x_axis, data)
 
         # Ensure correct and complete ticks on the left y axis
-        """ ax1.set_yticks(
-            np.arange(
-                half_offset,
-                len(emgsig.columns) * manual_offset + half_offset,
-                manual_offset,
-            )
-        ) """
         ax1.set_yticks(
             np.linspace(
                 start=half_offset,
@@ -1407,6 +1474,7 @@ def plot_refsig(
     line2d_kwargs_ax1=None,
     axes_kwargs=None,
     showimmediately=True,
+    use_plt=True,
 ):
     """
     Plot the REF_SIGNAL.
@@ -1429,7 +1497,7 @@ def plot_refsig(
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     tight_layout : bool, default True
-        If True (default), the plt.tight_layout() is called and the figure's
+        If True (default), fig.tight_layout() is called and the figure's
         layout is improved.
         It is useful to set it to False when calling the function from a GUI.
     line2d_kwargs_ax1 : dict, optional
@@ -1438,9 +1506,15 @@ def plot_refsig(
     axes_kwargs : dict, optional
         Kwargs for figure's axes.
     showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from a GUI.
+        If True (default), `plt.show()` is called to display the figure to the
+        user. This has an effect only if `use_plt` is True. Set to False when
+        using the function within a GUI or when managing figure display
+        manually.
+    use_plt : bool, default True
+        Whether to use the `pyplot` interface (`plt.subplots`) or the
+        object-oriented `matplotlib.figure.Figure` API to create the figure.
+        Set to False in GUI applications or headless environments to avoid the
+        persistent pyplot's global state.
 
     Returns
     -------
@@ -1511,10 +1585,10 @@ def plot_refsig(
     else:
         x_axis = refsig.index
 
-    figname = get_unique_fig_name("Reference signal")
-    fig, ax1 = plt.subplots(
+    figname = "Reference signal"
+    fig, ax1 = _create_figure(
         figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-        num=figname,
+        use_plt=use_plt, figname=figname,
     )
 
     ax1.plot(x_axis, refsig[0])
@@ -1552,6 +1626,7 @@ def plot_mupulses(
     line2d_kwargs_ax2=None,
     axes_kwargs=None,
     showimmediately=True,
+    use_plt=True,
 ):
     """
     Plot the MUPULSES (binary representation of the firings time).
@@ -1587,7 +1662,7 @@ def plot_mupulses(
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     tight_layout : bool, default True
-        If True (default), the plt.tight_layout() is called and the figure's
+        If True (default), fig.tight_layout() is called and the figure's
         layout is improved.
         It is useful to set it to False when calling the function from a GUI.
     line2d_kwargs_ax1 : dict, optional
@@ -1599,9 +1674,15 @@ def plot_mupulses(
     axes_kwargs : dict, optional
         Kwargs for figure's axes.
     showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from a GUI.
+        If True (default), `plt.show()` is called to display the figure to the
+        user. This has an effect only if `use_plt` is True. Set to False when
+        using the function within a GUI or when managing figure display
+        manually.
+    use_plt : bool, default True
+        Whether to use the `pyplot` interface (`plt.subplots`) or the
+        object-oriented `matplotlib.figure.Figure` API to create the figure.
+        Set to False in GUI applications or headless environments to avoid the
+        persistent pyplot's global state.
 
     Returns
     -------
@@ -1723,9 +1804,10 @@ def plot_mupulses(
     colors1 = ["C{}".format(i) for i in range(len(mupulses))]
 
     # Use the subplot to allow the use of twinx
-    figname = get_unique_fig_name("MUs pulses")
-    fig, ax1 = plt.subplots(
-        figsize=(figsize[0] / 2.54, figsize[1] / 2.54), num=figname,
+    figname = "MUs pulses"
+    fig, ax1 = _create_figure(
+        figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
+        use_plt=use_plt, figname=figname,
     )
 
     # Plot the MUPULSES.
@@ -1796,6 +1878,7 @@ def plot_ipts(
     line2d_kwargs_ax2=None,
     axes_kwargs=None,
     showimmediately=True,
+    use_plt=True,
 ):
     """
     Plot the IPTS (decomposed source).
@@ -1827,7 +1910,7 @@ def plot_ipts(
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     tight_layout : bool, default True
-        If True (default), the plt.tight_layout() is called and the figure's
+        If True (default), fig.tight_layout() is called and the figure's
         layout is improved.
         It is useful to set it to False when calling the function from a GUI.
     line2d_kwargs_ax1 : dict, optional
@@ -1839,9 +1922,15 @@ def plot_ipts(
     axes_kwargs : dict, optional
         Kwargs for figure's axes.
     showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from a GUI.
+        If True (default), `plt.show()` is called to display the figure to the
+        user. This has an effect only if `use_plt` is True. Set to False when
+        using the function within a GUI or when managing figure display
+        manually.
+    use_plt : bool, default True
+        Whether to use the `pyplot` interface (`plt.subplots`) or the
+        object-oriented `matplotlib.figure.Figure` API to create the figure.
+        Set to False in GUI applications or headless environments to avoid the
+        persistent pyplot's global state.
 
     Returns
     -------
@@ -1946,10 +2035,11 @@ def plot_ipts(
     else:
         x_axis = ipts.index
 
-    # Use the subplot function to allow for the use of twinx()
-    figname = get_unique_fig_name("IPTS")
-    fig, ax1 = plt.subplots(
-        figsize=(figsize[0] / 2.54, figsize[1] / 2.54), num=figname,
+    # Create figure and axis
+    figname = "IPTS"
+    fig, ax1 = _create_figure(
+        figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
+        use_plt=use_plt, figname=figname,
     )
 
     # Check if we have a single MU or a list of MUs to plot
@@ -2035,6 +2125,7 @@ def plot_idr(
     line2d_kwargs_ax2=None,
     axes_kwargs=None,
     showimmediately=True,
+    use_plt=True,
 ):
     """
     Plot the instantaneous discharge rate (IDR).
@@ -2064,7 +2155,7 @@ def plot_idr(
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     tight_layout : bool, default True
-        If True (default), the plt.tight_layout() is called and the figure's
+        If True (default), fig.tight_layout() is called and the figure's
         layout is improved.
         It is useful to set it to False when calling the function from a GUI.
     line2d_kwargs_ax1 : dict, optional
@@ -2076,9 +2167,15 @@ def plot_idr(
     axes_kwargs : dict, optional
         Kwargs for figure's axes.
     showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from a GUI.
+        If True (default), `plt.show()` is called to display the figure to the
+        user. This has an effect only if `use_plt` is True. Set to False when
+        using the function within a GUI or when managing figure display
+        manually.
+    use_plt : bool, default True
+        Whether to use the `pyplot` interface (`plt.subplots`) or the
+        object-oriented `matplotlib.figure.Figure` API to create the figure.
+        Set to False in GUI applications or headless environments to avoid the
+        persistent pyplot's global state.
 
     Returns
     -------
@@ -2168,10 +2265,11 @@ def plot_idr(
     if isinstance(munumber, list) and len(munumber) == 1:
         munumber = munumber[0]
 
-    # Use the subplot function to allow for the use of twinx()
-    figname = get_unique_fig_name("IDR")
-    fig, ax1 = plt.subplots(
-        figsize=(figsize[0] / 2.54, figsize[1] / 2.54), num=figname,
+    # Create figure and axis
+    figname = "IDR"
+    fig, ax1 = _create_figure(
+        figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
+        use_plt=use_plt, figname=figname,
     )
 
     # Check if we have a single MU or a list of MUs to plot.
@@ -2280,6 +2378,7 @@ def plot_smoothed_dr(
     line2d_kwargs_ax2=None,
     axes_kwargs=None,
     showimmediately=True,
+    use_plt=True,
 ):
     """
     Plot the smoothed discharge rate.
@@ -2317,7 +2416,7 @@ def plot_smoothed_dr(
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     tight_layout : bool, default True
-        If True (default), the plt.tight_layout() is called and the figure's
+        If True (default), fig.tight_layout() is called and the figure's
         layout is improved.
         It is useful to set it to False when calling the function from a GUI.
     line2d_kwargs_ax1 : dict, optional
@@ -2329,9 +2428,15 @@ def plot_smoothed_dr(
     axes_kwargs : dict, optional
         Kwargs for figure's axes.
     showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from a GUI.
+        If True (default), `plt.show()` is called to display the figure to the
+        user. This has an effect only if `use_plt` is True. Set to False when
+        using the function within a GUI or when managing figure display
+        manually.
+    use_plt : bool, default True
+        Whether to use the `pyplot` interface (`plt.subplots`) or the
+        object-oriented `matplotlib.figure.Figure` API to create the figure.
+        Set to False in GUI applications or headless environments to avoid the
+        persistent pyplot's global state.
 
     Returns
     -------
@@ -2441,11 +2546,11 @@ def plot_smoothed_dr(
     if not isinstance(smoothfits, pd.DataFrame):
         raise TypeError("smoothfits must be a pd.DataFrame")
 
-    # Use the subplot function to allow for the use of twinx()
-    figname = get_unique_fig_name("Smoothed DR")
-    fig, ax1 = plt.subplots(
+    # Create figure and axis
+    figname = "Smoothed DR"
+    fig, ax1 = _create_figure(
         figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-        num=figname,
+        use_plt=use_plt, figname=figname,
     )
 
     # Check if we have a single MU or a list of MUs to plot.
@@ -2617,6 +2722,7 @@ def plot_muaps(
     tight_layout=False,
     line2d_kwargs_ax1=None,
     showimmediately=True,
+    use_plt=True,
 ):
     """
     Plot MUAPs obtained from STA from one or multiple MUs.
@@ -2633,7 +2739,7 @@ def plot_muaps(
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     tight_layout : bool, default False
-        If True (default), the plt.tight_layout() is called and the figure's
+        If True (default), fig.tight_layout() is called and the figure's
         layout is improved.
         It is useful to set it to False when calling the function from a GUI
         or if the final layout is not correct.
@@ -2643,9 +2749,15 @@ def plot_muaps(
         Line2D, or a single dictionary. If a single dictionary is passed,
         the same style will be applied to all the lines. See examples.
     showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from a GUI.
+        If True (default), `plt.show()` is called to display the figure to the
+        user. This has an effect only if `use_plt` is True. Set to False when
+        using the function within a GUI or when managing figure display
+        manually.
+    use_plt : bool, default True
+        Whether to use the `pyplot` interface (`plt.subplots`) or the
+        object-oriented `matplotlib.figure.Figure` API to create the figure.
+        Set to False in GUI applications or headless environments to avoid the
+        persistent pyplot's global state.
 
     Returns
     -------
@@ -2822,12 +2934,13 @@ def plot_muaps(
     cols = len(sta_dict[0])
     rows = len(sta_dict[0][next(iter(sta_dict[0]))].columns)
 
-    figname = get_unique_fig_name(title)
-    fig, axs = plt.subplots(
-        rows,
-        cols,
+    figname = title
+    fig, axs = _create_figure_with_subplots(
+        rows=rows,
+        cols=cols,
         figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-        num=figname,
+        use_plt=use_plt,
+        figname=figname,
     )
 
     # Manage exception of arrays instead of matrices and check that they
@@ -2901,6 +3014,7 @@ def plot_muap(
     line2d_kwargs_ax2=None,
     axes_kwargs=None,
     showimmediately=True,
+    use_plt=True,
 ):
     """
     Plot the MUAPs of a specific matrix channel.
@@ -2935,7 +3049,7 @@ def plot_muap(
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     tight_layout : bool, default True
-        If True (default), the plt.tight_layout() is called and the figure's
+        If True (default), fig.tight_layout() is called and the figure's
         layout is improved.
         It is useful to set it to False when calling the function from a GUI.
     line2d_kwargs_ax1 : dict, optional
@@ -2947,9 +3061,15 @@ def plot_muap(
     axes_kwargs : dict, optional
         Kwargs for figure's axes.
     showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from a GUI.
+        If True (default), `plt.show()` is called to display the figure to the
+        user. This has an effect only if `use_plt` is True. Set to False when
+        using the function within a GUI or when managing figure display
+        manually.
+    use_plt : bool, default True
+        Whether to use the `pyplot` interface (`plt.subplots`) or the
+        object-oriented `matplotlib.figure.Figure` API to create the figure.
+        Set to False in GUI applications or headless environments to avoid the
+        persistent pyplot's global state.
 
     Returns
     -------
@@ -3142,10 +3262,10 @@ def plot_muap(
     figname = "ST MUAPs of MU {}, column {}, channel {}".format(
         munumber, column, channelnumb
     )
-    figname = get_unique_fig_name(figname)
-    fig, ax1 = plt.subplots(
+    figname = figname
+    fig, ax1 = _create_figure(
         figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-        num=figname,
+        use_plt=use_plt, figname=figname,
     )
 
     # Plot all the MUAPs
@@ -3215,6 +3335,7 @@ def plot_muaps_for_cv(
     tight_layout=False,
     line2d_kwargs_ax1=None,
     showimmediately=True,
+    use_plt=True,
 ):
     """
     Visualise MUAPs on which to calculate MUs CV.
@@ -3235,7 +3356,7 @@ def plot_muaps_for_cv(
     figsize : list, default [20, 15]
         Size of the figure in centimeters [width, height].
     tight_layout : bool, default False
-        If True (default), the plt.tight_layout() is called and the figure's
+        If True (default), fig.tight_layout() is called and the figure's
         layout is improved.
         It is useful to set it to False when calling the function from a GUI
         or if the final layout is not correct.
@@ -3245,9 +3366,15 @@ def plot_muaps_for_cv(
         Line2D, or a single dictionary. If a single dictionary is passed,
         the same style will be applied to all the lines. See examples.
     showimmediately : bool, default True
-        If True (default), plt.show() is called and the figure showed to the
-        user.
-        It is useful to set it to False when calling the function from a GUI.
+        If True (default), `plt.show()` is called to display the figure to the
+        user. This has an effect only if `use_plt` is True. Set to False when
+        using the function within a GUI or when managing figure display
+        manually.
+    use_plt : bool, default True
+        Whether to use the `pyplot` interface (`plt.subplots`) or the
+        object-oriented `matplotlib.figure.Figure` API to create the figure.
+        Set to False in GUI applications or headless environments to avoid the
+        persistent pyplot's global state.
 
     Returns
     -------
@@ -3339,16 +3466,17 @@ def plot_muaps_for_cv(
         ymax = 1
         ymin = -1
 
-    # Obtain number of columns and rows, this changes if we use different
-    # matrices.
+    # Obtain number of columns and rows
     cols = len(sta_dict)
     rows = len(sta_dict["col0"].columns)
-    figname = get_unique_fig_name(title)
-    fig, axs = plt.subplots(
-        rows,
-        cols,
+
+    figname = title
+    fig, axs = _create_figure_with_subplots(
+        rows=rows,
+        cols=cols,
         figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
-        num=figname,
+        use_plt=use_plt,
+        figname=figname,
     )
 
     # Manage exception of arrays instead of matrices and check that they
