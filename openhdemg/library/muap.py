@@ -11,7 +11,7 @@ from openhdemg.library.mathtools import (
 )
 from openhdemg.library.electrodes import sort_rawemg
 from openhdemg.library.plotemg import (
-    plot_idr, plot_muaps, plot_muaps_for_cv, get_unique_fig_name,
+    plot_idr, plot_muaps, plot_muaps_for_cv,
 )
 from scipy import signal
 import matplotlib.pyplot as plt

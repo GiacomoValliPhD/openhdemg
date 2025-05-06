@@ -3,12 +3,14 @@ This module contains all the functions used to analyse the MUs properties when
 not involving the MUs action potential shape.
 """
 
-import pandas as pd
-import numpy as np
-from openhdemg.library.tools import showselect, compute_idr, compute_covsteady
-from openhdemg.library.mathtools import compute_pnr, compute_sil
-import warnings
 import math
+import warnings
+
+import numpy as np
+import pandas as pd
+
+from openhdemg.library.mathtools import compute_pnr, compute_sil
+from openhdemg.library.tools import showselect, compute_idr, compute_covsteady
 
 
 def compute_thresholds(

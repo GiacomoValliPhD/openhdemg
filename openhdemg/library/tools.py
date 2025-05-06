@@ -6,13 +6,15 @@ shortcuts necessary to operate with the HD-EMG recordings.
 """
 
 import copy
-import pandas as pd
+import warnings
+
 import numpy as np
-import matplotlib.pyplot as plt
+import pandas as pd
 from scipy import signal
 from scipy.stats import iqr
 from sklearn.svm import SVR
-import warnings
+import matplotlib.pyplot as plt
+
 from openhdemg.library.mathtools import compute_sil
 
 

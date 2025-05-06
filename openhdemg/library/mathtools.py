@@ -3,16 +3,17 @@ This module contains all the mathematical functions that are necessary for the
 library.
 """
 
-import copy
-import pandas as pd
-import numpy as np
-import numpy.polynomial.polynomial as poly
-import math
-from scipy import signal
-from scipy.spatial.distance import cdist
-from scipy.fftpack import fft
 import sys
+import copy
+import math
 import warnings
+
+import numpy as np
+import pandas as pd
+from scipy import signal
+from scipy.fftpack import fft
+from scipy.spatial.distance import cdist
+import numpy.polynomial.polynomial as poly
 
 
 def min_max_scaling(data=None, series_or_df=None, col_by_col=False):

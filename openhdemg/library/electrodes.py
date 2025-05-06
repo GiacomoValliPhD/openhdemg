@@ -4,9 +4,11 @@ HD-EMG recordings.
 Functions to sort the electrode position are also included.
 """
 
-import numpy as np
 import copy
 import itertools
+
+import numpy as np
+
 
 OTBelectrodes_tuple = (
     "GR04MM1305",
