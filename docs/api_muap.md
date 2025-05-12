@@ -1,7 +1,6 @@
 Description
 -----------
-This module contains functions to produce and analyse MUs anction potentials
-(MUAPs).
+This module contains functions to produce and analyse MUs anction potentials (MUAPs).
 
 <br/>
 

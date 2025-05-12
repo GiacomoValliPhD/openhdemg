@@ -1,6 +1,7 @@
 Description
 -----------
-This module contains all the functions that are necessary to open or save MATLAB (.mat), text (.txt), JSON (.json) or custom (.csv) files. MATLAB files are used to store data from the DEMUSE, OTBiolab+ and Delsys software while JSON files are used to save and load files from this library.<br>
+This module contains all the functions that are necessary to open or save MATLAB (.mat), text (.txt), JSON (.json) or custom (.csv) files. MATLAB files are used to store data from the DEMUSE, OTBiolab+ and Delsys software while JSON files are used to save and load files from this library.
+
 The choice of saving files in the open standard JSON file format was preferred over the MATLAB file format since it has a better integration with Python and has a very high cross-platform compatibility.
 
 Function's scope

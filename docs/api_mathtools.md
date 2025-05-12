@@ -1,7 +1,6 @@
 Description
 -----------
-This module contains all the mathematical functions that are necessary for the
-library.
+This module contains all the mathematical functions that are necessary for the library.
 
 <br/>
 

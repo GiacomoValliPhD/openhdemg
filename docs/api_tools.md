@@ -1,9 +1,6 @@
 Description
 -----------
-This module contains the functions that don't properly apply to the plot
-or analysis category but that are necessary for the usability of the library.
-The functions contained in this module can be considered as "tools" or
-shortcuts necessary to operate with the HD-EMG recordings.
+This module contains the functions that don't properly apply to the plot or analysis category but that are necessary for the usability of the library. The functions contained in this module can be considered as "tools" or shortcuts necessary to operate with the HD-EMG recordings.
 
 <br/>
 
