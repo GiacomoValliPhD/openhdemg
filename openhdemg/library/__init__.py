@@ -1,15 +1,3 @@
-__all__ = [
-    "openfiles",
-    "analysis",
-    "plotemg",
-    "tools",
-    "mathtools",
-    "otbelectrodes",
-    "muap",
-    "info",
-    "pic"
-]
-
 from openhdemg.library.openfiles import (
     emg_from_otb,
     emg_from_demuse,
@@ -32,3 +20,5 @@ from openhdemg.library.electrodes import *
 from openhdemg.library.muap import *
 from openhdemg.library.info import *
 from openhdemg.library.pic import *
+
+# TODO consider direct imports for all the functions instead of *
