@@ -5,6 +5,7 @@ The functions contained in this module can be considered as "tools" or
 shortcuts necessary to operate with the HD-EMG recordings.
 """
 
+import sys
 import copy
 import warnings
 
@@ -13,19 +14,20 @@ import pandas as pd
 from scipy import signal
 from scipy.stats import iqr
 from sklearn.svm import SVR
-import matplotlib.pyplot as plt
 
+from openhdemg.ui.widgets import run_point_selector
 from openhdemg.library.mathtools import compute_sil
 
 
 def showselect(emgfile, how="ref_signal", title="", titlesize=12, nclic=2):
     """
-    Visually select a part of the recording.
+    Visually select a part of the recording (X axis).
 
     The area can be selected based on the reference signal or based on the
-    mean EMG signal. The selection can be performed with any letter or number
-    in the keyboard, wrong points can be removed by pressing the right mouse
-    button. Once finished, press enter to continue.
+    mean EMG signal. Users can move the mouse to track coordinates and press:
+        - "A" or "a" to add a point at the current cursor location
+        - "D" or "d" to delete the last selected point
+        - "Enter" to confirm the selection and close the window
 
     This function does not check whether the selected points are within the
     effective file duration. This should be done based on user's need.
@@ -56,11 +58,6 @@ def showselect(emgfile, how="ref_signal", title="", titlesize=12, nclic=2):
     -------
     points : list
         A list containing the selected points sorted in ascending order.
-
-    Raises
-    ------
-    ValueError
-        When the user clicked a wrong number of inputs in the GUI.
 
     Examples
     --------
@@ -104,22 +101,16 @@ def showselect(emgfile, how="ref_signal", title="", titlesize=12, nclic=2):
             + f"'mean_emg'. {how} was passed instead."
         )
 
-    # Show the signal for the selection
-    plt.figure()
-    plt.plot(data_to_plot)
-    plt.xlabel("Samples")
-    plt.ylabel(y_label)
-    plt.title(title, fontweight="bold", fontsize=titlesize)
+    res = run_point_selector(
+        data=data_to_plot,
+        nclic=nclic,
+        y_label=y_label,
+        title=title,
+        title_fontsize=titlesize,
+    )
 
-    ginput_res = plt.ginput(n=-1, timeout=0, mouse_add=False, show_clicks=True)
-
-    plt.close()
-
-    points = [round(point[0]) for point in ginput_res]
+    points = [round(point[0]) for point in res]
     points.sort()
-
-    if nclic > 0 and nclic != len(points):
-        raise ValueError("Wrong number of inputs, read the title")
 
     return points
 
@@ -286,7 +277,7 @@ def resize_emgfile(
         title = (
             "Select the start/end area to resize by hovering the mouse" +
             "\nand pressing the 'a'-key. Wrong points can be removed with " +
-            "right \nclick or canc/delete key. When ready, press enter."
+            "the \n'd' -key. When ready, press enter."
         )
         points = showselect(
             emgfile,
@@ -492,10 +483,13 @@ class EMGFileSectionsIterator:
         based on the visualisation of the reference signal or of the EMG
         signal amplitude.
 
-        Points can be added by pressing keyboard letters while hovering over
-        the point to resize. Right mouse click removes the point. Press 'enter'
-        to confirm the selection. Sections are cut starting from the first
-        point and then on the consecutove points.
+        Users can move the mouse to track coordinates and press:
+        - "A" or "a" to add a point at the current cursor location
+        - "D" or "d" to delete the last selected point
+        - "Enter" to confirm the selection and close the window
+
+        Sections are cut starting from the first point and then on the
+        consecutive points.
 
         Parameters
         ----------
@@ -556,10 +550,9 @@ class EMGFileSectionsIterator:
         # Fallback title
         if len(title) == 0:
             title = (
-                "Select the points where to resize by hovering the mouse" +
-                "\nand pressing the 'a'-key. Wrong points can be removed " +
-                "with right\nclick or canc/delete keys. When ready, press " +
-                "enter."
+                "Select the points by hovering the mouse and pressing the" +
+                "'a'-key.\nWrong points can be removed with the 'd' -key." +
+                "\nWhen ready, press enter."
             )
 
         split_points = showselect(
@@ -1638,9 +1631,9 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
 
     if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
         title = (
-            "Select the start/end area of the steady-state by hovering the " +
-            "mouse \nand pressing the 'a'-key. Wrong points can be removed " +
-            "with right \nclick or canc/delete key. When ready, press enter."
+            "Select the start/end area to resize by hovering the mouse" +
+            "\nand pressing the 'a'-key. Wrong points can be removed with " +
+            "the \n'd' -key. When ready, press enter."
         )
         points = showselect(
             emgfile=emgfile,
@@ -1806,10 +1799,9 @@ def remove_offset(emgfile, offsetval=0, auto=0):
             # Select the area to calculate the offset
             # (average value of the selected area)
             title = (
-                "Select the start/end area to calculate the offset by " +
-                "hovering the mouse \nand pressing the 'a'-key. Wrong " +
-                " points can be removed with right \nclick or canc/delete " +
-                "key. When ready, press enter."
+                "Select the start/end area to calculate offset by hovering " +
+                "the mouse \nand pressing the 'a'-key. Wrong points can be " +
+                "removed with the \n'd' -key. When ready, press enter."
             )
             points = showselect(
                 emgfile=offs_emgfile,
@@ -1896,9 +1888,9 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
     elif how == "showselect":
         # Select the area to measure the MVC (maximum value)
         title = (
-            "Select the start/end area to compute MVC by hovering the " +
-            "mouse \nand pressing the 'a'-key. Wrong points can be removed " +
-            "with right \nclick or canc/delete key. When ready, press enter."
+            "Select the start/end area to calculate MVC by hovering " +
+            "the mouse \nand pressing the 'a'-key. Wrong points can be " +
+            "removed with the \n'd' -key. When ready, press enter."
         )
         points = showselect(
             emgfile=emgfile,
@@ -2008,9 +2000,9 @@ def compute_rfd(
     else:
         # Otherwise select the starting point for the RFD
         title = (
-            "Select the start/end area to compute the RFD by hovering the " +
-            "mouse \nand pressing the 'a'-key. Wrong points can be removed " +
-            "with right \nclick or canc/delete key. When ready, press enter."
+            "Select the start/end area to calculate RFD by hovering " +
+            "the mouse \nand pressing the 'a'-key. Wrong points can be " +
+            "removed with the \n'd' -key. When ready, press enter."
         )
         points = showselect(
             emgfile,
