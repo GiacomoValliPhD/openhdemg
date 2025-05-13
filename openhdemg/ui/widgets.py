@@ -2,10 +2,10 @@ import os
 import gc
 import sys
 
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt, QSettings
 from PySide6.QtWidgets import (
-    QApplication, QDialog, QVBoxLayout, QMessageBox,
+    QApplication, QDialog, QVBoxLayout, QMessageBox, QFileDialog,
 )
 
 import matplotlib
@@ -70,12 +70,15 @@ class PointSelectorDialog(QDialog):
     closing.
 
     Users can move the mouse to track coordinates and press:
+
         - "A" or "a" to add a point at the current cursor location
         - "D" or "d" to delete the last selected point
         - "Enter" to confirm the selection and close the window
 
     Check the implementation of ``run_point_selector()`` to see how it can be
-    used.
+    used. It is always suggested to call the ``PointSelectorDialog`` from
+    ``run_point_selector()`` instead of directly running its instance, as
+    this is also managing the ``QApplication``.
 
     Parameters
     ----------
@@ -168,10 +171,18 @@ class PointSelectorDialog(QDialog):
         self.canvas.mpl_connect("key_press_event", self.on_key_press)
 
     def on_mouse_move(self, event):
+        """
+        Record mouse position on the figure coordinates.
+        """
+
         if event.inaxes:
             self.last_mouse_pos = [event.xdata, event.ydata]
 
     def on_key_press(self, event):
+        """
+        React to pressed buttons.
+        """
+
         if event.key in ["A", "a"] and self.last_mouse_pos is not None:
             self.points.append(self.last_mouse_pos)
             self.redraw_points()
@@ -182,6 +193,10 @@ class PointSelectorDialog(QDialog):
             self.close()
 
     def redraw_points(self):
+        """
+        Update the figure with the selected points.
+        """
+
         # Remove old markers from plot
         for marker in self.markers:
             marker.remove()
@@ -251,6 +266,7 @@ def run_point_selector(
     automatically manages the app integration for the user.
 
     Users can move the mouse to track coordinates and press:
+
         - "A" or "a" to add a point at the current cursor location
         - "D" or "d" to delete the last selected point
         - "Enter" to confirm the selection and close the window
@@ -290,7 +306,7 @@ def run_point_selector(
     >>> print(selected_points)
     [[70.22, 0.96], [222.14, -0.95], [314.93, 0.04]]
 
-    Select exactly 2 points and print the X coordinates.  # TODO consider if using __init__ or not for ui
+    Select exactly 2 points and print the X coordinates.
 
     >>> import numpy as np
     >>> from openhdemg.ui import run_point_selector
@@ -301,7 +317,7 @@ def run_point_selector(
 
     """
 
-    # Check if the point selector is called frpm an existing application.
+    # Check if the PointSelectorDialog is called from an existing application.
     # If not, create an app and retrieve an icon path for it.
     app, app_created, path_to_icon = check_app()
 
@@ -324,5 +340,287 @@ def run_point_selector(
     return points
 
 
-# TODO Fai documentazione su questo nuovo modulo
-# TODO elimina deprecated functions da qui e docs
+class CustomFileDialog():
+    """
+    Custom file dialog for opening or saving a file.
+
+    It uses QSettings to remember the last accessed directory.
+
+    Check the implementation of ``run_custom_file_dialog()`` to see how it can
+    be used. It is always suggested to call the ``CustomFileDialog`` from
+    ``run_custom_file_dialog()`` instead of directly running its instance, as
+    this is also managing the ``QApplication``.
+
+    Parameters
+    ----------
+    mode : str {"open", "save"}, default "open"
+        Operation mode for the dialog.
+
+        ``open``
+            Get the file path to load the selected file.
+
+        ``save``
+            Get the file path where to save the selected file.
+    filesource : str, default "file"
+        Description of the file type being handled. This is shown in the dialog
+        title.
+    filetypes : list of tuples, default [("openhdemg files", "*.json"), ("All files", "*.*")]
+        A list of (description, extension) tuples specifying acceptable file
+        types.
+
+    Methods
+    -------
+    get_filepath()
+        Get the path to the file or None if the operation is cancelled.
+    """
+
+    def __init__(
+        self,
+        mode="open",
+        filesource="file",
+        filetypes=[("All files", "*.*")],
+    ):
+
+        # Class variables
+        self.mode = mode
+        self.filesource = filesource
+        self.filetypes = filetypes
+
+        # Setup settings to remember the last directory.
+        # On Windows, settings registry can be accessed from:
+        # HKEY_CURRENT_USER\Software\openhdemg\library_ui
+        self.settings = QSettings("openhdemg", "library_ui")
+        self.last_dir_key = "LastDirectory"  # Same as in CustomDirectoryDialog
+
+    def get_filepath(self):
+        """
+        Get the path to the file.
+
+        If the operation is completed, the directory is memorised for following
+        uses.
+
+        Returns
+        -------
+        str or None
+            The selected file path if confirmed, or None if the dialog was
+            canceled.
+        """
+
+        last_dir = self.settings.value(self.last_dir_key, os.getcwd())
+        caption = f"Select an {self.filesource} file to {self.mode}"
+
+        if self.mode == "open":
+            file_path, _ = QFileDialog.getOpenFileName(
+                caption=caption, dir=last_dir, filter=self._build_filter()
+            )
+        elif self.mode == "save":
+            file_path, _ = QFileDialog.getSaveFileName(
+                caption=caption, dir=last_dir, filter=self._build_filter()
+            )
+        else:
+            raise ValueError("CustomFileDialog mode must be 'open' or 'save'")
+
+        if file_path:
+            # Save the directory for next time
+            self.settings.setValue(
+                self.last_dir_key, os.path.dirname(file_path),
+            )
+            return file_path
+        else:
+            return None
+
+    def _build_filter(self):
+        return ";;".join([f"{desc} ({ext})" for desc, ext in self.filetypes])
+
+
+def run_custom_file_dialog(
+    mode="open",
+    filesource="openhdemg",
+    filetypes=[("openhdemg files", "*.json"), ("All files", "*.*")],
+):
+    """
+    Opens a custom file dialog for opening or saving a file, remembering the
+    last accessed directory.
+
+    Compared to directly creating a CustomFileDialog instance, this function
+    automatically manages the app integration for the user.
+
+    Parameters
+    ----------
+    mode : str {"open", "save"}, default "open"
+        Operation mode for the dialog.
+
+        ``open``
+            Get the file path to load the selected file.
+
+        ``save``
+            Get the file path where to save the selected file.
+    filesource : str, default "openhdemg"
+        Description of the file type being handled. This is shown in the dialog
+        title.
+    filetypes : list of tuples, default [("openhdemg files", "*.json"), ("All files", "*.*")]
+        A list of (description, extension) tuples specifying acceptable file
+        types.
+
+    Returns
+    -------
+    str or None
+        The selected file path if confirmed, or None if the dialog was
+        canceled.
+
+    Examples
+    --------
+    Get the path to a MATLAB file and visualise the full path, the file name
+    and its directory.
+
+    >>> from openhdemg.ui import run_custom_file_dialog
+    >>> import os
+    >>> filepath = run_custom_file_dialog(
+    ...     mode="open",
+    ...     filesource="MATLAB",
+    ...     filetypes=[("MATLAB files", "*.mat"), ("All files", "*.*")]
+    ... )
+    >>> if filepath:
+    ...     filename = os.path.basename(filepath)
+    ...     directory = os.path.dirname(filepath)
+    ...     print("Full path:", filepath)
+    ...     print("File name:", filename)
+    ...     print("Directory:", directory)
+    ... else:
+    ...     print("No file was selected.")
+    """
+
+    # Check if the CustomFileDialog is called from an existing application.
+    # If not, create the app (the icon cannot be set in QFileDialog).
+    app, app_created, path_to_icon = check_app()
+
+    # Execute the CustomFileDialog in open or save mode
+    dialog = CustomFileDialog(
+        mode=mode,
+        filesource=filesource,
+        filetypes=filetypes,
+    )
+    filepath = dialog.get_filepath()
+
+    if app_created:
+        app.quit()
+
+    return filepath
+
+
+class CustomDirectoryDialog():
+    """
+    Custom dialog for selecting a directory.
+
+    It uses QSettings to remember the last accessed directory.
+
+    Check the implementation of ``run_custom_directory_dialog()`` to see how it
+    can be used. It is always suggested to call the ``CustomDirectoryDialog``
+    from ``run_custom_directory_dialog()`` instead of directly running its
+    instance, as this is also managing the ``QApplication``.
+
+    Parameters
+    ----------
+    window_title : str, default "Select a folder"
+        Title of the dialog window. This should guide the user.
+
+    Methods
+    -------
+    get_directory()
+        Get the directory path.
+    """
+
+    def __init__(self, window_title="Select a folder"):
+
+        # Class variables
+        self.window_title = window_title
+
+        # Setup settings to remember the last directory Same as in CustomFileDialog
+        self.settings = QSettings("openhdemg", "library_ui")
+        self.last_dir_key = "LastDirectory"
+
+    def get_directory(self):
+        """
+        Get the directory path.
+
+        If the operation is completed, the directory is memorised for following
+        uses.
+
+        Returns
+        -------
+        str or None
+            The selected directory path if confirmed, or None if the dialog was
+            canceled.
+        """
+
+        last_dir = self.settings.value(self.last_dir_key, os.getcwd())
+
+        dir_path = QFileDialog.getExistingDirectory(
+            caption=self.window_title, dir=last_dir,
+        )
+
+        if dir_path:
+            # Save the directory for next time
+            self.settings.setValue(
+                self.last_dir_key, dir_path,
+            )
+            return dir_path
+        else:
+            return None
+
+
+def run_custom_directory_dialog(window_title="Select a folder"):
+    """
+    Opens a custom dialog for selecting a directory, remembering the last
+    accessed directory.
+
+    Compared to directly creating a CustomDirectoryDialog instance, this
+    function automatically manages the app integration for the user.
+
+    Parameters
+    ----------
+    window_title : str, default "Select a folder"
+        Title of the dialog window. This should guide the user.
+
+    Returns
+    -------
+    str or None
+        The selected directory path if confirmed, or None if the dialog was
+        canceled.
+
+    Examples
+    --------
+    Select a directory and print the path:
+
+    >>> from openhdemg.ui import run_custom_directory_dialog
+    >>> dirpath = run_custom_directory_dialog(window_title="Select the output folder")
+    >>> if dirpath:
+    ...     print("Selected directory:", dirpath)
+    ... else:
+    ...     print("No directory was selected.")
+    """
+
+    # Check if the CustomDirectoryDialog is called from an existing
+    # application. If not, create the app (the icon cannot be set in
+    # QFileDialog).
+    app, app_created, path_to_icon = check_app()
+
+    # Execute the CustomDirectoryDialog in open or save mode
+    dialog = CustomDirectoryDialog(window_title=window_title)
+    dirpath = dialog.get_directory()
+
+    if app_created:
+        app.quit()
+
+    return dirpath
+
+
+
+
+
+
+
+
+
+
+# TODO tests for this module?????

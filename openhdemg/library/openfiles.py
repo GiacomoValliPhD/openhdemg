@@ -84,20 +84,24 @@ the function's description.
 #   )
 
 
-from scipy.io import loadmat
-import pandas as pd
-import numpy as np
-from openhdemg.library.electrodes import *
-from openhdemg.library.mathtools import compute_sil
-from openhdemg.library.tools import create_binary_firings, mupulses_from_binary
-from tkinter import *
-from tkinter import filedialog
+import os
 import json
 import gzip
-import warnings
-import os
 import fnmatch
+import warnings
 from io import StringIO
+
+import numpy as np
+import pandas as pd
+from scipy.io import loadmat
+
+from openhdemg.library.electrodes import (
+    OTBelectrodes_ied, OTBelectrodes_Nelectrodes,
+)
+from openhdemg.library.mathtools import compute_sil
+from openhdemg.library.tools import create_binary_firings, mupulses_from_binary
+
+from openhdemg.ui import run_custom_file_dialog, run_custom_directory_dialog
 
 
 # --------------------------------------------------------------------- #
@@ -1944,7 +1948,7 @@ def emg_from_json(filepath):
 # ---------------------------------------------------------------------
 # Function to open files from a GUI in a single line of code.
 
-def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
+def askopenfile(filesource="OPENHDEMG", **kwargs):
     """
     Select and open files with a GUI.
 
@@ -2068,8 +2072,9 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
 
     Returns
     -------
-    emgfile : dict
-        The dictionary containing the emgfile.
+    emgfile : dict or None
+        The dictionary containing the emgfile. If the selection process was
+        cancelled, it returns None.
 
     See also
     --------
@@ -2161,43 +2166,40 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
     >>> info.data(emgfile)
     """
 
-    # Set initialdir (actually not working on Windows, but it's not a problem
-    # of the code implementation)
-    if isinstance(initialdir, str):
-        if initialdir == "/":
-            initialdir = "/Decomposed Test files/"
+    # Warn for the use of a deprecated parameter
+    if kwargs.get("initialdir") is not None:
+        msg = (
+            "The initialdir parameter is deprecated and no longer valid. " +
+            "The UI now remembers the last accessed directory."
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
 
-    # Create and hide the tkinter root window necessary for the GUI based
-    # open-file function
-    root = Tk()
-    root.withdraw()
-
+    # Get the path to the file
     if filesource in ["DEMUSE", "OTB", "OTB_REFSIG", "DELSYS_REFSIG"]:
-        file_toOpen = filedialog.askopenfilename(
-            initialdir=initialdir,
-            title=f"Select a {filesource} file to load",
+        file_toOpen = run_custom_file_dialog(
+            mode="open",
+            filesource=filesource,
             filetypes=[("MATLAB files", "*.mat")],
         )
     elif filesource == "DELSYS":
-        emg_file_toOpen = filedialog.askopenfilename(
-            initialdir=initialdir,
-            title="Select a DELSYS file with raw EMG to load",
+        emg_file_toOpen = run_custom_file_dialog(
+            mode="open",
+            filesource=filesource,
             filetypes=[("MATLAB files", "*.mat")],
         )
-        mus_file_toOpen = filedialog.askdirectory(
-            initialdir=initialdir,
-            title="Select the folder containing the DELSYS decomposition",
+        mus_file_toOpen = run_custom_directory_dialog(
+            window_title="Select the folder containing DELSYS decomposition",
         )
     elif filesource == "OPENHDEMG":
-        file_toOpen = filedialog.askopenfilename(
-            initialdir=initialdir,
-            title="Select an OPENHDEMG file to load",
+        file_toOpen = run_custom_file_dialog(
+            mode="open",
+            filesource=filesource,
             filetypes=[("JSON files", "*.json")],
         )
     elif filesource in ["CUSTOMCSV", "CUSTOMCSV_REFSIG"]:
-        file_toOpen = filedialog.askopenfilename(
-            initialdir=initialdir,
-            title=f"Select a {filesource} file to load",
+        file_toOpen = run_custom_file_dialog(
+            mode="open",
+            filesource=filesource,
             filetypes=[("CSV files", "*.csv")],
         )
     else:
@@ -2207,8 +2209,9 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
             "'OPENHDEMG', 'CUSTOMCSV', 'CUSTOMCSV_REFSIG'\n"
         )
 
-    # Destroy the root since it is no longer necessary
-    root.destroy()
+    # Check if a file has been selected. If not, return None
+    if file_toOpen is None:
+        return file_toOpen
 
     # Open file depending on file origin
     if filesource == "DEMUSE":
@@ -2305,19 +2308,12 @@ def asksavefile(emgfile, compresslevel=4):
     - askopenfile : select and open files with a GUI.
     """
 
-    # Create and hide the tkinter root window necessary for the GUI based
-    # open-file function
-    root = Tk()
-    root.withdraw()
-
-    filepath = filedialog.asksaveasfilename(
-        defaultextension=".json",
+    # Get the filepath
+    filepath = run_custom_file_dialog(
+        mode="save",
+        filesource="OPENHDEMG",
         filetypes=[("JSON files", "*.json")],
-        title="Save JSON file",
     )
-
-    # Destroy the root since it is no longer necessary
-    root.destroy()
 
     print("\n-----------\nSaving file\n")
 
