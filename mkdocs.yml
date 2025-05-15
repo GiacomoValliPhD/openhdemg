@@ -1,6 +1,6 @@
 # Define the skeleton of the website/documentation
 site_name: openhdemg
-site_author: Giacomo Valli & Paul Ritsche
+site_author: Giacomo Valli
 site_description: >-
   All you need to know about openhdemg
 
@@ -9,7 +9,7 @@ repo_name: openhdemg
 repo_url: https://github.com/GiacomoValliPhD/openhdemg
 
 copyright: >
-  Copyright &copy; 2022 - 2024. The openhdemg community -
+  Copyright &copy; 2022 - 2025. Giacomo Valli -
   <a href="#__consent">Change cookie settings</a>
 
 theme:
@@ -94,6 +94,7 @@ nav:
     - muap: api_muap.md
     - electrodes: api_electrodes.md
     - info: api_info.md
+    - ui: api_widgets.md
     - compatibility: api_compatibility.md
 
     
