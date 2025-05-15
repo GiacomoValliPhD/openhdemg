@@ -7,12 +7,15 @@ import warnings
 
 import numpy as np
 import pandas as pd
+
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 
 from openhdemg.library.tools import compute_idr
 from openhdemg.library.mathtools import min_max_scaling
 
+matplotlib.use("QtAgg")
 
 class Figure_Layout_Manager():
     """

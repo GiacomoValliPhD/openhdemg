@@ -1,3 +1,10 @@
+"""
+This module contains classes (QtWidgets) and functions managing the user
+interfaces used by openhdemg.library. These classes or functions can be used
+directly or integrated in larger UIs (e.g., MU tracking and conduction
+velocity estimation).
+"""
+
 import os
 import gc
 import sys
@@ -106,6 +113,11 @@ class PointSelectorDialog(QDialog):
     points : list of lists
         A list of Lists containing the [x, y] coordinates of the selected
         points.
+
+    See also
+    --------
+    - run_point_selector : Run the point selector dialog and return the
+        selected points.
     """
 
     def __init__(
@@ -372,6 +384,11 @@ class CustomFileDialog():
     -------
     get_filepath()
         Get the path to the file or None if the operation is cancelled.
+
+    See also
+    --------
+    - run_custom_file_dialog : Opens a custom file dialog for opening or
+        saving a file.
     """
 
     def __init__(
@@ -528,6 +545,11 @@ class CustomDirectoryDialog():
     -------
     get_directory()
         Get the directory path.
+
+    See also
+    --------
+    - run_custom_directory_dialog : Opens a custom dialog for selecting a
+        directory.
     """
 
     def __init__(self, window_title="Select a folder"):
@@ -613,10 +635,6 @@ def run_custom_directory_dialog(window_title="Select a folder"):
         app.quit()
 
     return dirpath
-
-
-
-
 
 
 

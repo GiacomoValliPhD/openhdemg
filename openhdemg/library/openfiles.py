@@ -101,7 +101,9 @@ from openhdemg.library.electrodes import (
 from openhdemg.library.mathtools import compute_sil
 from openhdemg.library.tools import create_binary_firings, mupulses_from_binary
 
-from openhdemg.ui import run_custom_file_dialog, run_custom_directory_dialog
+from openhdemg.ui.widgets import (
+    run_custom_file_dialog, run_custom_directory_dialog,
+)
 
 
 # --------------------------------------------------------------------- #

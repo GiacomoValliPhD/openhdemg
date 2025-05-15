@@ -5,7 +5,6 @@ The functions contained in this module can be considered as "tools" or
 shortcuts necessary to operate with the HD-EMG recordings.
 """
 
-import sys
 import copy
 import warnings
 
@@ -25,6 +24,7 @@ def showselect(emgfile, how="ref_signal", title="", titlesize=12, nclic=2):
 
     The area can be selected based on the reference signal or based on the
     mean EMG signal. Users can move the mouse to track coordinates and press:
+
         - "A" or "a" to add a point at the current cursor location
         - "D" or "d" to delete the last selected point
         - "Enter" to confirm the selection and close the window
@@ -484,6 +484,7 @@ class EMGFileSectionsIterator:
         signal amplitude.
 
         Users can move the mouse to track coordinates and press:
+
         - "A" or "a" to add a point at the current cursor location
         - "D" or "d" to delete the last selected point
         - "Enter" to confirm the selection and close the window
