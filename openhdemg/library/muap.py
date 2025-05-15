@@ -1,30 +1,44 @@
 """
-This module contains functions to produce and analyse MUs anction potentials
+This module contains functions to produce and analyse MU anction potentials
 (MUAPs).
 """
 
-import pandas as pd
+import os
+import gc
 import sys
-from openhdemg.library.tools import delete_mus
-from openhdemg.library.mathtools import (
-    norm_twod_xcorr, norm_xcorr, find_mle_teta, mle_cv_est,
+import copy
+import time
+import warnings
+from functools import reduce
+
+import numpy as np
+import pandas as pd
+from scipy import signal
+from joblib import Parallel, delayed  # TODO can this be replaced???
+
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont, QIcon
+from PySide6.QtWidgets import (
+    QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QComboBox,
+    QPushButton, QPlainTextEdit, QDockWidget, QSizePolicy, QMessageBox,
 )
-from openhdemg.library.electrodes import sort_rawemg
+
 from openhdemg.library.plotemg import (
     plot_idr, plot_muaps, plot_muaps_for_cv,
 )
-from scipy import signal
-import matplotlib.pyplot as plt
-from functools import reduce
-import numpy as np
-import time
-from joblib import Parallel, delayed
-import copy
-import os
-import tkinter as tk
-from tkinter import ttk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import warnings
+from openhdemg.library.tools import delete_mus
+from openhdemg.library.electrodes import sort_rawemg
+from openhdemg.library.mathtools import (
+    norm_twod_xcorr, norm_xcorr, find_mle_teta, mle_cv_est,
+)
+
+from openhdemg.ui import check_app
+
+matplotlib.use("QtAgg")
 
 
 def diff(sorted_rawemg):
@@ -2096,13 +2110,47 @@ def estimate_cv_via_mle(emgfile, signal):
     return cv
 
 
-# TODO add function to return the results
+# TODO update docs to remove MUcv_gui and add run_mle_mucv_gui and MLE_MUCV_gui
 class MUcv_gui():
     """
-    Graphical user interface for the estimation of MUs conduction velocity.
+    The class MUcv_gui has been deprecated. Please use the function
+    run_mle_mucv_gui instead. This offers additional parameters.
+    """
+    def __init__(
+        self,
+        emgfile,
+        sorted_rawemg,
+        n_firings=[0, 50],
+        muaps_timewindow=50,
+        figsize=[25, 20],
+        csv_separator="\t",
+    ):
+        warnings.warn(
+            self.__doc__.replace("\n", " "), DeprecationWarning, stacklevel=2,
+        )
+        run_mle_mucv_gui(
+            emgfile,
+            sorted_rawemg=sorted_rawemg,
+            n_firings=n_firings,
+            muaps_timewindow=muaps_timewindow,
+            csv_separator=csv_separator,
+        )
 
-    GUI for the estimation of MUs conduction velocity (CV) and amplitude of
-    the action potentials (root mean square - RMS).
+
+def run_mle_mucv_gui(
+    emgfile,
+    sorted_rawemg,
+    n_firings=[0, 50],
+    muaps_timewindow=50,
+    diff_mode="double",
+    csv_separator="\t",
+):
+    """
+    Run the Graphical User Interface for the estimation of MU conduction
+    velocity via Maximum Likelyhood Estimation.
+
+    It allows to estimate also the amplitude of the action potentials
+    (root mean square - RMS).
 
     Parameters
     ----------
@@ -2122,22 +2170,35 @@ class MUcv_gui():
             The STA is calculated over all the firings.
     muaps_timewindow : int, default 50
         Timewindow to compute ST MUAPs in milliseconds.
-    figsize : list, default [20, 15]
-        Size of the initial MUAPs figure in centimeters [width, height].
+    diff_mode : str {"double", "single", "mono"}, default double
+        The type of differential derivation to use.
+
+        ``double``
+            Double differential derivation.
+
+        ``single``
+            Single differential derivation.
+
+        ``mono``
+            No differential derivation applied. This should only be used if the
+            EMG signal is already recorded or converted to a differential
+            mode. MU CV should never be estimated on the monopolar signal.
     csv_separator : str, default "\t"
         The field delimiter used to create the .csv copied to the clipboard.
 
     See also
     --------
+    - MLE_MUCV_gui : Graphical User Interface for the estimation of MU
+    conduction velocity via Maximum Likelyhood Estimation.
     - estimate_cv_via_mle : Estimate signal conduction velocity via maximum
         likelihood estimation.
 
     Examples
     --------
-    Call the GUI.
+    Run the GUI for MU CV estimation via MLE.
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emgfile = emg.emg_from_samplefile()
     >>> emgfile = emg.filter_rawemg(emgfile)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile,
@@ -2145,12 +2206,111 @@ class MUcv_gui():
     ...     orientation=180,
     ...     dividebycolumn=True
     ... )
-    >>> gui = emg.MUcv_gui(
+    >>> gui = emg.run_mle_mucv_gui(
     ...     emgfile=emgfile,
     ...     sorted_rawemg=sorted_rawemg,
-    ...     n_firings=[0,50],
-    ...     muaps_timewindow=50
+    ...     n_firings=[0, 50],
+    ...     muaps_timewindow=50,
+    ...     diff_mode="double",
     ... )
+
+    Get the results for further processing
+
+    >>> results = gui.res_df
+             CV        RMS       XCC Column  From_Row  To_Row
+    0  3.825479  84.266813  0.958324   col1         8      10
+    1  0.000000   0.000000  0.000000    0.0         0       0
+    2  3.802607  25.026962  0.958163   col2         3       7
+    3  3.596453  30.766466  0.918730   col2         5       7
+    4  0.000000   0.000000  0.000000    0.0         0       0
+
+    ![](md_graphics/docstrings/muap/mle_mucv_gui.png)
+    """
+
+    app, app_created, path_to_icon = check_app()
+
+    # Execute PointSelectorDialog in blocking mode
+    window = MLE_MUCV_gui(
+        emgfile,
+        sorted_rawemg,
+        n_firings=n_firings,
+        muaps_timewindow=muaps_timewindow,
+        diff_mode=diff_mode,
+        csv_separator=csv_separator,
+        path_to_icon=path_to_icon,
+    )
+    window.show()
+
+    if app_created:
+        # Do not use sys.exit(app.exec()) as it will terminate the script
+        # execution.
+        app.exec()
+
+    return window
+
+
+class MLE_MUCV_gui(QMainWindow):
+    """
+    Graphical User Interface for the estimation of MU conduction velocity via
+    Maximum Likelyhood Estimation.
+
+    It allows to estimate also the amplitude of the action potentials
+    (root mean square - RMS).
+
+    Check the implementation of ``run_mle_mucv_gui()`` to see how it can be
+    used. It is always suggested to call the ``MLE_MUCV_gui`` from
+    ``run_mle_mucv_gui()`` instead of directly running its instance, as
+    this is also managing the ``QApplication``.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+    sorted_rawemg : dict
+        A dict containing the sorted electrodes.
+        Every key of the dictionary represents a different column of the
+        matrix.
+        Rows are stored in the dict as a pd.DataFrame.
+    n_firings : list or str {"all"}, default [0, 50]
+        The range of firings to be used for the STA.
+        If a MU has less firings than the range, the upper limit
+        is adjusted accordingly.
+
+        ``all``
+            The STA is calculated over all the firings.
+    muaps_timewindow : int, default 50
+        Timewindow to compute ST MUAPs in milliseconds.
+    diff_mode : str {"double", "single", "mono"}, default double
+        The type of differential derivation to use.
+
+        ``double``
+            Double differential derivation.
+
+        ``single``
+            Single differential derivation.
+
+        ``mono``
+            No differential derivation applied. This should only be used if the
+            EMG signal is already recorded or converted to a differential
+            mode. MU CV should never be estimated on the monopolar signal.
+    csv_separator : str, default "\t"
+        The field delimiter used to create the .csv copied to the clipboard.
+    path_to_icon : None or str, default None
+        The path to the window icon. Use none if this widget inherits from a
+        parent.
+
+    Attributes
+    ----------
+    res_df : pd.DataFrame
+        The dataframe containing the estimated CV, RMS, XCC and the selected
+        channels.
+
+    See also
+    --------
+    - run_mle_mucv_gui : Run the GUI for estimating MU conduction velocity via
+        Maximum Likelyhood Estimation.
+    - estimate_cv_via_mle : Estimate signal conduction velocity via maximum
+        likelihood estimation.
     """
 
     def __init__(
@@ -2159,165 +2319,37 @@ class MUcv_gui():
         sorted_rawemg,
         n_firings=[0, 50],
         muaps_timewindow=50,
-        figsize=[25, 20],
+        diff_mode="double",
         csv_separator="\t",
+        path_to_icon=None,
     ):
         # On start, compute the necessary information
         self.emgfile = emgfile
-        self.dd = double_diff(sorted_rawemg)
+        if diff_mode == "double":
+            differential = double_diff(sorted_rawemg)
+        elif diff_mode == "single":
+            differential = diff(sorted_rawemg)
+        elif diff_mode == "mono":
+            differential = sorted_rawemg
+        else:
+            raise ValueError(
+                "diff_mode can only be 'double', 'single' or 'mono'. " +
+                f"'{diff_mode}' was passed instead."
+            )
+
         self.st = sta(
             emgfile=emgfile,
-            sorted_rawemg=self.dd,
+            sorted_rawemg=differential,
             firings=n_firings,
             timewindow=muaps_timewindow,
         )
         self.sta_xcc = xcc_sta(self.st)
-        self.figsize = figsize
         self.csv_separator = csv_separator
 
-        # After that, set up the GUI
-        self.root = tk.Tk()
-        self.root.title('MUs CV estimation')
-        root_path = os.path.dirname(os.path.abspath(__file__))
-        iconpath = os.path.join(
-            root_path,
-            "..",
-            "gui",
-            "gui_files",
-            "Icon_transp.ico"
-        )
-        if sys.platform.startswith("darwin"):  # macOS
-            self.root.iconbitmap(iconpath)
-        else:  # Windows
-            self.root.iconbitmap(iconpath, iconpath)
-
-        # Create outer frames, assign structure and minimum spacing
-        # Left
-        left_frm = tk.Frame(self.root, padx=2, pady=2)
-        left_frm.pack(side=tk.LEFT, expand=True, fill="both")
-        # Right
-        right_frm = tk.Frame(self.root, padx=4, pady=4)
-        right_frm.pack(side=tk.TOP, anchor="nw", expand=True, fill="y")
-
-        # Create inner frames
-        # Top left
-        top_left_frm = tk.Frame(left_frm, padx=2, pady=2)
-        top_left_frm.pack(side=tk.TOP, anchor="nw", fill="x")
-        # Bottom left
-        self.bottom_left_frm = tk.Frame(left_frm, padx=2, pady=2)
-        self.bottom_left_frm.pack(
-            side=tk.TOP, anchor="nw", expand=True, fill="both",
-        )
-
-        # Label MU number combobox
-        munumber_label = ttk.Label(top_left_frm, text="MU number", width=15)
-        munumber_label.grid(row=0, column=0, columnspan=1, sticky=tk.W)
-
-        # Create a combobox to change MU
-        self.all_mus = list(range(emgfile["NUMBER_OF_MUS"]))
-
-        self.selectmu_cb = ttk.Combobox(
-            top_left_frm,
-            textvariable=tk.StringVar(),
-            values=self.all_mus,
-            state='readonly',
-            width=15,
-        )
-        self.selectmu_cb.grid(row=1, column=0, columnspan=1, sticky=tk.W)
-        self.selectmu_cb.current(0)
-        # gui_plot() takes one positional argument (self), but the bind()
-        # method is passing two arguments: the event object and the function
-        # itself. Use lambda to avoid the error.
-        self.selectmu_cb.bind(
-            '<<ComboboxSelected>>',
-            lambda event: self.gui_plot(),
-        )
-
-        # Add empty column
-        emp = ttk.Label(top_left_frm, text="", width=15)
-        emp.grid(row=0, column=1, columnspan=1, sticky=tk.W)
-
-        # Create the widgets to calculate CV
-        # Label and combobox to select the matrix column
-        col_label = ttk.Label(top_left_frm, text="Column", width=15)
-        col_label.grid(row=0, column=2, columnspan=1, sticky=tk.W)
-
-        self.columns = list(self.st[0].keys())
-
-        self.col_cb = ttk.Combobox(
-            top_left_frm,
-            textvariable=tk.StringVar(),
-            values=self.columns,
-            state='readonly',
-            width=15,
-        )
-        self.col_cb.grid(row=1, column=2, columnspan=1, sticky=tk.W)
-        self.col_cb.current(0)
-
-        # Label and combobox to select the matrix channels
-        self.rows = list(range(len(list(self.st[0][self.columns[0]].columns))))
-
-        start_label = ttk.Label(top_left_frm, text="From row", width=15)
-        start_label.grid(row=0, column=3, columnspan=1, sticky=tk.W)
-
-        self.start_cb = ttk.Combobox(
-            top_left_frm,
-            textvariable=tk.StringVar(),
-            values=self.rows,
-            state='readonly',
-            width=15,
-        )
-        self.start_cb.grid(row=1, column=3, columnspan=1, sticky=tk.W)
-        self.start_cb.current(0)
-
-        self.stop_label = ttk.Label(top_left_frm, text="To row", width=15)
-        self.stop_label.grid(row=0, column=4, columnspan=1, sticky=tk.W)
-
-        self.stop_cb = ttk.Combobox(
-            top_left_frm,
-            textvariable=tk.StringVar(),
-            values=self.rows,
-            state='readonly',
-            width=15,
-        )
-        self.stop_cb.grid(row=1, column=4, columnspan=1, sticky=tk.W)
-        self.stop_cb.current(max(self.rows))
-
-        # Button to start CV estimation
-        self.ied = emgfile["IED"]
-        self.fsamp = emgfile["FSAMP"]
-        button_est = ttk.Button(
-            top_left_frm,
-            text="Estimate",
-            command=self.compute_cv,
-            width=15,
-        )
-        button_est.grid(row=1, column=5, columnspan=1, sticky="we")
-
-        # Configure column weights
-        for c in range(6):
-            if c == 1:
-                top_left_frm.columnconfigure(c, weight=20)
-            else:
-                top_left_frm.columnconfigure(c, weight=1)
-
-        # Align the right_frm
-        alignment_label = ttk.Label(right_frm, text="", width=15)
-        alignment_label.pack(side=tk.TOP, fill="x")
-
-        # Create a button to copy the dataframe to clipboard
-        copy_btn = ttk.Button(
-            right_frm,
-            text="Copy results",
-            command=self.copy_to_clipboard,
-            width=15,
-        )
-        copy_btn.pack(side=tk.TOP, fill="x", pady=(0, 5))
-
-        # Add text frame to show the results (only CV and RMS)
+        # Prepare a table to store the results
         self.res_df = pd.DataFrame(
             data=0.00,
-            index=self.all_mus,
+            index=[*range(self.emgfile["NUMBER_OF_MUS"])],
             columns=["CV", "RMS", "XCC", "Column", "From_Row", "To_Row"],
         )
         # Set the dtypes for each column
@@ -2329,55 +2361,169 @@ class MUcv_gui():
             "From_Row": "int64",
             "To_Row": "int64",
         })
-        # Set values
-        self.textbox = tk.Text(right_frm, width=25)
-        self.textbox.pack(side=tk.TOP, expand=True, fill="y")
-        self.textbox.insert(
-            '1.0',
-            self.res_df.loc[:, ["CV", "RMS", "XCC"]].to_string(
-                float_format="{:.2f}".format
-            ),
+
+        # Set up the GUI
+        super().__init__()
+        self.setWindowTitle("MU CV estimation via MLE")
+        if path_to_icon is not None:
+            icon = QIcon(path_to_icon)
+            self.setWindowIcon(icon)
+
+        # Place a status bar to enable grip
+        self.status_bar = self.statusBar()
+        self.status_bar.setSizeGripEnabled(True)
+
+        # Figure placeholder
+        self.figure = None
+
+        # --- Create central widget ---
+        # Top control bar with labels and widgets
+        control_layout = QVBoxLayout()
+        label_row = QHBoxLayout()
+        widget_row = QHBoxLayout()
+        rows_width = 150
+
+        # Labels
+        labels = ["MU number", "Column", "From row", "To row", ""]
+        for text in labels:
+            label = QLabel(text)
+            label.setAlignment(Qt.AlignLeft)
+            label_row.addWidget(label)
+            label.setFixedWidth(rows_width)
+            if text == "MU number":
+                label_row.addStretch()
+
+        # Dropdowns and button
+        self.combo_munumber = QComboBox()
+        self.combo_munumber.setFixedWidth(rows_width)
+        self.combo_col = QComboBox()
+        self.combo_col.setFixedWidth(rows_width)
+        self.combo_fromrow = QComboBox()
+        self.combo_fromrow.setFixedWidth(rows_width)
+        self.combo_torow = QComboBox()
+        self.combo_torow.setFixedWidth(rows_width)
+        estimate_button = QPushButton("Estimate")
+        estimate_button.setFixedWidth(rows_width)
+
+        # Populate dropdowns with items
+        mu_names = [str(n) for n in range(self.emgfile["NUMBER_OF_MUS"])]
+        column_names = list(self.st[0].keys())
+        row_names = [
+            str(r) for r in range(len(self.st[0][column_names[0]].columns))
+        ]
+
+        self.combo_munumber.addItems(mu_names)
+        self.combo_col.addItems(column_names)
+        self.combo_fromrow.addItems(row_names)
+        self.combo_torow.addItems(row_names)
+        self.combo_torow.setCurrentIndex(self.combo_torow.count() - 1)
+
+        # Add to widget row
+        widget_row.addWidget(self.combo_munumber)
+        widget_row.addStretch()
+        widget_row.addWidget(self.combo_col)
+        widget_row.addWidget(self.combo_fromrow)
+        widget_row.addWidget(self.combo_torow)
+        widget_row.addWidget(estimate_button)
+
+        # Connect left widgets
+        self.combo_munumber.currentTextChanged.connect(self.gui_plot)
+        estimate_button.clicked.connect(self.compute_cv)
+
+        # Combine into a top widget to prevent vertical expansion
+        top_widget = QWidget()
+        control_layout.addLayout(label_row)
+        control_layout.addLayout(widget_row)
+        top_widget.setLayout(control_layout)
+        top_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+        # Create figure canvas
+        self.fig_canvas = FigureCanvasQTAgg()
+
+        # Add to main layout
+        container = QWidget()
+        self.cw_layout = QVBoxLayout()
+        self.cw_layout.setContentsMargins(0, 0, 0, 0)
+        self.cw_layout.addWidget(top_widget)
+        self.cw_layout.addWidget(self.fig_canvas)
+        container.setLayout(self.cw_layout)
+        self.setCentralWidget(container)
+
+        # --- Create right dock widget ---
+        right_widget = QWidget()
+        layout = QVBoxLayout(right_widget)
+        layout.setContentsMargins(5, 5, 5, 0)
+        layout.setSpacing(5)
+
+        # Button on top
+        copy_button = QPushButton("Copy results")
+        copy_button.clicked.connect(self.copy_to_clipboard)
+        layout.addWidget(copy_button)
+
+        # Expanding text box with scrollbars
+        self.text_box = QPlainTextEdit()
+        self.text_box.setLineWrapMode(QPlainTextEdit.NoWrap)
+        font = QFont("Courier New")  # Or "Monospace", "Courier", etc.
+        font.setStyleHint(QFont.Monospace)
+        self.text_box.setFont(font)
+        self.text_box.setPlainText(self.res_df.to_string(float_format="%.2f"))
+        layout.addWidget(self.text_box, stretch=1)
+
+        # Put this widget directly in a dock
+        dock = QDockWidget("Output")
+        dock.setWidget(right_widget)
+        self.addDockWidget(Qt.RightDockWidgetArea, dock)
+        dock.setFeatures(
+            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable
         )
+        dock.setMinimumWidth(325)
 
-        # Plot MU 0 while opening the GUI,
-        # this will move the GUI in the background ??.
-        self.gui_plot()
+        # Display the MUAPs from the first MU at startup
+        self.gui_plot(self.combo_munumber.currentText())
 
-        # Bring back the GUI in the foreground
-        self.root.lift()
-        self.root.attributes('-topmost', True)
-        self.root.after_idle(self.root.attributes, '-topmost', False)
+    def clear_figure_and_canvas(self):
+        self.figure = None
+        self.fig_canvas = None
 
-        # Start the main loop
-        self.root.mainloop()
+        # Iteratively clean the 2 levels of the central widget
+        item = self.cw_layout.takeAt(1)
+        widget = item.widget()
+        widget.setParent(None)
+        widget.close()
+        widget.deleteLater()
+        del widget
+        del item
+
+        # Force garbage collection to fasten memory cleanup
+        gc.collect()
 
     # Define functions necessary for the GUI
     # Use empty docstrings to hide the functions from the documentation.
-    def gui_plot(self):
+    def gui_plot(self, text):
+        # The text is automatically passed from the connected signal.
         # Plot the MUAPs used to estimate CV.
 
         # Get MU number
-        mu = int(self.selectmu_cb.get())
+        mu = int(text)
+
+        # Free memory
+        self.clear_figure_and_canvas()
 
         # Get the figure
-        fig = plot_muaps_for_cv(
+        self.figure = plot_muaps_for_cv(
             sta_dict=self.st[mu],
             xcc_sta_dict=self.sta_xcc[mu],
+            tight_layout=False,
             showimmediately=False,
-            figsize=self.figsize,
+            use_plt=False,
+        )
+        self.figure.subplots_adjust(
+            left=0.05, right=0.95, top=0.9, bottom=0.05,
         )
 
-        # If canvas already exists, destroy it
-        if hasattr(self, 'canvas'):
-            self.canvas.get_tk_widget().destroy()
-
-        # Place the figure in the GUI
-        self.canvas = FigureCanvasTkAgg(fig, master=self.bottom_left_frm)
-        self.canvas.draw_idle()  # Await resizing
-        self.canvas.get_tk_widget().pack(
-            expand=True, fill="both", padx=0, pady=0,
-        )
-        plt.close()
+        # Create figure canvas
+        self.fig_canvas = FigureCanvasQTAgg(self.figure)
+        self.cw_layout.addWidget(self.fig_canvas)
 
     def copy_to_clipboard(self):
         # Copy the dataframe to clipboard in csv format.
@@ -2389,15 +2535,27 @@ class MUcv_gui():
         # Compute conduction velocity.
 
         # Get the muaps of the selected columns.
-        sig = self.st[int(self.selectmu_cb.get())][self.col_cb.get()]
-        col_list = list(range(int(self.start_cb.get()), int(self.stop_cb.get())+1))
+        current_mu = int(self.combo_munumber.currentText())
+        current_col = self.combo_col.currentText()
+        sig = self.st[current_mu][current_col]
+        from_row = int(self.combo_fromrow.currentText())
+        to_row = int(self.combo_torow.currentText())
+        if to_row <= from_row:
+            QMessageBox.critical(
+                self,
+                "Invalid Range",
+                "'To row' must be greater than 'From row'",
+            )
+            return
 
+        col_list = list(range(from_row, to_row + 1))
         sig = sig.iloc[:, col_list]
 
         # Verify that the signal is correcly oriented
         if len(sig) < len(sig.columns):
             raise ValueError(
-                "The number of signals exceeds the number of samples. Verify that each row represents a signal"
+                "The number of signals exceeds the number of samples. " +
+                "Verify that each row represents a signal"
             )
 
         # Estimate CV
@@ -2407,24 +2565,35 @@ class MUcv_gui():
         sig = sig.to_numpy()
         rms = np.mean(np.sqrt((np.mean(sig**2, axis=0))))
 
-        # Update the self.res_df and the self.textbox
-        mu = int(self.selectmu_cb.get())
+        # Update the self.res_df and the self.text_box
+        self.res_df.loc[current_mu, "CV"] = cv
+        self.res_df.loc[current_mu, "RMS"] = rms
 
-        self.res_df.loc[mu, "CV"] = cv
-        self.res_df.loc[mu, "RMS"] = rms
+        xcc_col_list = list(range(from_row + 1, to_row + 1))
+        xcc = self.sta_xcc[current_mu][current_col].iloc[:, xcc_col_list]
+        xcc = xcc.mean().mean()
+        self.res_df.loc[current_mu, "XCC"] = xcc
 
-        xcc_col_list = list(range(int(self.start_cb.get())+1, int(self.stop_cb.get())+1))
-        xcc = self.sta_xcc[mu][self.col_cb.get()].iloc[:, xcc_col_list].mean().mean()
-        self.res_df.loc[mu, "XCC"] = xcc
+        self.res_df.loc[current_mu, "Column"] = current_col
+        self.res_df.loc[current_mu, "From_Row"] = from_row
+        self.res_df.loc[current_mu, "To_Row"] = to_row
 
-        self.res_df.loc[mu, "Column"] = str(self.col_cb.get())
-        self.res_df.loc[mu, "From_Row"] = int(self.start_cb.get())
-        self.res_df.loc[mu, "To_Row"] = int(self.stop_cb.get())
+        self.text_box.setPlainText(self.res_df.to_string(float_format="%.2f"))
 
-        self.textbox.replace(
-            '1.0',
-            'end',
-            self.res_df.loc[:, ["CV", "RMS", "XCC"]].to_string(
-                float_format="{:.2f}".format
-            ),
+    def closeEvent(self, event):
+        # Ask user whether to exit and clear memory
+        reply = QMessageBox.question(
+            self,
+            "Exit MU CV estimation?",
+            "Make sure to copy the results first.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
         )
+        if reply == QMessageBox.No:
+            event.ignore()
+            return
+
+        self.clear_figure_and_canvas()
+
+        # Always call the base method to ensure normal closing behavior
+        super().closeEvent(event)
