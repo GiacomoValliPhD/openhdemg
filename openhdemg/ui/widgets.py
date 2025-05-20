@@ -10,7 +10,7 @@ import gc
 import sys
 
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import Qt, QSettings
+from PySide6.QtCore import Qt, QSettings, QEventLoop
 from PySide6.QtWidgets import (
     QApplication, QDialog, QVBoxLayout, QMessageBox, QFileDialog,
 )
@@ -42,28 +42,27 @@ def check_app():
         The active or newly created QApplication instance.
     app_created : bool
         True if a new QApplication was created, False if one already existed.
-    path_to_icon : str or None
-        Path to the openhdemg icon (if a new app was created), or None.
+    path_to_icon : str
+        Path to the openhdemg icon.
     """
 
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication(sys.argv)
-        app.setStyle('Fusion')
-
-        app_created = True
-
-        master_path = os.path.dirname(os.path.abspath(__file__))
-        path_to_icon = os.path.normpath(
+    master_path = os.path.dirname(os.path.abspath(__file__))
+    path_to_icon = os.path.normpath(
             os.path.join(
                 master_path,
                 "icons",
                 "Icon_transp.ico",
             )
         )
+
+    app = QApplication.instance()
+
+    if app is None:
+        app = QApplication(sys.argv)
+        app.setStyle('Fusion')
+        app_created = True
     else:
         app_created = False
-        path_to_icon = None
 
     return app, app_created, path_to_icon
 
@@ -346,9 +345,6 @@ def run_point_selector(
     dialog.exec()
     points = dialog.points
 
-    if app_created:
-        app.quit()
-
     return points
 
 
@@ -519,9 +515,6 @@ def run_custom_file_dialog(
     )
     filepath = dialog.get_filepath()
 
-    if app_created:
-        app.quit()
-
     return filepath
 
 
@@ -615,7 +608,9 @@ def run_custom_directory_dialog(window_title="Select a folder"):
     Select a directory and print the path:
 
     >>> from openhdemg.ui import run_custom_directory_dialog
-    >>> dirpath = run_custom_directory_dialog(window_title="Select the output folder")
+    >>> dirpath = run_custom_directory_dialog(
+    ...     window_title="Select the output folder"
+    ... )
     >>> if dirpath:
     ...     print("Selected directory:", dirpath)
     ... else:
@@ -631,14 +626,6 @@ def run_custom_directory_dialog(window_title="Select a folder"):
     dialog = CustomDirectoryDialog(window_title=window_title)
     dirpath = dialog.get_directory()
 
-    if app_created:
-        app.quit()
-
     return dirpath
 
-
-
-
-
-
-# TODO tests for this module?????
+# TODO How to test this module?
