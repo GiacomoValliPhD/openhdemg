@@ -20,7 +20,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QIcon, QTextCursor, QTextCharFormat, QColor
 from PySide6.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QComboBox,
@@ -1440,6 +1440,12 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
         The dataframe containing the tracked pairs, the XCC value and the
         inclusion state.
 
+    Signals
+    -------
+    - xcorr_muaps_tracking_gui_window_closed : Qt Signal. Emitted when the
+        XCORR_MUAPs_Tracking_gui window is closed by the user. Can be used to
+        block code execution until the window is closed.
+
     See also
     --------
     - run_xcorr_muaps_tracking_gui : Run the GUI for visually inspecting the
@@ -1447,6 +1453,10 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
     - tracking : Track MUs across two files comparing the MUAPs' shape and
         distribution.
     """
+
+    # Signals
+    # Emitted when window is closed
+    xcorr_muaps_tracking_gui_window_closed = Signal()
 
     def __init__(
         self,
@@ -1762,6 +1772,9 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
 
         self.clear_figure_and_canvas()
 
+        # Emit a closing signal
+        self.xcorr_muaps_tracking_gui_window_closed.emit()
+
         # Always call the base method to ensure normal closing behavior
         super().closeEvent(event)
 
@@ -1786,6 +1799,7 @@ def remove_duplicates_between(
     gui_addrefsig=True,
     gui_csv_separator="\t",
     which="munumber",
+    custom_tracking_res=None,
 ):
     """
     Remove duplicated MUs across two different files based on STA.
@@ -1890,6 +1904,10 @@ def remove_duplicates_between(
 
         ``accuracy``
             The MU with the lowest accuracy is removed.
+    custom_tracking_res : None or pd.DataFrame, default None
+        If custom tracking results are provided, the internal tracking
+        procedure is skipped and duplicates removal is performed based on the
+        provided info.
 
     Returns
     -------
@@ -1900,6 +1918,7 @@ def remove_duplicates_between(
         MU from file 2 and the normalised cross-correlation value (XCC).
         If gui=True, an additional column indicating the inclusion/exclusion
         of the MUs pairs will also be present in tracking_res.
+        If custom_tracking_res were provided, these will be returned instead.
 
     See also
     --------
@@ -1999,27 +2018,30 @@ def remove_duplicates_between(
     emgfile2 = copy.deepcopy(emgfile2)
 
     # Get tracking results to identify duplicated MUs
-    tracking_res = tracking(
-        emgfile1=emgfile1,
-        emgfile2=emgfile2,
-        firings=firings,
-        derivation=derivation,
-        timewindow=timewindow,
-        threshold=threshold,
-        matrixcode=matrixcode,
-        orientation=orientation,
-        n_rows=n_rows,
-        n_cols=n_cols,
-        custom_sorting_order=custom_sorting_order,
-        custom_muaps=custom_muaps,
-        exclude_belowthreshold=True,
-        filter=filter,
-        multiprocessing=multiprocessing,
-        show=show,
-        gui=gui,
-        gui_addrefsig=gui_addrefsig,
-        gui_csv_separator=gui_csv_separator,
-    )
+    if custom_tracking_res is None:
+        tracking_res = tracking(
+            emgfile1=emgfile1,
+            emgfile2=emgfile2,
+            firings=firings,
+            derivation=derivation,
+            timewindow=timewindow,
+            threshold=threshold,
+            matrixcode=matrixcode,
+            orientation=orientation,
+            n_rows=n_rows,
+            n_cols=n_cols,
+            custom_sorting_order=custom_sorting_order,
+            custom_muaps=custom_muaps,
+            exclude_belowthreshold=True,
+            filter=filter,
+            multiprocessing=multiprocessing,
+            show=show,
+            gui=gui,
+            gui_addrefsig=gui_addrefsig,
+            gui_csv_separator=gui_csv_separator,
+        )
+    else:
+        tracking_res = custom_tracking_res
 
     # If the tracking gui has been used to include/exclude pairs, use the
     # included pairs only.
@@ -2441,6 +2463,12 @@ class MLE_MUCV_gui(QMainWindow):
         The dataframe containing the estimated CV, RMS, XCC and the selected
         channels.
 
+    Signals
+    -------
+    - mle_mucv_gui_window_closed : Qt Signal. Emitted when the MLE_MUCV_gui
+        window is closed by the user. Can be used to block code execution
+        until the window is closed.
+
     See also
     --------
     - run_mle_mucv_gui : Run the GUI for estimating MU conduction velocity via
@@ -2448,6 +2476,9 @@ class MLE_MUCV_gui(QMainWindow):
     - estimate_cv_via_mle : Estimate signal conduction velocity via maximum
         likelihood estimation.
     """
+
+    # Signals
+    mle_mucv_gui_window_closed = Signal()  # Emitted when window is closed
 
     def __init__(
         self,
@@ -2731,6 +2762,9 @@ class MLE_MUCV_gui(QMainWindow):
             return
 
         self.clear_figure_and_canvas()
+
+        # Emit a closing signal
+        self.mle_mucv_gui_window_closed.emit()
 
         # Always call the base method to ensure normal closing behavior
         super().closeEvent(event)
