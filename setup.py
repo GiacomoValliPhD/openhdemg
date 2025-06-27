@@ -9,15 +9,11 @@ from setuptools import setup
 import openhdemg
 
 INSTALL_REQUIRES = [
-    "customtkinter==5.2.2",
-    "CTkMessagebox==2.7",
     "matplotlib==3.9.3",
     "numpy<=2.2.0",
-    "openpyxl==3.1.5",
     "pandas==2.2.3",
-    "pandastable==0.13.1",
+    "PySide6==6.9.0",
     "scipy<=1.14.1",
-    "seaborn==0.13.2",
     "scikit-learn==1.5.2",
 ]
 
@@ -26,9 +22,8 @@ PACKAGES = [
     "openhdemg.library",
     "openhdemg.library.decomposed_test_files",
     "openhdemg.compatibility",
-    "openhdemg.gui",
-    "openhdemg.gui.gui_files",
-    "openhdemg.gui.gui_modules",
+    "openhdemg.ui",
+    "openhdemg.ui.icons",
     "openhdemg.tests",
     "openhdemg.tests.fixtures",
     "openhdemg.tests.integration",
