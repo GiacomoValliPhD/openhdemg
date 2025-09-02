@@ -304,6 +304,11 @@ class PlotEmg:
                 "GR08MM1305",
                 "GR04MM1305",
                 "GR10MM0808",
+                "HD04MM1305",
+                "HD08MM1305",
+                "HD10MM0808",
+                "HD10MM0804",
+                "HD05MM0804",
                 "Trigno Galileo Sensor",
             )
             matrix_code = ctk.CTkComboBox(

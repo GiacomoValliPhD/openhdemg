@@ -195,6 +195,11 @@ class AdvancedAnalysis:
             "GR08MM1305",
             "GR04MM1305",
             "GR10MM0808",
+            "HD04MM1305",
+            "HD08MM1305",
+            "HD10MM0808",
+            "HD10MM0804",
+            "HD05MM0804",
         )
         self.matrix_code_combobox = ctk.CTkComboBox(
             self.a_window,
