@@ -10,7 +10,7 @@ import gc
 import sys
 
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import Qt, QSettings, QEventLoop
+from PySide6.QtCore import Qt, QSettings
 from PySide6.QtWidgets import (
     QApplication, QDialog, QVBoxLayout, QMessageBox, QFileDialog,
 )
