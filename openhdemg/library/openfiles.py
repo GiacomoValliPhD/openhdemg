@@ -336,25 +336,27 @@ def save_openhdemg_module(
         },
     }
 
+    # Make sure that these are json serialisable
+    # np Dtypes are not!
     IED = emgfile.get("IED", None)
     if IED is not None:
         manifest["IED"] = {
             "data_type": "float",
-            "value": emgfile["IED"],
+            "value": float(emgfile["IED"]),
         }
 
     EMG_LENGTH = emgfile.get("EMG_LENGTH", None)
     if EMG_LENGTH is not None:
         manifest["EMG_LENGTH"] = {
             "data_type": "int",
-            "value": emgfile["EMG_LENGTH"],
+            "value": int(emgfile["EMG_LENGTH"]),
         }
 
     NUMBER_OF_MUS = emgfile.get("NUMBER_OF_MUS", None)
     if NUMBER_OF_MUS is not None:
         manifest["NUMBER_OF_MUS"] = {
             "data_type": "int",
-            "value": emgfile["NUMBER_OF_MUS"],
+            "value": int(emgfile["NUMBER_OF_MUS"]),
         }
 
     # Add any custom informative dict to the manifest
@@ -682,41 +684,41 @@ def load_openhdemg_module(
             emgfile[key] = info["value"]
 
         # pd.DataFrame
-            if info["data_type"] == "pd.DataFrame":
-                file_path = root / info["data_file_path"]
-                # Verify checksum
-                if verify_checksum and info.get("checksum") is not None:
-                    hash_val = sha256_file(file_path)
-                    if hash_val != info["checksum"]:
-                        raise ValueError(
-                            f"Checksum mismatch for {key}. "
-                            f"Expected {info['checksum']}, got {hash_val}."
-                        )
-                # Load file
-                if info.get("compression") == "gzip":
-                    with gzip.open(file_path, "rb") as f:
-                        arr = np.frombuffer(
-                            f.read(), dtype=info["endian_dtype"],
-                        )
-                else:
-                    with open(file_path, "rb") as f:
-                        arr = np.fromfile(f, dtype=info["endian_dtype"])
-                        # TODO this allows to avoid preloading the data into
-                        # memory and will allow for partial loading.
-                # Reshape and assign columns dtypes
-                arr = arr.reshape(info["shape"], order=info["order"])
-                columns = []
-                for val, tname in zip(info["columns"], info["columns_dtypes"]):
-                    if tname == "int":
-                        val = int(val)
-                    elif tname == "float":
-                        val = float(val)
-                    columns.append(val)  # str fine as is
-                df = pd.DataFrame(arr, columns=columns)
-                for col, dtype_str in zip(df.columns, info["dtypes"]):
-                    df[col] = df[col].astype(dtype_str)
-                # Assign
-                emgfile[key] = df
+        if info["data_type"] == "pd.DataFrame":
+            file_path = root / info["data_file_path"]
+            # Verify checksum
+            if verify_checksum and info.get("checksum") is not None:
+                hash_val = sha256_file(file_path)
+                if hash_val != info["checksum"]:
+                    raise ValueError(
+                        f"Checksum mismatch for {key}. "
+                        f"Expected {info['checksum']}, got {hash_val}."
+                    )
+            # Load file
+            if info.get("compression") == "gzip":
+                with gzip.open(file_path, "rb") as f:
+                    arr = np.frombuffer(
+                        f.read(), dtype=info["endian_dtype"],
+                    )
+            else:
+                with open(file_path, "rb") as f:
+                    arr = np.fromfile(f, dtype=info["endian_dtype"])
+                    # TODO this allows to avoid preloading the data into
+                    # memory and will allow for partial loading.
+            # Reshape and assign columns dtypes
+            arr = arr.reshape(info["shape"], order=info["order"])
+            columns = []
+            for val, tname in zip(info["columns"], info["columns_dtypes"]):
+                if tname == "int":
+                    val = int(val)
+                elif tname == "float":
+                    val = float(val)
+                columns.append(val)  # str fine as is
+            df = pd.DataFrame(arr, columns=columns)
+            for col, dtype_str in zip(df.columns, info["dtypes"]):
+                df[col] = df[col].astype(dtype_str)
+            # Assign
+            emgfile[key] = df
 
         # empty pd.DataFrame
         if info["data_type"] == "empty pd.DataFrame":
