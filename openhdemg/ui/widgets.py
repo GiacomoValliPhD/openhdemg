@@ -8,13 +8,17 @@ velocity estimation).
 import os
 import gc
 import sys
+import copy
+import warnings
 
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt, QSettings
 from PySide6.QtWidgets import (
-    QApplication, QDialog, QVBoxLayout, QMessageBox, QFileDialog,
+    QApplication, QDialog, QVBoxLayout, QHBoxLayout, QMessageBox, QFileDialog,
+    QLabel, QPushButton, QDialogButtonBox, QSizePolicy, QWidget
 )
 
+import numpy as np
 import matplotlib
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import (
@@ -169,8 +173,8 @@ class PointSelectorDialog(QDialog):
 
         # Add figure and canvas to the layout
         self.v_layout = QVBoxLayout()
-        self.v_layout.addWidget(self.canvas)
         self.v_layout.addWidget(self.toolbar)
+        self.v_layout.addWidget(self.canvas)
         self.setLayout(self.v_layout)
 
         # Give focus to collect clicks
@@ -554,37 +558,70 @@ class CustomDirectoryDialog():
         self.settings = QSettings("openhdemg", "library_ui")
         self.last_dir_key = "LastDirectory"
 
-    def get_directory(self):
+    def get_directory(self, mode="open"):
         """
         Get the directory path.
 
-        If the operation is completed, the directory is memorised for following
-        uses.
+        Allows selecting an existing directory or typing a new one.
+        The new directory is created automatically if needed.
+
+        Parameters
+        ----------
+        mode : str {"open", "save"}, default "open"
+            Determines how the dialog behaves:
+
+            ``open``
+                The dialog is used to select an existing directory. The user
+                must choose a folder that already exists on the filesystem.
+
+            ``save``
+                The dialog additionally allows the user to type a new directory
+                name into the text bar. If the typed directory does not exist,
+                it will be created automatically after the user confirms.
 
         Returns
         -------
         str or None
-            The selected directory path if confirmed, or None if the dialog was
-            canceled.
+            The selected or created directory path.
         """
 
         last_dir = self.settings.value(self.last_dir_key, os.getcwd())
 
-        dir_path = QFileDialog.getExistingDirectory(
-            caption=self.window_title, dir=last_dir,
-        )
+        dialog = QFileDialog()
+        dialog.setWindowTitle(self.window_title)
+        dialog.setFileMode(QFileDialog.Directory)
+        dialog.setOption(QFileDialog.ShowDirsOnly, True)
 
-        if dir_path:
-            # Save the directory for next time
-            self.settings.setValue(
-                self.last_dir_key, dir_path,
-            )
+        # If saving, allow to type the new folder name
+        if mode == "save":
+            dialog.setAcceptMode(QFileDialog.AcceptSave)
+
+        # Set last directory
+        dialog.setDirectory(last_dir)
+
+        if dialog.exec():
+            dir_path = dialog.selectedFiles()[0]
+
+            # Create directory if it doesn't exist
+            if dir_path and not os.path.exists(dir_path):
+                try:
+                    os.makedirs(dir_path)
+                except Exception as e:
+                    QMessageBox.critical(
+                        None,
+                        "Error",
+                        f"Could not create directory:\n{dir_path}\n\n{str(e)}",
+                    )
+                    return None
+
+            # Save for next time
+            self.settings.setValue(self.last_dir_key, dir_path)
             return dir_path
-        else:
-            return None
+
+        return None
 
 
-def run_custom_directory_dialog(window_title="Select a folder"):
+def run_custom_directory_dialog(window_title="Select a folder", mode="open"):
     """
     Opens a custom dialog for selecting a directory, remembering the last
     accessed directory.
@@ -596,6 +633,17 @@ def run_custom_directory_dialog(window_title="Select a folder"):
     ----------
     window_title : str, default "Select a folder"
         Title of the dialog window. This should guide the user.
+    mode : str {"open", "save"}, default "open"
+        Determines how the dialog behaves:
+
+        ``open``
+            The dialog is used to select an existing directory. The user must
+            choose a folder that already exists on the filesystem.
+
+        ``save``
+            The dialog additionally allows the user to type a new directory
+            name into the text bar. If the typed directory does not exist, it
+            will be created automatically after the user confirms.
 
     Returns
     -------
@@ -624,8 +672,444 @@ def run_custom_directory_dialog(window_title="Select a folder"):
 
     # Execute the CustomDirectoryDialog in open or save mode
     dialog = CustomDirectoryDialog(window_title=window_title)
-    dirpath = dialog.get_directory()
+    dirpath = dialog.get_directory(mode=mode)
 
     return dirpath
+
+
+class VerticalNavigationToolbar2QT(NavigationToolbar2QT):
+    """
+    A vertical version of the Matplotlib NavigationToolbar2QT.
+
+    Parameters
+    ----------
+    canvas : matplotlib.backends.backend_qtagg.FigureCanvasQTAgg
+        The Matplotlib canvas associated with the toolbar.
+    parent : QWidget, optional
+        The parent widget for the toolbar. Defaults to None.
+    """
+
+    def __init__(self, canvas, parent=None):
+        super().__init__(canvas, parent)
+
+        # Create a vertical layout for the toolbar
+        self.setOrientation(Qt.Vertical)
+
+    def set_message(self, s):
+        """
+        Disable the mouse position display in the toolbar.
+        """
+        pass
+
+
+class Manual_EMGChannels_Selection_Dialog(QDialog):
+    """
+    Modal dialog for manual selection of noisy EMG channels.
+
+    The dialog displays stacked EMG channels for visual inspection and
+    allows the user to mark channels as valid or invalid using the
+    keyboard (keys 1-8). Selected channels are stored in the
+    ``GOOD_CHANNELS`` field of the EMG file upon confirmation.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+    manual_offset : float, default 0
+        Vertical spacing between channels. If 0, an automatic offset is
+        computed from signal amplitude.
+    path_to_icon : str or None, optional
+        Path to a window icon file.
+    parent : QWidget or None, optional
+        Parent widget.
+    """
+
+    def __init__(
+        self,
+        emgfile,
+        manual_offset=0,
+        path_to_icon=None,
+        parent=None,
+    ):
+        super().__init__(parent)
+
+        # Setup window
+        self.setWindowTitle("Select EMG Channels")
+        self.setWindowFlags(
+            Qt.Window |
+            Qt.WindowMaximizeButtonHint |
+            Qt.WindowCloseButtonHint
+        )
+        self.resize(1200, 800)
+
+        # Manually set icon if requested
+        if path_to_icon is not None:
+            icon = QIcon(path_to_icon)
+            self.setWindowIcon(icon)
+
+        # Make needed variables available
+        self.emgfile = copy.deepcopy(emgfile)
+
+        # Additional required variables
+        self.visible_count = 8
+        self.current_start = 0
+        self.n_channels = int(self.emgfile["RAW_SIGNAL"].shape[1])
+        self.good_channels = self.emgfile.get("GOOD_CHANNELS", None)
+        if self.good_channels is None:
+            self.good_channels = {
+                int(ch): True for ch in range(self.n_channels)
+            }
+        else:
+            # Convert loaded ch strings to int, then opposite on return
+            self.good_channels = {
+                int(k): bool(v) for k, v in self.good_channels.items()
+            }
+        self.raw_emg = None
+        self.figure = None
+        self.ax = None
+        self.lines = None
+        self.canvas = None
+        self.toolbar = None
+        self.plot_layout = None
+        self.plot_widget = None
+        self.keep_colour = "#1f77b4"
+        self.reject_colour = "red"
+        self.manual_offset = None
+        self.half_offset = None
+
+        # Calculate auto offset if 0 and generate emg array to plot
+        self.raw_emg = self.emgfile["RAW_SIGNAL"].to_numpy(
+            dtype=np.float64
+        )
+
+        if manual_offset == 0:
+            self.manual_offset = self._compute_offset(emg_arr=self.raw_emg)
+        else:
+            self.manual_offset = manual_offset
+        self.half_offset = manual_offset / 2
+
+        # X axis (Seconds)
+        self.x = np.arange(self.raw_emg.shape[0], dtype=np.float64)
+        self.x /= self.emgfile["FSAMP"]
+
+        # Build UI elements
+        # --- Plot widget ---
+        self.setup_plot_widget()
+
+        # --- Info labels ---
+        self.label_channels = QLabel()
+        self.label_channels.setStyleSheet(
+            "font-size: 14px; font-weight: bold; color: black;"
+        )
+        self.label_instructions = QLabel(
+            f"Press keys 1-{self.visible_count} to toggle channels "
+            "(blue = keep, red = remove)"
+        )
+        self.label_instructions.setStyleSheet(
+            "font-size: 12px; color: gray;"
+        )
+
+        # Navigation buttons
+        btn_prev = QPushButton("← Previous")
+        btn_next = QPushButton("Next →")
+        btn_prev.clicked.connect(self.show_previous)
+        btn_next.clicked.connect(self.show_next)
+
+        nav_layout = QHBoxLayout()
+        nav_layout.addWidget(btn_prev)
+        nav_layout.addStretch()
+        nav_layout.addWidget(btn_next)
+
+        # OK/Cancel
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+        )
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+
+        # Layout
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.label_channels)
+        layout.addWidget(self.label_instructions)
+        layout.addWidget(self.plot_widget)
+        layout.addLayout(nav_layout)
+        layout.addWidget(button_box)
+
+        # Initial plot
+        self.update_chart()
+
+    # -----------------------
+    # Plotting / refreshing
+    # -----------------------
+    def setup_plot_widget(self):
+        self.plot_widget = QWidget(self)
+        self.plot_layout = QHBoxLayout(self.plot_widget)
+        self.plot_layout.setContentsMargins(0, 0, 0, 0)
+
+        # ---- Matplotlib figure / axis ----
+        self.figure = Figure(constrained_layout=True)
+        self.ax = self.figure.add_subplot(111)
+
+        # Optional: basic cosmetics (safe defaults)
+        self.ax.set_xlabel("Time (s)", fontsize=14, labelpad=10)
+        self.ax.set_ylabel("Original channels (progressive)", fontsize=14)
+
+        # ---- Pre-allocate placeholder lines ----
+        self.lines = []
+
+        for i in range(self.visible_count):
+            (line,) = self.ax.plot(
+                [], [],
+                linewidth=0.5,
+                color=self.keep_colour,
+                animated=False,
+                visible=False,  # hidden until data is assigned
+            )
+            self.lines.append(line)
+
+        # Set reasonable x/y limits so empty plot doesn't look broken
+        self.ax.set_xlim(0, 1)
+        self.ax.set_ylim(0, 1)
+
+        # Store the figure in a canvas
+        self.canvas = FigureCanvasQTAgg(self.figure)
+        self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        # Toolbar
+        self.toolbar = VerticalNavigationToolbar2QT(self.canvas)
+
+        # Add to layout
+        self.plot_layout.addWidget(self.canvas)
+        self.plot_layout.addWidget(self.toolbar, alignment=Qt.AlignHCenter)
+
+    def _current_channels(self):
+        # Return the list of channel indices currently displayed.
+        end = min(self.current_start + self.visible_count, self.n_channels)
+        return list(range(self.current_start, end))
+
+    def update_chart(self):
+        # Update line data, colours, and axis labels for the current page.
+        channels = self._current_channels()
+        n_vis = len(channels)
+
+        # Update each placeholder line
+        for i, line in enumerate(self.lines):
+            if i < n_vis:
+                ch = channels[i]
+                y = self.raw_emg[:, ch] + (
+                    self.half_offset + self.manual_offset * i
+                )
+
+                line.set_data(self.x, y)
+                line.set_color(
+                    self.keep_colour if self.good_channels[ch] else self.reject_colour
+                )
+                line.set_visible(True)
+            else:
+                line.set_visible(False)
+                line.set_data([], [])
+
+        # Update axes limits safely
+        if n_vis > 0:
+            self.ax.set_xlim(float(self.x[0]), float(self.x[-1]))
+
+            # compute y-lims from the *locally stacked* visible signals
+            y_visible = np.column_stack([
+                self.raw_emg[:, ch] + (
+                    self.half_offset + self.manual_offset * i
+                )
+                for i, ch in enumerate(channels)
+            ])
+            y_min = float(np.min(y_visible))
+            y_max = float(np.max(y_visible))
+            pad = 0.05 * (y_max - y_min) if y_max > y_min else 1.0
+            self.ax.set_ylim(y_min - pad, y_max + pad)
+
+            # y ticks at local baselines
+            yticks = [
+                self.half_offset + self.manual_offset * i for i in range(n_vis)
+            ]
+            yticklabels = [f"{ch} ({i+1})" for i, ch in enumerate(channels)]
+            self.ax.set_yticks(yticks)
+            self.ax.set_yticklabels(yticklabels)
+
+        else:
+            self.ax.set_xlim(0, 1)
+            self.ax.set_ylim(0, 1)
+            self.ax.set_yticks([])
+
+        # Update label (1-based indices for humans)
+        self.label_channels.setText(
+            f"Showing channels {self.current_start + 1}-"
+            f"{min(self.current_start + self.visible_count, self.n_channels)} "
+            f"of {self.n_channels}"
+        )
+
+        self.canvas.draw_idle()
+
+    def _update_line_colours(self):
+        # Update line colours to reflect the current channel selection.
+        channels = self._current_channels()
+        for pos, ch in enumerate(channels):
+            self.lines[pos].set_color(
+                self.keep_colour if self.good_channels[ch] else self.reject_colour
+            )
+
+        self.canvas.draw_idle()
+
+    # -----------------------
+    # Helpers
+    # -----------------------
+    def _compute_offset(self, emg_arr):
+        # Return a scalar offset used to vertically stack channels.
+        ptp = np.ptp(emg_arr, axis=0)
+        ptp = ptp[np.isfinite(ptp)]
+        ptp = ptp[ptp > 0]
+
+        if ptp.size == 0:
+            return 1.0
+
+        offset = float(np.percentile(ptp, 90))  # robust-ish
+        if not np.isfinite(offset) or offset <= 0:
+            offset = float(np.max(ptp)) if ptp.size else 1.0
+
+        return offset * 1.05  # +5% headroom
+
+    # -----------------------
+    # Navigation
+    # -----------------------
+    def show_next(self):
+        if self.current_start + self.visible_count < self.n_channels:
+            self.current_start += self.visible_count
+            self.update_chart()
+
+    def show_previous(self):
+        if self.current_start - self.visible_count >= 0:
+            self.current_start -= self.visible_count
+            self.update_chart()
+
+    # -----------------------
+    # Interaction
+    # -----------------------
+    def keyPressEvent(self, event):
+        key = event.key()
+
+        # Toggle only for keys 1.self.visible_count
+        if Qt.Key_1 <= key <= (Qt.Key_1 + self.visible_count - 1):
+            idx = key - Qt.Key_1
+            channels = self._current_channels()
+            # Important for last page with fewer channels
+            if idx < len(channels):
+                ch = channels[idx]
+                self.good_channels[ch] = not self.good_channels[ch]
+                self._update_line_colours()
+            return
+
+        super().keyPressEvent(event)
+
+    # -----------------------
+    # Output
+    # -----------------------
+    def get_emgfile_with_good_channels(self):
+        """
+        Return a deepcopy the EMG file with updated GOOD_CHANNELS metadata.
+
+        Channel indices are stored as strings for saving compatibility.
+        """
+        str_good_chs = {
+            str(k): bool(v) for k, v in self.good_channels.items()
+        }
+        self.emgfile["GOOD_CHANNELS"] = str_good_chs
+
+        return self.emgfile
+
+    # -----------------------
+    # Cleanup
+    # -----------------------
+    def closeEvent(self, event):
+        try:
+            if self.canvas is not None:
+                self.canvas.setParent(None)
+                self.canvas.close()
+                self.canvas.deleteLater()
+                del self.canvas
+
+            if self.toolbar is not None:
+                self.toolbar.setParent(None)
+                self.toolbar.close()
+                self.toolbar.deleteLater()
+                del self.toolbar
+
+            if self.figure is not None:
+                self.figure.clear()
+
+            del self.plot_layout
+            del self.plot_widget
+
+            # Drop refs
+            self.lines = None
+            self.ax = None
+            self.figure = None
+            self.canvas = None
+            self.toolbar = None
+            self.good_channels = None
+            self.raw_emg = None
+        finally:
+            gc.collect()
+            super().closeEvent(event)
+
+
+def run_manual_emgchannels_selection_dialog(emgfile, manual_offset=0):
+    """
+    Select noisy channels via visual inspection.
+
+    This function opens a modal graphical dialog that allows the user to
+    visually inspect stacked EMG channels and mark noisy or unwanted
+    channels. Channel selection is performed interactively; the calling
+    code is blocked until the dialog is closed.
+
+    Compared to directly creating a Manual_EMGChannels_Selection_Dialog
+    instance, this function automatically manages the app integration for
+    the user.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+    manual_offset : int or float, default 0
+        This parameter sets the scaling of the channels. If 0 (default), the
+        channels' amplitude is scaled automatically to fit the plotting window.
+        If > 0, the channels will be scaled based on the specified value.
+
+    Returns
+    -------
+    edited_emgfile : dict or None
+        The EMG file dictionary with an updated ``"GOOD_CHANNELS"`` entry
+        (mapping channel indices as strings to booleans) if the user
+        confirms the selection.  
+        Returns ``None`` if the dialog is cancelled.
+
+    Examples
+    --------
+    See emg.select_bad_channels()
+    """
+
+    # Check if the Dialog is called from an existing application.
+    # If not, create an app and retrieve an icon path for it.
+    app, app_created, path_to_icon = check_app()
+
+    dlg = Manual_EMGChannels_Selection_Dialog(
+        emgfile=emgfile,
+        manual_offset=manual_offset,
+        path_to_icon=path_to_icon,
+        parent=None,
+    )
+    if dlg.exec() == QDialog.Accepted:
+        emgfile = dlg.get_emgfile_with_good_channels()
+        return emgfile
+    else:
+        return None
+
+
 
 # TODO How to test this module?
