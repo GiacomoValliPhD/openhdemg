@@ -4,6 +4,13 @@ This module contains the functions that don't properly apply to the plot or anal
 
 <br/>
 
+::: openhdemg.library.tools.standardise_emgfile_dtypes
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
 ::: openhdemg.library.tools.showselect
     options:
         show_root_full_path: False
@@ -12,6 +19,13 @@ This module contains the functions that don't properly apply to the plot or anal
 <br/>
 
 ::: openhdemg.library.tools.resize_emgfile
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
+::: openhdemg.library.tools.select_bad_channels
     options:
         show_root_full_path: False
         show_root_heading: True
@@ -60,6 +74,20 @@ This module contains the functions that don't properly apply to the plot or anal
 
 <br/>
 
+::: openhdemg.library.tools.find_duplicates_within
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
+::: openhdemg.library.tools.remove_duplicates_within
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
 ::: openhdemg.library.tools.sort_mus
     options:
         show_root_full_path: False
@@ -82,6 +110,13 @@ This module contains the functions that don't properly apply to the plot or anal
 <br/>
 
 ::: openhdemg.library.tools.filter_refsig
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
+::: openhdemg.library.tools.remove_powerline_harmonics
     options:
         show_root_full_path: False
         show_root_heading: True

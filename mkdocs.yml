@@ -94,10 +94,10 @@ nav:
     - muap: api_muap.md
     - electrodes: api_electrodes.md
     - info: api_info.md
-    - ui: api_widgets.md
+    - ui:
+      - widgets: api_widgets.md
     - compatibility: api_compatibility.md
 
-    
 # Extensions
 markdown_extensions:
   - abbr

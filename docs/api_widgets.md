@@ -52,3 +52,17 @@ This module contains classes (QtWidgets) and functions managing the user interfa
         show_root_heading: True
 
 <br/>
+
+::: openhdemg.ui.widgets.Manual_EMGChannels_Selection_Dialog
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
+::: openhdemg.ui.widgets.run_manual_emgchannels_selection_dialog
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>

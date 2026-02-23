@@ -25,6 +25,13 @@ This module contains all the mathematical functions that are necessary for the l
 
 <br/>
 
+::: openhdemg.library.mathtools.discrete_spike_xcorr
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
 ::: openhdemg.library.mathtools.compute_sil
     options:
         show_root_full_path: False

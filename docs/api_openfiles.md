@@ -1,57 +1,89 @@
 Description
 -----------
-This module contains all the functions that are necessary to open or save MATLAB (.mat), text (.txt), JSON (.json) or custom (.csv) files. MATLAB files are used to store data from the DEMUSE, OTBiolab+ and Delsys software while JSON files are used to save and load files from this library.
 
-The choice of saving files in the open standard JSON file format was preferred over the MATLAB file format since it has a better integration with Python and has a very high cross-platform compatibility.
+!!! note "New in version 0.2.0"
+    The recommended workflow for saving and loading *openhdemg* data now relies on the following high-level functions and classes for binary files:
+    
+    - [`save_openhdemg_module`](#openhdemg.library.openfiles.save_openhdemg_module)
+    - [`asksavemodule`](#openhdemg.library.openfiles.asksavemodule)
+    - [`load_openhdemg_module`](#openhdemg.library.openfiles.load_openhdemg_module)
+    - [`askopenmodule`](#openhdemg.library.openfiles.askopenmodule)
+    - [`openhdemg_Collection`](#openhdemg.library.openfiles.openhdemg_Collection)
 
-Function's scope
-----------------
-- **emg_from_samplefile**:<br>
-    Used to load the sample file provided with the library.
-- **emg_from_otb** and **emg_from_demuse**:<br>
-    Used to load .mat files coming from the DEMUSE or the OTBiolab+ software. Demuse has a fixed file structure while the OTB file, in order to be compatible with this library should be exported with a strict structure as described in the function emg_from_otb. In both cases, the input file is a .mat file.
-- **emg_from_delsys**:<br>
-    Used to load a combination of .mat and .txt files exported by the Delsys Neuromap and Neuromap explorer software containing the raw EMG signal and the decomposition outcome.
-- **emg_from_customcsv**:<br>
-    Used to load custom file formats contained in .csv files.
-- **refsig_from_otb**, **refsig_from_delsys** and **refsig_from_customcsv**:<br>
-    Used to load files from the OTBiolab+ (.mat) and the Delsys Neuromap software (.mat) or from a custom .csv file that contain only the reference signal.
-- **save_json_emgfile**, **emg_from_json**:<br>
-    Used to save the working file to a .json file or to load the .json file.
-- **askopenfile**, **asksavefile**:<br>
-    A quick GUI implementation that allows users to select the file to open or save.
+This module contains all the functions that are necessary to open or save *openhdemg* binary files for modules and collections, in addition to MATLAB (.mat), text (.txt), JSON (.json) or custom (.csv) files. MATLAB files are used to store data from the DEMUSE, OTBiolab+ and Delsys software while binary and JSON files are used to save and load files from this library.
 
-Notes
------
-Once opened, the file is returned as a dictionary with key-value pairs:<br>
+**If you are using an *openhdemg* version >= 0.2, it is recommended to use binary data (modules and collections), as these provide the best performance and flexibility** within the *openhdemg* framework, but also for optimal portability across operating systems and storage in private and public repositories. Indeed, our binary structures allow to compress files and check their integrity, if needed.
 
-"SOURCE" : source of the file (i.e., "CUSTOMCSV", "DEMUSE", "OTB", "DELSYS")<br>
-"FILENAME" : the name of the opened file<br>
-"RAW_SIGNAL" : the raw EMG signal<br>
-"REF_SIGNAL" : the reference signal<br>
-"ACCURACY" : accuracy score (depending on source file type)<br>
-"IPTS" : pulse train (decomposed source, depending on source file type)<br>
-"MUPULSES" : instants of firing<br>
-"FSAMP" : sampling frequency<br>
-"IED" : interelectrode distance<br>
-"EMG_LENGTH" : length of the emg file (in samples)<br>
-"NUMBER_OF_MUS" : total number of MUs<br>
-"BINARY_MUS_FIRING" : binary representation of MUs firings<br>
-"EXTRAS" : additional custom values<br>
+The content of the loaded emgfile can differ depending on the file type. In general, decomposed files are dictionaries containing at least the following keys:<br>
 
-The only exception is when files are loaded with just the reference signal:
+```python
+"SOURCE" : source of the file (e.g., "OPENHDEMG", "CUSTOMCSV")
+"FILENAME" : the name of the opened file
+"RAW_SIGNAL" : the raw EMG signal
+"REF_SIGNAL" : the reference signal
+"ACCURACY" : accuracy score (depending on source file type)
+"IPTS" : pulse train (decomposed source, depending on source file type)
+"MUPULSES" : instants of firing
+"FSAMP" : sampling frequency
+"IED" : interelectrode distance
+"EMG_LENGTH" : length of the emg file (in samples)
+"NUMBER_OF_MUS" : total number of MUs
+"BINARY_MUS_FIRING" : binary representation of MUs firings
+"EXTRAS" : additional custom values
+```
 
-"SOURCE" : source of the file (i.e., "CUSTOMCSV_REFSIG", "OTB_REFSIG", "DELSYS_REFSIG")<br>
-"FILENAME" : the name of the opened file<br>
-"FSAMP" : sampling frequency<br>
-"REF_SIGNAL" : the reference signal<br>
-"EXTRAS" : additional custom values<br>
+More keys might be present if additional pd.DataFrames or Dictionaries are present in the emgfiles saved with 'save_emgfile_module'.
 
-Additional informations can be found in the
-[info module](api_info.md#openhdemg.library.info.data) and in the
-function's description.
+Similarly, less keys might be present if there is no decomposition result or no EMG signal.
+
+As an example, when files are loaded with just the reference signal:
+
+```python
+"SOURCE" : source of the file (i.e., "CUSTOMCSV_REFSIG", "OTB_REFSIG", "DELSYS_REFSIG")
+"FILENAME" : the name of the opened file
+"FSAMP" : sampling frequency
+"REF_SIGNAL" : the reference signal
+"EXTRAS" : additional custom values
+```
+
+Additional information can be found in the [info module](api_info.md#openhdemg.library.info.data) and in the function's description.
 
 Furthermore, all the users are encouraged to read the dedicated tutorial [Structure of the emgfile](tutorials/emgfile_structure.md).
+
+<br/>
+
+::: openhdemg.library.openfiles.save_openhdemg_module
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
+::: openhdemg.library.openfiles.asksavemodule
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
+::: openhdemg.library.openfiles.load_openhdemg_module
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
+::: openhdemg.library.openfiles.askloadmodule
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
+::: openhdemg.library.openfiles.openhdemg_Collection
+    options:
+        show_root_full_path: False
+        show_root_heading: True
 
 <br/>
 
@@ -133,6 +165,20 @@ Furthermore, all the users are encouraged to read the dedicated tutorial [Struct
 <br/>
 
 ::: openhdemg.library.openfiles.asksavefile
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
+::: openhdemg.library.openfiles.is_safe_openhdemg_folder
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
+::: openhdemg.library.openfiles.sha256_file
     options:
         show_root_full_path: False
         show_root_heading: True
