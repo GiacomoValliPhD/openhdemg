@@ -17,6 +17,7 @@ from openhdemg.library.mathtools import min_max_scaling
 
 matplotlib.use("QtAgg")
 
+
 class Figure_Layout_Manager():
     """
     Class managing custom layout and custom settings for 2D plots.
@@ -919,12 +920,12 @@ def _create_figure_with_subplots(
     return fig, axes
 
 
-# TODO take care of destroying plt interactive plots during areas selection or others
 def plot_emgsig(
     emgfile,
     channels,
     manual_offset=0,
     addrefsig=False,
+    refsig_channel=0,
     timeinseconds=True,
     figsize=[20, 15],
     tight_layout=True,
@@ -955,9 +956,11 @@ def plot_emgsig(
         This parameter sets the scaling of the channels. If 0 (default), the
         channels' amplitude is scaled automatically to fit the plotting window.
         If > 0, the channels will be scaled based on the specified value.
-    addrefsig : bool, default True
+    addrefsig : bool, default False
         If True, the REF_SIGNAL is plotted in front of the signal with a
         separated y-axes.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
     timeinseconds : bool, default True
         Whether to show the time on the x-axes in seconds (True)
         or in samples (False).
@@ -1185,7 +1188,7 @@ def plot_emgsig(
             )
 
         ax2 = ax1.twinx()
-        ax2.plot(x_axis, emgfile["REF_SIGNAL"][0])
+        ax2.plot(x_axis, emgfile["REF_SIGNAL"][refsig_channel])
         ax2.set_ylabel("MVC")
 
         # Set z-order so that ax2 is in the background
@@ -1220,6 +1223,7 @@ def plot_differentials(
     column="col0",
     manual_offset=0,
     addrefsig=False,
+    refsig_channel=0,
     timeinseconds=True,
     figsize=[20, 15],
     tight_layout=True,
@@ -1250,9 +1254,11 @@ def plot_differentials(
         This parameter sets the scaling of the channels. If 0 (default), the
         channels' amplitude is scaled automatically to fit the plotting window.
         If > 0, the channels will be scaled based on the specified value.
-    addrefsig : bool, default True
+    addrefsig : bool, default False
         If True, the REF_SIGNAL is plotted in front of the signal with a
         separated y-axes.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
     timeinseconds : bool, default True
         Whether to show the time on the x-axes in seconds (True)
         or in samples (False).
@@ -1440,7 +1446,7 @@ def plot_differentials(
             )
 
         ax2 = ax1.twinx()
-        ax2.plot(x_axis, emgfile["REF_SIGNAL"][0])
+        ax2.plot(x_axis, emgfile["REF_SIGNAL"][refsig_channel])
         ax2.set_ylabel("MVC")
 
         # Set z-order so that ax2 is in the background
@@ -1470,6 +1476,7 @@ def plot_differentials(
 
 def plot_refsig(
     emgfile,
+    refsig_channel=0,
     ylabel="",
     timeinseconds=True,
     figsize=[20, 15],
@@ -1490,6 +1497,8 @@ def plot_refsig(
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
     ylabel : str
         WARNING! This parameter is deprecated since v0.1.1 and will be removed
         after v0.2.0. Please use axes_kwargs instead. See examples in the
@@ -1554,6 +1563,7 @@ def plot_refsig(
     ... }
     >>> fig = emg.plot_refsig(
     ...     emgfile,
+    ...     refsig_channel=0,
     ...     timeinseconds=True,
     ...     tight_layout=True,
     ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
@@ -1575,7 +1585,7 @@ def plot_refsig(
 
     # Check to have the REF_SIGNAL in a pandas dataframe
     if isinstance(emgfile["REF_SIGNAL"], pd.DataFrame):
-        refsig = emgfile["REF_SIGNAL"]
+        refsig = emgfile["REF_SIGNAL"][refsig_channel]
     else:
         raise TypeError(
             "REF_SIGNAL is probably absent or it is not contained in a " +
@@ -1594,7 +1604,7 @@ def plot_refsig(
         use_plt=use_plt, figname=figname,
     )
 
-    ax1.plot(x_axis, refsig[0])
+    ax1.plot(x_axis, refsig)
 
     ax1.set_ylabel("MVC")
     ax1.set_xlabel("Time (Sec)" if timeinseconds else "Samples")
@@ -1621,7 +1631,8 @@ def plot_mupulses(
     munumber="all",
     linewidths=0,
     linelengths=0.9,
-    addrefsig=True,
+    addrefsig=False,
+    refsig_channel=0,
     timeinseconds=True,
     figsize=[20, 15],
     tight_layout=True,
@@ -1656,9 +1667,11 @@ def plot_mupulses(
         plot_mupulses documentation.
     linelengths : float, default 0.9
         The vertical length of each line. This must be a value between 0 and 1.
-    addrefsig : bool, default True
+    addrefsig : bool, default False
         If True, the REF_SIGNAL is plotted in front of the MUs pulses with a
         separated y-axes.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
     timeinseconds : bool, default True
         Whether to show the time on the x-axes in seconds (True)
         or in samples (False).
@@ -1742,6 +1755,17 @@ def plot_mupulses(
     plot_emgsig().
     """
 
+    # Check if any MU is present
+    if emgfile.get("NUMBER_OF_MUS", None) in [0, None]:
+        fig, ax1 = _create_figure(
+            figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
+            use_plt=use_plt, figname="MUs pulses",
+        )
+        ax1.set_title("No motor units to plot")
+        if showimmediately:
+            plt.show()
+        return fig
+
     # Warn for the use of a deprecated parameter
     if linewidths > 0:
         msg = (
@@ -1772,8 +1796,10 @@ def plot_mupulses(
             y_tick_lab = [*range(0, emgfile["NUMBER_OF_MUS"])]
             ylab = "Motor units"
             munumber = [*range(emgfile["NUMBER_OF_MUS"])]
-        else:
+        elif emgfile["NUMBER_OF_MUS"] == 1:
             munumber = 0
+        else:
+            raise ValueError("Unexpected values in emgfile['NUMBER_OF_MUS']")
 
     if isinstance(munumber, int):
         mupulses = [mupulses[munumber]]
@@ -1790,8 +1816,8 @@ def plot_mupulses(
             ylab = f"MU n. {munumber[0]}"
     else:
         raise TypeError(
-            "While calling the plot_mupulses function, you should pass an " +
-            "integer, a list or 'all' to munumber"
+            "While calling the plot_mupulses function, you should pass " +
+            "an integer, a list or 'all' to munumber"
         )
 
     # Convert x axes in seconds if timeinseconds==True.
@@ -1842,7 +1868,7 @@ def plot_mupulses(
                 "dataframe"
             )
         ax2 = ax1.twinx()
-        ax2.plot(x_axis, emgfile["REF_SIGNAL"][0])
+        ax2.plot(x_axis, emgfile["REF_SIGNAL"][refsig_channel])
         ax2.set_ylabel("MVC")
 
         # Set z-order so that ax2 is in the background
@@ -1874,6 +1900,7 @@ def plot_ipts(
     emgfile,
     munumber="all",
     addrefsig=False,
+    refsig_channel=0,
     timeinseconds=True,
     figsize=[20, 15],
     tight_layout=True,
@@ -1904,9 +1931,11 @@ def plot_ipts(
         We need the " * " operator to unpack the results of range into a list.
         munumber is expected to be with base 0 (i.e., the first MU in the file
         is the number 0).
-    addrefsig : bool, default True
+    addrefsig : bool, default False
         If True, the REF_SIGNAL is plotted in front of the signal with a
         separated y-axes.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
     timeinseconds : bool, default True
         Whether to show the time on the x-axes in seconds (True) or in
         samples (False).
@@ -2013,12 +2042,25 @@ def plot_ipts(
     plot_emgsig().
     """
 
+    # Check if any MU is present
+    if emgfile.get("NUMBER_OF_MUS", None) in [0, None]:
+        fig, ax1 = _create_figure(
+            figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
+            use_plt=use_plt, figname="IPTS",
+        )
+        ax1.set_title("No motor units to plot")
+        if showimmediately:
+            plt.show()
+        return fig
+
     # Check if all the MUs have to be plotted
     if isinstance(munumber, str):
-        if emgfile["NUMBER_OF_MUS"] == 1:  # Manage exception of single MU
+        if emgfile["NUMBER_OF_MUS"] > 1:
+            munumber = [*range(emgfile["NUMBER_OF_MUS"])]
+        elif emgfile["NUMBER_OF_MUS"] == 1:
             munumber = 0
         else:
-            munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
+            raise ValueError("Unexpected values in emgfile['NUMBER_OF_MUS']")
 
     # Check if we have a single mu or a list of mus to plot
     if isinstance(munumber, list) and len(munumber) == 1:
@@ -2088,7 +2130,7 @@ def plot_ipts(
             )
 
         ax2 = ax1.twinx()
-        ax2.plot(x_axis, emgfile["REF_SIGNAL"][0])
+        ax2.plot(x_axis, emgfile["REF_SIGNAL"][refsig_channel])
         ax2.set_ylabel("MVC")
 
         # Set z-order so that ax2 is in the background
@@ -2120,7 +2162,8 @@ def plot_ipts(
 def plot_idr(
     emgfile,
     munumber="all",
-    addrefsig=True,
+    addrefsig=False,
+    refsig_channel=0,
     timeinseconds=True,
     figsize=[20, 15],
     tight_layout=True,
@@ -2149,9 +2192,11 @@ def plot_idr(
         We need the " * " operator to unpack the results of range into a list.
         munumber is expected to be with base 0 (i.e., the first MU in the file
         is the number 0).
-    addrefsig : bool, default True
+    addrefsig : bool, default False
         If True, the REF_SIGNAL is plotted in front of the MUs IDR with a
         separated y-axes.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
     timeinseconds : bool, default True
         Whether to show the time on the x-axes in seconds (True)
         or in samples (False).
@@ -2254,15 +2299,28 @@ def plot_idr(
     plot_emgsig().
     """
 
+    # Check if any MU is present
+    if emgfile.get("NUMBER_OF_MUS", None) in [0, None]:
+        fig, ax1 = _create_figure(
+            figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
+            use_plt=use_plt, figname="IDR",
+        )
+        ax1.set_title("No motor units to plot")
+        if showimmediately:
+            plt.show()
+        return fig
+
     # Compute the IDR
     idr = compute_idr(emgfile=emgfile)
 
     # Check if all the MUs have to be plotted
     if isinstance(munumber, str):
-        if emgfile["NUMBER_OF_MUS"] == 1:  # Manage exception of single MU
+        if emgfile["NUMBER_OF_MUS"] > 1:
+            munumber = [*range(emgfile["NUMBER_OF_MUS"])]
+        elif emgfile["NUMBER_OF_MUS"] == 1:
             munumber = 0
         else:
-            munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
+            raise ValueError("Unexpected values in emgfile['NUMBER_OF_MUS']")
 
     # Check if we have a single mu or a list of mus to plot
     if isinstance(munumber, list) and len(munumber) == 1:
@@ -2338,7 +2396,7 @@ def plot_idr(
             else emgfile["REF_SIGNAL"].index
         )
         ax2 = ax1.twinx()
-        ax2.plot(x_axis, emgfile["REF_SIGNAL"][0])
+        ax2.plot(x_axis, emgfile["REF_SIGNAL"][refsig_channel])
         ax2.set_ylabel("MVC")
 
         # Set z-order so that ax2 is in the background
@@ -2373,7 +2431,8 @@ def plot_smoothed_dr(
     munumber="all",
     addidr=True,
     stack=True,
-    addrefsig=True,
+    addrefsig=False,
+    refsig_channel=0,
     timeinseconds=True,
     figsize=[20, 15],
     tight_layout=True,
@@ -2410,9 +2469,11 @@ def plot_smoothed_dr(
     stack : bool, default True
         Whether to stack multiple MUs. If False, all the MUs smoothed DR will
         be plotted on the same line.
-    addrefsig : bool, default True
+    addrefsig : bool, default False
         If True, the REF_SIGNAL is plotted in front of the MUs IDR with a
         separated y-axes.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
     timeinseconds : bool, default True
         Whether to show the time on the x-axes in seconds (True)
         or in samples (False).
@@ -2532,6 +2593,17 @@ def plot_smoothed_dr(
     plot_emgsig().
     """
 
+    # Check if any MU is present
+    if emgfile.get("NUMBER_OF_MUS", None) in [0, None]:
+        fig, ax1 = _create_figure(
+            figsize=(figsize[0] / 2.54, figsize[1] / 2.54),
+            use_plt=use_plt, figname="Smoothed DR",
+        )
+        ax1.set_title("No motor units to plot")
+        if showimmediately:
+            plt.show()
+        return fig
+
     # Compute the IDR
     idr = compute_idr(emgfile=emgfile)
 
@@ -2540,10 +2612,12 @@ def plot_smoothed_dr(
         if len(munumber) == 1:  # Manage exception of single MU
             munumber = munumber[0]
     elif isinstance(munumber, str):
-        if emgfile["NUMBER_OF_MUS"] == 1:  # Manage exception of single MU
+        if emgfile["NUMBER_OF_MUS"] > 1:
+            munumber = [*range(emgfile["NUMBER_OF_MUS"])]
+        elif emgfile["NUMBER_OF_MUS"] == 1:
             munumber = 0
         else:
-            munumber = [*range(0, emgfile["NUMBER_OF_MUS"])]
+            raise ValueError("Unexpected values in emgfile['NUMBER_OF_MUS']")
 
     # Check smoothfits type
     if not isinstance(smoothfits, pd.DataFrame):
@@ -2689,7 +2763,7 @@ def plot_smoothed_dr(
         )
 
         ax2 = ax1.twinx()
-        ax2.plot(x_axis, emgfile["REF_SIGNAL"][0])
+        ax2.plot(x_axis, emgfile["REF_SIGNAL"][refsig_channel])
         ax2.set_ylabel("MVC")
 
         # Set z-order so that ax2 is in the background

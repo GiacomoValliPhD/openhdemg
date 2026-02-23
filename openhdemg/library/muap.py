@@ -3,9 +3,7 @@ This module contains functions to produce and analyse MU anction potentials
 (MUAPs).
 """
 
-import os
 import gc
-import sys
 import copy
 import time
 import warnings
@@ -781,6 +779,7 @@ def tracking(
     show=False,
     gui=True,
     gui_addrefsig=True,
+    gui_refsig_channel=0,
     gui_csv_separator="\t",
 ):
     """
@@ -884,6 +883,8 @@ def tracking(
     gui_addrefsig : bool, default True
         If True, the REF_SIGNAL is plotted in front of the IDR with a
         separated y-axes. This is used only when gui=True.
+    gui_refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
     gui_csv_separator : str, default "\t"
         The field delimiter used by the GUI to create the .csv copied to the
         clipboard. This is used only when gui=True.
@@ -1030,8 +1031,9 @@ def tracking(
             emgfile2_sorted = double_diff(sorted_rawemg=emgfile2_sorted)
         else:
             raise ValueError(
-                f"derivation can be one of 'mono', 'sd', 'dd'. {derivation} was passed instead"
-                )
+                "derivation can be one of 'mono', 'sd', 'dd'. "
+                f"{derivation} was passed instead."
+            )
 
         # Get the STAs
         sta_emgfile1 = sta(
@@ -1223,6 +1225,7 @@ def tracking(
             sta_emgfile2=sta_emgfile2,
             align_muaps=False if isinstance(custom_muaps, list) else True,
             addrefsig=gui_addrefsig,
+            refsig_channel=gui_refsig_channel,
             csv_separator=gui_csv_separator,
         )
 
@@ -1247,6 +1250,7 @@ class Tracking_gui():
         sta_emgfile2,
         align_muaps=True,
         addrefsig=True,
+        refsig_channel=0,
         csv_separator="\t",
     ):
 
@@ -1261,6 +1265,7 @@ class Tracking_gui():
             sta_emgfile2,
             align_muaps=align_muaps,
             addrefsig=addrefsig,
+            refsig_channel=refsig_channel,
             csv_separator=csv_separator,
         )
         # For backward compatibility
@@ -1280,6 +1285,7 @@ def run_xcorr_muaps_tracking_gui(
     sta_emgfile2,
     align_muaps=True,
     addrefsig=True,
+    refsig_channel=0,
     csv_separator="\t",
 ):
     """
@@ -1312,6 +1318,8 @@ def run_xcorr_muaps_tracking_gui(
     addrefsig : bool, default True
         If True, the REF_SIGNAL is plotted in front of the IDR with a
         separated y-axes.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
     csv_separator : str, default "\t"
         The field delimiter used to create the .csv copied to the clipboard.
 
@@ -1377,7 +1385,7 @@ def run_xcorr_muaps_tracking_gui(
 
     app, app_created, path_to_icon = check_app()
 
-    # Execute PointSelectorDialog in blocking mode
+    # Execute in blocking mode
     window = XCORR_MUAPs_Tracking_gui(
         emgfile1,
         emgfile2,
@@ -1386,11 +1394,12 @@ def run_xcorr_muaps_tracking_gui(
         sta_emgfile2,
         align_muaps=align_muaps,
         addrefsig=addrefsig,
+        refsig_channel=refsig_channel,
         csv_separator=csv_separator,
         path_to_icon=path_to_icon,
     )
     window.show()
-    app.exec()
+    app.exec()  # TODO maybe in these calls we need to check if app_created
 
     return window
 
@@ -1428,6 +1437,8 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
     addrefsig : bool, default True
         If True, the REF_SIGNAL is plotted in front of the IDR with a
         separated y-axes.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
     csv_separator : str, default "\t"
         The field delimiter used to create the .csv copied to the clipboard.
     path_to_icon : None or str, default None
@@ -1467,6 +1478,7 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
         sta_emgfile2,
         align_muaps=True,
         addrefsig=True,
+        refsig_channel=0,
         csv_separator="\t",
         path_to_icon=None,
     ):
@@ -1479,6 +1491,7 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
         self.sta_emgfile2 = sta_emgfile2
         self.align_muaps = align_muaps
         self.addrefsig = addrefsig
+        self.refsig_channel = refsig_channel
         self.csv_separator = csv_separator
 
         # Add included/excluded label to self.tracking_res
@@ -1689,6 +1702,7 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
             emgfile=self.emgfile1,
             munumber=mu1,
             addrefsig=self.addrefsig,
+            refsig_channel=self.refsig_channel,
             figsize=[15, 9],
             showimmediately=False,
             tight_layout=True,
@@ -1706,6 +1720,7 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
             emgfile=self.emgfile2,
             munumber=mu2,
             addrefsig=self.addrefsig,
+            refsig_channel=self.refsig_channel,
             figsize=[15, 9],
             showimmediately=False,
             tight_layout=True,
@@ -1797,6 +1812,7 @@ def remove_duplicates_between(
     show=False,
     gui=True,
     gui_addrefsig=True,
+    gui_refsig_channel=0,
     gui_csv_separator="\t",
     which="munumber",
     custom_tracking_res=None,
@@ -1893,6 +1909,8 @@ def remove_duplicates_between(
     gui_addrefsig : bool, default True
         If True, the REF_SIGNAL is plotted in front of the IDR with a
         separated y-axes. This is used only when gui=True.
+    gui_refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
     gui_csv_separator : str, default "\t"
         The field delimiter used by the GUI to create the .csv copied to the
         clipboard. This is used only when gui=True.
@@ -1922,6 +1940,8 @@ def remove_duplicates_between(
 
     See also
     --------
+    - remove_duplicates_within : Remove duplicate MUs within the same file
+        based on discharge times.
     - sta : computes the STA of every MUs.
     - norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
         two MUs.
@@ -2038,6 +2058,7 @@ def remove_duplicates_between(
             show=show,
             gui=gui,
             gui_addrefsig=gui_addrefsig,
+            gui_refsig_channel=gui_refsig_channel,
             gui_csv_separator=gui_csv_separator,
         )
     else:
@@ -2391,7 +2412,7 @@ def run_mle_mucv_gui(
 
     app, app_created, path_to_icon = check_app()
 
-    # Execute PointSelectorDialog in blocking mode
+    # Execute in blocking mode
     window = MLE_MUCV_gui(
         emgfile,
         sorted_rawemg,

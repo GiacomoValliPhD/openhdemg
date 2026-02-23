@@ -14,10 +14,14 @@ This module contains all the information regarding:
 """
 
 import json
+import textwrap
 from textwrap import dedent
 
+import numpy as np
+import pandas as pd
 
-class info:
+
+class info:  # TODO new data structure and more flexibility, also change the SOURCE fields through the repo
     """
     A class used to obtain info.
 
@@ -62,51 +66,260 @@ class info:
         emgfile keys are:
         dict_keys(['SOURCE', 'FILENAME', 'RAW_SIGNAL', 'REF_SIGNAL', 'ACCURACY', 'IPTS', 'MUPULSES', 'FSAMP', 'IED', 'EMG_LENGTH', 'NUMBER_OF_MUS', 'BINARY_MUS_FIRING', 'EXTRAS'])
         Any key can be acced as emgfile[key].
-        emgfile['SOURCE'] is a <class 'str'> of value:
-        DEMUSE
+        'SOURCE':
+            str: 'OPENHDEMG'
+        'FSAMP':
+            float: 2048.0
         .
         .
         .
         """
 
-        if emgfile["SOURCE"] in ["DEMUSE", "OTB", "CUSTOMCSV", "DELSYS"]:
-            print("\nData structure of the emgfile")
-            print("-----------------------------\n")
-            print(f"emgfile type is:\n{type(emgfile)}\n")
-            print(f"emgfile keys are:\n{emgfile.keys()}\n")
-            print("Any key can be acced as emgfile[key].\n")
-            print(f"emgfile['SOURCE'] is a {type(emgfile['SOURCE'])} of value:\n{emgfile['SOURCE']}\n")
-            print(f"emgfile['FILENAME'] is a {type(emgfile['FILENAME'])} of value:\n{emgfile['FILENAME']}\n")
-            print("MUST NOTE: emgfile from OTB has 64 channels, from DEMUSE 65 (includes empty channel).")
-            print(f"emgfile['RAW_SIGNAL'] is a {type(emgfile['RAW_SIGNAL'])} of value:\n{emgfile['RAW_SIGNAL']}\n")
-            print(f"emgfile['REF_SIGNAL'] is a {type(emgfile['REF_SIGNAL'])} of value:\n{emgfile['REF_SIGNAL']}\n")
-            print(f"emgfile['ACCURACY'] is a {type(emgfile['ACCURACY'])} of value:\n{emgfile['ACCURACY']}\n")
-            print(f"emgfile['IPTS'] is a {type(emgfile['IPTS'])} of value:\n{emgfile['IPTS']}\n")
-            print(f"emgfile['MUPULSES'] is a {type(emgfile['MUPULSES'])} of length depending on total MUs number.")
-            if emgfile['NUMBER_OF_MUS'] > 0:  # Manage exceptions
-                print("MUPULSES for each MU can be accessed as emgfile['MUPULSES'][MUnumber].\n")
-                print(f"emgfile['MUPULSES'][0] is a {type(emgfile['MUPULSES'][0])} of value:\n{emgfile['MUPULSES'][0]}\n")
-            print(f"emgfile['FSAMP'] is a {type(emgfile['FSAMP'])} of value:\n{emgfile['FSAMP']}\n")
-            print(f"emgfile['IED'] is a {type(emgfile['IED'])} of value:\n{emgfile['IED']}\n")
-            print(f"emgfile['EMG_LENGTH'] is a {type(emgfile['EMG_LENGTH'])} of value:\n{emgfile['EMG_LENGTH']}\n")
-            print(f"emgfile['NUMBER_OF_MUS'] is a {type(emgfile['NUMBER_OF_MUS'])} of value:\n{emgfile['NUMBER_OF_MUS']}\n")
-            print(f"emgfile['BINARY_MUS_FIRING'] is a {type(emgfile['BINARY_MUS_FIRING'])} of value:\n{emgfile['BINARY_MUS_FIRING']}\n")
-            print(f"emgfile['EXTRAS'] is a {type(emgfile['EXTRAS'])} of value:\n{emgfile['EXTRAS']}\n")
+        MAX_W = 80  # max line width for keys/cols lists etc.
 
-        elif emgfile["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]:
-            print("\nData structure of the emgfile")
-            print("-----------------------------\n")
-            print(f"emgfile type is:\n{type(emgfile)}\n")
-            print(f"emgfile keys are:\n{emgfile.keys()}\n")
-            print("Any key can be acced as emgfile[key].\n")
-            print(f"emgfile['SOURCE'] is a {type(emgfile['SOURCE'])} of value:\n{emgfile['SOURCE']}\n")
-            print(f"emgfile['FILENAME'] is a {type(emgfile['FILENAME'])} of value:\n{emgfile['FILENAME']}\n")
-            print(f"emgfile['FSAMP'] is a {type(emgfile['FSAMP'])} of value:\n{emgfile['FSAMP']}\n")
-            print(f"emgfile['REF_SIGNAL'] is a {type(emgfile['REF_SIGNAL'])} of value:\n{emgfile['REF_SIGNAL']}\n")
-            print(f"emgfile['EXTRAS'] is a {type(emgfile['EXTRAS'])} of value:\n{emgfile['EXTRAS']}\n")
+        def _srepr(x, limit=300):
+            """Safe repr that never raises and never gets too long."""
 
-        else:
-            raise ValueError(f"Source '{emgfile['SOURCE']}' not recognised")
+            try:
+                out = repr(x)
+            except Exception as e:
+                out = f"<unrepr-able: {type(e).__name__}: {e}>"
+            return out if len(out) <= limit else out[:limit] + " …"
+
+        def _wrap_list(
+            items,
+            *,
+            indent=0,
+            width=MAX_W,
+            max_items=25,
+            prefix="",
+        ):
+
+            """
+            Wrap a list-like preview so lines stay <= `width` (best-effort),
+            with nice indentation similar to code formatting.
+            """
+            pad = " " * indent
+
+            # Safely tokenise items, keeping each token short
+            tokens = []
+            try:
+                seq = list(items)
+            except Exception:
+                seq = []
+
+            for it in seq[:max_items]:
+                tokens.append(_srepr(it, limit=30))
+
+            more = ""
+            try:
+                if len(seq) > max_items:
+                    more = f", ... (+{len(seq) - max_items} more)"
+            except Exception:
+                pass
+
+            body = ", ".join(tokens) + more
+            text = f"{prefix}[{body}]"
+
+            return textwrap.fill(
+                text,
+                width=width,
+                initial_indent=pad,
+                subsequent_indent=pad + " " * (len(prefix) + 1),
+                break_long_words=False,
+                break_on_hyphens=False,
+            )
+
+        def _summarise(x, depth=1, indent=0):
+            pad = " " * indent
+
+            try:
+                # dict
+                if isinstance(x, dict):
+                    try:
+                        keys = list(x.keys())
+                    except Exception as e:
+                        _name = type(e).__name__
+                        return f"{pad}dict (keys unreadable: {_name}: {e})"
+
+                    more = (
+                        "" if len(keys) <= 25 else f" (+{len(keys) - 25} more)"
+                    )
+                    lines = [f"{pad}dict ({len(keys)} keys{more})"]
+                    lines.append(
+                        _wrap_list(
+                            keys,
+                            indent=indent,
+                            width=MAX_W,
+                            max_items=25,
+                            prefix="keys=",
+                        )
+                    )
+
+                    if depth > 0 and keys:
+                        for k in keys[:20]:
+                            try:
+                                v = x[k]
+                            except Exception as e:
+                                _name = type(e).__name__
+                                lines.append(
+                                    f"{pad}  {k!r}: <unreadable: {_name}: {e}>"
+                                )
+                                continue
+
+                            # recurse nicely for nested dicts
+                            if isinstance(v, dict) and depth > 0:
+                                lines.append(f"{pad}  {k!r}:")
+                                lines.append(
+                                    _summarise(
+                                        v,
+                                        depth=depth - 1,
+                                        indent=indent + 4,
+                                    )
+                                )
+                            else:
+                                child = _summarise(
+                                    v, depth=depth - 1, indent=0,
+                                ).lstrip()
+                                lines.append(f"{pad}  {k!r}: {child}")
+
+                    return "\n".join(lines)
+
+                # DataFrame
+                if isinstance(x, pd.DataFrame):
+                    try:
+                        r, c = x.shape
+                        cols = list(x.columns)
+                        preview_cols = cols[:12]
+
+                        extra_c = "" if c <= 12 else f" (+{c - 12} cols)"
+                        extra_r = "" if r <= 5 else f" (+{r - 5} rows)"
+
+                        head = x.loc[:, preview_cols].head(5)
+
+                        lines = [
+                            f"{pad}DataFrame shape={x.shape}{extra_r}{extra_c}"
+                        ]
+                        lines.append(
+                            _wrap_list(
+                                preview_cols,
+                                indent=indent + 2,
+                                width=MAX_W,
+                                max_items=12,
+                                prefix="columns=",
+                            ) + (
+                                "" if c <= 12 else " ..."
+                            )
+                        )
+                        lines.append(f"{pad}  head:\n{head}")
+                        return "\n".join(lines)
+                    except Exception as e:
+                        _name = type(e).__name__
+                        return f"{pad}DataFrame (summary failed: {_name}: {e})"
+
+                # Series
+                if isinstance(x, pd.Series):
+                    try:
+                        n = len(x)
+                        head = x.head(8)
+                        extra = "" if n <= 8 else f" (+{n - 8})"
+                        _string = (
+                            f"{pad}Series len={n}{extra}\n{pad}  head:\n{head}"
+                        )
+                        return _string
+                    except Exception as e:
+                        _name = type(e).__name__
+                        return f"{pad}Series (summary failed: {_name}: {e})"
+
+                # ndarray
+                if isinstance(x, np.ndarray):
+                    try:
+                        preview = "<preview failed>"
+                        try:
+                            preview = _srepr(x.ravel()[:10])
+                        except Exception:
+                            pass
+                        return (
+                            f"{pad}ndarray shape={getattr(x, 'shape', None)}, "
+                            f"dtype={getattr(x, 'dtype', None)}, "
+                            f"preview={preview}"
+                        )
+                    except Exception as e:
+                        _name = type(e).__name__
+                        return f"{pad}ndarray (summary failed: {_name}: {e})"
+
+                # sequences
+                if isinstance(x, (list, tuple, set)):
+                    try:
+                        seq = list(x) if isinstance(x, set) else x
+                        n = len(seq)
+                        types = [type(v).__name__ for v in seq[:5]]
+                        return _wrap_list(
+                            types,
+                            indent=indent,
+                            width=MAX_W,
+                            max_items=5,
+                            prefix=f"{type(x).__name__} len={n}, first_types=",
+                        )
+                    except Exception as e:
+                        _string = (
+                            f"{pad}{type(x).__name__} "
+                            f"(summary failed: {type(e).__name__}: {e})"
+                        )
+                        return _string
+
+                # scalar fallback
+                return f"{pad}{type(x).__name__}: {_srepr(x)}"
+
+            except Exception as e:
+                return f"{pad}<summary failed: {type(e).__name__}: {e}>"
+
+        print("\nData structure of the emgfile")
+        print("-----------------------------\n")
+        print(f"emgfile type is:\n{type(emgfile)}\n")
+
+        if not isinstance(emgfile, dict):
+            print("WARNING: emgfile is not a dict. Summarising object:\n")
+            print(_summarise(emgfile, depth=2, indent=2))
+            return
+
+        # Keys (wrapped to 80 chars)
+        try:
+            keys = list(emgfile.keys())
+            print(f"emgfile keys are ({len(keys)}):")
+            print(
+                _wrap_list(
+                    keys, indent=0, width=MAX_W, max_items=60, prefix="",
+                )
+            )
+            print("")
+        except Exception as e:
+            _name = type(e).__name__
+            print(f"emgfile keys are: <failed to list keys: {_name}: {e}>\n")
+
+        print("Any key can be accessed as emgfile[key].\n")
+
+        # Full inspection (everything)
+        print("All fields (full inspection):")
+        print("----------------------------")
+        try:
+            all_keys = list(emgfile.keys())
+        except Exception:
+            all_keys = []
+
+        for k in all_keys:
+            try:
+                v = emgfile[k]
+            except Exception as e:
+                print(f"{k!r}: <failed to access: {type(e).__name__}: {e}>\n")
+                continue
+
+            depth = 3 if isinstance(v, dict) else 1
+            print(f"{k!r}:")
+            print(_summarise(v, depth=depth, indent=2))
+            print("")
+
+        print("Done.\n")
 
     def abbreviations(self):
         """
@@ -219,8 +432,7 @@ class info:
 
             This project is aimed at users that already know the Python
             language, as well as for those willing to learn it and even for
-            those not interested in coding thanks to a friendly graphical user
-            interface (GUI).
+            those not interested in coding thanks to a friendly software.
 
             Both the openhdemg project and its contributors adhere to the Open
             Science Principles and especially to the idea of public release of
