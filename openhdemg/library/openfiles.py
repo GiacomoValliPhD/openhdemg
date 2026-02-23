@@ -506,22 +506,20 @@ def save_openhdemg_module(
 
 def asksavemodule(
     emgfile,
-    module_name,
     filename=None,
     compresslevel=None,
     add_checksum=False,
 ):
     """
-    Select the folder where to save the module with an UI and save it.
+    Select or create the folder where to save the module with an UI.
 
     Parameters
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    module_name : str
-        Name of the module folder to create in the selected directory.
-    filename : str, default None
+    filename : str or None, default None
         Optional filename to override the existing ``emgfile["FILENAME"]``.
+        If ``None``, the saving name will be used.
     compresslevel : {None, int}, default None
         Compression level (0-9). If ``None``, saves as raw binary files
         without compression. Saving the file without compression will allow
@@ -557,18 +555,20 @@ def asksavemodule(
     """
 
     # Get the filepath
-    filepath = run_custom_directory_dialog(
-        window_title="Select a folder to save the module"
+    dirpath = run_custom_directory_dialog(
+        window_title="Select a folder to save the module",
+        mode="save",
     )
+    parent_path, dirname = os.path.split(dirpath)
 
     print("\n---------------\nSaving module\n")
 
     # Save the module
     path = save_openhdemg_module(
         emgfile=emgfile,
-        path=filepath,
-        module_name=module_name,
-        filename=filename,
+        path=parent_path,
+        module_name=dirname,
+        filename=dirname if filename is None else filename,
         compresslevel=compresslevel,
         add_checksum=add_checksum,
     )
@@ -634,7 +634,7 @@ def load_openhdemg_module(
 
     See also
     --------
-    - askopenmodule : Select the module folder to load with an UI.
+    - askloadmodule : Select the module folder to load with an UI.
 
     Raises
     ------
@@ -772,6 +772,7 @@ def load_openhdemg_module(
 def askloadmodule(
     verify_checksum=False,
     return_metadata=False,
+    return_path=False,
 ):
     """
     Select the module folder to load with an UI and load it.
@@ -790,6 +791,8 @@ def askloadmodule(
     return_metadata : bool, default False
         Whether to return the module metadata. If true, an additional object
         is returned.
+    return_path : bool, default False
+        Whether to return the path to the module, including module name.
 
     Returns
     -------
@@ -801,7 +804,7 @@ def askloadmodule(
             - ``pandas.DataFrame`` objects
             - Lists of NumPy array (``MUPULSES``)
             - Other emgfile-related metadata from the manifest
-    metadata : dict
+    metadata : dict, optional
         This is returned only if ``return_metadata`` is ``True``. An example of
         it content is:
 
@@ -813,6 +816,9 @@ def askloadmodule(
             - "python_version": "3.13.1",
             - "openhdemg_version": "0.2.0-beta.1",
             - "data_structure_version": "1.0"
+    path : pathlib.Path, optional
+        The resolved (absolute) path to the module, including module name.
+        This is returned only if ``return_path`` is ``True``.
 
     See also
     --------
@@ -836,6 +842,10 @@ def askloadmodule(
         window_title="Select the module folder to load"
     )
 
+    # Check if a file has been selected. If not, return None
+    if path_to_module is None:
+        return path_to_module
+
     if not is_safe_openhdemg_folder(
         path=path_to_module,
         marker_name=".openhdemg_module",
@@ -844,14 +854,10 @@ def askloadmodule(
             f"'{path_to_module}' is not a valid openhdemg module folder."
         )
 
-    # Check if a file has been selected. If not, return None
-    if path_to_module is None:
-        return path_to_module
-
     print("\n--------------\nLoading module\n")
 
     # Open file
-    path = Path(path_to_module)
+    path = Path(path_to_module).resolve()
     res = load_openhdemg_module(
         path=path.parent,
         module_name=path.name,
@@ -861,7 +867,10 @@ def askloadmodule(
 
     print("\n--------------\nModule loaded\n")
 
-    return res
+    if return_path is True:
+        return res, path
+    else:
+        return res
 
 
 class openhdemg_Collection():
@@ -3291,7 +3300,7 @@ def save_json_emgfile(emgfile, filepath, compresslevel=4):
         - `save_openhdemg_module`
         - `asksavemodule`
         - `load_openhdemg_module`
-        - `askopenmodule`
+        - `askloadmodule`
         - `openhdemg_Collection`
 
     Parameters
@@ -3315,7 +3324,7 @@ def save_json_emgfile(emgfile, filepath, compresslevel=4):
             "openhdemg modules and collections should be saved using "
             "high-level functions and classes for binary files "
             "(save_openhdemg_module, asksavemodule, load_openhdemg_module, "
-            "askopenmodule, openhdemg_Collection). Saving them "
+            "askloadmodule, openhdemg_Collection). Saving them "
             "using save_json_emgfile might fail or omit data."
         )
 
@@ -3451,7 +3460,7 @@ def save_json_emgfile(emgfile, filepath, compresslevel=4):
         raise ValueError(
             "\nFile source not recognised. Use instead high-level functions "
             "and classes for binary files (save_openhdemg_module, "
-            "asksavemodule, load_openhdemg_module, askopenmodule, "
+            "asksavemodule, load_openhdemg_module, askloadmodule, "
             "openhdemg_Collection).\n"
         )
 
@@ -3633,7 +3642,7 @@ def askopenfile(filesource="OPENHDEMG", **kwargs):
         - `save_openhdemg_module`
         - `asksavemodule`
         - `load_openhdemg_module`
-        - `askopenmodule`
+        - `askloadmodule`
         - `openhdemg_Collection`
 
     Parameters
@@ -3983,7 +3992,7 @@ def asksavefile(emgfile, compresslevel=4):
         - `save_openhdemg_module`
         - `asksavemodule`
         - `load_openhdemg_module`
-        - `askopenmodule`
+        - `askloadmodule`
         - `openhdemg_Collection`
 
     Parameters
