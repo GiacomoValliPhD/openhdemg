@@ -435,67 +435,68 @@ def save_openhdemg_module(
             "checksum": checksum
         }
 
-    # Save MUPULSES and reference in manifest
-    MUPULSES = emgfile.get("MUPULSES", None)
-    if MUPULSES is not None:
+    # Save MUPULSES and REFERENCE_MUPULSES and reference them in manifest
+    for mupulses_name in ["MUPULSES", "REFERENCE_MUPULSES"]:
+        MUPULSES = emgfile.get(mupulses_name, None)
+        if MUPULSES is not None:
 
-        MUPULSES_offsets = []
-        MUPULSES_lengths = []
-        dtypes = []
-        endian_dtypes = []
+            MUPULSES_offsets = []
+            MUPULSES_lengths = []
+            dtypes = []
+            endian_dtypes = []
 
-        # Write file
-        if compresslevel is None:
-            # Uncompressed
-            MUPULSES_path = files_path / "MUPULSES.bin"
-            compression = None
-            with open(MUPULSES_path, "wb") as f:
-                pos = 0
-                # Save as a ragged array with reference to split points
-                for arr in MUPULSES:
-                    arr = np.ascontiguousarray(arr)
-                    f.write(arr.tobytes())
-                    MUPULSES_lengths.append(arr.shape[0])
-                    MUPULSES_offsets.append(pos)
-                    dtypes.append(str(arr.dtype))
-                    endian_dtypes.append(arr.dtype.str)
-                    pos += arr.nbytes
-        else:
-            # Compressed
-            MUPULSES_path = files_path / "MUPULSES.bin.gz"
-            compression = "gzip"
-            with gzip.open(
-                MUPULSES_path, "wb", compresslevel=compresslevel,
-            ) as f:
-                pos = 0
-                # Save as a ragged array with reference to split points
-                for arr in MUPULSES:
-                    arr = np.ascontiguousarray(arr)
-                    f.write(arr.tobytes())
-                    MUPULSES_lengths.append(arr.shape[0])
-                    MUPULSES_offsets.append(pos)
-                    dtypes.append(str(arr.dtype))
-                    endian_dtypes.append(arr.dtype.str)
-                    pos += arr.nbytes
+            # Write file
+            if compresslevel is None:
+                # Uncompressed
+                MUPULSES_path = files_path / f"{mupulses_name}.bin"
+                compression = None
+                with open(MUPULSES_path, "wb") as f:
+                    pos = 0
+                    # Save as a ragged array with reference to split points
+                    for arr in MUPULSES:
+                        arr = np.ascontiguousarray(arr)
+                        f.write(arr.tobytes())
+                        MUPULSES_lengths.append(arr.shape[0])
+                        MUPULSES_offsets.append(pos)
+                        dtypes.append(str(arr.dtype))
+                        endian_dtypes.append(arr.dtype.str)
+                        pos += arr.nbytes
+            else:
+                # Compressed
+                MUPULSES_path = files_path / f"{mupulses_name}.bin.gz"
+                compression = "gzip"
+                with gzip.open(
+                    MUPULSES_path, "wb", compresslevel=compresslevel,
+                ) as f:
+                    pos = 0
+                    # Save as a ragged array with reference to split points
+                    for arr in MUPULSES:
+                        arr = np.ascontiguousarray(arr)
+                        f.write(arr.tobytes())
+                        MUPULSES_lengths.append(arr.shape[0])
+                        MUPULSES_offsets.append(pos)
+                        dtypes.append(str(arr.dtype))
+                        endian_dtypes.append(arr.dtype.str)
+                        pos += arr.nbytes
 
-        # Add checksum for integrity checks if desired
-        if add_checksum:
-            checksum = sha256_file(MUPULSES_path)
-        else:
-            checksum = None
+            # Add checksum for integrity checks if desired
+            if add_checksum:
+                checksum = sha256_file(MUPULSES_path)
+            else:
+                checksum = None
 
-        # Add info to the manifest
-        manifest["MUPULSES"] = {
-            "data_type": "list_of_1D_np.ndarray",  # e.g., (137,)  # TODO document this
-            "data_file_path": str(MUPULSES_path.relative_to(root)),
-            "compression": compression,
-            "order": "C",
-            "lengths": MUPULSES_lengths,
-            "offsets": MUPULSES_offsets,
-            "dtypes": dtypes,
-            "endian_dtypes": endian_dtypes,
-            "checksum": checksum
-        }
+            # Add info to the manifest
+            manifest[mupulses_name] = {
+                "data_type": "list_of_1D_np.ndarray",  # e.g., (137,)  # TODO document this
+                "data_file_path": str(MUPULSES_path.relative_to(root)),
+                "compression": compression,
+                "order": "C",
+                "lengths": MUPULSES_lengths,
+                "offsets": MUPULSES_offsets,
+                "dtypes": dtypes,
+                "endian_dtypes": endian_dtypes,
+                "checksum": checksum
+            }
 
     # Save the manifest file
     manifest_path.write_text(json.dumps(manifest, indent=4))
@@ -1141,7 +1142,8 @@ class openhdemg_Collection():
 
     def remove_module(self, module_name):
         """
-        Remove a module from the collection.
+        Remove a module from the collection and its reference from the
+        manifest.
 
         Parameters
         ----------
@@ -1159,7 +1161,15 @@ class openhdemg_Collection():
             If the key is not found.
         """
 
-        return copy.deepcopy(self.modules.pop(module_name))
+        removed_module = self.modules.pop(module_name)
+
+        # Remove module key from manifest.
+        # Do not enforce it since self.manifest["modules"] will not contain
+        # anything until first save.
+        if module_name in self.manifest["modules"]:
+            self.manifest["modules"].remove(module_name)
+
+        return copy.deepcopy(removed_module)
 
     def save_module(
         self,
@@ -1349,7 +1359,12 @@ class openhdemg_Collection():
 
         self.manifest_path.write_text(json.dumps(self.manifest, indent=4))
 
-    def save(self, compresslevel=None, add_checksum=False):
+    def save(
+        self,
+        update_filename=True,
+        compresslevel=None,
+        add_checksum=False,
+    ):
         """
         Save the entire collection to disk.
 
@@ -1358,6 +1373,9 @@ class openhdemg_Collection():
 
         Parameters
         ----------
+        update_filename : bool, default True
+            If True, override the existing ``emgfile["FILENAME"]`` for all
+            modules to match module name.
         compresslevel : {None, int}, default None
             Compression level (0-9). If ``None``, saves as raw binary files
             without compression. Saving the file without compression will allow
@@ -1407,6 +1425,7 @@ class openhdemg_Collection():
         for module_name in self.modules.keys():
             self.save_module(
                 module_name=module_name,
+                filename=module_name if update_filename else None,
                 compresslevel=compresslevel,
                 add_checksum=add_checksum,
                 save_updated_manifest=False,
@@ -1421,7 +1440,12 @@ class openhdemg_Collection():
         # Save the updated manifest file (including participant info)
         self.save_manifest()
 
-    def asksave(self, compresslevel=None, add_checksum=False):
+    def asksave(
+        self,
+        update_filename=True,
+        compresslevel=None,
+        add_checksum=False,
+    ):
         """
         Save the entire collection to disk using an UI to select the target
         directory.
@@ -1431,6 +1455,9 @@ class openhdemg_Collection():
 
         Parameters
         ----------
+        update_filename : bool, default True
+            If True, override the existing ``emgfile["FILENAME"]`` for all
+            modules to match module name.
         compresslevel : {None, int}, default None
             Compression level (0-9). If ``None``, saves as raw binary files
             without compression. Saving the file without compression will allow
@@ -1464,6 +1491,7 @@ class openhdemg_Collection():
 
         # Save the module
         self.save(
+            update_filename=update_filename,
             compresslevel=compresslevel,
             add_checksum=add_checksum,
         )
@@ -1599,7 +1627,7 @@ class openhdemg_Collection():
         Returns
         -------
         pandas.DataFrame
-            A deep copy of the loaded shared DataFrame.
+            A deep copy of the loaded shared DataFrame or None if not present.
 
         Raises
         ------
@@ -1614,13 +1642,17 @@ class openhdemg_Collection():
         # Check if the root is set.
         self._check_root_set()
 
-        # Check if the shared_dataframe is present in the manifest
-        info = self.manifest.get("shared_dataframe", None)
-        if info is None:
+        # Check if the shared_dataframe key is present in the manifest
+        info = self.manifest.get("shared_dataframe", False)
+        if info is False:
             raise ValueError(
-                "No 'shared_dataframe' detected in the manifest. "
+                "No 'shared_dataframe' key detected in the manifest. "
                 "Try to use 'load_manifest()' first."
             )
+        # Check if the shared_dataframe was saved and needs to be loaded
+        if info is None:
+            warnings.warn("No 'shared_dataframe' detected.")
+            return None
 
         file_path = self.root / info["data_file_path"]
 
