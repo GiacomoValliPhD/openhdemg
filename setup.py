@@ -1,4 +1,4 @@
-# Copyright (C) 2022 - 2024. The openhdemg community.
+# Copyright (C) 2022 - 2026. The openhdemg community.
 
 # To read the content of the README or description file
 from pathlib import Path
@@ -16,6 +16,13 @@ INSTALL_REQUIRES = [
     "scipy<=1.14.1",
     "scikit-learn==1.5.2",
 ]
+
+EXTRAS_REQUIRE = {
+    "gurobi": [
+        "gurobipy",
+    ],
+}
+# pip install "openhdemg[gurobi]"
 
 PACKAGES = [
     "openhdemg",
@@ -55,7 +62,7 @@ if __name__ == "__main__":
         description="Open-source analysis of High-Density EMG data",
         long_description=long_descr,
         long_description_content_type="text/markdown",
-        license="GPL-3.0",
+        license="BSD-3-Clause",
         project_urls={
             "Documentation": "https://giacomovalli.com/openhdemg",
             "Release Notes": "https://giacomovalli.com/openhdemg/what%27s-new",
@@ -64,6 +71,7 @@ if __name__ == "__main__":
         },
         version=openhdemg.__version__,
         install_requires=INSTALL_REQUIRES,
+        extras_require=EXTRAS_REQUIRE,
         include_package_data=True,
         packages=PACKAGES,
         package_data={"openhdemg": ["*"]},

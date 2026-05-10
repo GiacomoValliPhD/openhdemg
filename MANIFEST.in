@@ -1,6 +1,7 @@
 # Add README, LICENSE and requirements :
 include README.md
 include LICENSE
+include CONTRIBUTING.md
 include requirements.txt
 
 # Add all the non .py files in openhdemg
