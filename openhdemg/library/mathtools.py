@@ -440,7 +440,7 @@ def compute_sil(
 
     Returns
     -------
-    sil : float
+    sil : np.float64
         The SIL score.
 
     See also
@@ -531,7 +531,7 @@ def compute_sil(
         return 0.0
     sil = (inter_sums - intra_sums) / max_val
 
-    return sil
+    return np.float64(sil)
 
 
 def compute_pnr(
@@ -567,7 +567,7 @@ def compute_pnr(
 
     Returns
     -------
-    pnr : float
+    pnr : np.float64
         The PNR in decibels.
 
     See also
@@ -737,7 +737,100 @@ def compute_pnr(
     noise_cluster = np.square(noise_cluster)
     pnr = 10 * np.log10(np.mean(peak_cluster) / np.mean(noise_cluster))
 
-    return pnr
+    return np.float64(pnr)
+
+
+def compute_pulses_agreement_rate(
+    estimated_pulses,
+    reference_pulses,
+    tolerance=1,
+    method="dice_coefficient",
+):
+    """
+    Calculate the Rate of Agreement (ROA) between two MUPULSES sets.
+
+    Usually used to estimate the ROA between the MUPULSES of a single MU
+    detected during the decomposition (or after the manual cleaning), with a
+    reference array of values (for example, simulation ground truth or MUPULSES
+    detected using different computational methods).
+
+    Currently, only the 'dice_coefficient' method is implemented. This
+    parameter is included for future compatibility with alternative agreement
+    metrics.
+
+    Parameters
+    ----------
+    estimated_pulses : ndarray
+        The estimated time of firing (e.g., MUPULSES[mu]) of the MU of
+        interest.
+    reference_pulses : ndarray
+        The reference time of firing (e.g., REFERENCE_MUPULSES[mu]) of the same
+        MU of interest.
+    tolerance : int, default 1
+        Maximum accepted absolute sample difference between an estimated and
+        reference discharge for them to be counted as a match. A value of 0
+        means exact sample matching. tolerance=n allows +/-n samples of shift.
+    method : str, optional
+        The metric used to calculate agreement. Currently only supports 
+        "dice_coefficient" (default), which calculates ROA as:
+        (2 * TP) / (2 * TP + FP + FN) * 100.
+
+    Returns
+    -------
+    roa : np.float64
+        The ROA in %.
+    """
+
+    if method != "dice_coefficient":
+        raise NotImplementedError(
+            f"Method '{method}' is not implemented. Use 'dice_coefficient'."
+        )
+
+    if tolerance < 0:
+        raise ValueError("'tolerance' must be >= 0.")
+
+    # Ignore duplicate values. np.unique also sorts the arrays.
+    estimated_pulses = np.unique(estimated_pulses)
+    reference_pulses = np.unique(reference_pulses)
+
+    # For the Dice coefficient:
+    # denominator = 2 * TP + FP + FN.
+    # Since FP = n_estimated - TP and FN = n_reference - TP, this simplifies to
+    # n_estimated + n_reference.
+    denominator = estimated_pulses.size + reference_pulses.size
+
+    if denominator == 0:
+        return np.float64(0.0)
+
+    if tolerance == 0:
+        # Exact matching: faster than the Python while-loop.
+        tp = np.intersect1d(
+            estimated_pulses,
+            reference_pulses,
+            assume_unique=True,
+        ).size
+
+        return np.float64((2 * tp / denominator) * 100)
+
+    # One-to-one matching within tolerance.
+    i = 0
+    j = 0
+    tp = 0
+
+    while i < reference_pulses.size and j < estimated_pulses.size:
+        ref = reference_pulses[i]
+        est = estimated_pulses[j]
+
+        if abs(est - ref) <= tolerance:
+            tp += 1
+            i += 1
+            j += 1
+        elif est < ref - tolerance:
+            j += 1
+        else:
+            i += 1
+
+    return np.float64((2 * tp / denominator) * 100)
 
 
 def derivatives_beamforming(sig, row, teta):

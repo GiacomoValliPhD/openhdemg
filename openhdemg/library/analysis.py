@@ -806,6 +806,18 @@ def basic_mus_properties(
             f"{accuracy} was passed instead"
         )
 
+    # If present, append ROA_WITH_REFERENCE_MUPULSES
+    if "ROA_WITH_REFERENCE_MUPULSES" in emgfile:
+        # Report the ROA
+        toappend = emgfile["ROA_WITH_REFERENCE_MUPULSES"]
+        toappend.columns = ["ROA with reference MUPULSES"]
+        exportable_df = pd.concat([exportable_df, toappend], axis=1)
+
+        # Calculate avrage ROA
+        avg_roa = exportable_df["ROA with reference MUPULSES"].mean()
+        toappend = pd.DataFrame([{"avg_ROA": avg_roa}])
+        exportable_df = pd.concat([exportable_df, toappend], axis=1)
+
     # Calculate RT and DERT
     mus_thresholds = compute_thresholds(
         emgfile=emgfile,
@@ -829,7 +841,7 @@ def basic_mus_properties(
     exportable_df = pd.concat([exportable_df, mus_dr], axis=1)
 
     # Calculate COVisi
-    covisi = compute_covisi(  # TODO
+    covisi = compute_covisi(
         emgfile=emgfile,
         n_firings_RecDerec=n_firings_RecDerec,
         start_steady=start_steady,
@@ -841,7 +853,7 @@ def basic_mus_properties(
     exportable_df = pd.concat([exportable_df, covisi], axis=1)
 
     # Calculate COVsteady
-    covsteady = compute_covsteady(  # TODO
+    covsteady = compute_covsteady(
         emgfile=emgfile,
         start_steady=start_steady,
         end_steady=end_steady,

@@ -45,3 +45,10 @@ This module contains all the mathematical functions that are necessary for the l
         show_root_heading: True
 
 <br/>
+
+::: openhdemg.library.mathtools.compute_pulses_agreement_rate
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>

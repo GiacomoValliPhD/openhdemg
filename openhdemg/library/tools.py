@@ -17,7 +17,9 @@ from sklearn.svm import SVR
 from openhdemg.ui.widgets import (
     run_point_selector, run_manual_emgchannels_selection_dialog
 )
-from openhdemg.library.mathtools import discrete_spike_xcorr, compute_sil
+from openhdemg.library.mathtools import (
+    discrete_spike_xcorr, compute_sil, compute_pulses_agreement_rate
+)
 
 
 def standardise_emgfile_dtypes(emgfile):
@@ -47,7 +49,10 @@ def standardise_emgfile_dtypes(emgfile):
     - `"EMG_LENGTH"` (int)
     - `"NUMBER_OF_MUS"` (int)
     - `"BINARY_MUS_FIRING"` (pandas.DataFrame, np.uint8)
+
     - `"GOOD_CHANNELS"` (dict{str: int})
+    - `"REFERENCE_MUPULSES"` (list of 1D numpy.ndarray, np.int64)
+    - `"ROA_WITH_REFERENCE_MUPULSES"` (pandas.DataFrame, np.float64)
 
     Any additional keys (e.g., `"EXTRAS"`) are preserved but not type-checked.
 
@@ -71,7 +76,7 @@ def standardise_emgfile_dtypes(emgfile):
     Warns
     -----
     UserWarning
-        If "MUPULSES" is not 1D and is flattened.
+        If "MUPULSES"[n] or "REFERENCE_MUPULSES"[n] is not 1D and is flattened.
 
     Examples
     --------
@@ -107,8 +112,10 @@ def standardise_emgfile_dtypes(emgfile):
         "RAW_SIGNAL": ("pd.DataFrame", np.float64),
         "REF_SIGNAL": ("pd.DataFrame", np.float64),
         "ACCURACY": ("pd.DataFrame", np.float64),
+        "ROA_WITH_REFERENCE_MUPULSES": ("pd.DataFrame", np.float64),
         "IPTS": ("pd.DataFrame", np.float64),
         "MUPULSES": ("list_of_np", np.int64),
+        "REFERENCE_MUPULSES": ("list_of_np", np.int64),
         "FSAMP": np.float64,
         "IED": np.float64,
         "EMG_LENGTH": np.int64,
@@ -355,6 +362,7 @@ def resize_emgfile(
     refsig_channel=0,
     accuracy="recalculate",
     compute_on_peaks_only=True,
+    roa_with_reference_mupulses="recalculate",
     custom_dataframes=None,
     ignore_negative_ipts=None,
 ):
@@ -364,14 +372,23 @@ def resize_emgfile(
     This function can be useful to compute the various parameters only in the
     area of interest.
 
+    !!! note "Since version 0.2.0"
+        Specific **NON-STANDARD** components in the emgfile are also resized.
+
     For **STANDARD** we refer to:
-        - RAW_SIGNAL
-        - REF_SIGNAL
-        - IPTS
-        - MUPULSES
-        - EMG_LENGTH
-        - BINARY_MUS_FIRING
-        - ACCURACY (if recalculated in the new portion)
+
+    - `RAW_SIGNAL`
+    - `REF_SIGNAL`
+    - `IPTS`
+    - `MUPULSES`
+    - `EMG_LENGTH`
+    - `BINARY_MUS_FIRING`
+    - `ACCURACY` (if recalculated in the new portion)
+
+    For **NON-STANDARD** we refer to:
+
+    - `REFERENCE_MUPULSES`
+    - `ROA_WITH_REFERENCE_MUPULSES`
 
     Additional dataframes contained in the emgfile will be resized if
     specified in "custom_dataframes".
@@ -387,7 +404,7 @@ def resize_emgfile(
         The dictionary containing the emgfile to resize.
     area : None or list, default None
         The resizing area. If already known, it can be passed in samples, as a
-        list (e.g., [120,2560]).
+        list (e.g., [120, 2560]).
         If None, the user can select the area of interest manually.
     how : str {"ref_signal", "mean_emg"}, default "ref_signal"
         If area==None, allow the user to visually select the area to resize
@@ -416,6 +433,18 @@ def resize_emgfile(
         candidate spikes, ignoring baseline or negative ipts values.
         If False, the noise cluster is defined as all samples not selected as
         MU spikes.
+    roa_with_reference_mupulses : str {"recalculate", "maintain"}, default "recalculate"
+        Whether to re-calculate the rate of agreement (ROA) between "MUPULSES"
+        and "REFERENCE_MUPULSES".
+
+        ``recalculate``
+            The ROA is computed in the new resized file. This can
+            be done only if both "MUPULSES" and "REFERENCE_MUPULSES" are
+            present.
+
+        ``maintain``
+            The original ROA measure already contained in the emgfile is
+            returned without any computation.
     custom_dataframes : list or None, default None
         A list of strings pointing to the additional dataframes to resize. The
         strings should match the emgfile keys associated to the pd.DataFrames.
@@ -473,6 +502,10 @@ def resize_emgfile(
     # "EMG_LENGTH" no need to check
     _has_binary_mus_firing = "BINARY_MUS_FIRING" in rs_emgfile
     _has_accuracy = "ACCURACY" in rs_emgfile
+
+    # Verify which NON-STANDARD keys are present
+    _has_reference_mupulses = "REFERENCE_MUPULSES" in rs_emgfile
+    _has_roa = "ROA_WITH_REFERENCE_MUPULSES" in rs_emgfile
 
     # Identify the area of interest
     if isinstance(area, list) and len(area) == 2:
@@ -546,7 +579,7 @@ def resize_emgfile(
             start_:end_
         ].reset_index(drop=True)
 
-    # MU pulses, list of arrays
+    # MUPULSES, list of arrays
     if _has_mupulses is True:
         # If MUs are present, NUMBER_OF_MUS must be set.
         n_mus = rs_emgfile.get("NUMBER_OF_MUS", None)
@@ -565,10 +598,30 @@ def resize_emgfile(
                     ] - first_idx
                 )
 
+    # REFERENCE MUPULSES, list of arrays
+    if _has_reference_mupulses is True:
+        # We assume that NUMBER_OF_MUS is already managed, at least by resizing
+        # MUPULSES. Do the rest only if any MU is present.
+        n_mus = rs_emgfile.get("NUMBER_OF_MUS", None)
+        if n_mus > 0:
+            for mu in range(n_mus):
+                rs_emgfile["REFERENCE_MUPULSES"][mu] = (
+                    rs_emgfile["REFERENCE_MUPULSES"][mu][
+                        (rs_emgfile["REFERENCE_MUPULSES"][mu] >= start_)
+                        & (rs_emgfile["REFERENCE_MUPULSES"][mu] < end_)
+                    ] - first_idx
+                )
+
     # Compute SIL or leave original ACCURACY
     if accuracy == "recalculate":
         if _has_accuracy is True and rs_emgfile.get("NUMBER_OF_MUS", 0) > 0:
-            if _has_ipts is True and not rs_emgfile["IPTS"].empty:
+            if _has_ipts is False:
+                raise ValueError(
+                    "Impossible to calculate ACCURACY (SIL). IPTS not "
+                    "found. If IPTS is not present or empty, set "
+                    "accuracy='maintain'"
+                )
+            if not rs_emgfile["IPTS"].empty:
                 # Calculate SIL
                 for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
                     res = compute_sil(
@@ -579,16 +632,35 @@ def resize_emgfile(
                     )  # TODO ignore_negative_ipts deprecated => remove
                     rs_emgfile["ACCURACY"].iloc[mu] = res
 
-            else:
-                raise ValueError(
-                    "Impossible to calculate ACCURACY (SIL). IPTS not "
-                    "found. If IPTS is not present or empty, set "
-                    "accuracy='maintain'"
-                )
     elif accuracy != "maintain":
         raise ValueError(
             "Accuracy can only be 'recalculate' or 'maintain'."
             f"{accuracy} was passed instead."
+        )
+
+    # Compute ROA or leave original
+    if roa_with_reference_mupulses == "recalculate":
+        if _has_roa is True and rs_emgfile.get("NUMBER_OF_MUS", 0) > 0:
+            if _has_reference_mupulses is False:
+                raise ValueError(
+                    "Impossible to calculate ROA. REFERENCE_MUPULSES not "
+                    "found. If REFERENCE_MUPULSES is not present or empty, "
+                    "set roa_with_reference_mupulses='maintain'"
+                )
+            if len(rs_emgfile["REFERENCE_MUPULSES"]) > 0:
+                # Calculate ROA
+                for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
+                    res = compute_pulses_agreement_rate(
+                        estimated_pulses=rs_emgfile["MUPULSES"][mu],
+                        reference_pulses=rs_emgfile["REFERENCE_MUPULSES"][mu],
+                        method="dice_coefficient",
+                    )
+                    rs_emgfile["ROA_WITH_REFERENCE_MUPULSES"].iloc[mu] = res
+
+    elif roa_with_reference_mupulses != "maintain":
+        raise ValueError(
+            "roa_with_reference_mupulses can only be 'recalculate' or "
+            f"'maintain'. {accuracy} was passed instead."
         )
 
     # Custom dataframes
@@ -633,7 +705,7 @@ def select_bad_channels(emgfile, manual_offset=0):
     edited_emgfile : dict or None
         The EMG file dictionary with an updated ``"GOOD_CHANNELS"`` entry
         (mapping channel indices as strings to booleans) if the user
-        confirms the selection.  
+        confirms the selection.
         Returns ``None`` if the dialog is cancelled.
 
     Examples
@@ -1051,6 +1123,7 @@ class EMGFileSectionsIterator:
         self,
         accuracy="recalculate",
         compute_on_peaks_only=True,
+        roa_with_reference_mupulses="recalculate",
         custom_dataframes=None,
         ignore_negative_ipts=None,
     ):
@@ -1075,6 +1148,18 @@ class EMGFileSectionsIterator:
             other candidate spikes, ignoring baseline or negative ipts values.
             If False, the noise cluster is defined as all samples not selected
             as MU spikes.
+        roa_with_reference_mupulses : str {"recalculate", "maintain"}, default "recalculate"
+            Whether to re-calculate the rate of agreement (ROA) between
+            "MUPULSES" and "REFERENCE_MUPULSES".
+
+            ``recalculate``
+                The ROA is computed in the new resized file. This can
+                be done only if both "MUPULSES" and "REFERENCE_MUPULSES" are
+                present.
+
+            ``maintain``
+                The original ROA measure already contained in the emgfile is
+                returned without any computation.
         custom_dataframes : list or None, default None
             A list of strings pointing to the additional dataframes to resize.
             The strings should match the emgfile keys associated to the
@@ -1108,6 +1193,7 @@ class EMGFileSectionsIterator:
                 self.file, area=[start, end],
                 accuracy=accuracy,
                 compute_on_peaks_only=compute_on_peaks_only,
+                roa_with_reference_mupulses=roa_with_reference_mupulses,
                 custom_dataframes=custom_dataframes,
                 ignore_negative_ipts=ignore_negative_ipts,  # TODO deprecated, remove later
             )
@@ -1646,7 +1732,7 @@ def delete_mus(
             "The emgile does not contain the key 'NUMBER_OF_MUS' or this is"
             "set to None."
         )
-    
+
     # Check if any MU
     if emgfile["NUMBER_OF_MUS"] == 0:
         warnings.warn("The file does not contain any MU.")
@@ -1669,9 +1755,8 @@ def delete_mus(
 
     else:
         raise ValueError(
-            "if_single_mu must be one of 'ignore' or 'remove', {} was passed instead".format(
-                if_single_mu
-            )
+            "if_single_mu must be one of 'ignore' or 'remove', "
+            f"{if_single_mu} was passed instead"
         )
 
     # Create the object to store the new emgfile without the specified MUs.
@@ -1696,7 +1781,9 @@ def delete_mus(
 
         ==> "EXTRAS" : EXTRAS but only for DELSYS file
 
-        ==> MU_LABELS : optional labels for the MUs
+        ==> "MU_LABELS" : optional labels for the MUs
+        ==> "REFERENCE_MUPULSES" : optional set of reference MUPULSES
+        ==> "ROA_WITH_REFERENCE_MUPULSES" : optional ROA dataframe
     }
     """
 
@@ -1716,6 +1803,14 @@ def delete_mus(
     if del_emgfile.get("ACCURACY", None) is not None:
         del_emgfile["ACCURACY"] = del_emgfile["ACCURACY"].drop(munumber)
         del_emgfile["ACCURACY"] = del_emgfile["ACCURACY"].reset_index(
+            drop=True
+        )
+
+    # Drop ROA_WITH_REFERENCE_MUPULSES values and reset the index
+    _this_str = "ROA_WITH_REFERENCE_MUPULSES"
+    if del_emgfile.get(_this_str, None) is not None:
+        del_emgfile[_this_str] = del_emgfile[_this_str].drop(munumber)
+        del_emgfile[_this_str] = del_emgfile[_this_str].reset_index(
             drop=True
         )
 
@@ -1741,6 +1836,15 @@ def delete_mus(
         for mu in range(emgfile["NUMBER_OF_MUS"]):
             if mu not in munumber:
                 del_emgfile["MUPULSES"].append(emgfile["MUPULSES"][mu])
+
+    # Delete REFERENCE_MUPULSES as for MUPULSES
+    if del_emgfile.get("REFERENCE_MUPULSES", None) is not None:
+        del_emgfile["REFERENCE_MUPULSES"] = []
+        for mu in range(emgfile["NUMBER_OF_MUS"]):
+            if mu not in munumber:
+                del_emgfile["REFERENCE_MUPULSES"].append(
+                    emgfile["REFERENCE_MUPULSES"][mu]
+                )
 
     # Subrtact the number of deleted MUs to the total number
     del_emgfile["NUMBER_OF_MUS"] = del_emgfile["NUMBER_OF_MUS"] - len(munumber)
@@ -2155,6 +2259,16 @@ def sort_mus(emgfile):
     """
     Sort the MUs in order of recruitment.
 
+    The following emgfile keys are sorted:
+
+    - `IPTS`
+    - `MUPULSES`
+    - `BINARY_MUS_FIRING`
+    - `ACCURACY`
+    - `REFERENCE_MUPULSES`
+    - `ROA_WITH_REFERENCE_MUPULSES`
+    - `MU_LABELS`
+
     Parameters
     ----------
     emgfile : dict
@@ -2166,64 +2280,72 @@ def sort_mus(emgfile):
         The dictionary containing the sorted emgfile.
     """
 
-    # If we only have 1 MU, there is no necessity to sort it.
-    if emgfile["NUMBER_OF_MUS"] <= 1:
-        return copy.deepcopy(emgfile)
-
     # Create the object to store the sorted emgfile.
     # Create a deepcopy to avoid changing the original emgfile
     sorted_emgfile = copy.deepcopy(emgfile)
-    """
-    Need to be changed: ==>
-    emgfile =   {
-                "SOURCE" : SOURCE,
-                "RAW_SIGNAL" : RAW_SIGNAL,
-                "REF_SIGNAL" : REF_SIGNAL,
-                ==> "ACCURACY": ACCURACY,
-                ==> "IPTS" : IPTS,
-                ==> "MUPULSES" : MUPULSES,
-                "FSAMP" : FSAMP,
-                "IED" : IED,
-                "EMG_LENGTH" : EMG_LENGTH,
-                "NUMBER_OF_MUS" : NUMBER_OF_MUS,
-                ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
-                }
-    """
+
+    # Pre-check
+    n_mus = emgfile.get("NUMBER_OF_MUS", None)
+    if n_mus is None:
+        raise KeyError("NUMBER_OF_MUS is not present.")
+    if "MUPULSES" not in emgfile:
+        raise KeyError("MUPULSES is not present.")
+    if n_mus <= 1:
+        # If we only have 1 MU, there is no necessity to sort it.
+        return sorted_emgfile
 
     # Identify the sorting_order by the first MUpulse of every MUs
-    df = []
-    for mu in range(emgfile["NUMBER_OF_MUS"]):
-        if len(emgfile["MUPULSES"][mu]) > 0:
-            df.append(emgfile["MUPULSES"][mu][0])
-        else:
-            df.append(np.inf)
+    def _first_pulse(mu):
+        pulses = emgfile["MUPULSES"][mu]
+        return pulses[0] if len(pulses) > 0 else np.inf
+    sorting_order = sorted(range(n_mus), key=_first_pulse)
 
-    df = pd.DataFrame(df, columns=["firstpulses"])
-    df.sort_values(by="firstpulses", inplace=True)
-    sorting_order = list(df.index)
-
-    # Sort ACCURACY (single column)
+    # Sort MUPULSES and REFERENCE_MUPULSES (list of arrays).
+    # Also MU_LABELS (dict{str: str}).
     for origpos, newpos in enumerate(sorting_order):
-        sorted_emgfile["ACCURACY"].loc[origpos] = emgfile["ACCURACY"].loc[newpos]
+        if "MUPULSES" in sorted_emgfile:
+            # Preferable to use the sorting_order as a double-check in
+            # alternative to: sorted_emgfile["MUPULSES"] = sorted(
+            #   sorted_emgfile["MUPULSES"], key=min, reverse=False))
+            sorted_emgfile["MUPULSES"][origpos] = emgfile["MUPULSES"][newpos]
 
-    # Sort IPTS (multiple columns, sort by columns, then reset columns' name)
-    sorted_emgfile["IPTS"] = sorted_emgfile["IPTS"].reindex(columns=sorting_order)
-    sorted_emgfile["IPTS"].columns = np.arange(emgfile["NUMBER_OF_MUS"])
+        if "REFERENCE_MUPULSES" in sorted_emgfile:
+            sorted_emgfile["REFERENCE_MUPULSES"][
+                origpos
+            ] = emgfile["REFERENCE_MUPULSES"][newpos]
 
-    # Sort BINARY_MUS_FIRING (multiple columns, sort by columns,
-    # then reset columns' name)
-    sorted_emgfile["BINARY_MUS_FIRING"] = sorted_emgfile["BINARY_MUS_FIRING"].reindex(
-        columns=sorting_order
-    )
-    sorted_emgfile["BINARY_MUS_FIRING"].columns = np.arange(emgfile["NUMBER_OF_MUS"])
+    if "MU_LABELS" in sorted_emgfile:
+        new_labels = {}
+        for origpos, newpos in enumerate(sorting_order):
+            new_labels[str(origpos)] = emgfile["MU_LABELS"].get(
+                str(newpos), "none",
+            )
+        sorted_emgfile["MU_LABELS"] = new_labels
 
-    # Sort MUPULSES.
-    # Preferable to use the sorting_order as a double-check in alternative to:
-    # sorted_emgfile["MUPULSES"] = sorted(
-    #   sorted_emgfile["MUPULSES"], key=min, reverse=False)
-    # )
-    for origpos, newpos in enumerate(sorting_order):
-        sorted_emgfile["MUPULSES"][origpos] = emgfile["MUPULSES"][newpos]
+    # Sort ACCURACY and ROA_WITH_REFERENCE_MUPULSES (single column)
+    if "ACCURACY" in sorted_emgfile:
+        sorted_emgfile["ACCURACY"] = emgfile["ACCURACY"].reindex(
+            sorting_order
+        ).reset_index(drop=True)
+
+    if "ROA_WITH_REFERENCE_MUPULSES" in sorted_emgfile:
+        sorted_emgfile["ROA_WITH_REFERENCE_MUPULSES"] = emgfile[
+            "ROA_WITH_REFERENCE_MUPULSES"
+        ].reindex(sorting_order).reset_index(drop=True)
+
+    # Sort IPTS and BINARY_MUS_FIRING (multiple columns, sort by columns, then
+    # reset columns' name)
+    if "IPTS" in sorted_emgfile:
+        sorted_emgfile["IPTS"] = sorted_emgfile["IPTS"].reindex(
+            columns=sorting_order
+        )
+        sorted_emgfile["IPTS"].columns = np.arange(n_mus)
+
+    if "BINARY_MUS_FIRING" in sorted_emgfile:
+        sorted_emgfile["BINARY_MUS_FIRING"] = sorted_emgfile[
+            "BINARY_MUS_FIRING"
+        ].reindex(columns=sorting_order)
+        sorted_emgfile["BINARY_MUS_FIRING"].columns = np.arange(n_mus)
 
     return sorted_emgfile
 
