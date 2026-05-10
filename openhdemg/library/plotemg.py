@@ -1899,6 +1899,7 @@ def plot_mupulses(
 def plot_ipts(
     emgfile,
     munumber="all",
+    show_markers=False,
     addrefsig=False,
     refsig_channel=0,
     timeinseconds=True,
@@ -2038,6 +2039,40 @@ def plot_ipts(
 
     ![](md_graphics/docstrings/plotemg/plot_ipts_ex_3.png)
 
+    Plot IPTS and markers of selected MUs, together with the reference signal.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askloadmodule()
+    >>> line2d_kwargs_ax1 = {"linewidth": 0.5}
+    >>> fig = emg.plot_ipts(
+    ...     emgfile,
+    ...     munumber=[0,1,2,3,4,5,6,7],
+    ...     show_markers=True,
+    ...     addrefsig=True,
+    ... )
+
+    ![](md_graphics/docstrings/plotemg/plot_ipts_ex_4.png)
+
+    Plot IPTS and markers of all MUs with custom styling.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.askloadmodule()
+    >>> line2d_kwargs_ax1 = {"linewidth": 0.5}
+    >>> line2d_kwargs_ax1 = {
+    ...     "linewidth": 0.4,
+    ...     "color": "tab:olive",
+    ...     "markerfacecolor": "tab:olive",
+    ... }
+    >>> fig = emg.plot_ipts(
+    ...     emgfile,
+    ...     munumber="all",
+    ...     show_markers=True,
+    ...     addrefsig=True,
+    ...     line2d_kwargs_ax1=line2d_kwargs_ax1,
+    ... )
+
+    ![](md_graphics/docstrings/plotemg/plot_ipts_ex_5.png)
+
     For additional examples on how to customise the figure's layout, refer to
     plot_emgsig().
     """
@@ -2074,6 +2109,35 @@ def plot_ipts(
             "IPTS is probably absent or it is not contained in a dataframe"
         )
 
+    # Check to have the MUPULSES in a pandas dataframe if needed
+    if show_markers is True and emgfile.get("MUPULSES", None) is None:
+        raise ValueError(
+            "show_markers=True requires emgfile['MUPULSES'] to be present."
+        )
+
+    # Set marker styling to a decent default. These can be changed via
+    # line2d_kwargs_ax1.
+    if isinstance(munumber, int):
+        _n_mus_to_plot = 1
+    else:
+        _n_mus_to_plot = len(munumber)
+    max_marker_size = 6.0
+    min_marker_size = 2.0
+    max_mus_for_min_size = 30
+    marker_gray = 0.35
+    marker_size = max_marker_size - (
+        (max(_n_mus_to_plot, 1) - 1) / (max_mus_for_min_size - 1)
+    ) * (max_marker_size - min_marker_size)
+    marker_size = max(min_marker_size, min(max_marker_size, marker_size))
+    marker_kwargs = {
+        "linestyle": "None",
+        "marker": "o",
+        "markersize": marker_size,
+        "markeredgecolor": str(marker_gray),
+        "markeredgewidth": max(0.6, marker_size / 5),
+        "markerfacecolor": (marker_gray, marker_gray, marker_gray, 0.18),
+    }
+
     # Here we produce an x axis in seconds or samples
     if timeinseconds:
         x_axis = ipts.index / emgfile["FSAMP"]
@@ -2091,6 +2155,13 @@ def plot_ipts(
     if isinstance(munumber, int):
         ax1.plot(x_axis, ipts[munumber])
 
+        # Add markers if needed
+        if show_markers is True:
+            pulses = np.asarray(emgfile["MUPULSES"][munumber], dtype=int)
+            marker_x = pulses / emgfile["FSAMP"] if timeinseconds else pulses
+            marker_y = ipts[munumber].iloc[pulses].to_numpy()
+            ax1.plot(marker_x, marker_y, **marker_kwargs)
+
         ax1.set_ylabel("MU {}".format(munumber))
         # Use set_ylabel because if the MU is empty,
         # the channel number won't show.
@@ -2106,6 +2177,13 @@ def plot_ipts(
             # Add value to the previous channel to avoid overlapping
             norm_ipts = norm_ipts + (0.5 - norm_ipts.mean()) + count
             ax1.plot(x_axis, norm_ipts)
+
+            # Add markers if needed
+            if show_markers is True:
+                pulses = np.asarray(emgfile["MUPULSES"][thisMU], dtype=int)
+                marker_x = pulses / emgfile["FSAMP"] if timeinseconds else pulses
+                marker_y = norm_ipts.iloc[pulses].to_numpy()
+                ax1.plot(marker_x, marker_y, **marker_kwargs)
 
         # Ensure correct and complete ticks on the left y axis
         ax1.set_yticks(np.arange(0.5, len(munumber) + 0.5, 1))
