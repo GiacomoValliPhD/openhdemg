@@ -27,5 +27,6 @@ from openhdemg.library.electrodes import *
 from openhdemg.library.muap import *
 from openhdemg.library.info import *
 from openhdemg.library.pic import *
+from openhdemg.library.commonality import *
 
 # TODO consider direct imports for all the functions instead of *
