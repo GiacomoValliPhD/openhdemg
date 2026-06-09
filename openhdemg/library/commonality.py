@@ -1,12 +1,14 @@
-import numpy as np
-from itertools import combinations
-from scipy import signal
-from scipy.special import erfcinv, digamma
-from scipy.sparse.csgraph import connected_components
 import warnings
 from math import comb
+from itertools import combinations
+
+import numpy as np
 import pandas as pd
+from scipy import signal
 from scipy.optimize import curve_fit
+from scipy.special import erfcinv, digamma
+from scipy.sparse.csgraph import connected_components
+
 
 def pooled_intramuscular_coherence(
     emgfile,
@@ -16,7 +18,7 @@ def pooled_intramuscular_coherence(
     window_duration_seconds=1,
     overlap_seconds=0.5,
     nfft=None,
-    random_state:int=42,
+    random_state=42,
 ):
     """
     Estimate common synaptic input oscillations using coherence analysis
@@ -24,26 +26,29 @@ def pooled_intramuscular_coherence(
 
     The procedure follows these steps:
 
-        1. Randomly split motor units into two groups.
-        2. Sum the binary spike trains within each group to obtain two cumulative spike trains (CSTs).
-        3. Estimate auto-spectra of CST 1 and CST 2.
-        4. Estimate cross-spectrum between CST 1 and CST 2.
-        5. Repeat over random permutations (default: 100).
-        6. Pool spectra across iterations.
-        7. Compute coherence from the pooled spectra.
+    1. Randomly split motor units into two groups.
+    2. Sum the binary spike trains within each group to obtain two cumulative
+    spike trains (CSTs).
+    3. Estimate auto-spectra of CST 1 and CST 2.
+    4. Estimate cross-spectrum between CST 1 and CST 2.
+    5. Repeat over random permutations (default: 100).
+    6. Pool spectra across iterations.
+    7. Compute coherence from the pooled spectra.
 
-        References: Negro et al., 2012 (https://doi.org/10.1371/journal.pone.0044894).
-                    Castronovo et al., 2015 (https://doi.org/10.1152/japplphysiol.00255.2015).
-                    Cabral et al., 2024 (https://doi.org/10.1113/JP286078).
-                    Cabral et al., 2024 (https://doi.org/10.1523/ENEURO.0043-24.2024).
+    References:
+
+    - Negro et al., 2012 (https://doi.org/10.1371/journal.pone.0044894)
+    - Castronovo et al., 2015 (https://doi.org/10.1152/japplphysiol.00255.2015)
+    - Cabral et al., 2024 (https://doi.org/10.1113/JP286078)
+    - Cabral et al., 2024 (https://doi.org/10.1523/ENEURO.0043-24.2024)
 
     Parameters
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
     number_of_mus_cst : int, default -1
-        Number of motor units included in each group for the cumulative spike train.
-        If -1, defaults to floor(number_of_mus / 2).
+        Number of motor units included in each group for the cumulative spike
+        train. If -1, defaults to floor(number_of_mus / 2).
     number_iterations : int, default 100
         Number of random permutations.
     window_type : str, default "hanning"
@@ -51,27 +56,30 @@ def pooled_intramuscular_coherence(
     window_duration_seconds : float, default 1
         Size of the window for coherence estimation in seconds.
     overlap_seconds : float, default 0.5
-        Number of seconds of overlap between adjoining segments.
-        Considering a window_duration_seconds of 1 second, 
-        an overlap of 0.5 seconds means a 50% overlap.
+        Number of seconds of overlap between adjoining segments. Considering a
+        window_duration_seconds of 1 second, an overlap of 0.5 seconds means a
+        50% overlap.
     nfft : int, optional
-        Number of FFT points.
-        If None, defaults to 10 * fsamp.
+        Number of FFT points. If None, defaults to 10 * fsamp.
     random_state : int, default 42
         Random seed for reproducible random permutations.
 
     Returns
-    -------  
+    -------
     coherence_results : dict
         Dictionary containing the following keys:
-            - "coherence": the coherence curve (numpy array)
-            - "frequency": the frequency values corresponding to the coherence curve (numpy array)
-            - "window_duration_seconds": the window duration in seconds (float)
-            - "window": the window used for spectral estimation (numpy array)
-            - "overlap_seconds": the overlap between segments in seconds (float)
-            - "cst_duration_seconds": the duration of the cumulative spike trains in seconds (float)
-            - "fsamp": the sampling frequency in Hz (float)
+
+        - "coherence": the coherence curve (numpy array).
+        - "frequency": the frequency values corresponding to the coherence
+        curve (numpy array).
+        - "window_duration_seconds": the window duration in seconds (float).
+        - "window": the window used for spectral estimation (numpy array).
+        - "overlap_seconds": the overlap between segments in seconds (float).
+        - "cst_duration_seconds": the duration of the cumulative spike trains
+        in seconds (float).
+        - "fsamp": the sampling frequency in Hz (float).
     """
+
     # ----------------------------------
     # Validate inputs
     # ----------------------------------
@@ -80,36 +88,46 @@ def pooled_intramuscular_coherence(
         raise ValueError(
             "There are no motor unit pulses in the emgfile. "
             "Please check that MUPULSES is not empty."
-        )   
-    
+        )
+
     tot_mus = emgfile["NUMBER_OF_MUS"]
 
     if tot_mus < 2:
-        raise ValueError("To calculate coherence, total number of mus units must be at least 2.")
+        raise ValueError(
+            "To calculate coherence, total number of mus units must be at "
+            "least 2."
+        )
 
-    # Determine the number of motor units in each cumulative spike train group (number_of_mus_cst)
+    # Determine the number of motor units in each cumulative spike train group
+    # (number_of_mus_cst).
     if number_of_mus_cst == -1:
         number_of_mus_cst = tot_mus // 2
     elif number_of_mus_cst > (tot_mus // 2):
-        warnings.warn("number_of_mus_cst is greater than half of total number of motor units. number_of_mus_cst will be set to half of total number of motor units.",
-            UserWarning,
+        msg = (
+            "number_of_mus_cst is greater than half of total number of motor "
+            "units. number_of_mus_cst will be set to half of total number of "
+            "motor units."
         )
+        warnings.warn(msg, UserWarning)
         number_of_mus_cst = tot_mus // 2
     elif number_of_mus_cst < 1:
         raise ValueError("number_of_mus_cst must be at least 1.")
 
     if window_duration_seconds <= 0:
         raise ValueError("window_duration_seconds must be a positive number.")
-    
+
     fsamp = emgfile["FSAMP"]
     window_samples = int(round(fsamp * window_duration_seconds))
 
-    if window_type == "hanning":        
+    if window_type == "hanning":
         window = signal.windows.hann(window_samples, sym=True)
     elif window_type == "hamming":
         window = signal.windows.hamming(window_samples, sym=True)
     else:
-        raise ValueError("Unsupported window_type. Supported types are 'hanning' and 'hamming'.")
+        raise ValueError(
+            "Unsupported window_type. Supported types are 'hanning' and "
+            "'hamming'."
+        )
 
     if nfft is None:
         nfft = int(round(10 * fsamp))
@@ -120,19 +138,17 @@ def pooled_intramuscular_coherence(
     overlap_samples = int(round(fsamp * overlap_seconds))
 
     if overlap_samples >= window_samples:
-        raise ValueError("overlap_seconds must be smaller than the window_duration_seconds.")
+        raise ValueError(
+            "overlap_seconds must be smaller than the window_duration_seconds."
+        )
 
     binary_mus_firing = emgfile["BINARY_MUS_FIRING"].to_numpy(dtype=np.int64)
-    
-    warnings.warn(
-        "Important! emgfile[BINARY_MUS_FIRING] was converted from uint8 to int64 to avoid overflow errors.",
-        UserWarning
-    )
 
     rng = np.random.default_rng(random_state)
 
     # ----------------------------------
-    # Number of unique unordered group pairs (group1 vs group2 is the same as group2 vs group1)
+    # Number of unique unordered group pairs (group1 vs group2 is the same as
+    # group2 vs group1).
     # ----------------------------------
     unique_split_count = (
         comb(tot_mus, number_of_mus_cst)
@@ -140,8 +156,8 @@ def pooled_intramuscular_coherence(
         // 2
     ) 
 
-    # If the number of unique splits is smaller than the requested number of iterations, 
-    # use all unique splits and warn the user.
+    # If the number of unique splits is smaller than the requested number of
+    # iterations, use all unique splits and warn the user.
     use_all_unique_splits = unique_split_count < number_iterations
 
     if use_all_unique_splits:
@@ -185,13 +201,13 @@ def pooled_intramuscular_coherence(
     # ----------------------------------
     # Main loop over iterations
     # ----------------------------------
-    
+
     # Initialize variables
     pooled_auto_spectra_1 = None
     pooled_auto_spectra_2 = None
     pooled_cross_spectra = None
-    frequency = None    
-    
+    frequency = None
+
     for iteration in range(number_iterations):
 
         print(f"Iteration {iteration + 1}/{number_iterations}...")
@@ -219,7 +235,7 @@ def pooled_intramuscular_coherence(
             window=window,
             noverlap=overlap_samples,
             nfft=nfft,
-            detrend=False, # already detrended above
+            detrend=False,  # already detrended above
             return_onesided=True,
             scaling="density",
         )
@@ -231,7 +247,7 @@ def pooled_intramuscular_coherence(
             window=window,
             noverlap=overlap_samples,
             nfft=nfft,
-            detrend=False, # already detrended above
+            detrend=False,  # already detrended above
             return_onesided=True,
             scaling="density",
         )
@@ -243,15 +259,21 @@ def pooled_intramuscular_coherence(
             window=window,
             noverlap=overlap_samples,
             nfft=nfft,
-            detrend=False, # already detrended above
+            detrend=False,  # already detrended above
             return_onesided=True,
             scaling="density",
         )
 
         if pooled_auto_spectra_1 is None:
-            pooled_auto_spectra_1 = np.zeros_like(auto_spectra_1, dtype=np.float64)
-            pooled_auto_spectra_2 = np.zeros_like(auto_spectra_2, dtype=np.float64)
-            pooled_cross_spectra = np.zeros_like(cross_spectra, dtype=np.complex128) # cross-spectra is complex-valued 
+            pooled_auto_spectra_1 = np.zeros_like(
+                auto_spectra_1, dtype=np.float64
+            )
+            pooled_auto_spectra_2 = np.zeros_like(
+                auto_spectra_2, dtype=np.float64
+            )
+            pooled_cross_spectra = np.zeros_like(
+                cross_spectra, dtype=np.complex128
+            )  # cross-spectra is complex-valued
 
         # Pool spectra across iterations by summing them up
         pooled_auto_spectra_1 += auto_spectra_1
@@ -263,14 +285,17 @@ def pooled_intramuscular_coherence(
     pooled_auto_spectra_2 /= number_iterations
     pooled_cross_spectra /= number_iterations
 
-    # Compute coherence from the pooled spectra using the formula: 
+    # Compute coherence from the pooled spectra using the formula:
     # C(f) = |Pxy(f)|^2 / (Pxx(f) * Pyy(f))
-    coherence = np.abs(pooled_cross_spectra) ** 2 / (pooled_auto_spectra_1 * pooled_auto_spectra_2)
+    coherence = np.abs(pooled_cross_spectra) ** 2 / (
+        pooled_auto_spectra_1 * pooled_auto_spectra_2
+    )
 
     length_signal, _ = binary_mus_firing.shape
 
-    # Ensure that variables are in the proper data type (e.g., float64) before returning the results
-    coherence = np.asarray(coherence, dtype=np.float64) 
+    # Ensure that variables are in the proper data type (e.g., float64) before
+    # returning the results.
+    coherence = np.asarray(coherence, dtype=np.float64)
     frequency = np.asarray(frequency, dtype=np.float64)
     window_duration_seconds = float(window_duration_seconds)
     window = np.asarray(window, dtype=np.float64)
@@ -280,27 +305,29 @@ def pooled_intramuscular_coherence(
     coherence_results = {
         "coherence": coherence,
         "frequency": frequency,
-        "window_duration_seconds": window_duration_seconds, 
-        "window": window, 
+        "window_duration_seconds": window_duration_seconds,
+        "window": window,
         "overlap_seconds": overlap_seconds,
         "cst_duration_seconds": cst_duration_seconds,
         "fsamp": fsamp,
-    } 
+    }
 
     return coherence_results
 
-def z_score_coherence(
-    coherence_results,
-    ):
+
+def z_score_coherence(coherence_results):
     """
     Z-score coherence following two possible cases:
 
     1. No overlap:
+
         z = sqrt(2 * L) * atanh(sqrt(coherence))
 
-        where L is the number of non-overlapping time segments used in the Welch method.
+        where L is the number of non-overlapping time segments used in the
+        Welch method.
 
     2. With overlap:
+
         z = sqrt(2 * K_tilde) * atanh(sqrt(coherence))
 
         where K_tilde is the corrected number of independent segments
@@ -314,10 +341,13 @@ def z_score_coherence(
     Returns
     -------
     z_score_results : dict
-        Dictionary containing the same keys of pooled_intramuscular_coherence plus the following keys:
-            - "z_score": the z-scored coherence curve (numpy array)
-            - "factor": the factor used for z-scoring (float)
+        Dictionary containing the same keys of pooled_intramuscular_coherence
+        plus the following keys:
+
+        - "z_score": the z-scored coherence curve (numpy array)
+        - "factor": the factor used for z-scoring (float)
     """
+
     # ----------------------------------
     # Validate inputs
     # ----------------------------------
@@ -347,7 +377,7 @@ def z_score_coherence(
     # ----------------------------------
     else:
 
-        step_samples = window_samples - int( round(fsamp * overlap_seconds) )
+        step_samples = window_samples - int(round(fsamp * overlap_seconds))
 
         K = int(np.floor(cst_duration_samples / window_samples))
 
@@ -379,8 +409,9 @@ def z_score_coherence(
 
     z_score = factor * np.arctanh(np.sqrt(coherence))
 
-    # Ensure that variables are in the proper data type (e.g., float64) before returning the results
-    z_score = np.asarray(z_score, dtype=np.float64) 
+    # Ensure that variables are in the proper data type (e.g., float64) before
+    # returning the results
+    z_score = np.asarray(z_score, dtype=np.float64)
     factor = float(factor)
 
     # Update the results dictionary with z-score and factor
@@ -395,14 +426,15 @@ def z_score_coherence(
 
     return z_score_results
 
+
 def calculate_coherence_bands(
     coherence_results,
     confidence_level_type="high_frequency_bias",
-    bias_frequency_range=[250, 500],    
+    bias_frequency_range=[250, 500],
     delta_frequency_range=[1, 5],
     alpha_frequency_range=[5, 15],
     beta_frequency_range=[15, 35],
-    gamma_frequency_range=[35, 60],  
+    gamma_frequency_range=[35, 60],
 ):
     """
     Calculate band-specific parameters from either a z-scored coherence curve
@@ -412,29 +444,36 @@ def calculate_coherence_bands(
     Otherwise, the function uses raw coherence curve.
 
     For each frequency band, this function calculates:
-        1. Average coherence/z-score above the confidence level.
-        2. Area under the coherence/z-score curve above the confidence level.
+
+    1. Average coherence/z-score above the confidence level.
+    2. Area under the coherence/z-score curve above the confidence level.
 
     Parameters
     ----------
     coherence_results : dict
-        Dictionary containing either:
-            - "z_score", "frequency"
-        or:
-            - "coherence", "frequency"
-    confidence_level_type : str, default "high_frequency_bias"
-        Type of confidence level used to determine which parts of the coherence/z-score 
-        curve are considered significant.
-        Options:
-            1. "high_frequency_bias": 
-                The confidence level is defined as the average coherence/z-score in the 
-                high-frequency bias band defined by bias_frequency_range.
-            2. "theoretical":
-                The confidence level is defined as 95% confidence level based on the theoretical distribution.
-                    - For z-score: 1.65 (95th percentile of the standard normal distribution)
-                    - For coherence: 1 - 0.05 ** (1 / (L - 1)), where L is the number of non-overlapping segments used in the Welch method.
+        Dictionary containing either keys {"z_score", "frequency"} or
+        {"coherence", "frequency"}.
+    confidence_level_type : str {"high_frequency_bias", "theoretical"}, default "high_frequency_bias"
+        Type of confidence level used to determine which parts of the
+        coherence/z-score curve are considered significant.
+
+        ``high_frequency_bias``
+            The confidence level is defined as the average coherence/z-score
+            in the high-frequency bias band defined by bias_frequency_range.
+
+        ``theoretical``
+            The confidence level is defined as 95% confidence level based on
+            the theoretical distribution.
+
+            - For z-score: 1.65 (95th percentile of the standard normal
+            distribution).
+
+            - For coherence: 1 - 0.05 ** (1 / (L - 1)), where L is the number
+            of non-overlapping segments used in the Welch method.
+
     bias_frequency_range : list, default [250, 500]
-        Frequency range for the bias band in Hz when confidence_level_type is "high_frequency_bias".
+        Frequency range for the bias band in Hz when confidence_level_type is
+        "high_frequency_bias".
     delta_frequency_range : list, default [1, 5]
         Frequency range for the delta band in Hz.
     alpha_frequency_range : list, default [5, 15]
@@ -446,30 +485,41 @@ def calculate_coherence_bands(
 
     Returns
     -------
-    coherence_band_results : dataframe
+    coherence_band_results : pd.DataFrame
         Dataframe with the following columns:
-            - "coherence_type": "z_score" or "coherence"
-            - "confidence_level": confidence level used (float)
-            - "average_delta": average coherence/z-score in the delta band above the confidence level
-            - "auc_delta": area under the coherence/z-score curve in the delta band above the confidence level
-            - "average_alpha": average coherence/z-score in the alpha band above the confidence level
-            - "auc_alpha": area under the coherence/z-score curve in the alpha band above the confidence level
-            - "average_beta": average coherence/z-score in the beta band above the confidence level
-            - "auc_beta": area under the coherence/z-score curve in the beta band above the confidence level
-            - "average_gamma": average coherence/z-score in the gamma band above the confidence level
-            - "auc_gamma": area under the coherence/z-score curve in the gamma band above the confidence level
+
+        - "coherence_type": "z_score" or "coherence".
+        - "confidence_level": confidence level used (float).
+        - "average_delta": average coherence/z-score in the delta band above
+        the confidence level.
+        - "auc_delta": area under the coherence/z-score curve in the delta
+        band above the confidence level.
+        - "average_alpha": average coherence/z-score in the alpha band above
+        the confidence level.
+        - "auc_alpha": area under the coherence/z-score curve in the alpha
+        band above the confidence level.
+        - "average_beta": average coherence/z-score in the beta band above the
+        confidence level.
+        - "auc_beta": area under the coherence/z-score curve in the beta band
+        above the confidence level.
+        - "average_gamma": average coherence/z-score in the gamma band above
+        the confidence level.
+        - "auc_gamma": area under the coherence/z-score curve in the gamma
+        band above the confidence level.
     """
+
     # ----------------------------------
     # Validate inputs
     # ----------------------------------
     frequency = coherence_results["frequency"]
     cst_duration_seconds = coherence_results["cst_duration_seconds"]
     window_duration_seconds = coherence_results["window_duration_seconds"]
-    
+
     bias_frequency_range = sorted(bias_frequency_range)
-    bias_mask = ((frequency >= bias_frequency_range[0])
-                 & (frequency <= bias_frequency_range[1])
-                )
+    bias_mask = (
+        (frequency >= bias_frequency_range[0])
+        & (frequency <= bias_frequency_range[1])
+    )
 
     # ----------------------------------
     # Case 1: use z-score if available
@@ -495,15 +545,17 @@ def calculate_coherence_bands(
         confidence_level = float(np.mean(coherence_curve[bias_mask]))
     elif confidence_level_type == "theoretical":
         if coherence_type == "z_score":
-            confidence_level = 1.65 # 95th percentile of the standard normal distribution
+            confidence_level = 1.65
+            # 95th percentile of the standard normal distribution
         else:
             L = int(np.floor(cst_duration_seconds / window_duration_seconds))
-            confidence_level = 1 - 0.05 ** (1 / (L - 1))        
+            confidence_level = 1 - 0.05 ** (1 / (L - 1))
     else:
-        warnings.warn("Confidence level type must be 'high_frequency_bias' or 'theoretical'. "
-                        "It will be used 'high_frequency_bias'.",
-                        UserWarning,
-                        )
+        msg = (
+            "Confidence level type must be 'high_frequency_bias' or "
+            "'theoretical'. It will be used 'high_frequency_bias'."
+        )
+        warnings.warn(msg, UserWarning)
         confidence_level = float(np.mean(coherence_curve[bias_mask]))
 
     # ----------------------------------
@@ -573,12 +625,13 @@ def calculate_coherence_bands(
 
     return pd.DataFrame([coherence_band_results])
 
-def _smooth_spiketrains_convolution(
+
+def smooth_spiketrains_convolution(
     binary_mus_firing,
     fsamp,
-    window_type="hanning", 
+    window_type="hanning",
     window_duration_seconds=0.4
-    ):
+):
     """
     Smooth a binary spike train by convolving it with a window.
 
@@ -594,25 +647,30 @@ def _smooth_spiketrains_convolution(
     Returns
     -------
     smoothed_mus_firing : np.ndarray
-        Smoothed motor unit discharge rates obtained by convolving the binary spike train with the specified window.
-        Arrangement of the output array is the same as binary_mus_firing (samples x motor units).
+        Smoothed motor unit discharge rates obtained by convolving the binary
+        spike train with the specified window. Arrangement of the output array
+        is the same as binary_mus_firing (samples x motor units).
     """
+
     # ----------------------------------
     # Validate inputs
     # ----------------------------------
     if window_duration_seconds <= 0:
         raise ValueError("window_duration_seconds must be a positive number.")
-    
+
     window_samples = int(round(fsamp * window_duration_seconds))
 
-    if window_type == "hanning":        
+    if window_type == "hanning":
         window = signal.windows.hann(window_samples, sym=True)
     elif window_type == "hamming":
         window = signal.windows.hamming(window_samples, sym=True)
     else:
-        raise ValueError("Unsupported window_type. Supported types are 'hanning' and 'hamming'.")
-    
-    # Smoothing spike trains by convolving with the window and scaling to preserve units in pps
+        raise ValueError(
+            "Unsupported window_type. Use 'hanning' or 'hamming'."
+        )
+
+    # Smoothing spike trains by convolving with the window and scaling to
+    # preserve units in pps.
     scaling_factor = fsamp / np.sum(window)
 
     smoothed_mus_firing = signal.lfilter(
@@ -621,10 +679,12 @@ def _smooth_spiketrains_convolution(
         binary_mus_firing,
         axis=0,
     )
-    # Ensure that variables are in the proper data type (e.g., float64) before returning the results
-    smoothed_mus_firing = np.asarray(smoothed_mus_firing, dtype=np.float64) 
+    # Ensure that variables are in the proper data type (e.g., float64) before
+    # returning the results.
+    smoothed_mus_firing = np.asarray(smoothed_mus_firing, dtype=np.float64)
 
     return smoothed_mus_firing
+
 
 def pca_components(
     emgfile,
@@ -643,19 +703,24 @@ def pca_components(
     Estimate low-dimensional components from motor unit spike trains
     using PCA applied to smoothed discharge-rate profiles.
 
-    The procedure follows the MATLAB pipeline:
+    The procedure follows this pipeline:
 
-        1. Convert binary motor unit spike trains to smoothed discharge-rate profiles.
-        2. High-pass filter the smoothed discharge rates to remove offsets and slow trends.
-        3. Standardize each motor unit discharge profile.
-        4. Calculate the covariance/correlation matrix.
-        5. Extract eigenvalues and eigenvectors.
-        6. Use parallel analysis to estimate the number of components to retain.
-        7. Project the standardized discharge profiles onto the retained eigenvectors.
+    1. Convert binary motor unit spike trains to smoothed discharge-rate
+    profiles.
+    2. High-pass filter the smoothed discharge rates to remove offsets and
+    slow trends.
+    3. Standardize each motor unit discharge profile.
+    4. Calculate the covariance/correlation matrix.
+    5. Extract eigenvalues and eigenvectors.
+    6. Use parallel analysis to estimate the number of components to
+    retain.
+    7. Project the standardized discharge profiles onto the retained
+    eigenvectors.
 
-        References: Negro et al., 2009 (https://doi.org/10.1113/jphysiol.2009.178509).
-                    Cabral et al., 2025 (https://doi.org/10.1016/j.isci.2025.113483).
-                   
+    References:
+
+    - Negro et al., 2009 (https://doi.org/10.1113/jphysiol.2009.178509)
+    - Cabral et al., 2025 (https://doi.org/10.1016/j.isci.2025.113483)
 
     Parameters
     ----------
@@ -663,25 +728,29 @@ def pca_components(
         The dictionary containing the emgfile.
     window_duration_seconds : float, default 0.4
         Duration of the Hann window used to smooth binary spike trains.
-    filter_highcut : float, default 0.75 
+    filter_highcut : float, default 0.75
         High-pass cutoff frequency used to remove offsets and slow trends.
     filter_order : int, default 3
         Butterworth filter order.
     remove_edge_seconds : float, default 1
-        Number of seconds to remove from the beginning and end of the smoothed 
-        discharge profiles to avoid edge artifacts from convolution and filtering.
+        Number of seconds to remove from the beginning and end of the smoothed
+        discharge profiles to avoid edge artifacts from convolution and
+        filtering.
     method_n_components : str, default "parallel_analysis"
         Method used to estimate the number of components to retain.
-            Options:
-                1. "parallel_analysis"
-                    Retain the number of components that present eigenvalues greater 
-                    than the percentile (e.g., 95th) of eigenvalues generated from 
-                    randomly shuffling the data.
-                2. "variance_greater_than_threshold"
-                    Retain the number of components that explain more than a certain 
-                    percentage (e.g., 80%) of the variance.
-                3. "eigenvalue_greater_than_one" (Kaiser's criterion)
-                    Retain the number of components with eigenvalues greater than 1.
+
+        ``parallel_analysis``
+            Retain the number of components that present eigenvalues greater
+            than the percentile (e.g., 95th) of eigenvalues generated from
+            randomly shuffling the data.
+
+        ``variance_greater_than_threshold``
+            Retain the number of components that explain more than a certain
+            percentage (e.g., 80%) of the variance.
+
+        ``eigenvalue_greater_than_one``
+            (Kaiser's criterion). Retain the number of components with
+            eigenvalues greater than 1.
     number_iterations_pa : int, default 1000
         Number of iterations for parallel analysis.
     percentile_pa : float, default 95
@@ -695,26 +764,42 @@ def pca_components(
     -------
     pca_results : dict
         Dictionary containing the following keys:
-            - "smoothed_mus_firing": the smoothed binary spike trains calculated by window convolution (numpy array)
-                smoothed_mus_firing has the same shape as the input binary_mus_firing (samples x motor units).
-            - "kmo": the Kaiser-Meyer-Olkin measure of sampling adequacy (float)
-            - "method_n_components": the selected method to estimate the number of components to retain (str)
-            - "eigenvalues_threshold_pa": the eigenvalue threshold based on parallel analysis (float)
-            - "variance_threshold": the variance threshold used if method_n_components is "variance_greater_than_threshold" (float)
-            - "number_of_components_retained": the number of components retained based on parallel analysis (int)
-            - "eigenvalues": the eigenvalues of the covariance/correlation matrix (numpy array)
-            - "eigenvectors": the eigenvectors of the covariance/correlation matrix (numpy array)
-            - "explained_variance": the explained variance in percentage of each component (numpy array)
-            - "cumulative_explained_variance": the cumulative explained variance in percentage (numpy array)
-            - "low_dimensional_components": the low-dimensional components (numpy array)      
-    
+
+        - "smoothed_mus_firing": the smoothed binary spike trains calculated
+        by window convolution (numpy array) smoothed_mus_firing has the same
+        shape as the input binary_mus_firing (samples x motor units).
+        - "kmo": the Kaiser-Meyer-Olkin measure of sampling adequacy (float).
+        - "method_n_components": the selected method to estimate the number of
+        components to retain (str).
+        - "eigenvalues_threshold_pa": the eigenvalue threshold based on
+        parallel analysis (float).
+        - "variance_threshold": the variance threshold used if
+        method_n_components is "variance_greater_than_threshold" (float).
+        - "number_of_components_retained": the number of components retained
+        based on parallel analysis (int).
+        - "eigenvalues": the eigenvalues of the covariance/correlation matrix
+        (numpy array).
+        - "eigenvectors": the eigenvectors of the covariance/correlation
+        matrix (numpy array).
+        - "explained_variance": the explained variance in percentage of each
+        component (numpy array).
+        - "cumulative_explained_variance": the cumulative explained variance
+        in percentage (numpy array).
+        - "low_dimensional_components": the low-dimensional components (numpy
+        array).
+
     Notes
     -------
-    1. Kaiser-Meyer-Olkin (KMO) measure is calculated to assess the factorability of the dataset before performing PCA.
-    Typically, a KMO value above 0.7 is considered acceptable (Hoelzle & Meyer, 2012; https://doi.org/10.1002/9781118133880.hop202006).
-    2. Altough other methods to define the number of components are available, we reccomend using parallel analysis as it is more robust 
-    and data-driven than arbitrary thresholds (e.g., eigenvalue > 1 or variance explained > 80%).
+    1. Kaiser-Meyer-Olkin (KMO) measure is calculated to assess the
+    factorability of the dataset before performing PCA. Typically, a KMO value
+    above 0.7 is considered acceptable (Hoelzle & Meyer, 2012;
+    https://doi.org/10.1002/9781118133880.hop202006).
+    2. Altough other methods to define the number of components are available,
+    we reccomend using parallel analysis as it is more robust and data-driven
+    than arbitrary thresholds (e.g., eigenvalue > 1 or variance explained >
+    80%).
     """
+
     # ----------------------------------
     # Validate inputs
     # ----------------------------------
@@ -729,46 +814,39 @@ def pca_components(
 
     if tot_mus < 2:
         raise ValueError(
-            "At least 2 motor units are required for PCA common input analysis."
+            "At least 2 MUs are required for PCA common input analysis."
         )
 
     binary_mus_firing = emgfile["BINARY_MUS_FIRING"].to_numpy(dtype=np.int64)
 
-    warnings.warn(
-        "Important! emgfile[BINARY_MUS_FIRING] was converted from uint8 to int64 to avoid overflow errors.",
-        UserWarning
-    )
-
     if window_duration_seconds <= 0:
         raise ValueError("window_duration_seconds must be positive.")
 
-    if filter_highcut <= 0: 
+    if filter_highcut <= 0:
         raise ValueError("filter_highcut must be positive.")
 
-    if filter_highcut >= fsamp / 2: 
-        raise ValueError("filter_highcut must be lower than Nyquist frequency.")
+    if filter_highcut >= fsamp / 2:
+        raise ValueError(
+            "filter_highcut must be lower than Nyquist frequency."
+        )
 
     rng = np.random.default_rng(random_state)
 
-    # Smooth binary spike trains by convolving with the window and scaling to preserve units in pps
-    smoothed_mus_firing = _smooth_spiketrains_convolution(
+    # Smooth binary spike trains by convolving with the window and scaling to
+    # preserve units in pps.
+    smoothed_mus_firing = smooth_spiketrains_convolution(
         binary_mus_firing,
         fsamp,
-        window_type=window_type, 
+        window_type=window_type,
         window_duration_seconds=window_duration_seconds,
         )
 
     # Remove edge samples affected by convolution and filtering
     remove_edge_samples = int(round(fsamp * remove_edge_seconds))
     if remove_edge_samples > 0:
-        smoothed_mus_firing = smoothed_mus_firing[remove_edge_samples: -remove_edge_samples, :]
-        
-        warnings.warn(
-            f"Important! The first and last {remove_edge_seconds} seconds of"
-            f"the smoothed discharge profiles were removed to avoid edge"
-            f"artifacts from convolution and filtering.",
-            UserWarning,
-        )
+        smoothed_mus_firing = smoothed_mus_firing[
+            remove_edge_samples: -remove_edge_samples, :
+        ]
 
     # High-pass filter smoothed discharge rates
     sos = signal.butter(
@@ -782,7 +860,8 @@ def pca_components(
     smoothed_mus_firing = signal.sosfiltfilt(sos, smoothed_mus_firing, axis=0)
 
     # ----------------------------------
-    # Internal function to perform KMO test; i.e., check if the dataset is factorable
+    # Internal function to perform KMO test; i.e., check if the dataset is
+    # factorable.
     # ----------------------------------
     def _calculate_kmo(x):
         """
@@ -819,16 +898,18 @@ def pca_components(
         n_features = corr_matrix.shape[0]
 
         corr_squared_sum = np.sum(corr_matrix ** 2) - n_features
-        partial_corr_squared_sum = np.sum(partial_corr_matrix ** 2) - n_features
+        partial_corr_squared_sum = np.sum(
+            partial_corr_matrix ** 2
+        ) - n_features
 
         kmo = corr_squared_sum / (
             corr_squared_sum + partial_corr_squared_sum
         )
 
-        kmo = round(float(kmo),4)
+        kmo = round(float(kmo), 4)
 
         return kmo
-    
+
     # Calculate KMO measure
     kmo = _calculate_kmo(smoothed_mus_firing)
 
@@ -838,8 +919,8 @@ def pca_components(
 
     if np.any(column_std == 0):
         raise ValueError(
-            "At least one motor unit has zero standard deviation after smoothing. "
-            "PCA cannot be performed."
+            "At least one motor unit has zero standard deviation after "
+            "smoothing. PCA cannot be performed."
         )
 
     z_smoothed_mus_firing = (smoothed_mus_firing - column_mean) / column_std
@@ -899,7 +980,9 @@ def pca_components(
             """
 
             if dataset.ndim != 2:
-                raise ValueError("dataset must be a 2D matrix: samples x features.")
+                raise ValueError(
+                    "dataset must be a 2D matrix: samples x features."
+                )
 
             if rng is None:
                 rng = np.random.default_rng()
@@ -939,39 +1022,42 @@ def pca_components(
                 axis=1,
             )
 
-            return mean_eigenvalues_pa, percentile_eigenvalues_pa    
-        
-        # Run parallel analysis to get mean and percentile eigenvalues from shuffled data
-        mean_eigenvalues_pa, percentile_eigenvalues_pa = _parallel_analysis_eigenvalues(
+            return mean_eigenvalues_pa, percentile_eigenvalues_pa
+            # TODO mean_eigenvalues_pa is never used, do we really need to return it?
+
+        # Run parallel analysis to get mean and percentile eigenvalues from
+        # shuffled data.
+        _, percentile_eigenvalues_pa = _parallel_analysis_eigenvalues(
             dataset=smoothed_mus_firing,
             number_iterations_pa=number_iterations_pa,
             percentile_pa=percentile_pa,
             rng=rng,
         )
 
-        # Number of components with eigenvalues higher than simulated percentile
+        # Number of components with eigenvalues higher than simulated
+        # percentile.
         number_of_components_retained = int(
             np.sum(eigenvalues > percentile_eigenvalues_pa)
         )
-    
-    # Option 2: Variance threshold method: 
+
+    # Option 2: Variance threshold method:
     elif method_n_components == "variance_greater_than_threshold":
-    
-        number_of_components_retained = int(np.sum(cumulative_explained_variance < variance_threshold))
-        mean_eigenvalues_pa = None
+        number_of_components_retained = int(
+            np.sum(cumulative_explained_variance < variance_threshold)
+        )
         percentile_eigenvalues_pa = None
-    
-    # Option 3: Eigenvalue > 1 method: 
+
+    # Option 3: Eigenvalue > 1 method:
     elif method_n_components == "eigenvalue_greater_than_one":
         number_of_components_retained = int(np.sum(eigenvalues > 1.0))
-        mean_eigenvalues_pa = None
         percentile_eigenvalues_pa = None
-    
+
     else:
         raise ValueError(
-            f"Invalid method_n_components. "
-            f"The method must be one of the following: "
-            f"'parallel_analysis', 'variance_greater_than_threshold', or 'eigenvalue_greater_than_one'."
+            "Invalid method_n_components. The method must be one of the "
+            "following: 'parallel_analysis', "
+            "'variance_greater_than_threshold', or "
+            "'eigenvalue_greater_than_one'."
         )
 
     if number_of_components_retained < 1:
@@ -1008,11 +1094,12 @@ def pca_components(
 
     return pca_results
 
+
 def common_drive_index(
     emgfile,
     window_type="hanning",
     window_duration_seconds=0.4,
-    filter_highcut=0.75, 
+    filter_highcut=0.75,
     filter_order=3,
     remove_edge_seconds=1.0,
     window_corr_seconds=5.0,
@@ -1031,9 +1118,11 @@ def common_drive_index(
     +/- max_lag_seconds is extracted for each segment and then averaged
     across segments.
 
-    References: De Luca et al., 1985 (https://doi.org/10.1113/jphysiol.1982.sp014294).
-                Negro et al., 2009 (https://doi.org/10.1113/jphysiol.2009.178509).
-                Negro et al., 2012 (https://doi.org/10.1371/journal.pone.0044894).
+    References:
+
+    - De Luca et al., 1985 (https://doi.org/10.1113/jphysiol.1982.sp014294)
+    - Negro et al., 2009 (https://doi.org/10.1113/jphysiol.2009.178509)
+    - Negro et al., 2012 (https://doi.org/10.1371/journal.pone.0044894)
 
     Parameters
     ----------
@@ -1046,37 +1135,59 @@ def common_drive_index(
     filter_order : int, default 3
         Butterworth filter order.
     remove_edge_seconds : float, default 1
-        Number of seconds to remove from the beginning and end of the smoothed discharge profiles to avoid edge artifacts from convolution and filtering.
-    window_corr_seconds : float, default 5.0 
+        Number of seconds to remove from the beginning and end of the smoothed
+        discharge profiles to avoid edge artifacts from convolution and
+        filtering.
+    window_corr_seconds : float, default 5.0
         Segment duration in seconds for pairwise cross-correlation.
         If -1, the entire signal is used.
-    overlap_corr_seconds : float, default 0.0 (no overlap)
+    overlap_corr_seconds : float, default 0.0
         Overlap duration in seconds for pairwise cross-correlation.
-        Segments will overlap by overlap_corr_seconds.
+        Segments will overlap by overlap_corr_seconds. 0.0 means no overlap.
     max_lag_seconds : float, default 0.1
         Maximum lag for cross-correlation, in seconds.
 
     Returns
     -------
     cdi_results : dict
-        Dictionary containing pairwise correlations and common drive index.
-            - "smoothed_mus_firing": the smoothed binary spike trains calculated by window convolution (numpy array)
-                smoothed_mus_firing has the same shape as the input binary_mus_firing (samples x motor units).
-            - "pairwise_correlation": dataframe of average pairwise correlation and if it is significant for each motor unit pair (dataframe)
-            - "pairwise_correlation_matrix": square matrix of average pairwise correlations between all motor unit pairs (numpy array)
-                pairwise_correlation_matrix[i,j] contains the average pairwise correlation between motor unit i and j.
-            - "pairwise_correlation_matrix_thresholded": thresholded pairwise_correlation_matrix (numpy array)
-                correlation values that are not significant are set to zero.
-            - "common_drive_index_mean": mean of cross-correlation values across all motor unit pairs (float)
-            - "common_drive_index_std": standard deviation of cross-correlation values across all motor unit pairs (float)
-            - "common_drive_index_thresholded_mean": mean of cross-correlation values across all motor unit pairs that are above the significance threshold (float)
-            - "common_drive_index_thresholded_std": standard deviation of cross-correlation values across all motor unit pairs that are above the significance threshold (float)
-            - "confidence_level": the confidence level used to determine if a pairwise correlation is significant (float)
-            - "percentage_significant_pairs": percentage of motor unit pairs with significant correlation (float)
-            - "corr_signals_all_pairs": list of numpy arrays containing the cross-correlation signals for all pairs (list of numpy arrays)
-            - "grand_average_corr_values": grand average of the corr_signals_all_pairs (numpy array)
-            - "lags_seconds": lags used to calculate the cross-correlation signals (numpy array)
+        Dictionary containing pairwise correlations and common drive index with
+        keys:
+
+        - "smoothed_mus_firing": the smoothed binary spike trains
+        calculated by window convolution (numpy array). smoothed_mus_firing
+        has the same shape as the input binary_mus_firing (samples x motor
+        units).
+        - "pairwise_correlation": dataframe of average pairwise correlation
+        and if it is significant for each motor unit pair (dataframe).
+        - "pairwise_correlation_matrix": square matrix of average pairwise
+        correlations between all motor unit pairs (numpy array).
+        pairwise_correlation_matrix[i,j] contains the average pairwise
+        correlation between motor unit i and j.
+        - "pairwise_correlation_matrix_thresholded": thresholded
+        pairwise_correlation_matrix (numpy array). correlation values that are
+        not significant are set to zero.
+        - "common_drive_index_mean": mean of cross-correlation values across
+        all motor unit pairs (float).
+        - "common_drive_index_std": standard deviation of cross-correlation
+        values across all motor unit pairs (float).
+        - "common_drive_index_thresholded_mean": mean of cross-correlation
+        values across all motor unit pairs that are above the significance
+        threshold (float).
+        - "common_drive_index_thresholded_std": standard deviation of
+        cross-correlation values across all motor unit pairs that are above
+        the significance threshold (float).
+        - "confidence_level": the confidence level used to determine if a
+        pairwise correlation is significant (float).
+        - "percentage_significant_pairs": percentage of motor unit pairs with
+        significant correlation (float).
+        - "corr_signals_all_pairs": list of numpy arrays containing the
+        cross-correlation signals for all pairs (list of numpy arrays).
+        - "grand_average_corr_values": grand average of the
+        corr_signals_all_pairs (numpy array).
+        - "lags_seconds": lags used to calculate the cross-correlation signals
+        (numpy array).
     """
+
     # ----------------------------------
     # Validate inputs
     # ----------------------------------
@@ -1091,45 +1202,45 @@ def common_drive_index(
 
     if tot_mus < 2:
         raise ValueError(
-            "At least 2 motor units are required for common drive index analysis."
+            "At least 2 MUs are required for common drive index analysis."
         )
 
     if window_duration_seconds <= 0:
         raise ValueError("window_duration_seconds must be positive.")
-    
+
     if overlap_corr_seconds < 0:
         raise ValueError("ovelap_corr_seconds must be positive.")
 
     if window_corr_seconds != -1 and window_corr_seconds <= 0:
-        raise ValueError("window_corr_seconds must be positive or -1 for no segmentation.")
+        raise ValueError(
+            "window_corr_seconds must be positive or -1 for no segmentation."
+        )
 
     if window_corr_seconds != -1:
         if overlap_corr_seconds >= window_corr_seconds:
             raise ValueError(
-                "overlap_corr_seconds must be smaller than window_corr_seconds."
+                "overlap_corr_seconds must be smaller than "
+                "window_corr_seconds."
             )
 
     if filter_highcut <= 0:
         raise ValueError("filter_highcut must be positive.")
 
     if filter_highcut >= fsamp / 2:
-        raise ValueError("filter_highcut must be lower than Nyquist frequency.")
+        raise ValueError(
+            "filter_highcut must be lower than Nyquist frequency."
+        )
 
     if max_lag_seconds < 0:
         raise ValueError("max_lag_seconds must be >= 0.")
 
     binary_mus_firing = emgfile["BINARY_MUS_FIRING"].to_numpy(dtype=np.int64)
 
-    warnings.warn(
-        "Important! emgfile['BINARY_MUS_FIRING'] was converted to int64 "
-        "to avoid overflow errors.",
-        UserWarning,
-    )
-    
     rng = np.random.default_rng(random_state)
 
     # ----------------------------------
-    # Internal function to generate surrogate binary spike trains by shuffling ISIs independently for each motor unit
+    # Internal function to generate surrogate binary spike trains by shuffling
+    # ISIs independently for each motor unit.
     # ----------------------------------
     def _generate_shuffled_binary_mus_firing(
         binary_mus_firing,
@@ -1154,13 +1265,13 @@ def common_drive_index(
 
             for mu_idx in range(total_n_mus):
 
-                binary_spike_train=binary_mus_firing[:, mu_idx]                
+                binary_spike_train = binary_mus_firing[:, mu_idx]
                 spike_indices = np.flatnonzero(binary_spike_train)
                 shuffled_spike_train = np.zeros(n_samples, dtype=np.int64)
                 isi = np.diff(spike_indices)
                 shuffled_isi = rng.permutation(isi)
                 first_spike = spike_indices[0]
-                
+
                 shuffled_spike_indices = np.concatenate(
                     (
                         [first_spike],
@@ -1180,16 +1291,17 @@ def common_drive_index(
             )
 
         return surrogate_binary_mus_firing_list
- 
+
     surrogate_binary_mus_firing_list = _generate_shuffled_binary_mus_firing(
         binary_mus_firing=binary_mus_firing,
         total_n_mus=tot_mus,
         number_of_surrogates=number_of_surrogates,
-        rng=rng,        
+        rng=rng,
         )
 
-    # Smooth binary spike trains by convolving with the window and scaling to preserve units in pps
-    smoothed_mus_firing = _smooth_spiketrains_convolution(
+    # Smooth binary spike trains by convolving with the window and scaling to
+    # preserve units in pps.
+    smoothed_mus_firing = smooth_spiketrains_convolution(
         binary_mus_firing,
         fsamp,
         window_type=window_type,
@@ -1199,15 +1311,10 @@ def common_drive_index(
     # Remove edge samples affected by convolution and filtering
     remove_edge_samples = int(round(fsamp * remove_edge_seconds))
     if remove_edge_samples > 0:
-        smoothed_mus_firing = smoothed_mus_firing[remove_edge_samples: -remove_edge_samples, :]
-        
-        warnings.warn(
-            f"Important! The first and last {remove_edge_seconds} seconds of"
-            f"the smoothed discharge profiles were removed to avoid edge"
-            f"artifacts from convolution and filtering.",
-            UserWarning,
-        )
-    
+        smoothed_mus_firing = smoothed_mus_firing[
+            remove_edge_samples: -remove_edge_samples, :
+        ]
+
     # High-pass filter smoothed discharge rates
     sos = signal.butter(
         N=filter_order,
@@ -1223,7 +1330,7 @@ def common_drive_index(
 
     for surrogate_binary_mus_firing in surrogate_binary_mus_firing_list:
 
-        surrogate_smoothed_mus_firing = _smooth_spiketrains_convolution(
+        surrogate_smoothed_mus_firing = smooth_spiketrains_convolution(
             surrogate_binary_mus_firing,
             fsamp,
             window_type=window_type,
@@ -1231,12 +1338,18 @@ def common_drive_index(
         )
 
         if remove_edge_samples > 0:
-            surrogate_smoothed_mus_firing = surrogate_smoothed_mus_firing[remove_edge_samples:-remove_edge_samples, :]
+            surrogate_smoothed_mus_firing = surrogate_smoothed_mus_firing[
+                remove_edge_samples:-remove_edge_samples, :
+            ]
 
-        surrogate_smoothed_mus_firing = signal.sosfiltfilt(sos, surrogate_smoothed_mus_firing, axis=0)
+        surrogate_smoothed_mus_firing = signal.sosfiltfilt(
+            sos, surrogate_smoothed_mus_firing, axis=0,
+        )
 
-        surrogate_smoothed_mus_firing_list.append(surrogate_smoothed_mus_firing)
-           
+        surrogate_smoothed_mus_firing_list.append(
+            surrogate_smoothed_mus_firing
+        )
+
     n_samples = smoothed_mus_firing.shape[0]
 
     if window_corr_seconds == -1:
@@ -1248,7 +1361,7 @@ def common_drive_index(
             overlap_corr_samples = segment_samples
         else:
             overlap_corr_samples = int(round(overlap_corr_seconds * fsamp))
-    max_lag_samples = int(round(max_lag_seconds * fsamp))  
+    max_lag_samples = int(round(max_lag_seconds * fsamp))
 
     n_windows = int(
         np.floor((n_samples - segment_samples) / overlap_corr_samples) + 1
@@ -1256,12 +1369,17 @@ def common_drive_index(
 
     if n_windows < 1:
         raise ValueError(
-            "The signal is shorter than window_corr_seconds after edge removal."
+            "The signal is shorter than window_corr_seconds after edge "
+            "removal."
         )
-    
+
     # ----------------------------------
-    # Internal function to calculate normalized cross-correlation between two signals with lag limits
+    # Internal function to calculate normalized cross-correlation between two
+    # signals with lag limits.
     # ----------------------------------
+    # TODO compare this with norm_xcorr in mathtools and think if these can be
+    # merged or _normalized_cross_correlation should be moved in mathtools.
+    # Not urgent.
     def _normalized_cross_correlation(
         signal_1,
         signal_2,
@@ -1344,13 +1462,13 @@ def common_drive_index(
             segment_correlations.append(peak_correlation)
 
         # Store average correlation values across windows for this pair
-        corr_values_all_windows = np.asarray(corr_values_all_windows,
-                                             dtype=np.float64,
-                                            )
-        average_corr_values = np.mean(corr_values_all_windows,
-                                      axis=0,
-                                      )
-        corr_signals_all_pairs.append(average_corr_values)   
+        corr_values_all_windows = np.asarray(
+            corr_values_all_windows, dtype=np.float64,
+        )
+        average_corr_values = np.mean(
+            corr_values_all_windows, axis=0,
+        )
+        corr_signals_all_pairs.append(average_corr_values)
 
         # ----------------------------------
         # Pairwise cross-correlation
@@ -1380,11 +1498,19 @@ def common_drive_index(
                         max_lag_samples=max_lag_samples,
                     )
 
-                    surrogate_peak_correlation = np.max(corr_values_surrogate)
-                    surrogate_segment_correlations.append(surrogate_peak_correlation)
+                    surrogate_peak_correlation = np.max(
+                        corr_values_surrogate
+                    )
+                    surrogate_segment_correlations.append(
+                        surrogate_peak_correlation
+                    )
 
-                surrogate_mean_peak_correlation = np.mean(surrogate_segment_correlations)
-                surrogate_peak_correlations_all.append(surrogate_mean_peak_correlation)
+                surrogate_mean_peak_correlation = np.mean(
+                    surrogate_segment_correlations
+                )
+                surrogate_peak_correlations_all.append(
+                    surrogate_mean_peak_correlation
+                )
 
         pair_results.append(
             {
@@ -1401,37 +1527,44 @@ def common_drive_index(
 
     # Transpose corr_signals_all_pairs to have shape n_lags x n_pairs
     corr_signals_all_pairs = np.array(corr_signals_all_pairs).T
-    lags_seconds = np.asarray(lags_seconds,dtype=np.float64)
+    lags_seconds = np.asarray(lags_seconds, dtype=np.float64)
 
     # Calculate the grand average correlation values across all pairs
-    grand_average_corr_values = np.mean(corr_signals_all_pairs,
-                                        axis=1,
-                                        )
+    grand_average_corr_values = np.mean(corr_signals_all_pairs, axis=1)
 
     # Convert to dataframe
     pairwise_correlation = pd.DataFrame(pair_results)
 
     # Calculate confidence level from surrogate data
-    surrogate_peak_correlations_all = np.asarray(surrogate_peak_correlations_all,
-                                                      dtype=np.float64,
-                                                      )
-    confidence_level = np.percentile(surrogate_peak_correlations_all,
-                                     confidence_percentile,
-                                    )
+    surrogate_peak_correlations_all = np.asarray(
+        surrogate_peak_correlations_all, dtype=np.float64,
+    )
+    confidence_level = np.percentile(
+        surrogate_peak_correlations_all, confidence_percentile,
+    )
 
-    # Add a column in the dataframe indicating whether the mean pair correlation is above the confidence level
-    significant_mask = (pairwise_correlation["mean_correlation"] > confidence_level)
+    # Add a column in the dataframe indicating whether the mean pair
+    # correlation is above the confidence level.
+    significant_mask = (
+        pairwise_correlation["mean_correlation"] > confidence_level
+    )
     pairwise_correlation["significant"] = significant_mask
 
     # Thresholded square correlation matrix
     pairwise_correlation_matrix_thresholded = pairwise_correlation_matrix.copy()
-    pairwise_correlation_matrix_thresholded[pairwise_correlation_matrix_thresholded < confidence_level] = 0.0
+    pairwise_correlation_matrix_thresholded[
+        pairwise_correlation_matrix_thresholded < confidence_level
+    ] = 0.0
 
-    # Calculate the common drive index as the average of the mean correlations across all pairs.
+    # Calculate the common drive index as the average of the mean correlations
+    # across all pairs.
     common_drive_index_mean = pairwise_correlation["mean_correlation"].mean()
-    common_drive_index_std = pairwise_correlation["mean_correlation"].std(ddof=1)
+    common_drive_index_std = pairwise_correlation["mean_correlation"].std(
+        ddof=1,
+    )
 
-    # Calculate the common drive index considering only pairs above the confidence level
+    # Calculate the common drive index considering only pairs above the
+    # confidence level.
     n_significant_pairs = int(np.sum(significant_mask))
     if n_significant_pairs > 0:
         common_drive_index_thresholded_mean = (
@@ -1452,7 +1585,7 @@ def common_drive_index(
 
     cdi_results = {
         "smoothed_mus_firing": smoothed_mus_firing,
-         
+
         "pairwise_correlation": pairwise_correlation,
         "pairwise_correlation_matrix": pairwise_correlation_matrix,
         "pairwise_correlation_matrix_thresholded": pairwise_correlation_matrix_thresholded,
@@ -1470,6 +1603,7 @@ def common_drive_index(
 
     return cdi_results
 
+
 def pci_index(
     emgfile,
     number_iterations=100,
@@ -1483,11 +1617,13 @@ def pci_index(
     random_state=42,
 ):
     """
-    Estimate the proportion of common input index (PCI) from motor unit spike trains.
+    Estimate the proportion of common input index (PCI) from motor unit spike
+    trains.
 
-    This implementation follows the logic of Negro et al. (2016), where coherence
-    is calculated between two CSTs containing n motor units each. The number of
-    motor units per CST is varied from 1 to floor(total number of MUs / 2).
+    This implementation follows the logic of Negro et al. (2016), where
+    coherence is calculated between two CSTs containing n motor units each.
+    The number of motor units per CST is varied from 1 to floor (total number
+    of MUs / 2).
 
     The relationship between average coherence and number of units per CST is
     fitted using Eq. 4:
@@ -1498,11 +1634,13 @@ def pci_index(
 
         PCI = sqrt(A / B)
 
-    References: Negro et al., 2016 (https://doi.org/10.1113/JP271748).
+    References:
+
+    - Negro et al., 2016 (https://doi.org/10.1113/JP271748).
 
     Parameters
     ----------
-   emgfile : dict
+    emgfile : dict
         The dictionary containing the emgfile.
     number_iterations : int, default 100
         Number of random permutations. If the number of unique splits
@@ -1523,22 +1661,30 @@ def pci_index(
     beta_frequency_range : list, default [15, 35]
         Beta frequency range in Hz.
     random_state : int, default 42
-        Random seed for reproducible random permutations.   emgfile : dict
-        The dictionary containing the emgfile.
+        Random seed for reproducible random permutations.
 
     Returns
     -------
     pci_results : dict
-        Dictionary containing coherence-vs-CST-size values and fitted PCI values.
-            - "pci_coherence_df": dataframe containing the number of MUs per CST and the corresponding average coherence values for each frequency band (dataframe)
-            - "fitted_pci_coherence_df": dataframe containing the number of MUs per CST and the corresponding fitted coherence values using the fitted A and B parameters for each frequency band (dataframe)
-            - "pci_fit_df": dataframe containing the fitted A and B parameters, and the PCI index for each frequency band (dataframe)
-    
+        Dictionary containing coherence-vs-CST-size values and fitted PCI
+        values. Keys are:
+
+        - "pci_coherence_df": dataframe containing the number of MUs per CST
+        and the corresponding average coherence values for each frequency band
+        (dataframe).
+        - "fitted_pci_coherence_df": dataframe containing the number of MUs
+        per CST and the corresponding fitted coherence values using the fitted
+        A and B parameters for each frequency band (dataframe).
+        - "pci_fit_df": dataframe containing the fitted A and B parameters,
+        and the PCI index for each frequency band (dataframe).
+
     Notes
     -------
-    The PCI index is typically implemented only for the delta band (see Negro et al., 2016), but this function also fits the model 
-    and estimates the PCI for alpha and beta bands.
+    The PCI index is typically implemented only for the delta band (see Negro
+    et al., 2016), but this function also fits the model and estimates the PCI
+    for alpha and beta bands.
     """
+
     # ----------------------------------
     # Validate inputs
     # ----------------------------------
@@ -1564,12 +1710,6 @@ def pci_index(
 
     binary_mus_firing = emgfile["BINARY_MUS_FIRING"].to_numpy(dtype=np.int64)
 
-    warnings.warn(
-        "Important! emgfile['BINARY_MUS_FIRING'] was converted to int64 "
-        "to avoid overflow errors.",
-        UserWarning,
-    )
-
     rng = np.random.default_rng(random_state)
 
     # ----------------------------------
@@ -1582,7 +1722,10 @@ def pci_index(
     elif window_type == "hamming":
         window = signal.windows.hamming(window_samples, sym=True)
     else:
-        raise ValueError("Unsupported window_type. Supported types are 'hanning' and 'hamming'.")
+        raise ValueError(
+            "Unsupported window_type. Supported types are 'hanning' and "
+            "'hamming'."
+        )
 
     overlap_samples = int(round(fsamp * overlap_seconds))
 
@@ -1601,7 +1744,8 @@ def pci_index(
     pci_rows = []
 
     # ----------------------------------
-    # Internal function to calculate pooled coherence for a fixed number of MUs per CST
+    # Internal function to calculate pooled coherence for a fixed number of
+    # MUs per CST.
     # ----------------------------------
     def _pooled_coherence_for_fixed_cst_size(
         binary_mus_firing,
@@ -1630,11 +1774,13 @@ def pci_index(
         use_all_unique_splits = unique_split_count < number_iterations
 
         if use_all_unique_splits:
-            warnings.warn(
-                f"Only {unique_split_count} unique CST group splits are possible. "
-                f"number_iterations will be set to {unique_split_count}.",
-                UserWarning,
+            msg = (
+                f"Only {unique_split_count} unique CST group splits are "
+                "possible. number_iterations will be set to "
+                f"{unique_split_count}.",
             )
+            warnings.warn(msg, UserWarning)
+
             group_pairs = []
             used_splits = set()
 
@@ -1842,7 +1988,7 @@ def pci_index(
     average_coherence_df = pd.DataFrame(pci_rows)
 
     # ----------------------------------
-    # Internal function to calculate the PCI model values for a given n, A, and B
+    # Internal function to calculate the PCI model values for a given n, A, B.
     # ----------------------------------
     def _pci_model(
         n,
@@ -1919,7 +2065,7 @@ def pci_index(
                 "PCI": np.nan,
                 "fitted_coherence": np.full_like(n_units, np.nan, dtype=float),
             }
-    
+
     # ----------------------------------
     # Fit Eq. 4 for each frequency band
     # ----------------------------------
@@ -1928,7 +2074,7 @@ def pci_index(
         "delta": "average_delta",
         "alpha": "average_alpha",
         "beta": "average_beta",
-        }.items():
+    }.items():
 
         fit_results[band_name] = _fit_pci_model(
             n_units=average_coherence_df["number_of_mus_cst"],
@@ -1958,11 +2104,12 @@ def pci_index(
 
     pci_results = {
         "pci_fit_df": pci_fit_df,
-        "average_coherence_df": average_coherence_df,        
+        "average_coherence_df": average_coherence_df,
         "fitted_average_coherence_df": fitted_average_coherence_df,
     }
 
     return pci_results
+
 
 def network_information_framework(
     emgfile,
@@ -1974,20 +2121,24 @@ def network_information_framework(
     type_clustering="single",
 ):
     """
-    Estimate non-linear dependencies between motor units using pairwise mutual information.
+    Estimate non-linear dependencies between MUs using pairwise mutual
+    information.
 
     This method:
-        1. Smooths binary motor unit spike trains.
-        2. High-pass filters the smoothed discharge rates.
-        3. Copula-normalizes each motor unit discharge-rate profile.
-        4. Estimates pairwise Gaussian mutual information between motor units.
-        5. Constructs a symmetric mutual-information network.
-        6. Applies modified percolation analysis to identify a network threshold.
-        7. Applies link-community detection to identify overlapping modules.
 
-    References: O'Reilly & Delis, 2022 (https://doi.org/10.1088/1741-2552/ac5150).
-                O'Reilly & Delis, 2024 (https://doi.org/10.7554/eLife.87651.4).
-                Cabral et al., 2025 (https://doi.org/10.1016/j.isci.2025.113483).
+    1. Smooths binary motor unit spike trains.
+    2. High-pass filters the smoothed discharge rates.
+    3. Copula-normalizes each motor unit discharge-rate profile.
+    4. Estimates pairwise Gaussian mutual information between motor units.
+    5. Constructs a symmetric mutual-information network.
+    6. Applies modified percolation analysis to identify a network threshold.
+    7. Applies link-community detection to identify overlapping modules.
+
+    References:
+
+    - O'Reilly & Delis, 2022 (https://doi.org/10.1088/1741-2552/ac5150)
+    - O'Reilly & Delis, 2024 (https://doi.org/10.7554/eLife.87651.4)
+    - Cabral et al., 2025 (https://doi.org/10.1016/j.isci.2025.113483)
 
     Parameters
     ----------
@@ -2000,32 +2151,49 @@ def network_information_framework(
     filter_order : int, default 3
         Butterworth filter order.
     remove_edge_seconds : float, default 1
-        Number of seconds to remove from the beginning and end of the smoothed 
-        discharge profiles to avoid edge artifacts from convolution and filtering.
-    type_clustering : str, default "single"
-        Link-community clustering type. Options:
-            - "single"
-            - "complete"
+        Number of seconds to remove from the beginning and end of the smoothed
+        discharge profiles to avoid edge artifacts from convolution and
+        filtering.
+    type_clustering : str {"single", "complete"}, default "single"
+        Link-community clustering type.
+
+        ``single``
+
+        ``complete``
 
     Returns
     -------
     network_results : dict
-        Dictionary containing:
-            - smoothed_mus_firing: the smoothed binary spike trains calculated by window convolution (numpy array)
-                smoothed_mus_firing has the same shape as the input binary_mus_firing (samples x motor units).
-            - pairwise_mi: dataframe of average pairwise mutual information and if it is significant for each motor unit pair (dataframe)
-            - pairwise_mi_matrix: square matrix of average pairwise mutual information between all motor unit pairs (numpy array)
-                pairwise_mi_matrix[i,j] contains the average pairwise mutual information between motor unit i and j.
-            - pairwise_mi_matrix_thresholded : thresholded mutual-information matrix (numpy array)
-                mutual-information values that are not significant are set to zero.
-            - network_density : network density after thresholding (float)
-            - confidence_level : the confidence level calculated using the percolation analysis to determine if a mutual-information value is significant (float)
-            - percentage_significant_pairs: percentage of motor unit pairs with significant mutual information (float)
-            - module_affiliation_matrix: binary matrix indicating the module affiliation of each motor unit (numpy array)
-                module_affiliation_matrix[i,j] is 1 if motor unit j belongs to component (or community) i, and 0 otherwise.
-            - number_of_components: number of low-dimensional components (communities) of the mutual-information network (int)
-            - percentage_mus_first_component: percentage of motor units that belong to the first component (float)
-    """  
+        Dictionary containing keys:
+
+        - smoothed_mus_firing: the smoothed binary spike trains calculated by
+        window convolution (numpy array). smoothed_mus_firing has the same
+        shape as the input binary_mus_firing (samples x motor units).
+        - pairwise_mi: dataframe of average pairwise mutual information and if
+        it is significant for each motor unit pair (dataframe).
+        - pairwise_mi_matrix: square matrix of average pairwise mutual
+        information between all motor unit pairs (numpy array).
+        pairwise_mi_matrix[i,j] contains the average pairwise mutual
+        information between motor unit i and j.
+        - pairwise_mi_matrix_thresholded : thresholded mutual-information
+        matrix (numpy array). Mutual-information values that are not
+        significant are set to zero.
+        - network_density : network density after thresholding (float)
+        - confidence_level : the confidence level calculated using the
+        percolation analysis to determine if a mutual-information value is
+        significant (float).
+        - percentage_significant_pairs: percentage of motor unit pairs with
+        significant mutual information (float).
+        - module_affiliation_matrix: binary matrix indicating the module
+        affiliation of each motor unit (numpy array).
+        module_affiliation_matrix[i,j] is 1 if motor unit j belongs to
+        component (or community) i, and 0 otherwise.
+        - number_of_components: number of low-dimensional components
+        (communities) of the mutual-information network (int).
+        - percentage_mus_first_component: percentage of motor units that
+        belong to the first component (float).
+    """
+
     # ----------------------------------
     # Validate inputs
     # ----------------------------------
@@ -2040,7 +2208,7 @@ def network_information_framework(
 
     if tot_mus < 2:
         raise ValueError(
-            "At least 2 motor units are required for network-information analysis."
+            "At least 2 MUs are required for network-information analysis."
         )
 
     if window_duration_seconds <= 0:
@@ -2050,7 +2218,9 @@ def network_information_framework(
         raise ValueError("filter_highcut must be positive.")
 
     if filter_highcut >= fsamp / 2:
-        raise ValueError("filter_highcut must be lower than Nyquist frequency.")
+        raise ValueError(
+            "filter_highcut must be lower than Nyquist frequency."
+        )
 
     if type_clustering not in ["single", "complete"]:
         raise ValueError("type_clustering must be 'single' or 'complete'.")
@@ -2066,7 +2236,7 @@ def network_information_framework(
     # ----------------------------------
     # Smooth binary spike trains
     # ----------------------------------
-    smoothed_mus_firing = _smooth_spiketrains_convolution(
+    smoothed_mus_firing = smooth_spiketrains_convolution(
         binary_mus_firing,
         fsamp,
         window_type=window_type,
@@ -2088,13 +2258,6 @@ def network_information_framework(
             remove_edge_samples:-remove_edge_samples,
             :
         ]
-
-        warnings.warn(
-            f"Important! The first and last {remove_edge_seconds} seconds of "
-            f"the smoothed discharge profiles were removed to avoid edge "
-            f"artifacts from convolution and filtering.",
-            UserWarning,
-        )
 
     # ----------------------------------
     # High-pass filter smoothed discharge rates
@@ -2154,16 +2317,17 @@ def network_information_framework(
         x_norm = -np.sqrt(2) * erfcinv(2 * x_cdf)
 
         return x_norm
-    
+
     X = smoothed_mus_firing
     X_norm = _copnorm(X)
 
     # -----------------------------------
     # Step 2: Pairwise mutual information
     # -----------------------------------
-    
+
     # -----------------------------------
-    # Internal function to calculate mutual information between two Gaussian variables
+    # Internal function to calculate mutual information between two Gaussian
+    # variables.
     # -----------------------------------
     def _mi_gg(
         x,
@@ -2245,7 +2409,7 @@ def network_information_framework(
 
         I = (HX + HY - HXY) / ln2
 
-        return float(I)
+        return float(I)  # TODO ambiguous variable name 'I' Flake8(E741), do not use I or O as variable names
 
     pairwise_mi_matrix = np.zeros((tot_mus, tot_mus), dtype=np.float64)
     mi_rows = []
@@ -2280,7 +2444,8 @@ def network_information_framework(
     # -----------------------------------
     def _number_connected_components(A):
         """
-        Return the number of connected components in an undirected adjacency matrix.
+        Return the number of connected components in an undirected adjacency
+        matrix.
         """
 
         A = np.asarray(A)
@@ -2297,7 +2462,7 @@ def network_information_framework(
         )
 
         return int(n_components), labels
-    
+
     # -----------------------------------
     # Internal function to apply absolute thresholding
     # -----------------------------------
@@ -2313,7 +2478,7 @@ def network_information_framework(
         W[W < threshold] = 0.0
 
         return W
-    
+
     # -----------------------------------
     # Internal function to apply modified percolation analysis
     # -----------------------------------
@@ -2383,14 +2548,17 @@ def network_information_framework(
 
     confidence_level = _modified_percolation_analysis(pairwise_mi_matrix)
 
-    # Add a column in the dataframe indicating whether the mean pair correlation is above the confidence level
+    # Add a column in the dataframe indicating whether the mean pair
+    # correlation is above the confidence level.
     significant_mask = (pairwise_mi["mutual_information"] > confidence_level)
     pairwise_mi["significant"] = significant_mask
     n_significant_pairs = int(np.sum(significant_mask))
 
     # Thresholded network
     pairwise_mi_matrix_thresholded = pairwise_mi_matrix.copy()
-    pairwise_mi_matrix_thresholded[pairwise_mi_matrix_thresholded < confidence_level] = 0.0
+    pairwise_mi_matrix_thresholded[
+        pairwise_mi_matrix_thresholded < confidence_level
+    ] = 0.0
     pairwise_mi_matrix_thresholded[pairwise_mi_matrix_thresholded < 0] = 0.0
 
     # ------------------------------------
@@ -2605,7 +2773,8 @@ def network_information_framework(
                 break
 
             # Merge the first maximal pair.
-            # This is simpler than MATLAB's all-ties merge but follows the same principle.
+            # This is simpler than MATLAB's all-ties merge but follows the
+            # same principle.  # TODO do we need this comment?
             u1_pos, u2_pos = merge_positions[0]
 
             link_1 = U[u1_pos]
@@ -2654,11 +2823,15 @@ def network_information_framework(
             module_affiliation_matrix[j, nodes] = 1
 
         # Remove modules with <=2 nodes:
-        module_affiliation_matrix = module_affiliation_matrix[np.sum(module_affiliation_matrix, axis=1) > 2, :]
+        module_affiliation_matrix = module_affiliation_matrix[
+            np.sum(module_affiliation_matrix, axis=1) > 2, :
+        ]
 
         return module_affiliation_matrix
 
-    module_affiliation_matrix = _link_communities(pairwise_mi_matrix_thresholded, type_clustering=type_clustering)
+    module_affiliation_matrix = _link_communities(
+        pairwise_mi_matrix_thresholded, type_clustering=type_clustering,
+    )
 
     number_of_components = int(module_affiliation_matrix.shape[0])
 
@@ -2688,7 +2861,9 @@ def network_information_framework(
 
         "module_affiliation_matrix": module_affiliation_matrix,
         "number_of_components": number_of_components,
-        "percentage_mus_first_component": percentage_mus_first_component,  
+        "percentage_mus_first_component": percentage_mus_first_component,
     }
 
     return network_results
+
+# TODO in the docstrings, use MU and MUs instead of motor units. Not urgent.
