@@ -47,19 +47,25 @@ def pooled_intramuscular_coherence(
     emgfile : dict
         The dictionary containing the emgfile.
     number_of_mus_cst : int, default -1
-        Number of MUss included in each group for the cumulative spike
+        Number of MUs included in each group for the cumulative spike
         train. If -1, defaults to floor(number_of_mus / 2).
     number_iterations : int, default 100
         Number of random permutations.
-    window_type : str, default "hanning"
-        Type of window used for spectral estimation.
+    window_type : str {"hanning", "hamming"}, default "hanning"
+        Type of window used for spectral estimation. Can be:
+
+        ``hanning``
+            A Hann window.
+
+        ``hamming``
+            A Hamming window
     window_duration_seconds : float, default 1
         Size of the window for coherence estimation in seconds.
     overlap_seconds : float, default 0.5
         Number of seconds of overlap between adjoining segments. Considering a
         window_duration_seconds of 1 second, an overlap of 0.5 seconds means a
         50% overlap.
-    nfft : int, optional
+    nfft : int or None, default None
         Number of FFT points. If None, defaults to 10 * fsamp.
     random_state : int, default 42
         Random seed for reproducible random permutations.
@@ -68,7 +74,7 @@ def pooled_intramuscular_coherence(
     -------
     coherence_results : dict
         Dictionary containing the following keys:
-        
+
         - "coherence_all_pairs": list of numpy arrays containing the
         coherence signals for all CST pairs (list of numpy arrays).
         - "coherence": the coherence curve (numpy array).
@@ -156,7 +162,7 @@ def pooled_intramuscular_coherence(
         comb(tot_mus, number_of_mus_cst)
         * comb(tot_mus - number_of_mus_cst, number_of_mus_cst)
         // 2
-    ) 
+    )
 
     # If the number of unique splits is smaller than the requested number of
     # iterations, use all unique splits and warn the user.
@@ -270,9 +276,9 @@ def pooled_intramuscular_coherence(
         # Compute coherence for each iteration and store it
         coherence_iteration = (np.abs(cross_spectra) ** 2 / (
             auto_spectra_1 * auto_spectra_2)
-        ) 
+        )
         coherence_all_pairs.append(coherence_iteration)
-        
+
         if pooled_auto_spectra_1 is None:
             pooled_auto_spectra_1 = np.zeros_like(
                 auto_spectra_1, dtype=np.float64
@@ -288,10 +294,10 @@ def pooled_intramuscular_coherence(
         pooled_auto_spectra_1 += auto_spectra_1
         pooled_auto_spectra_2 += auto_spectra_2
         pooled_cross_spectra += cross_spectra
-    
+
     # Transpose individual coherence
-    coherence_all_pairs = np.array(coherence_all_pairs).T 
-    
+    coherence_all_pairs = np.array(coherence_all_pairs).T
+
     # Average the pooled spectra by dividing by the number of iterations
     pooled_auto_spectra_1 /= number_iterations
     pooled_auto_spectra_2 /= number_iterations
@@ -653,8 +659,14 @@ def smooth_spiketrains_convolution(
     ----------
     binary_mus_firing : np.ndarray
         The binary MU firing data.
-    window_type : str, default "hanning"
-        Type of window used for smoothing.
+    window_type : str {"hanning", "hamming"}, default "hanning"
+        Type of window used for spectral estimation. Can be:
+
+        ``hanning``
+            A Hann window.
+
+        ``hamming``
+            A Hamming window
     window_duration_seconds : float, default 0.4
         Smoothing window duration in seconds.
 
@@ -1657,13 +1669,19 @@ def pci_index(
     number_iterations : int, default 100
         Number of random permutations. If the number of unique splits
         is smaller than number_iterations, all unique splits are used.
-    window_type : str, default "hanning"
-        Type of window used for spectral estimation.
+    window_type : str {"hanning", "hamming"}, default "hanning"
+        Type of window used for spectral estimation. Can be:
+
+        ``hanning``
+            A Hann window.
+
+        ``hamming``
+            A Hamming window
     window_duration_seconds : float, default 1
         Size of the window for coherence estimation in seconds.
     overlap_seconds : float, default 0
         Number of seconds of overlap between adjoining segments.
-    nfft : int, optional
+    nfft : int or None, default None
         Number of FFT points.
         If None, defaults to 10 * fsamp.
     delta_frequency_range : list, default [1, 5]
@@ -1681,10 +1699,10 @@ def pci_index(
         Dictionary containing coherence-vs-CST-size values and fitted PCI
         values. Keys are:
 
-        - "pci_coherence_df": dataframe containing the number of MUs per CST
+        - "average_coherence_df": dataframe containing the number of MUs per CST
         and the corresponding average coherence values for each frequency band
         (dataframe).
-        - "fitted_pci_coherence_df": dataframe containing the number of MUs
+        - "fitted_average_coherence_df": dataframe containing the number of MUs
         per CST and the corresponding fitted coherence values using the fitted
         A and B parameters for each frequency band (dataframe).
         - "pci_fit_df": dataframe containing the fitted A and B parameters,
@@ -2115,9 +2133,9 @@ def pci_index(
     )
 
     pci_results = {
-        "pci_fit_df": pci_fit_df,
         "average_coherence_df": average_coherence_df,
         "fitted_average_coherence_df": fitted_average_coherence_df,
+        "pci_fit_df": pci_fit_df,
     }
 
     return pci_results
@@ -2238,12 +2256,6 @@ def smoothed_dr_mutualinformation(
         raise ValueError("type_clustering must be 'single' or 'complete'.")
 
     binary_mus_firing = emgfile["BINARY_MUS_FIRING"].to_numpy(dtype=np.int64)
-
-    warnings.warn(
-        "Important! emgfile['BINARY_MUS_FIRING'] was converted to int64 "
-        "to avoid overflow errors.",
-        UserWarning,
-    )
 
     # ----------------------------------
     # Smooth binary spike trains
