@@ -1211,7 +1211,7 @@ def plot_emgsig(
     )
 
     # Show the figure
-    if showimmediately:
+    if showimmediately is True and use_plt is True:
         plt.show()
 
     return fig
@@ -1468,7 +1468,7 @@ def plot_differentials(
         despine="2yaxes" if addrefsig else "1yaxis",
     )
 
-    if showimmediately:
+    if showimmediately is True and use_plt is True:
         plt.show()
 
     return fig
@@ -1620,7 +1620,7 @@ def plot_refsig(
     # Set appropriate layout
     fig_manager.set_layout(tight_layout=tight_layout, despine="1yaxis")
 
-    if showimmediately:
+    if showimmediately is True and use_plt is True:
         plt.show()
 
     return fig
@@ -1762,7 +1762,7 @@ def plot_mupulses(
             use_plt=use_plt, figname="MUs pulses",
         )
         ax1.set_title("No motor units to plot")
-        if showimmediately:
+        if showimmediately is True and use_plt is True:
             plt.show()
         return fig
 
@@ -1890,7 +1890,7 @@ def plot_mupulses(
         despine="2yaxes" if addrefsig else "1yaxis",
     )
 
-    if showimmediately:
+    if showimmediately is True and use_plt is True:
         plt.show()
 
     return fig
@@ -2084,7 +2084,7 @@ def plot_ipts(
             use_plt=use_plt, figname="IPTS",
         )
         ax1.set_title("No motor units to plot")
-        if showimmediately:
+        if showimmediately is True and use_plt is True:
             plt.show()
         return fig
 
@@ -2231,7 +2231,7 @@ def plot_ipts(
     )
 
     # Show the figure
-    if showimmediately:
+    if showimmediately is True and use_plt is True:
         plt.show()
 
     return fig
@@ -2384,7 +2384,7 @@ def plot_idr(
             use_plt=use_plt, figname="IDR",
         )
         ax1.set_title("No motor units to plot")
-        if showimmediately:
+        if showimmediately is True and use_plt is True:
             plt.show()
         return fig
 
@@ -2497,7 +2497,7 @@ def plot_idr(
     )
 
     # Show the figure
-    if showimmediately:
+    if showimmediately is True and use_plt is True:
         plt.show()
 
     return fig
@@ -2678,7 +2678,7 @@ def plot_smoothed_dr(
             use_plt=use_plt, figname="Smoothed DR",
         )
         ax1.set_title("No motor units to plot")
-        if showimmediately:
+        if showimmediately is True and use_plt is True:
             plt.show()
         return fig
 
@@ -2864,7 +2864,7 @@ def plot_smoothed_dr(
     )
 
     # Show the figure
-    if showimmediately:
+    if showimmediately is True and use_plt is True:
         plt.show()
 
     return fig
@@ -3148,7 +3148,7 @@ def plot_muaps(
     fig_manager.set_layout(tight_layout=tight_layout, despine="all")
 
     # Show the figure
-    if showimmediately:
+    if showimmediately is True and use_plt is True:
         plt.show()
 
     return fig
@@ -3476,7 +3476,7 @@ def plot_muap(
     )
 
     # Show the figure
-    if showimmediately:
+    if showimmediately is True and use_plt is True:
         plt.show()
 
     return fig
@@ -3702,7 +3702,7 @@ def plot_muaps_for_cv(
     fig_manager.set_layout(tight_layout=tight_layout, despine="all")
 
     # Show the figure
-    if showimmediately:
+    if showimmediately is True and use_plt is True:
         plt.show()
 
     return fig
