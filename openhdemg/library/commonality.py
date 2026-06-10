@@ -26,7 +26,7 @@ def pooled_intramuscular_coherence(
 
     The procedure follows these steps:
 
-    1. Randomly split motor units into two groups.
+    1. Randomly split MUs into two groups.
     2. Sum the binary spike trains within each group to obtain two cumulative
     spike trains (CSTs).
     3. Estimate auto-spectra of CST 1 and CST 2.
@@ -47,7 +47,7 @@ def pooled_intramuscular_coherence(
     emgfile : dict
         The dictionary containing the emgfile.
     number_of_mus_cst : int, default -1
-        Number of motor units included in each group for the cumulative spike
+        Number of MUss included in each group for the cumulative spike
         train. If -1, defaults to floor(number_of_mus / 2).
     number_iterations : int, default 100
         Number of random permutations.
@@ -68,7 +68,9 @@ def pooled_intramuscular_coherence(
     -------
     coherence_results : dict
         Dictionary containing the following keys:
-
+        
+        - "coherence_all_pairs": list of numpy arrays containing the
+        coherence signals for all CST pairs (list of numpy arrays).
         - "coherence": the coherence curve (numpy array).
         - "frequency": the frequency values corresponding to the coherence
         curve (numpy array).
@@ -86,7 +88,7 @@ def pooled_intramuscular_coherence(
 
     if not emgfile["MUPULSES"]:
         raise ValueError(
-            "There are no motor unit pulses in the emgfile. "
+            "There are no MU pulses in the emgfile. "
             "Please check that MUPULSES is not empty."
         )
 
@@ -98,7 +100,7 @@ def pooled_intramuscular_coherence(
             "least 2."
         )
 
-    # Determine the number of motor units in each cumulative spike train group
+    # Determine the number of MUs in each cumulative spike train group
     # (number_of_mus_cst).
     if number_of_mus_cst == -1:
         number_of_mus_cst = tot_mus // 2
@@ -106,7 +108,7 @@ def pooled_intramuscular_coherence(
         msg = (
             "number_of_mus_cst is greater than half of total number of motor "
             "units. number_of_mus_cst will be set to half of total number of "
-            "motor units."
+            "MUs."
         )
         warnings.warn(msg, UserWarning)
         number_of_mus_cst = tot_mus // 2
@@ -203,6 +205,7 @@ def pooled_intramuscular_coherence(
     # ----------------------------------
 
     # Initialize variables
+    coherence_all_pairs = []
     pooled_auto_spectra_1 = None
     pooled_auto_spectra_2 = None
     pooled_cross_spectra = None
@@ -264,6 +267,12 @@ def pooled_intramuscular_coherence(
             scaling="density",
         )
 
+        # Compute coherence for each iteration and store it
+        coherence_iteration = (np.abs(cross_spectra) ** 2 / (
+            auto_spectra_1 * auto_spectra_2)
+        ) 
+        coherence_all_pairs.append(coherence_iteration)
+        
         if pooled_auto_spectra_1 is None:
             pooled_auto_spectra_1 = np.zeros_like(
                 auto_spectra_1, dtype=np.float64
@@ -279,7 +288,10 @@ def pooled_intramuscular_coherence(
         pooled_auto_spectra_1 += auto_spectra_1
         pooled_auto_spectra_2 += auto_spectra_2
         pooled_cross_spectra += cross_spectra
-
+    
+    # Transpose individual coherence
+    coherence_all_pairs = np.array(coherence_all_pairs).T 
+    
     # Average the pooled spectra by dividing by the number of iterations
     pooled_auto_spectra_1 /= number_iterations
     pooled_auto_spectra_2 /= number_iterations
@@ -295,6 +307,7 @@ def pooled_intramuscular_coherence(
 
     # Ensure that variables are in the proper data type (e.g., float64) before
     # returning the results.
+    coherence_all_pairs = np.asarray(coherence_all_pairs, dtype=np.float64)
     coherence = np.asarray(coherence, dtype=np.float64)
     frequency = np.asarray(frequency, dtype=np.float64)
     window_duration_seconds = float(window_duration_seconds)
@@ -303,6 +316,7 @@ def pooled_intramuscular_coherence(
     overlap_seconds = float(overlap_seconds)
 
     coherence_results = {
+        "coherence_all_pairs": coherence_all_pairs,
         "coherence": coherence,
         "frequency": frequency,
         "window_duration_seconds": window_duration_seconds,
@@ -638,7 +652,7 @@ def smooth_spiketrains_convolution(
     Parameters
     ----------
     binary_mus_firing : np.ndarray
-        The binary motor unit firing data.
+        The binary MU firing data.
     window_type : str, default "hanning"
         Type of window used for smoothing.
     window_duration_seconds : float, default 0.4
@@ -647,9 +661,9 @@ def smooth_spiketrains_convolution(
     Returns
     -------
     smoothed_mus_firing : np.ndarray
-        Smoothed motor unit discharge rates obtained by convolving the binary
+        Smoothed MU discharge rates obtained by convolving the binary
         spike train with the specified window. Arrangement of the output array
-        is the same as binary_mus_firing (samples x motor units).
+        is the same as binary_mus_firing (samples x MUs).
     """
 
     # ----------------------------------
@@ -686,7 +700,7 @@ def smooth_spiketrains_convolution(
     return smoothed_mus_firing
 
 
-def pca_components(
+def smoothed_dr_pca(
     emgfile,
     window_type="hanning",
     window_duration_seconds=0.4,
@@ -700,16 +714,16 @@ def pca_components(
     random_state=42,
 ):
     """
-    Estimate low-dimensional components from motor unit spike trains
+    Estimate low-dimensional components from MU spike trains
     using PCA applied to smoothed discharge-rate profiles.
 
     The procedure follows this pipeline:
 
-    1. Convert binary motor unit spike trains to smoothed discharge-rate
+    1. Convert binary MU spike trains to smoothed discharge-rate
     profiles.
     2. High-pass filter the smoothed discharge rates to remove offsets and
     slow trends.
-    3. Standardize each motor unit discharge profile.
+    3. Standardize each MU discharge profile.
     4. Calculate the covariance/correlation matrix.
     5. Extract eigenvalues and eigenvectors.
     6. Use parallel analysis to estimate the number of components to
@@ -767,7 +781,7 @@ def pca_components(
 
         - "smoothed_mus_firing": the smoothed binary spike trains calculated
         by window convolution (numpy array) smoothed_mus_firing has the same
-        shape as the input binary_mus_firing (samples x motor units).
+        shape as the input binary_mus_firing (samples x MUs).
         - "kmo": the Kaiser-Meyer-Olkin measure of sampling adequacy (float).
         - "method_n_components": the selected method to estimate the number of
         components to retain (str).
@@ -805,7 +819,7 @@ def pca_components(
     # ----------------------------------
     if not emgfile["MUPULSES"]:
         raise ValueError(
-            "There are no motor unit pulses in the emgfile. "
+            "There are no MU pulses in the emgfile. "
             "Please check that MUPULSES is not empty."
         )
 
@@ -919,7 +933,7 @@ def pca_components(
 
     if np.any(column_std == 0):
         raise ValueError(
-            "At least one motor unit has zero standard deviation after "
+            "At least one MU has zero standard deviation after "
             "smoothing. PCA cannot be performed."
         )
 
@@ -956,14 +970,14 @@ def pca_components(
             """
             Parallel analysis for PCA.
 
-            Each motor unit column is independently shuffled, preserving the
-            marginal distribution of each motor unit but destroying temporal
+            Each MU column is independently shuffled, preserving the
+            marginal distribution of each MU but destroying temporal
             covariance between them.
 
             Parameters
             ----------
             dataset : np.ndarray
-                Data matrix with shape samples x motor units.
+                Data matrix with shape samples x MUs.
             number_iterations_pa : int, default 1000
                 Number of shuffled datasets.
             percentile_pa : float, default 95
@@ -1011,23 +1025,17 @@ def pca_components(
 
                 simulated_eigenvalues[:, iteration] = eigenvalues
 
-            mean_eigenvalues_pa = np.mean(
-                simulated_eigenvalues,
-                axis=1,
-            )
-
             percentile_eigenvalues_pa = np.percentile(
                 simulated_eigenvalues,
                 percentile_pa,
                 axis=1,
             )
 
-            return mean_eigenvalues_pa, percentile_eigenvalues_pa
-            # TODO mean_eigenvalues_pa is never used, do we really need to return it?
+            return percentile_eigenvalues_pa
 
         # Run parallel analysis to get mean and percentile eigenvalues from
         # shuffled data.
-        _, percentile_eigenvalues_pa = _parallel_analysis_eigenvalues(
+        percentile_eigenvalues_pa = _parallel_analysis_eigenvalues(
             dataset=smoothed_mus_firing,
             number_iterations_pa=number_iterations_pa,
             percentile_pa=percentile_pa,
@@ -1111,10 +1119,10 @@ def common_drive_index(
 ):
     """
     Calculate the common drive index as the average pairwise cross-correlation
-    between smoothed motor unit discharge profiles.
+    between smoothed MU discharge profiles.
 
     Cross-correlation is calculated in windows of window_corr_seconds.
-    For each motor unit pair, the maximum absolute correlation within
+    For each MU pair, the maximum absolute correlation within
     +/- max_lag_seconds is extracted for each segment and then averaged
     across segments.
 
@@ -1158,27 +1166,27 @@ def common_drive_index(
         has the same shape as the input binary_mus_firing (samples x motor
         units).
         - "pairwise_correlation": dataframe of average pairwise correlation
-        and if it is significant for each motor unit pair (dataframe).
+        and if it is significant for each MU pair (dataframe).
         - "pairwise_correlation_matrix": square matrix of average pairwise
-        correlations between all motor unit pairs (numpy array).
+        correlations between all MU pairs (numpy array).
         pairwise_correlation_matrix[i,j] contains the average pairwise
-        correlation between motor unit i and j.
+        correlation between MU i and j.
         - "pairwise_correlation_matrix_thresholded": thresholded
         pairwise_correlation_matrix (numpy array). correlation values that are
         not significant are set to zero.
         - "common_drive_index_mean": mean of cross-correlation values across
-        all motor unit pairs (float).
+        all MU pairs (float).
         - "common_drive_index_std": standard deviation of cross-correlation
-        values across all motor unit pairs (float).
+        values across all MU pairs (float).
         - "common_drive_index_thresholded_mean": mean of cross-correlation
-        values across all motor unit pairs that are above the significance
+        values across all MU pairs that are above the significance
         threshold (float).
         - "common_drive_index_thresholded_std": standard deviation of
-        cross-correlation values across all motor unit pairs that are above
+        cross-correlation values across all MU pairs that are above
         the significance threshold (float).
         - "confidence_level": the confidence level used to determine if a
         pairwise correlation is significant (float).
-        - "percentage_significant_pairs": percentage of motor unit pairs with
+        - "percentage_significant_pairs": percentage of MU pairs with
         significant correlation (float).
         - "corr_signals_all_pairs": list of numpy arrays containing the
         cross-correlation signals for all pairs (list of numpy arrays).
@@ -1193,7 +1201,7 @@ def common_drive_index(
     # ----------------------------------
     if not emgfile["MUPULSES"]:
         raise ValueError(
-            "There are no motor unit pulses in the emgfile. "
+            "There are no MU pulses in the emgfile. "
             "Please check that MUPULSES is not empty."
         )
 
@@ -1240,7 +1248,7 @@ def common_drive_index(
 
     # ----------------------------------
     # Internal function to generate surrogate binary spike trains by shuffling
-    # ISIs independently for each motor unit.
+    # ISIs independently for each MU.
     # ----------------------------------
     def _generate_shuffled_binary_mus_firing(
         binary_mus_firing,
@@ -1250,7 +1258,7 @@ def common_drive_index(
     ):
         """
         Generate surrogate versions of binary_mus_firing by independently
-        shuffling the interspike intervals of each motor unit.
+        shuffling the interspike intervals of each MU.
         """
 
         surrogate_binary_mus_firing_list = []
@@ -1383,7 +1391,7 @@ def common_drive_index(
     def _normalized_cross_correlation(
         signal_1,
         signal_2,
-        max_lag_samples,
+        lag_samples,
     ):
         """
         Returns normalized cross-correlation values and lags.
@@ -1397,8 +1405,8 @@ def common_drive_index(
         )
 
         if denominator == 0:
-            corr_values = np.zeros(2 * max_lag_samples + 1)
-            lags = np.arange(-max_lag_samples, max_lag_samples + 1)
+            corr_values = np.zeros(2 * lag_samples + 1)
+            lags = np.arange(-lag_samples, lag_samples + 1)
             return corr_values, lags
 
         full_corr = signal.correlate(
@@ -1417,8 +1425,8 @@ def common_drive_index(
         )
 
         lag_mask = (
-            (full_lags >= -max_lag_samples)
-            & (full_lags <= max_lag_samples)
+            (full_lags >= -lag_samples)
+            & (full_lags <= lag_samples)
         )
 
         corr_values = full_corr[lag_mask]
@@ -1452,13 +1460,17 @@ def common_drive_index(
             corr_values, lags = _normalized_cross_correlation(
                 signal_1,
                 signal_2,
-                max_lag_samples=max_lag_samples,
+                lag_samples=int(round(1 * fsamp)),
             )
 
             corr_values_all_windows.append(corr_values)
             if lags_seconds is None:
                 lags_seconds = lags / fsamp
-            peak_correlation = np.max(corr_values)
+            
+            max_lag_mask = ((lags >= -max_lag_samples)
+                            & (lags <= max_lag_samples)
+            )        
+            peak_correlation = np.max(corr_values[max_lag_mask])
             segment_correlations.append(peak_correlation)
 
         # Store average correlation values across windows for this pair
@@ -1495,11 +1507,11 @@ def common_drive_index(
                     corr_values_surrogate, _ = _normalized_cross_correlation(
                         signal_1_surrogate,
                         signal_2_surrogate,
-                        max_lag_samples=max_lag_samples,
+                        lag_samples=int(round(1 * fsamp)),
                     )
-
+                    
                     surrogate_peak_correlation = np.max(
-                        corr_values_surrogate
+                        corr_values_surrogate[max_lag_mask]
                     )
                     surrogate_segment_correlations.append(
                         surrogate_peak_correlation
@@ -1617,12 +1629,12 @@ def pci_index(
     random_state=42,
 ):
     """
-    Estimate the proportion of common input index (PCI) from motor unit spike
+    Estimate the proportion of common input index (PCI) from MU spike
     trains.
 
     This implementation follows the logic of Negro et al. (2016), where
-    coherence is calculated between two CSTs containing n motor units each.
-    The number of motor units per CST is varied from 1 to floor (total number
+    coherence is calculated between two CSTs containing n MUs each.
+    The number of MUs per CST is varied from 1 to floor (total number
     of MUs / 2).
 
     The relationship between average coherence and number of units per CST is
@@ -1690,7 +1702,7 @@ def pci_index(
     # ----------------------------------
     if not emgfile["MUPULSES"]:
         raise ValueError(
-            "There are no motor unit pulses in the emgfile. "
+            "There are no MU pulses in the emgfile. "
             "Please check that MUPULSES is not empty."
         )
 
@@ -1699,7 +1711,7 @@ def pci_index(
 
     if tot_mus < 4:
         raise ValueError(
-            "At least 4 motor units are required to estimate PCI."
+            "At least 4 MUs are required to estimate PCI."
         )
 
     if window_duration_seconds <= 0:
@@ -1940,7 +1952,7 @@ def pci_index(
 
         print(
             f"Calculating coherence for {number_of_mus_cst} "
-            f"motor unit(s) per CST..."
+            f"MU(s) per CST..."
         )
 
         coherence_results_n = _pooled_coherence_for_fixed_cst_size(
@@ -2111,7 +2123,7 @@ def pci_index(
     return pci_results
 
 
-def network_information_framework(
+def smoothed_dr_mutualinformation(
     emgfile,
     window_type="hanning",
     window_duration_seconds=0.4,
@@ -2126,10 +2138,10 @@ def network_information_framework(
 
     This method:
 
-    1. Smooths binary motor unit spike trains.
+    1. Smooths binary MU spike trains.
     2. High-pass filters the smoothed discharge rates.
-    3. Copula-normalizes each motor unit discharge-rate profile.
-    4. Estimates pairwise Gaussian mutual information between motor units.
+    3. Copula-normalizes each MU discharge-rate profile.
+    4. Estimates pairwise Gaussian mutual information between MUs.
     5. Constructs a symmetric mutual-information network.
     6. Applies modified percolation analysis to identify a network threshold.
     7. Applies link-community detection to identify overlapping modules.
@@ -2168,13 +2180,13 @@ def network_information_framework(
 
         - smoothed_mus_firing: the smoothed binary spike trains calculated by
         window convolution (numpy array). smoothed_mus_firing has the same
-        shape as the input binary_mus_firing (samples x motor units).
+        shape as the input binary_mus_firing (samples x MUs).
         - pairwise_mi: dataframe of average pairwise mutual information and if
-        it is significant for each motor unit pair (dataframe).
+        it is significant for each MU pair (dataframe).
         - pairwise_mi_matrix: square matrix of average pairwise mutual
-        information between all motor unit pairs (numpy array).
+        information between all MU pairs (numpy array).
         pairwise_mi_matrix[i,j] contains the average pairwise mutual
-        information between motor unit i and j.
+        information between MU i and j.
         - pairwise_mi_matrix_thresholded : thresholded mutual-information
         matrix (numpy array). Mutual-information values that are not
         significant are set to zero.
@@ -2182,15 +2194,15 @@ def network_information_framework(
         - confidence_level : the confidence level calculated using the
         percolation analysis to determine if a mutual-information value is
         significant (float).
-        - percentage_significant_pairs: percentage of motor unit pairs with
+        - percentage_significant_pairs: percentage of MU pairs with
         significant mutual information (float).
         - module_affiliation_matrix: binary matrix indicating the module
-        affiliation of each motor unit (numpy array).
-        module_affiliation_matrix[i,j] is 1 if motor unit j belongs to
+        affiliation of each MU (numpy array).
+        module_affiliation_matrix[i,j] is 1 if MU j belongs to
         component (or community) i, and 0 otherwise.
         - number_of_components: number of low-dimensional components
         (communities) of the mutual-information network (int).
-        - percentage_mus_first_component: percentage of motor units that
+        - percentage_mus_first_component: percentage of MUs that
         belong to the first component (float).
     """
 
@@ -2199,7 +2211,7 @@ def network_information_framework(
     # ----------------------------------
     if not emgfile["MUPULSES"]:
         raise ValueError(
-            "There are no motor unit pulses in the emgfile. "
+            "There are no MU pulses in the emgfile. "
             "Please check that MUPULSES is not empty."
         )
 
@@ -2351,7 +2363,7 @@ def network_information_framework(
 
         Returns
         -------
-        I : float
+        mi_bits : float
             Mutual information in bits.
         """
 
@@ -2407,29 +2419,29 @@ def network_information_framework(
             )
             HXY = HXY - n_var_xy * dterm - np.sum(psi_terms)
 
-        I = (HX + HY - HXY) / ln2
+        mi_bits = (HX + HY - HXY) / ln2
 
-        return float(I)  # TODO ambiguous variable name 'I' Flake8(E741), do not use I or O as variable names
+        return float(mi_bits)
 
     pairwise_mi_matrix = np.zeros((tot_mus, tot_mus), dtype=np.float64)
     mi_rows = []
     for mu_1, mu_2 in combinations(range(tot_mus), 2):
 
-        I = _mi_gg(
+        mi_bits = _mi_gg(
             X_norm[:, mu_1],
             X_norm[:, mu_2],
             biascorrect=True,
             demeaned=True,
         )
 
-        pairwise_mi_matrix[mu_1, mu_2] = I
-        pairwise_mi_matrix[mu_2, mu_1] = I
+        pairwise_mi_matrix[mu_1, mu_2] = mi_bits
+        pairwise_mi_matrix[mu_2, mu_1] = mi_bits
 
         mi_rows.append(
             {
                 "mu_1": mu_1,
                 "mu_2": mu_2,
-                "mutual_information": I,
+                "mutual_information": mi_bits,
             }
         )
 
@@ -2773,8 +2785,6 @@ def network_information_framework(
                 break
 
             # Merge the first maximal pair.
-            # This is simpler than MATLAB's all-ties merge but follows the
-            # same principle.  # TODO do we need this comment?
             u1_pos, u2_pos = merge_positions[0]
 
             link_1 = U[u1_pos]
@@ -2865,5 +2875,3 @@ def network_information_framework(
     }
 
     return network_results
-
-# TODO in the docstrings, use MU and MUs instead of motor units. Not urgent.
