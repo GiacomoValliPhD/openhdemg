@@ -1048,7 +1048,7 @@ def smoothed_dr_pca(
         # Run parallel analysis to get mean and percentile eigenvalues from
         # shuffled data.
         percentile_eigenvalues_pa = _parallel_analysis_eigenvalues(
-            dataset=smoothed_mus_firing,
+            dataset=z_smoothed_mus_firing,
             number_iterations_pa=number_iterations_pa,
             percentile_pa=percentile_pa,
             rng=rng,
@@ -1541,7 +1541,11 @@ def common_drive_index(
                 "mu_1": mu_1,
                 "mu_2": mu_2,
                 "mean_correlation": np.mean(segment_correlations),
-                "std_correlation": np.std(segment_correlations, ddof=1),
+                "std_correlation": (
+                    np.std(segment_correlations, ddof=1)
+                    if len(segment_correlations) > 1
+                    else 0.0
+                ),
             }
         )
 
@@ -1808,8 +1812,8 @@ def pci_index(
                 f"Only {unique_split_count} unique CST group splits are "
                 "possible. number_iterations will be set to "
                 f"{unique_split_count}.",
+                UserWarning,
             )
-            warnings.warn(msg, UserWarning)
 
             group_pairs = []
             used_splits = set()
