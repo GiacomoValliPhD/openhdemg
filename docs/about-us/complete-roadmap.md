@@ -37,7 +37,7 @@ At this stage, we have identified and set six major milestones for the *openhdem
 
 ### Development milestones
 
-The development milestones focus on advancing the framework's functionality, improving existing features, and introducing new algorithms and analysis techniques. These milestones aim to enhance the capabilities and performance of *openhdemg*, providing a more powerful and comprehensive tool for analyzing High-Density Electromyography (HD-EMG) recordings.
+The development milestones focus on advancing the framework's functionality, improving existing features, and introducing new algorithms and analysis techniques. These milestones aim to enhance the capabilities and performance of *openhdemg*, providing a more powerful and comprehensive tool for analyzing High-Density surface Electromyography (HDsEMG) recordings.
 
 **Going public** &nbsp; :fontawesome-solid-check:
 
@@ -49,21 +49,21 @@ Planned by end of 2023. While a beta release is meant for testing purpose, a sta
 
 **Release v1.0** &nbsp; :fontawesome-solid-clock:
 
-The release of Version 1.0 is undoubtedly the most significant achievement for an open-source project like *openhdemg*, signifying a substantial enhancement in the project's completeness and usability. With this release, the project has achieved a level of maturity that fulfills the needs of a wide range of users in the field of HD-EMG.
+The release of Version 1.0 is undoubtedly the most significant achievement for an open-source project like *openhdemg*, signifying a substantial enhancement in the project's completeness and usability. With this release, the project has achieved a level of maturity that fulfills the needs of a wide range of users in the field of HDsEMG.
 
 --------------------------------------------
 
 ### Engagement milestones
 
-On the engagement side, the milestones aim to enhance the reach and outreach of *openhdemg* and to bring new [contributors](#meet-the-contributors) in the project. These milestones focus on expanding the visibility and impact of *openhdemg* within the HD-EMG community and beyond.
+On the engagement side, the milestones aim to enhance the reach and outreach of *openhdemg* and to bring new [contributors](#meet-the-contributors) in the project. These milestones focus on expanding the visibility and impact of *openhdemg* within the HDsEMG community and beyond.
 
 **Reach 1** &nbsp; :fontawesome-solid-clock: &nbsp; :fontawesome-solid-calendar-day:
 
-Planned by end of 2023. By leveraging preferred channels such as [Twitter](https://twitter.com/openhdemg){:target="_blank"} and congresses, we aim to engage with new individuals and organizations interested in HD-EMG analysis. Target to complete 'Reach 1' = 100 [Twitter](https://twitter.com/openhdemg){:target="_blank"} followers.
+Planned by end of 2023. By leveraging preferred channels such as [Twitter](https://twitter.com/openhdemg){:target="_blank"} and congresses, we aim to engage with new individuals and organizations interested in HDsEMG analysis. Target to complete 'Reach 1' = 100 [Twitter](https://twitter.com/openhdemg){:target="_blank"} followers.
 
 **Outreach 1** &nbsp; :fontawesome-solid-clock: &nbsp; :fontawesome-solid-calendar-day:
 
-Planned by end of 2023. This milestone involves improving documentation, providing tutorials and educational resources, and enhancing user support. By achieving these milestones, we aim to empower users with the knowledge and tools they need to effectively utilize *openhdemg* and conduct their own HD-EMG analyses. Target to complete 'Outreach 1' = cover all the functionalities of the *openhdemg* framework with specific tutorials.
+Planned by end of 2023. This milestone involves improving documentation, providing tutorials and educational resources, and enhancing user support. By achieving these milestones, we aim to empower users with the knowledge and tools they need to effectively utilize *openhdemg* and conduct their own HDsEMG analyses. Target to complete 'Outreach 1' = cover all the functionalities of the *openhdemg* framework with specific tutorials.
 
 **Increase contributors 1** &nbsp; :fontawesome-solid-clock:
 
@@ -91,13 +91,13 @@ Bringing new contributors to the *openhdemg* project is fundamental to increase 
 
 **Reach 1**
 
-- Develop a social media strategy for *openhdemg*, including regular posting, engaging with relevant hashtags, and connecting with HD-EMG researchers and practitioners.
+- Develop a social media strategy for *openhdemg*, including regular posting, engaging with relevant hashtags, and connecting with HDsEMG researchers and practitioners.
 - Share success stories, case studies, and relevant content about *openhdemg* on Twitter to attract a wider audience and increase followers.
-- Actively participate in HD-EMG-related congresses, conferences, and events to network with professionals in the field and promote *openhdemg*.
+- Actively participate in HDsEMG-related congresses, conferences, and events to network with professionals in the field and promote *openhdemg*.
 
 **Outreach 1**
 
-- Create comprehensive tutorials and educational resources that cover various aspects of HD-EMG analysis using *openhdemg*.
+- Create comprehensive tutorials and educational resources that cover various aspects of HDsEMG analysis using *openhdemg*.
 - Improve the documentation to provide clear instructions, examples, and explanations of the framework's functionalities.
 - Establish a user support system, such as a forum or mailing list and promote the use of the [*openhdemg* discussion section](https://github.com/GiacomoValliPhD/openhdemg/discussions){:target="_blank"}.
 
