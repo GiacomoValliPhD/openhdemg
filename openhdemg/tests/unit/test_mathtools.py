@@ -24,6 +24,7 @@ from openhdemg.library.mathtools import (
     derivatives_beamforming, mle_cv_est, find_mle_teta,
 )
 import numpy as np
+import pandas as pd
 
 
 class TestMathTools(unittest.TestCase):
@@ -115,16 +116,32 @@ class TestMathTools(unittest.TestCase):
 
         # Change mode
         res = norm_twod_xcorr(df, shifted_df, mode="full")
+        self.assertIsInstance(res[0], pd.DataFrame)
         self.assertAlmostEqual(res[1], 0.975, places=2)
         self.assertEqual(res[0].shape, (399, 127))
 
         res = norm_twod_xcorr(df, shifted_df, mode="valid")
+        self.assertIsInstance(res[0], pd.DataFrame)
         self.assertAlmostEqual(res[1], -0.358, places=2)
         self.assertEqual(res[0].shape, (1, 1))
 
         res = norm_twod_xcorr(df, shifted_df, mode="same")
+        self.assertIsInstance(res[0], pd.DataFrame)
         self.assertAlmostEqual(res[1], 0.975, places=2)
         self.assertEqual(res[0].shape, df.shape)
+
+        # Test numpy array and modes
+        arr = df.to_numpy()
+        shifted_arr = shifted_df.to_numpy()
+        res = norm_twod_xcorr(arr, shifted_arr, mode="full")
+        self.assertIsInstance(res[0], np.ndarray)
+        self.assertAlmostEqual(res[1], 0.975, places=2)
+        self.assertEqual(res[0].shape, (399, 127))
+
+        res = norm_twod_xcorr(arr, shifted_arr, mode="same")
+        self.assertIsInstance(res[0], np.ndarray)
+        self.assertAlmostEqual(res[1], 0.975, places=2)
+        self.assertEqual(res[0].shape, arr.shape)
 
     def test_compute_sil(self):
         """

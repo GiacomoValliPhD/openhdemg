@@ -133,7 +133,7 @@ def norm_xcorr(sig1, sig2, out="both"):
     ----------
     sig1, sig2 : pd.Series or np.ndarray
         The two signals to correlate.
-        These signals must be 1-dimensional and of same length.
+        These signals must be 1-dimensional and of same length and type.
     out : str {"both", "max"}, default "both"
         A string indicating the output value:
 
@@ -161,12 +161,22 @@ def norm_xcorr(sig1, sig2, out="both"):
 
     # Implementation corresponding to:
     # MATLAB => xcorr(a, b, 'normalized')
-    # From:
+    # Adapted from:
     # https://stackoverflow.com/questions/53436231/normalized-cross-correlation-in-python
     norm_a = np.linalg.norm(sig1)
-    a = sig1 / norm_a
+    if norm_a != 0:
+        a = sig1 / norm_a
+    else:
+        # Avoid division by zero
+        a = np.zeros_like(sig1)
+
     norm_b = np.linalg.norm(sig2)
-    b = sig2 / norm_b
+    if norm_b != 0:
+        b = sig2 / norm_b
+    else:
+        # Avoid division by zero
+        b = np.zeros_like(sig2)
+
     c = np.correlate(a, b, mode='full')
 
     # `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5)
@@ -183,21 +193,20 @@ def norm_xcorr(sig1, sig2, out="both"):
     return xcc
 
 
-def norm_twod_xcorr(df1, df2, mode="full"):
+def norm_twod_xcorr(sig1=None, sig2=None, mode="full", df1=None, df2=None):
     """
-    Normalised 2-dimensional cross-correlation of 2.
+    Normalised 2-dimensional cross-correlation of 2, 2D signals.
 
     The two inputs must have same shape.
     When this function is used to cross-correlate MUAPs obtained via STA,
-    df1 and df2 should contain the unpacked STA of the first and second MU,
+    sig1 and sig2 should contain the unpacked STA of the first and second MU,
     respectively, without np.nan columns.
 
     Parameters
     ----------
-    df1 : pd.DataFrame
-        A pd.DataFrame containing the first 2-dimensional signal.
-    df2 : pd.DataFrame
-        A pd.DataFrame containing the second 2-dimensional signal.
+    sig1, sig2 : pd.DataFrame or np.ndarray
+        The two signals to correlate.
+        These signals must be 2-dimensional and of same length and type.
     mode : str {"full", "valid", "same"}, default "full"
         A string indicating the size of the output:
 
@@ -213,10 +222,16 @@ def norm_twod_xcorr(df1, df2, mode="full"):
         ``same``
            The output is the same size as `in1`, centered
            with respect to the 'full' output.
+    df1 : None
+        This parameter is deprecated and will be removed in future releases.
+        Use "sig1" instead.
+    df2 : None
+        This parameter is deprecated and will be removed in future releases.
+        Use "sig2" instead.
 
     Returns
     -------
-    normxcorr_df : pd.DataFrame
+    normxcorr : pd.DataFrame
         The results of the normalised 2d cross-correlation.
     normxcorr_max : float
         The maximum value of the 2d cross-correlation.
@@ -254,14 +269,14 @@ def norm_twod_xcorr(df1, df2, mode="full"):
     >>> mu1 = 1
     >>> sta_mu1 = sta[mu0]
     >>> sta_mu2 = sta[mu1]
-    >>> df1 = emg.unpack_sta(sta_mu1)
+    >>> df1, _ = emg.unpack_sta(sta_mu1)
     >>> no_nan_sta1 = df1.dropna(axis=1)
-    >>> df2 = emg.unpack_sta(sta_mu2)
+    >>> df2, _ = emg.unpack_sta(sta_mu2)
     >>> no_nan_sta2 = df2.dropna(axis=1)
     >>> normxcorr_df, normxcorr_max = emg.norm_twod_xcorr(
     ...     no_nan_sta1,
     ...     no_nan_sta2,
-    ...     )
+    ... )
     >>> normxcorr_max
     0.7241553627564273
     >>> normxcorr_df
@@ -279,29 +294,46 @@ def norm_twod_xcorr(df1, df2, mode="full"):
     406 -0.000002 -2.473282e-07  6.006046e-07 ...  1.605406e-05  0.000007
     """
 
-    # Perform 2d xcorr
-    correlate2d = signal.correlate2d(in1=df1, in2=df2, mode=mode)
+    # Check for using deprecated parameters.
+    msg = (
+        "The 'df1' and 'df2' parameters are deprecated since v0.1.2 and " +
+        "will be removed after v0.2.0. Please use 'sig1' and 'sig2' instead."
+    )
+    if df1 is not None:
+        sig1 = df1
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+    if df2 is not None:
+        sig2 = df2
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
 
-    # There is no need to work with numpy.ndarrays as signal.correlate2d is
-    # already converting the pd.DataFrame into numpy.ndarray, and the rest of
-    # the code does not take much time to run.
+    # Convert pandas DataFrame to numpy array if necessary
+    is_dataframe = isinstance(sig1, pd.DataFrame) and isinstance(sig2, pd.DataFrame)
+    arr1 = sig1.to_numpy() if is_dataframe else sig1
+    arr2 = sig2.to_numpy() if is_dataframe else sig2
+
+    # Perform 2D cross-correlation
+    corr = signal.correlate2d(in1=arr1, in2=arr2, mode=mode)
+
+    # Compute normalization factor
+    norm_factor = np.sqrt((arr1**2).sum() * (arr2**2).sum())
 
     # Normalise the result of 2d xcorr for the different energy levels
     # MATLAB equivalent:
     # acor_norm = xcorr(x,y)/sqrt(sum(abs(x).^2)*sum(abs(y).^2))
     # http://gaidi.ca/weblog/normalizing-a-cross-correlation-in-matlab
-    absx = df1.abs()
-    absy = df2.abs()
-    expx = absx**2
-    expy = absy**2
-    sumx = expx.sum().sum()
-    sumy = expy.sum().sum()
-    acor_norm = correlate2d / np.sqrt(sumx * sumy)
+    if norm_factor != 0:
+        corr_norm = corr / norm_factor
+    else:
+        # Avoid division by zero
+        corr_norm = np.zeros_like(corr)
 
-    normxcorr_df = pd.DataFrame(acor_norm)
-    normxcorr_max = normxcorr_df.max().max()
+    # Find the max correlation value
+    normxcorr_max = corr_norm.max()
 
-    return normxcorr_df, normxcorr_max
+    # Convert result back to DataFrame if original inputs were DataFrames
+    normxcorr = pd.DataFrame(corr_norm) if is_dataframe else corr_norm
+
+    return normxcorr, normxcorr_max
 
 
 def compute_sil(ipts, mupulses, ignore_negative_ipts=False):

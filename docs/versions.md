@@ -9,7 +9,7 @@ If you're looking for a specific version, simply select it from the list below.
 
 ## 🚀 Latest Version  
 
-**[v0.1.1 (Latest)](https://www.giacomovalli.com/openhdemg/){:target="_blank"}**  
+**[v0.1.2 (Latest)](https://www.giacomovalli.com/openhdemg/){:target="_blank"}**  
 _Latest features, updates, and improvements._  
 
 ---
@@ -18,7 +18,9 @@ _Latest features, updates, and improvements._
 
 Here are the older versions of the documentation:
 
-- [v0.1.0](https://www.giacomovalli.com/openhdemg/v0.1.0/){:target="_blank"} - Initial stable release.
+- [v0.1.1](https://www.giacomovalli.com/openhdemg/v0.1.1/){:target="_blank"}
+
+- [v0.1.0](https://www.giacomovalli.com/openhdemg/v0.1.0/){:target="_blank"}
 
 ---
 
