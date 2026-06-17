@@ -8,6 +8,7 @@ The main components are:
 - `convolutive_bss()`, the lower-level decomposition function;
 - `EMGDecomposer`, a high-level pipeline that can filter, remove power-line harmonics, exclude bad channels, decompose, reconstruct an `emgfile`, and remove duplicate MUs;
 - `select_bad_channels()`, a visual workflow for marking noisy channels;
+- `run_bss_mu_editor()`, a lightweight UI for basic manual editing of BSS discharge selections;
 - `remove_powerline_harmonics()`, an FFT-based function for suppressing harmonics of the selected mains frequency;
 - `remove_duplicates_within()`, a within-file duplicate-removal function based on spike-train timing.
 
@@ -283,7 +284,180 @@ if decomposed_emgfile.get("NUMBER_OF_MUS", 0) > 0:
 emg.asksavemodule(emgfile=decomposed_emgfile)
 ```
 
-## Manual editing in the Software
+## Lightweight BSS MU Editor
+
+For small manual corrections, openhdemg also provides a lightweight cleaning UI through `run_bss_mu_editor()`. This editor can display the discharge-rate/IPTS traces, add or remove discharge times, recompute the current MU source using a user-provided extended and whitened signal, and mark MUs that should be deleted later.
+
+!!! note "Advanced MU cleaning"
+    The most advanced MU cleaning tools are available in the ***[openhdemg software](https://www.giacomovalli.com/openhdemg_software/){:target="_blank"}***. The software provides the dedicated cleaning environment for extensive manual review and should be preferred when advanced editing, quality-control panels, and a more complete interactive workflow are required.
+
+The editor should be called through `run_bss_mu_editor()` rather than by instantiating the widget directly. The runner manages the Qt application and returns:
+
+- `edited_emgfile`, with manually edited `MUPULSES` and, when the `W` command is used, updated `IPTS`;
+- `mus_to_delete`, a list of MU indexes marked for deletion in the UI.
+
+The editor does not delete marked MUs and does not finalise derived fields such as `ACCURACY`/SIL or `BINARY_MUS_FIRING`. These steps should be performed in the calling script after the UI closes.
+
+Prepare the filtered, extended, and whitened signal in the calling script,
+then open the cleaning UI.
+
+Import needed modules
+
+```python
+import warnings
+import numpy as np
+import pandas as pd
+import openhdemg.library as emg
+from openhdemg.ui import run_bss_mu_editor
+```
+
+Load openhdemg module decomposed using EMGDecomposer
+
+```python
+emgfile = emg.askloadmodule()
+```
+
+Extract needed decomposition parameters
+
+```python
+decomp_params = emgfile.get("DECOMPOSITION_PARAMETERS", {})
+extension_factor = int(decomp_params.get("extension_factor"))
+eigenvalue_percentile = int(decomp_params.get("eigenvalue_percentile"))
+```
+
+Band-pass filter the EMG signal.
+The filtered emg signal will only be used for cleaning and not updated in
+the original emgfile.
+
+```python
+order = int(decomp_params["bandpass_filtering"].get("order"))
+lowcut = int(decomp_params["bandpass_filtering"].get("lowcut"))
+highcut = int(decomp_params["bandpass_filtering"].get("highcut"))
+if None in (order, lowcut, highcut):
+    warnings.warn(
+        "Band-pass filtering was skipped because one or more "
+        "parameters are missing: 'order', 'lowcut', 'highcut'.",
+        UserWarning,
+    )
+    filtered_emgfile = emgfile
+else:
+    filtered_emgfile = emg.filter_rawemg(
+        emgfile=emgfile,
+        order=int(order),
+        lowcut=int(lowcut),
+        highcut=int(highcut),
+    )
+```
+
+Extract the EMG signal and store it as an array with channels as rows,
+samples as columns.
+
+```python
+emg_sig = filtered_emgfile["RAW_SIGNAL"].to_numpy(dtype=np.float64).T
+```
+
+Optional: remove bad channels before extension/whitening, if desired.
+
+```python
+good_channels = emgfile.get("GOOD_CHANNELS", None)
+if good_channels is not None:
+    good_idx = sorted(
+        int(ch) for ch, ok in good_channels.items() if ok
+    )
+    emg_sig = emg_sig[good_idx, :]
+```
+
+Prepare the filtered/extended/whitened signal
+
+```python
+e_w_sig = emg.svd_whitening(
+    emg.extend_emg_signal(
+        sig=emg_sig,
+        ext_fact=extension_factor,
+    ),
+    eigenvalue_percentile=eigenvalue_percentile,
+)
+```
+
+Align with the original sample indexes used by MUPULSES/IPTS
+
+```python
+e_w_sig = np.pad(
+    e_w_sig,
+    ((0, 0), (extension_factor, 0)),
+    mode="constant",
+    constant_values=0,
+)
+```
+
+Start the editor
+
+```python
+edited_emgfile, mus_to_delete = run_bss_mu_editor(
+    emgfile=emgfile,
+    e_w_sig=e_w_sig,
+    refsig_channel=0,
+)
+```
+
+![](../md_graphics/docstrings/widgets/discharge_editor_ex_1.png)
+
+Once editing is completed, delete MUs marked in the UI
+
+```python
+if mus_to_delete:
+    edited_emgfile = emg.delete_mus(
+        edited_emgfile,
+        munumber=mus_to_delete,
+        if_single_mu="remove",
+    )
+```
+
+Also check for duplicate MUs that might have emerged from manual editing.
+
+```python
+duplicate_params = decomp_params["duplicate_removal"]
+edited_emgfile = emg.remove_duplicates_within(
+    emgfile=edited_emgfile,
+    correlation_max_lag=duplicate_params["correlation_max_lag"],
+    peak_window_half_width=duplicate_params["peak_window_half_width"],
+    duplicate_threshold=duplicate_params["duplicate_threshold"],
+    which=duplicate_params["which"],
+)
+```
+
+Recalculate SIL for all remaining MUs.
+
+```python
+sil_values = []
+for mu in range(edited_emgfile["NUMBER_OF_MUS"]):
+    sil = emg.compute_sil(
+        ipts=edited_emgfile["IPTS"][mu],
+        mupulses=edited_emgfile["MUPULSES"][mu],
+        compute_on_peaks_only=True,
+    )
+    sil_values.append(sil)
+edited_emgfile["ACCURACY"] = pd.DataFrame(sil_values)
+```
+
+Recalculate binary MU firings.
+
+```python
+edited_emgfile["BINARY_MUS_FIRING"] = emg.create_binary_firings(
+    emg_length=edited_emgfile["EMG_LENGTH"],
+    number_of_mus=edited_emgfile["NUMBER_OF_MUS"],
+    mupulses=edited_emgfile["MUPULSES"],
+)
+```
+
+Standardise emgfile dtypes and save the emgfile.
+
+```python
+edited_emgfile = emg.standardise_emgfile_dtypes(emgfile=edited_emgfile)
+emg.asksavemodule(emgfile=edited_emgfile)
+```
+
+## Advanced Manual Editing in the Software
 
 The output of motor unit decomposition should never be accepted blindly. Before a decomposed file is used for analysis, the operator should carefully inspect the decomposition outcome and decide which motor units should be accepted, rejected, or manually edited.
 
@@ -291,7 +465,7 @@ This decision should be based on multiple checks, including physiological plausi
 
 For this reason, each decomposition outcome should undergo manual revision. When needed, the automatic result should be manually edited to maximise the accuracy and reliability of the subsequent analyses.
 
-However, serious manual editing requires a dedicated infrastructure: interactive visualisation, fast navigation across motor units, editing tools for discharge times, cleaning utilities and quality-control panels. For this reason, manual editing is currently supported through the ***[openhdemg software](https://www.giacomovalli.com/openhdemg_software/){:target="_blank"}***.
+However, serious manual editing requires a dedicated infrastructure: interactive visualisation, fast navigation across motor units, editing tools for discharge times, cleaning utilities and quality-control panels. The lightweight library editor is useful for basic edits, but the most advanced cleaning workflow is provided by the ***[openhdemg software](https://www.giacomovalli.com/openhdemg_software/){:target="_blank"}***.
 
 The software can be downloaded ***[here](https://www.giacomovalli.com/openhdemg_software/){:target="_blank"}***.
 

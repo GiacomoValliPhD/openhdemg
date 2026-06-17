@@ -1,80 +1,73 @@
 Description
 -----------
-This module contains classes (QtWidgets) and functions managing the user interfaces used by openhdemg.library. These classes or functions can be used directly or integrated in larger UIs (e.g., MU tracking and conduction velocity estimation).
+This module contains the functions needed to extract MU discharge times using convolutive blind source separation techniques.
 
 <br/>
 
-::: openhdemg.ui.widgets.check_app
+::: openhdemg.library.decomposition.extend_emg_signal
     options:
         show_root_full_path: False
         show_root_heading: True
 
 <br/>
 
-::: openhdemg.ui.widgets.PointSelectorDialog
+::: openhdemg.library.decomposition.svd_whitening
     options:
         show_root_full_path: False
         show_root_heading: True
 
 <br/>
 
-::: openhdemg.ui.widgets.run_point_selector
+::: openhdemg.library.decomposition.normc
     options:
         show_root_full_path: False
         show_root_heading: True
 
 <br/>
 
-::: openhdemg.ui.widgets.CustomFileDialog
+::: openhdemg.library.decomposition.symdecor
     options:
         show_root_full_path: False
         show_root_heading: True
 
 <br/>
 
-::: openhdemg.ui.widgets.run_custom_file_dialog
+::: openhdemg.library.decomposition.get_cost_function
     options:
         show_root_full_path: False
         show_root_heading: True
 
 <br/>
 
-::: openhdemg.ui.widgets.CustomDirectoryDialog
+::: openhdemg.library.decomposition.source_peaks_classification
     options:
         show_root_full_path: False
         show_root_heading: True
 
 <br/>
 
-::: openhdemg.ui.widgets.run_custom_directory_dialog
+::: openhdemg.library.decomposition.compute_mu_filter
     options:
         show_root_full_path: False
         show_root_heading: True
 
 <br/>
 
-::: openhdemg.ui.widgets.Manual_EMGChannels_Selection_Dialog
+::: openhdemg.library.decomposition.ConvolutiveBSSParams
     options:
         show_root_full_path: False
         show_root_heading: True
 
 <br/>
 
-::: openhdemg.ui.widgets.run_manual_emgchannels_selection_dialog
+::: openhdemg.library.decomposition.convolutive_bss
     options:
         show_root_full_path: False
         show_root_heading: True
 
 <br/>
 
-::: openhdemg.ui.widgets.BSS_MU_Editor
-    options:
-        show_root_full_path: False
-        show_root_heading: True
-
-<br/>
-
-::: openhdemg.ui.widgets.run_bss_mu_editor
+::: openhdemg.library.decomposition.EMGDecomposer
     options:
         show_root_full_path: False
         show_root_heading: True
