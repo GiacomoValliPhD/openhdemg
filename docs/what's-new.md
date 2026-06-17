@@ -24,7 +24,7 @@ This is a beta release and includes intentional changes that may affect existing
 - **New PySide6 software architecture** replacing the legacy GUI.
 - **New persistent binary data structure** with modules for single files and collections for multi-file studies.
 - **More flexible and robust `emgfile` structure** with optional standard keys and explicit dtype standardisation.
-- **New decomposition and cleaning workflow** for raw HDsEMG decomposition, bad-channel selection, power-line harmonic removal, and within-file duplicate removal.
+- **New decomposition and cleaning workflow** for raw HDsEMG decomposition, bad-channel selection, power-line harmonic removal, within-file duplicate removal, and manual editing of BSS MU discharge selections.
 - **New common-input and result plotting modules** for pooled intramuscular coherence, smoothed discharge-rate PCA, common drive, PCI, and mutual-information network analysis.
 - **Multiple reference-signal support** across plotting, editing, and analysis functions.
 - **Improved plotting architecture** with object-oriented Matplotlib figure creation through `use_plt=False`.
@@ -70,6 +70,7 @@ This is a beta release and includes intentional changes that may affect existing
     - New `select_bad_channels()` function lets users mark noisy channels and stores the result in `emgfile["GOOD_CHANNELS"]`.
     - New `remove_powerline_harmonics()` function removes harmonics of the selected power-line frequency.
     - New `remove_duplicates_within()` removes duplicate MUs inside one file using spike-train timing.
+    - New `run_bss_mu_editor()` function opens a lightweight manual editor for reviewing and editing BSS MU discharge selections.
 
 - **Common input and result plotting**:
   
@@ -90,6 +91,7 @@ This is a beta release and includes intentional changes that may affect existing
     - `load_openhdemg_module()`
     - `askloadmodule()`
     - `convolutive_bss()`
+    - `run_bss_mu_editor()`
 
 - **Updated functions**:
   
@@ -109,6 +111,7 @@ This is a beta release and includes intentional changes that may affect existing
     - `ConvolutiveBSSParams`
     - `EMGDecomposer`
     - `MLE_MUCV_gui`
+    - `BSS_MU_Editor`
 
 - **Updated classes**:
   

@@ -9,7 +9,7 @@ repo_name: openhdemg
 repo_url: https://github.com/GiacomoValliPhD/openhdemg
 
 copyright: >
-  Copyright &copy; 2022 - 2025. Giacomo Valli -
+  Copyright &copy; 2022 - 2026. Giacomo Valli -
   <a href="#__consent">Change cookie settings</a>
 
 theme:
@@ -63,20 +63,22 @@ nav:
   - Welcome: index.md
   - About us: about-us.md
   - Quick-Start: quick-start.md
+  - Software: https://www.giacomovalli.com/openhdemg_software/
   - Tutorials:
     #- Overview on the tutorials: Tutorials.md
     - For new users:
       - Setup working environment: tutorials/setup_working_env.md
     - Basics of openhdemg:
       - Structure of the emgfile: tutorials/emgfile_structure.md
+      - Multiple reference signals: tutorials/multiple_reference_signals.md
+      - Binary modules: tutorials/binary_modules.md
+      - Collections: tutorials/collections.md
       - Import from other software: tutorials/import_from_other_software.md
+    - Processing and analyses:
+      - Decomposition and cleaning: tutorials/decomposition_and_cleaning.md
     - Move to newer versions:
       - Convert old .json files: tutorials/convert_old_json_files.md
-  - Graphical Interface:
-    - Intro: gui_intro.md
-    - Basics: gui_basics.md
-    - Advanced: gui_advanced.md
-    - Settings: gui_settings.md
+      - Migrate to 0.2.0: tutorials/migrate_to_0_2_0.md
   - Releases:
     - Release notes: what's-new.md
     - Browse versions: https://www.giacomovalli.com/openhdemg/versions/
@@ -86,12 +88,15 @@ nav:
   - ISEK-JEK Tutorials: isek_jek_tutorials.md
   - API Reference:
     - openfiles: api_openfiles.md
-    - plotemg: api_plotemg.md
-    - analysis: api_analysis.md
-    - pic: api_pic.md
     - tools: api_tools.md
     - mathtools: api_mathtools.md
+    - plotemg: api_plotemg.md
+    - decomposition: api_decomposition.md
+    - analysis: api_analysis.md
+    - pic: api_pic.md
     - muap: api_muap.md
+    - commonality: api_commonality.md
+    - plotresults: api_plotresults.md
     - electrodes: api_electrodes.md
     - info: api_info.md
     - ui:
@@ -109,7 +114,7 @@ markdown_extensions:
   - toc:
       permalink: true
       title: On this page
-      toc_depth: 3
+      toc_depth: 4
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.betterem:
@@ -157,10 +162,12 @@ extra:
     description: >- 
       We use only the minimum cookies required by GitHub to ensure our website functions smoothly.
       You can disable them anytime, because your privacy is our priority!
+    cookies:
+      github: GitHub
     actions:
       - accept
       - manage
-      # - reject
+      - reject
 
 # Need to have or pip install:
 # mkdocs

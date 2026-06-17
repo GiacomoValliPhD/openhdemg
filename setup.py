@@ -17,11 +17,12 @@ INSTALL_REQUIRES = [
     "scikit-learn==1.5.2",
 ]
 
-EXTRAS_REQUIRE = {
-    "gurobi": [
-        "gurobipy",
-    ],
-}
+EXTRAS_REQUIRE = {}
+# EXTRAS_REQUIRE = {
+#     "gurobi": [
+#         "gurobipy",
+#     ],
+# }
 # pip install "openhdemg[gurobi]"
 
 PACKAGES = [
