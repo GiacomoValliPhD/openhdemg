@@ -86,6 +86,30 @@ def pooled_intramuscular_coherence(
         - "cst_duration_seconds": the duration of the cumulative spike trains
         in seconds (float).
         - "fsamp": the sampling frequency in Hz (float).
+
+    Examples
+    --------
+    Estimate pooled intramuscular coherence with overlapping windows.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> coherence_results = emg.pooled_intramuscular_coherence(
+    ...     emgfile=emgfile,
+    ...     number_iterations=100,
+    ...     window_duration_seconds=1,
+    ...     overlap_seconds=0.5,
+    ... )
+    >>> coherence_results["coherence"]
+
+    Estimate coherence without overlapping windows.
+
+    >>> coherence_results = emg.pooled_intramuscular_coherence(
+    ...     emgfile=emgfile,
+    ...     number_iterations=100,
+    ...     window_duration_seconds=1,
+    ...     overlap_seconds=0,
+    ... )
+    >>> coherence_results["coherence"]
     """
 
     # ----------------------------------
@@ -366,6 +390,19 @@ def z_score_coherence(coherence_results):
 
         - "z_score": the z-scored coherence curve (numpy array)
         - "factor": the factor used for z-scoring (float)
+
+    Examples
+    --------
+    Z-score the coherence curve returned by pooled_intramuscular_coherence().
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> coherence_results = emg.pooled_intramuscular_coherence(
+    ...     emgfile=emgfile,
+    ...     overlap_seconds=0.5,
+    ... )
+    >>> z_score_results = emg.z_score_coherence(coherence_results)
+    >>> z_score_results["z_score"]
     """
 
     # ----------------------------------
@@ -526,6 +563,23 @@ def calculate_coherence_bands(
         the confidence level.
         - "auc_gamma": area under the coherence/z-score curve in the gamma
         band above the confidence level.
+
+    Examples
+    --------
+    Calculate frequency-band summaries from a z-scored coherence curve.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> coherence_results = emg.pooled_intramuscular_coherence(
+    ...     emgfile=emgfile,
+    ...     overlap_seconds=0.5,
+    ... )
+    >>> z_score_results = emg.z_score_coherence(coherence_results)
+    >>> coherence_band_results = emg.calculate_coherence_bands(
+    ...     coherence_results=z_score_results,
+    ...     confidence_level_type="theoretical",
+    ... )
+    >>> coherence_band_results
     """
 
     # ----------------------------------
@@ -569,6 +623,14 @@ def calculate_coherence_bands(
             # 95th percentile of the standard normal distribution
         else:
             L = int(np.floor(cst_duration_seconds / window_duration_seconds))
+
+            if L <= 1:
+                raise ValueError(
+                    "The theoretical confidence level for raw coherence "
+                    "requires at least 2 non-overlapping segments. Increase "
+                    "cst_duration_seconds or reduce window_duration_seconds."
+                )
+
             confidence_level = 1 - 0.05 ** (1 / (L - 1))
     else:
         msg = (
@@ -676,6 +738,19 @@ def smooth_spiketrains_convolution(
         Smoothed MU discharge rates obtained by convolving the binary
         spike train with the specified window. Arrangement of the output array
         is the same as binary_mus_firing (samples x MUs).
+
+    Examples
+    --------
+    Smooth the binary spike trains stored in an EMG file.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> binary_mus_firing = emgfile["BINARY_MUS_FIRING"].to_numpy()
+    >>> smoothed_mus_firing = emg.smooth_spiketrains_convolution(
+    ...     binary_mus_firing=binary_mus_firing,
+    ...     fsamp=emgfile["FSAMP"],
+    ... )
+    >>> smoothed_mus_firing
     """
 
     # ----------------------------------
@@ -824,6 +899,19 @@ def smoothed_dr_pca(
     we reccomend using parallel analysis as it is more robust and data-driven
     than arbitrary thresholds (e.g., eigenvalue > 1 or variance explained >
     80%).
+
+    Examples
+    --------
+    Estimate PCA components from smoothed MU discharge-rate profiles.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> pca_results = emg.smoothed_dr_pca(
+    ...     emgfile=emgfile,
+    ...     method_n_components="parallel_analysis",
+    ... )
+    >>> pca_results["number_of_components_retained"]
+    >>> pca_results["explained_variance"]
     """
 
     # ----------------------------------
@@ -1166,6 +1254,15 @@ def common_drive_index(
         Segments will overlap by overlap_corr_seconds. 0.0 means no overlap.
     max_lag_seconds : float, default 0.1
         Maximum lag for cross-correlation, in seconds.
+    number_of_surrogates : int, default 2
+        Number of surrogate spike-train sets used to estimate the confidence
+        level. Surrogates are generated by independently shuffling the
+        interspike intervals of each MU.
+    confidence_percentile : float, default 95
+        Percentile of surrogate peak correlations used as the confidence level
+        to determine whether each pairwise correlation is significant.
+    random_state : int, default 42
+        Random seed for reproducible surrogate generation.
 
     Returns
     -------
@@ -1206,6 +1303,21 @@ def common_drive_index(
         corr_signals_all_pairs (numpy array).
         - "lags_seconds": lags used to calculate the cross-correlation signals
         (numpy array).
+
+    Examples
+    --------
+    Calculate the common drive index using non-overlapping 5-second
+    correlation windows.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> cdi_results = emg.common_drive_index(
+    ...     emgfile=emgfile,
+    ...     window_corr_seconds=5,
+    ...     overlap_corr_seconds=0,
+    ... )
+    >>> cdi_results["pairwise_correlation"]
+    >>> cdi_results["common_drive_index_mean"]
     """
 
     # ----------------------------------
@@ -1382,6 +1494,8 @@ def common_drive_index(
         else:
             overlap_corr_samples = int(round(overlap_corr_seconds * fsamp))
     max_lag_samples = int(round(max_lag_seconds * fsamp))
+    # TODO here and in the rest of the code, round already returns an int if
+    # ndigits is omitted. Remove int().
 
     n_windows = int(
         np.floor((n_samples - segment_samples) / overlap_corr_samples) + 1
@@ -1478,10 +1592,11 @@ def common_drive_index(
             corr_values_all_windows.append(corr_values)
             if lags_seconds is None:
                 lags_seconds = lags / fsamp
-            
-            max_lag_mask = ((lags >= -max_lag_samples)
-                            & (lags <= max_lag_samples)
-            )        
+
+            max_lag_mask = (
+                (lags >= -max_lag_samples)
+                & (lags <= max_lag_samples)
+            )
             peak_correlation = np.max(corr_values[max_lag_mask])
             segment_correlations.append(peak_correlation)
 
@@ -1521,7 +1636,7 @@ def common_drive_index(
                         signal_2_surrogate,
                         lag_samples=int(round(1 * fsamp)),
                     )
-                    
+
                     surrogate_peak_correlation = np.max(
                         corr_values_surrogate[max_lag_mask]
                     )
@@ -1699,9 +1814,9 @@ def pci_index(
         Dictionary containing coherence-vs-CST-size values and fitted PCI
         values. Keys are:
 
-        - "average_coherence_df": dataframe containing the number of MUs per CST
-        and the corresponding average coherence values for each frequency band
-        (dataframe).
+        - "average_coherence_df": dataframe containing the number of MUs per
+        CST and the corresponding average coherence values for each frequency
+        band (dataframe).
         - "fitted_average_coherence_df": dataframe containing the number of MUs
         per CST and the corresponding fitted coherence values using the fitted
         A and B parameters for each frequency band (dataframe).
@@ -1713,6 +1828,18 @@ def pci_index(
     The PCI index is typically implemented only for the delta band (see Negro
     et al., 2016), but this function also fits the model and estimates the PCI
     for alpha and beta bands.
+
+    Examples
+    --------
+    Estimate the proportion of common input index.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> pci_results = emg.pci_index(
+    ...     emgfile=emgfile,
+    ...     number_iterations=100,
+    ... )
+    >>> pci_results["average_coherence_df"]
     """
 
     # ----------------------------------
@@ -1807,7 +1934,7 @@ def pci_index(
             msg = (
                 f"Only {unique_split_count} unique CST group splits are "
                 "possible. number_iterations will be set to "
-                f"{unique_split_count}.",
+                f"{unique_split_count}."
             )
             warnings.warn(msg, UserWarning)
 
@@ -2222,6 +2349,18 @@ def smoothed_dr_mutualinformation(
         (communities) of the mutual-information network (int).
         - percentage_mus_first_component: percentage of MUs that
         belong to the first component (float).
+
+    Examples
+    --------
+    Estimate a mutual-information network from smoothed discharge rates.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> network_results = emg.smoothed_dr_mutualinformation(
+    ...     emgfile=emgfile,
+    ... )
+    >>> network_results["pairwise_mi"]
+    >>> network_results["module_affiliation_matrix"]
     """
 
     # ----------------------------------

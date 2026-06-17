@@ -811,12 +811,7 @@ def plot_common_drive_index(
             confidence_level,
         ])
 
-    min_y_value = min(values_for_ylim)
-
-    if min_y_value < 0:
-        ax1.set_ylim(min_y_value, 1)
-    else:
-        ax1.set_ylim(0, 1)
+    ax1.set_ylim(-1, 1)
 
     ax1.set_xlabel("Lag (s)", fontsize=12, labelpad=6)
     ax1.set_ylabel("Mean cross-correlation", fontsize=12, labelpad=6)
