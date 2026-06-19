@@ -95,7 +95,7 @@ decomposed_emgfile = decomposer.run_decomposition(emgfile)
 By default, `EMGDecomposer`:
 
 - applies band-pass filtering with order 2 and 20-500 Hz cut-offs;
-- does not remove power-line harmonics unless notch parameters are set;
+- does not remove power-line harmonics unless `notch_enabled=True`;
 - excludes bad channels if `GOOD_CHANNELS` is present;
 - runs `convolutive_bss()`;
 - reconstructs the `emgfile` with decomposition outputs;
@@ -109,22 +109,12 @@ Change band-pass and power-line harmonic settings with `change_filtering_paramet
 decomposer = emg.EMGDecomposer()
 
 decomposer.change_filtering_parameters(
+    bandpass_enabled=True,
     bandpass_order=2,
     bandpass_lowcut=20,
     bandpass_highcut=500,
+    notch_enabled=True,
     notch_freq=50.0,
-    notch_width=5.0,
-)
-```
-
-For 60 Hz mains:
-
-```python
-decomposer.change_filtering_parameters(
-    bandpass_order=2,
-    bandpass_lowcut=20,
-    bandpass_highcut=500,
-    notch_freq=60.0,
     notch_width=5.0,
 )
 ```
@@ -133,11 +123,8 @@ Disable all filtering:
 
 ```python
 decomposer.change_filtering_parameters(
-    bandpass_order=None,
-    bandpass_lowcut=None,
-    bandpass_highcut=None,
-    notch_freq=None,
-    notch_width=None,
+    bandpass_enabled=False,
+    notch_enabled=False,
 )
 ```
 
@@ -163,6 +150,7 @@ Within-file duplicate removal is enabled by default but you can change its param
 
 ```python
 decomposer.change_duplicate_removal_parameters(
+    duplicate_removal_enabled=True,
     correlation_max_lag=50e-3,
     peak_window_half_width=5e-3,
     duplicate_threshold=30,
@@ -265,9 +253,11 @@ params.min_spike_count = 20
 decomposer = emg.EMGDecomposer()
 decomposer.set_decomposition_parameters(params)
 decomposer.change_filtering_parameters(
+    bandpass_enabled=True,
     bandpass_order=2,
     bandpass_lowcut=20,
     bandpass_highcut=900,
+    notch_enabled=True,
     notch_freq=50.0,
     notch_width=5.0,
 )
@@ -286,7 +276,7 @@ emg.asksavemodule(emgfile=decomposed_emgfile)
 
 ## Lightweight BSS MU Editor
 
-For small manual corrections, openhdemg also provides a lightweight cleaning UI through `run_bss_mu_editor()`. This editor can display the discharge-rate/IPTS traces, add or remove discharge times, recompute the current MU source using a user-provided extended and whitened signal, and mark MUs that should be deleted later.
+For small manual corrections, openhdemg also provides a lightweight cleaning UI through `run_bss_mu_editor()`. This editor can display the discharge-rate/IPTS traces, add or remove discharge times, recompute the current MU source using a user-provided extended, centered, and whitened signal, and mark MUs that should be deleted later.
 
 !!! note "Advanced MU cleaning"
     The most advanced MU cleaning tools are available in the ***[openhdemg software](https://www.giacomovalli.com/openhdemg_software/){:target="_blank"}***. The software provides the dedicated cleaning environment for extensive manual review and should be preferred when advanced editing, quality-control panels, and a more complete interactive workflow are required.
@@ -298,13 +288,12 @@ The editor should be called through `run_bss_mu_editor()` rather than by instant
 
 The editor does not delete marked MUs and does not finalise derived fields such as `ACCURACY`/SIL or `BINARY_MUS_FIRING`. These steps should be performed in the calling script after the UI closes.
 
-Prepare the filtered, extended, and whitened signal in the calling script,
-then open the cleaning UI.
+Prepare the preprocessed, extended, centered, and whitened signal in the
+calling script, then open the cleaning UI.
 
 Import needed modules
 
 ```python
-import warnings
 import numpy as np
 import pandas as pd
 import openhdemg.library as emg
@@ -320,32 +309,24 @@ emgfile = emg.askloadmodule()
 Extract needed decomposition parameters
 
 ```python
-decomp_params = emgfile.get("DECOMPOSITION_PARAMETERS", {})
-extension_factor = int(decomp_params.get("extension_factor"))
-eigenvalue_percentile = int(decomp_params.get("eigenvalue_percentile"))
+decomp_params = emgfile["DECOMPOSITION_PARAMETERS"]
+extension_factor = int(decomp_params["extension_factor"])
+eigenvalue_percentile = float(decomp_params["eigenvalue_percentile"])
 ```
 
-Band-pass filter the EMG signal.
-The filtered emg signal will only be used for cleaning and not updated in
-the original emgfile.
+Rebuild the same signal used by the decomposition preprocessing pipeline.
+The prepared signal will only be used for cleaning and will not update the
+original emgfile.
 
 ```python
-order = int(decomp_params["bandpass_filtering"].get("order"))
-lowcut = int(decomp_params["bandpass_filtering"].get("lowcut"))
-highcut = int(decomp_params["bandpass_filtering"].get("highcut"))
-if None in (order, lowcut, highcut):
-    warnings.warn(
-        "Band-pass filtering was skipped because one or more "
-        "parameters are missing: 'order', 'lowcut', 'highcut'.",
-        UserWarning,
-    )
-    filtered_emgfile = emgfile
-else:
-    filtered_emgfile = emg.filter_rawemg(
-        emgfile=emgfile,
-        order=int(order),
-        lowcut=int(lowcut),
-        highcut=int(highcut),
+working_emgfile = emgfile
+bandpass_params = decomp_params["bandpass_filtering"]
+if bandpass_params["enabled"] is True:
+    working_emgfile = emg.filter_rawemg(
+        emgfile=working_emgfile,
+        order=bandpass_params["order"],
+        lowcut=bandpass_params["lowcut"],
+        highcut=bandpass_params["highcut"],
     )
 ```
 
@@ -353,28 +334,44 @@ Extract the EMG signal and store it as an array with channels as rows,
 samples as columns.
 
 ```python
-emg_sig = filtered_emgfile["RAW_SIGNAL"].to_numpy(dtype=np.float64).T
+emg_sig = working_emgfile["RAW_SIGNAL"].to_numpy(dtype=np.float64).T
 ```
 
-Optional: remove bad channels before extension/whitening, if desired.
+Apply power-line harmonics removal when it was used during decomposition.
 
 ```python
-good_channels = emgfile.get("GOOD_CHANNELS", None)
-if good_channels is not None:
-    good_idx = sorted(
-        int(ch) for ch, ok in good_channels.items() if ok
-    )
-    emg_sig = emg_sig[good_idx, :]
-```
-
-Prepare the filtered/extended/whitened signal
-
-```python
-e_w_sig = emg.svd_whitening(
-    emg.extend_emg_signal(
+powerline_params = decomp_params["powerline_harmonics"]
+if powerline_params["enabled"] is True:
+    emg_sig = emg.remove_powerline_harmonics(
         sig=emg_sig,
-        ext_fact=extension_factor,
-    ),
+        fsamp=emgfile["FSAMP"],
+        notch_freq=powerline_params["notch_freq"],
+        notch_width=powerline_params["notch_width"],
+    )
+```
+
+Remove bad channels when this was used during decomposition.
+
+```python
+if decomp_params["exclude_bad_channels"] is True:
+    good_channels = emgfile.get("GOOD_CHANNELS", None)
+    if good_channels is not None:
+        good_idx = sorted(
+            int(ch) for ch, ok in good_channels.items() if ok
+        )
+        emg_sig = emg_sig[good_idx, :]
+```
+
+Prepare the extended, centered, and whitened signal.
+
+```python
+e_sig = emg.extend_emg_signal(
+    sig=emg_sig,
+    ext_fact=extension_factor,
+)
+e_sig = e_sig - np.mean(e_sig, axis=1, keepdims=True)
+e_w_sig = emg.svd_whitening(
+    e_sig=e_sig,
     eigenvalue_percentile=eigenvalue_percentile,
 )
 ```
@@ -413,17 +410,19 @@ if mus_to_delete:
     )
 ```
 
-Also check for duplicate MUs that might have emerged from manual editing.
+Also check for duplicate MUs that might have emerged from manual editing, if
+duplicate removal is enabled in the decomposition metadata.
 
 ```python
 duplicate_params = decomp_params["duplicate_removal"]
-edited_emgfile = emg.remove_duplicates_within(
-    emgfile=edited_emgfile,
-    correlation_max_lag=duplicate_params["correlation_max_lag"],
-    peak_window_half_width=duplicate_params["peak_window_half_width"],
-    duplicate_threshold=duplicate_params["duplicate_threshold"],
-    which=duplicate_params["which"],
-)
+if duplicate_params["enabled"] is True:
+    edited_emgfile = emg.remove_duplicates_within(
+        emgfile=edited_emgfile,
+        correlation_max_lag=duplicate_params["correlation_max_lag"],
+        peak_window_half_width=duplicate_params["peak_window_half_width"],
+        duplicate_threshold=duplicate_params["duplicate_threshold"],
+        which=duplicate_params["which"],
+    )
 ```
 
 Recalculate SIL for all remaining MUs.
