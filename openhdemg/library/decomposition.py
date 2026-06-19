@@ -745,24 +745,14 @@ class EMGDecomposer:
 
         Filtering
             - bandpass: enabled by default (order=2, 20-500 Hz)
-            - power-line removal: disabled by default (notch parameters are
-            None)
+            - power-line removal: disabled by default
 
         Channels
             - bad-channel exclusion: enabled by default
             (`exclude_bad_channels=True`)
 
         Duplicate removal
-            - enabled by default (all duplicate-removal parameters set).
-
-        Notes
-        -----
-        - Bandpass filtering is applied only if *all* of `bandpass_order`,
-        `bandpass_lowcut`, and `bandpass_highcut` are not None.
-        - Power-line harmonics removal is applied only if *both* `notch_freq`
-        and `notch_width` are not None.
-        - Duplicate removal is applied only if all duplicate-removal
-        parameters are not None.
+            - enabled by default
 
         Examples
         --------
@@ -796,11 +786,8 @@ class EMGDecomposer:
 
         >>> decomposer = emg.EMGDecomposer()
         >>> decomposer.change_filtering_parameters(
-        ...     bandpass_order=None,
-        ...     bandpass_lowcut=None,
-        ...     bandpass_highcut=None,
-        ...     notch_freq=None,
-        ...     notch_width=None,
+        ...     bandpass_enabled=False,
+        ...     notch_enabled=False,
         ... )
         >>> decomposed_emgfile = decomposer.run_decomposition(emgfile)
 
@@ -808,10 +795,7 @@ class EMGDecomposer:
 
         >>> decomposer = emg.EMGDecomposer()
         >>> decomposer.change_duplicate_removal_parameters(
-        ...     correlation_max_lag=None,
-        ...     peak_window_half_width=None,
-        ...     duplicate_threshold=None,
-        ...     which=None,
+        ...     duplicate_removal_enabled=False,
         ... )
         >>> decomposed_emgfile = decomposer.run_decomposition(emgfile)
         """
@@ -821,15 +805,18 @@ class EMGDecomposer:
         self.decomposition_function = convolutive_bss
         self.decomposition_parameters = ConvolutiveBSSParams()
 
+        self.bandpass_enabled = True
         self.bandpass_order = 2
         self.bandpass_lowcut = 20
         self.bandpass_highcut = 500
 
-        self.notch_freq = None
-        self.notch_width = None
+        self.notch_enabled = False
+        self.notch_freq = 50.0
+        self.notch_width = 5.0
 
         self.exclude_bad_channels = True
 
+        self.dup_removal_enabled = True
         self.dup_correlation_max_lag = 50e-3
         self.dup_peak_window_half_width = 2.5e-3
         self.dup_duplicate_threshold = 30
@@ -877,42 +864,42 @@ class EMGDecomposer:
 
     def change_filtering_parameters(
         self,
+        bandpass_enabled=True,
         bandpass_order=2,
         bandpass_lowcut=20,
         bandpass_highcut=500,
+        notch_enabled=False,
         notch_freq=50.0,
         notch_width=5.0,
     ):
         """
         Configure preprocessing filters.
 
-        Bandpass filtering is applied only when `bandpass_order`,
-        `bandpass_lowcut`, and `bandpass_highcut` are all not None.
-
-        Power-line harmonics removal is applied only when both `notch_freq` and
-        `notch_width` are not None.
-
         Parameters
         ----------
-        bandpass_order : int or None, default 2
+        bandpass_enabled : bool, default True
+            Whether to bandpass filter the signal.
+        bandpass_order : int, default 2
             The filter order. Note that a band-pass transformation doubles the
             order, so `order=2` produces a 4th-order band-pass filter.
-        bandpass_lowcut : float or None, default 20
+        bandpass_lowcut : float, default 20
             The lower cut-off frequency in Hz.
-        bandpass_highcut : float or None, default 500
+        bandpass_highcut : float, default 500
              The higher cut-off frequency in Hz.
-        notch_freq : float or None, default 50.0
+        notch_enabled : bool, default False
+            Whether to apply notch filtering.
+        notch_freq : float, default 50.0
             Fundamental power-line frequency (e.g., 50 or 60 Hz).
-        notch_width : float or None, default 5.0
+        notch_width : float, default 5.0
             Width of each notch (± notch_width/2), in Hz.
-
-        Notes
-        -----
-        To disable *all* filtering, set all parameters to None.
         """
+
+        self.bandpass_enabled = bandpass_enabled
         self.bandpass_order = bandpass_order
         self.bandpass_lowcut = bandpass_lowcut
         self.bandpass_highcut = bandpass_highcut
+
+        self.notch_enabled = notch_enabled
         self.notch_freq = notch_freq
         self.notch_width = notch_width
 
@@ -924,9 +911,11 @@ class EMGDecomposer:
         -------
         params : dict
             Dictionary with keys:
+            - "bandpass_enabled"
             - "bandpass_order"
             - "bandpass_lowcut"
             - "bandpass_highcut"
+            - "notch_enabled"
             - "notch_freq"
             - "notch_width"
 
@@ -937,11 +926,14 @@ class EMGDecomposer:
         """
 
         return {
+            "bandpass_enabled": self.bandpass_enabled,
             "bandpass_order": self.bandpass_order,
             "bandpass_lowcut": self.bandpass_lowcut,
             "bandpass_highcut": self.bandpass_highcut,
+
+            "notch_enabled": self.notch_enabled,
             "notch_freq": self.notch_freq,
-            "notch_width": self.notch_width,
+            "notch_width": self.notch_width
         }
 
     def use_good_channels_only(self, ans: bool = True):
@@ -964,6 +956,7 @@ class EMGDecomposer:
 
     def change_duplicate_removal_parameters(
         self,
+        duplicate_removal_enabled=True,
         correlation_max_lag=50e-3,
         peak_window_half_width=2.5e-3,
         duplicate_threshold=30,
@@ -972,10 +965,10 @@ class EMGDecomposer:
         """
         Configure post-processing removal of duplicate MUs.
 
-        Duplicate removal is applied only when all parameters are not None.
-
         Parameters
         ----------
+        duplicate_removal_enabled : bool, default True
+            Whether to remove duplicate units.
         correlation_max_lag : float, default 50e-3
             Maximum lag (in seconds) used when computing the cross-correlation
             between MU spike trains. Defines the full search range for possible
@@ -1002,12 +995,9 @@ class EMGDecomposer:
 
             ``covisi``
                 The MU with the highest CoV of interspike interval is removed.
-
-        Notes
-        -----
-        To disable duplicate removal, set all parameters to None.
         """
 
+        self.dup_removal_enabled = duplicate_removal_enabled
         self.dup_correlation_max_lag = correlation_max_lag
         self.dup_peak_window_half_width = peak_window_half_width
         self.dup_duplicate_threshold = duplicate_threshold
@@ -1021,6 +1011,7 @@ class EMGDecomposer:
         -------
         params : dict
             Dictionary with keys:
+            - "duplicate_removal_enabled"
             - "correlation_max_lag"
             - "peak_window_half_width"
             - "duplicate_threshold"
@@ -1034,10 +1025,11 @@ class EMGDecomposer:
         """
 
         return {
+            "duplicate_removal_enabled": self.dup_removal_enabled,
             "correlation_max_lag": self.dup_correlation_max_lag,
             "peak_window_half_width": self.dup_peak_window_half_width,
             "duplicate_threshold": self.dup_duplicate_threshold,
-            "which": self.dup_which,
+            "which": self.dup_which
         }
 
     def run_decomposition(self, emgfile, **plotting_kwargs):
@@ -1067,7 +1059,7 @@ class EMGDecomposer:
         signals : class, optional
             A class providing Qt Signals for external plotting and progress
             monitoring obtained from DecompositionSignals.
-        send_only_process : Bool, optional
+        send_only_process : bool, optional
             If true, only the signal marking the iteration is sent.
             This can save data transfer and plotting time.
         stop_object : class, optional
@@ -1097,10 +1089,7 @@ class EMGDecomposer:
         emgfile = copy.deepcopy(emgfile)
 
         # Preprocess signal
-        c1 = self.bandpass_order is not None
-        c2 = self.bandpass_lowcut is not None
-        c3 = self.bandpass_highcut is not None
-        if all((c1, c2, c3)):
+        if self.bandpass_enabled:
             _filtered_emgfile = filter_rawemg(
                 emgfile=emgfile,
                 order=self.bandpass_order,
@@ -1110,32 +1099,29 @@ class EMGDecomposer:
             emgsig = np.transpose(
                 _filtered_emgfile["RAW_SIGNAL"].to_numpy().astype(np.float64)
             )
-            bandpass_filtering_dict = {
-                "order": self.bandpass_order,
-                "lowcut": self.bandpass_lowcut,
-                "highcut": self.bandpass_highcut
-            }
         else:
             emgsig = np.transpose(
                 emgfile["RAW_SIGNAL"].to_numpy().astype(np.float64)
             )
-            bandpass_filtering_dict = None
+        bandpass_filtering_dict = {
+            "enabled": self.bandpass_enabled,
+            "order": self.bandpass_order,
+            "lowcut": self.bandpass_lowcut,
+            "highcut": self.bandpass_highcut
+        }
 
-        c1 = self.notch_freq is not None
-        c2 = self.notch_width is not None
-        if all((c1, c2)):
+        if self.notch_enabled:
             emgsig = remove_powerline_harmonics(
                 sig=emgsig,
                 fsamp=emgfile["FSAMP"],
                 notch_freq=self.notch_freq,
                 notch_width=self.notch_width,
             )
-            powerline_harm_dict = {
-                "notch_freq": self.notch_freq,
-                "notch_width": self.notch_width
-            }
-        else:
-            powerline_harm_dict = None
+        powerline_harm_dict = {
+            "enabled": self.notch_enabled,
+            "notch_freq": self.notch_freq,
+            "notch_width": self.notch_width
+        }
 
         # Remove bad channels
         if self.exclude_bad_channels is True:
@@ -1174,11 +1160,25 @@ class EMGDecomposer:
         decomposition_parameters = {
             "method_name": self.decomposition_function_name,
             **asdict(self.decomposition_parameters),
-            "bandpass_filtering": bandpass_filtering_dict,  # None or dict
-            "powerline_harmonics": powerline_harm_dict,     # None or dict
+            "bandpass_filtering": bandpass_filtering_dict,
+            "powerline_harmonics": powerline_harm_dict,
             "exclude_bad_channels": self.exclude_bad_channels,
         }
         emgfile["DECOMPOSITION_PARAMETERS"] = decomposition_parameters
+
+        # Update also decomposition parameters with duplicate removal
+        # parameters here because if no MUs are detected, it will not be stored
+        # later on.
+        remove_duplicates_dict = {
+            "enabled": self.dup_removal_enabled,
+            "correlation_max_lag": self.dup_correlation_max_lag,
+            "peak_window_half_width": self.dup_peak_window_half_width,
+            "duplicate_threshold": self.dup_duplicate_threshold,
+            "which": self.dup_which,
+        }
+        emgfile["DECOMPOSITION_PARAMETERS"][
+            "duplicate_removal"
+        ] = remove_duplicates_dict
 
         # Extract decomposition parameters here, for future compatibility, as
         # Different decomposition functions might return a different number of
@@ -1239,11 +1239,7 @@ class EMGDecomposer:
         )
 
         # Remove duplicates
-        c1 = self.dup_correlation_max_lag is not None
-        c2 = self.dup_peak_window_half_width is not None
-        c3 = self.dup_duplicate_threshold is not None
-        c4 = self.dup_which is not None
-        if all((c1, c2, c3, c4)):
+        if self.dup_removal_enabled:
             print("\u25B6  Removing duplicate MUs")
             emgfile = remove_duplicates_within(
                 emgfile=emgfile,
@@ -1252,18 +1248,6 @@ class EMGDecomposer:
                 duplicate_threshold=self.dup_duplicate_threshold,
                 which=self.dup_which,
             )
-            remove_duplicates_dict = {
-                "correlation_max_lag": self.dup_correlation_max_lag,
-                "peak_window_half_width": self.dup_peak_window_half_width,
-                "duplicate_threshold": self.dup_duplicate_threshold,
-                "which": self.dup_which,
-            }
-        else:
-            remove_duplicates_dict = None
-        # Update decomposition parmaeters with duplicate removal parameters
-        emgfile["DECOMPOSITION_PARAMETERS"][
-            "duplicate_removal"
-        ] = remove_duplicates_dict
 
         # Standardise emgfile
         emgfile = standardise_emgfile_dtypes(emgfile=emgfile)
