@@ -6,24 +6,191 @@ shortcuts necessary to operate with the HD-EMG recordings.
 """
 
 import copy
-import pandas as pd
+import warnings
+
 import numpy as np
-import matplotlib.pyplot as plt
+import pandas as pd
 from scipy import signal
 from scipy.stats import iqr
 from sklearn.svm import SVR
-import warnings
-from openhdemg.library.mathtools import compute_sil
+
+from openhdemg.ui.widgets import (
+    run_point_selector, run_manual_emgchannels_selection_dialog
+)
+from openhdemg.library.mathtools import (
+    discrete_spike_xcorr, compute_sil, compute_pulses_agreement_rate
+)
 
 
-def showselect(emgfile, how="ref_signal", title="", titlesize=12, nclic=2):
+def standardise_emgfile_dtypes(emgfile):
     """
-    Visually select a part of the recording.
+    Standardise the data types of fields in an emgfile dictionary.
+
+    This function ensures that each standard key conforms to a predefined data
+    type specification. It enforces numeric data types, and standardises array
+    and scalar types to maintain consistency across saving/loading and
+    processing of the emgfile.
+
+    For motor unit pulse trains, all arrays are verified to be one-dimensional.
+    If a non-1D array is detected, the function issues a warning and
+    automatically flattens it to 1D to preserve compatibility.
+
+    The following keys are checked and standardised:
+
+    - `"SOURCE"` (str)
+    - `"FILENAME"` (str)
+    - `"RAW_SIGNAL"` (pandas.DataFrame, np.float64)
+    - `"REF_SIGNAL"` (pandas.DataFrame, np.float64)
+    - `"ACCURACY"` (pandas.DataFrame, np.float64)
+    - `"IPTS"` (pandas.DataFrame, np.float64)
+    - `"MUPULSES"` (list of 1D numpy.ndarray, np.int64)
+    - `"FSAMP"` (float)
+    - `"IED"` (float)
+    - `"EMG_LENGTH"` (int)
+    - `"NUMBER_OF_MUS"` (int)
+    - `"BINARY_MUS_FIRING"` (pandas.DataFrame, np.uint8)
+
+    - `"GOOD_CHANNELS"` (dict{str: int})
+    - `"REFERENCE_MUPULSES"` (list of 1D numpy.ndarray, np.int64)
+    - `"ROA_WITH_REFERENCE_MUPULSES"` (pandas.DataFrame, np.float64)
+
+    Any additional keys (e.g., `"EXTRAS"`) are preserved but not type-checked.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+
+    Returns
+    -------
+    dict
+        A deep copy of the input emgfile where all recognised fields have been
+        standardised to the expected data types.
+
+    Raises
+    ------
+    TypeError
+        If a recognised field does not match the expected data type or cannot
+        be cast.
+
+    Warns
+    -----
+    UserWarning
+        If "MUPULSES"[n] or "REFERENCE_MUPULSES"[n] is not 1D and is flattened.
+
+    Examples
+    --------
+    Check data types for IPTS of the sample emgfile.
+
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> print(emgfile["IPTS"].dtypes)
+    0    float32
+    1    float32
+    2    float32
+    3    float32
+    4    float32
+    dtype: object
+
+    Standardise the emgfile and check again the data types for IPTS.
+
+    >>> standard_emgfile = emg.standardise_emgfile_dtypes(emgfile)
+    >>> print(standard_emgfile["IPTS"].dtypes)
+    0    float64
+    1    float64
+    2    float64
+    3    float64
+    4    float64
+    dtype: object
+    """
+
+    data = copy.deepcopy(emgfile)
+
+    spec = {
+        "SOURCE": str,
+        "FILENAME": str,
+        "RAW_SIGNAL": ("pd.DataFrame", np.float64),
+        "REF_SIGNAL": ("pd.DataFrame", np.float64),
+        "ACCURACY": ("pd.DataFrame", np.float64),
+        "ROA_WITH_REFERENCE_MUPULSES": ("pd.DataFrame", np.float64),
+        "IPTS": ("pd.DataFrame", np.float64),
+        "MUPULSES": ("list_of_np", np.int64),
+        "REFERENCE_MUPULSES": ("list_of_np", np.int64),
+        "FSAMP": np.float64,
+        "IED": np.float64,
+        "EMG_LENGTH": np.int64,
+        "NUMBER_OF_MUS": np.int64,
+        "BINARY_MUS_FIRING": ("pd.DataFrame", np.uint8),  # TODO document uint8
+        # "EXTRAS" => Skip checks for extras and any other custom key
+    }
+
+    for key, expected in spec.items():
+
+        if key not in data:
+            continue  # Skip
+
+        if isinstance(expected, tuple):
+            kind, dtype = expected
+
+            if kind == "pd.DataFrame":
+                if not isinstance(data[key], pd.DataFrame):
+                    raise TypeError(f"{key} must be a pandas DataFrame")
+                # Cast data
+                data[key] = data[key].astype(dtype)
+
+            elif kind == "list_of_np":
+                if not isinstance(data[key], list) or not all(
+                    isinstance(arr, np.ndarray) for arr in data[key]
+                ):
+                    raise TypeError(f"{key} must be a list of numpy arrays")
+
+                # Flatten to 1D if not already  # TODO document this
+                fixed_arrays = []
+                for i, arr in enumerate(data[key]):
+                    if arr.ndim != 1:
+                        warnings.warn(
+                            f"Array {i} in '{key}' is not 1D (got shape "
+                            f"{arr.shape}). It will be flattened.",
+                            UserWarning,
+                            stacklevel=2
+                        )
+                        arr = arr.ravel()
+                    fixed_arrays.append(arr.astype(dtype))
+
+                data[key] = fixed_arrays
+
+        else:
+            # Single value casting
+            data[key] = expected(data[key])
+
+    # Non-standard keys
+    # GOOD_CHANNELS => dict{str: int}
+    if isinstance(data.get("GOOD_CHANNELS"), dict):
+        data["GOOD_CHANNELS"] = {
+            str(k): int(v)
+            for k, v in data["GOOD_CHANNELS"].items()
+        }
+
+    return data
+
+
+def showselect(
+    emgfile,
+    how="ref_signal",
+    refsig_channel=0,
+    title="",
+    titlesize=12,
+    nclic=2,
+):
+    """
+    Visually select a part of the recording (X axis).
 
     The area can be selected based on the reference signal or based on the
-    mean EMG signal. The selection can be performed with any letter or number
-    in the keyboard, wrong points can be removed by pressing the right mouse
-    button. Once finished, press enter to continue.
+    mean EMG signal. Users can move the mouse to track coordinates and press:
+
+        - "A" or "a" to add a point at the current cursor location
+        - "D" or "d" to delete the last selected point
+        - "Enter" to confirm the selection and close the window
 
     This function does not check whether the selected points are within the
     effective file duration. This should be done based on user's need.
@@ -41,6 +208,8 @@ def showselect(emgfile, how="ref_signal", title="", titlesize=12, nclic=2):
 
         ``mean_emg``
             Visualise the mean EMG signal to select the area to resize.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
     title : str
         The title of the plot. It is optional but strongly recommended.
         It should describe the task to do.
@@ -54,11 +223,6 @@ def showselect(emgfile, how="ref_signal", title="", titlesize=12, nclic=2):
     -------
     points : list
         A list containing the selected points sorted in ascending order.
-
-    Raises
-    ------
-    ValueError
-        When the user clicked a wrong number of inputs in the GUI.
 
     Examples
     --------
@@ -91,7 +255,7 @@ def showselect(emgfile, how="ref_signal", title="", titlesize=12, nclic=2):
 
     # Get the data to plot
     if how == "ref_signal":
-        data_to_plot = emgfile["REF_SIGNAL"][0]
+        data_to_plot = emgfile["REF_SIGNAL"].loc[:, refsig_channel]
         y_label = "Reference signal"
     elif how == "mean_emg":
         data_to_plot = emgfile["RAW_SIGNAL"].mean(axis=1)
@@ -99,25 +263,21 @@ def showselect(emgfile, how="ref_signal", title="", titlesize=12, nclic=2):
     else:
         raise ValueError(
             "Wrong argument in showselect(). how can only be 'ref_signal' or "
-            + f"'mean_emg'. {how} was passed instead."
+            f"'mean_emg'. {how} was passed instead."
         )
+    # Normalise for plotting
+    data_to_plot = np.asarray(data_to_plot, dtype=np.float64).ravel()
 
-    # Show the signal for the selection
-    plt.figure()
-    plt.plot(data_to_plot)
-    plt.xlabel("Samples")
-    plt.ylabel(y_label)
-    plt.title(title, fontweight="bold", fontsize=titlesize)
+    res = run_point_selector(
+        data=data_to_plot,
+        nclic=nclic,
+        y_label=y_label,
+        title=title,
+        title_fontsize=titlesize,
+    )
 
-    ginput_res = plt.ginput(n=-1, timeout=0, mouse_add=False, show_clicks=True)
-
-    plt.close()
-
-    points = [round(point[0]) for point in ginput_res]
+    points = [round(point[0]) for point in res]
     points.sort()
-
-    if nclic > 0 and nclic != len(points):
-        raise ValueError("Wrong number of inputs, read the title")
 
     return points
 
@@ -143,6 +303,7 @@ def create_binary_firings(emg_length, number_of_mus, mupulses):
     -------
     binary_MUs_firing : pd.DataFrame
         A pd.DataFrame containing the binary representation of MUs firing.
+        Please note that dtype=np.uint8. Please convert before processing.
     """
 
     # Skip the step if I don't have the mupulses (is nan)
@@ -151,7 +312,7 @@ def create_binary_firings(emg_length, number_of_mus, mupulses):
 
     # Initialise a pd.DataFrame with zeros
     binary_MUs_firing = pd.DataFrame(
-        np.zeros((emg_length, number_of_mus), dtype=int)
+        np.zeros((emg_length, number_of_mus), dtype=np.uint8)
     )
 
     for mu in range(number_of_mus):
@@ -178,7 +339,7 @@ def mupulses_from_binary(binarymusfiring):
     """
 
     # Create empty list of lists to fill with ndarrays containing the MUPULSES
-    # (point of firing)
+    # (instants of the firing)
     numberofMUs = len(binarymusfiring.columns)
     MUPULSES = [[] for _ in range(numberofMUs)]
 
@@ -189,7 +350,7 @@ def mupulses_from_binary(binarymusfiring):
                 my_ndarray.append(idx)
                 # Take the firing time and add it to the ndarray
 
-        MUPULSES[mu] = np.array(my_ndarray)
+        MUPULSES[mu] = np.array(my_ndarray, dtype=np.int64)
 
     return MUPULSES
 
@@ -198,14 +359,44 @@ def resize_emgfile(
     emgfile,
     area=None,
     how="ref_signal",
+    refsig_channel=0,
     accuracy="recalculate",
-    ignore_negative_ipts=False,
+    compute_on_peaks_only=True,
+    roa_with_reference_mupulses="recalculate",
+    custom_dataframes=None,
+    ignore_negative_ipts=None,
 ):
     """
-    Resize all the components in the emgfile.
+    Resize all the **STANDARD** components in the emgfile.
 
     This function can be useful to compute the various parameters only in the
     area of interest.
+
+    !!! note "Since version 0.2.0"
+        Specific **NON-STANDARD** components in the emgfile are also resized.
+
+    For **STANDARD** we refer to:
+
+    - `RAW_SIGNAL`
+    - `REF_SIGNAL`
+    - `IPTS`
+    - `MUPULSES`
+    - `EMG_LENGTH`
+    - `BINARY_MUS_FIRING`
+    - `ACCURACY` (if recalculated in the new portion)
+
+    For **NON-STANDARD** we refer to:
+
+    - `REFERENCE_MUPULSES`
+    - `ROA_WITH_REFERENCE_MUPULSES`
+
+    Additional dataframes contained in the emgfile will be resized if
+    specified in "custom_dataframes".
+
+    !!! note "Since version 0.2.0"
+        The behaviour of this function has changed to ensure a more accurate
+        SIL estimation. To maintain the old behaviour, you can set
+        ``compute_on_peaks_only=False`` when ``accuracy=="recalculate``".
 
     Parameters
     ----------
@@ -213,7 +404,7 @@ def resize_emgfile(
         The dictionary containing the emgfile to resize.
     area : None or list, default None
         The resizing area. If already known, it can be passed in samples, as a
-        list (e.g., [120,2560]).
+        list (e.g., [120, 2560]).
         If None, the user can select the area of interest manually.
     how : str {"ref_signal", "mean_emg"}, default "ref_signal"
         If area==None, allow the user to visually select the area to resize
@@ -224,6 +415,8 @@ def resize_emgfile(
 
         ``mean_emg``
             Visualise the mean EMG signal to select the area to resize.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
     accuracy : str {"recalculate", "maintain"}, default "recalculate"
 
         ``recalculate``
@@ -233,12 +426,33 @@ def resize_emgfile(
         ``maintain``
             The original accuracy measure already contained in the emgfile is
             returned without any computation.
-    ignore_negative_ipts : bool, default False
-        This parameter determines the silhouette score estimation. If True,
-        only positive ipts values are used during peak and noise clustering.
-        This is particularly important for compensating sources with large
-        negative components. This parameter is considered only if
-        accuracy=="recalculate".
+    compute_on_peaks_only : bool, default True
+        If True, the silhouette (SIL) score is computed using **only the ipts
+        peaks**, rather than all values in the source signal. This can improve
+        accuracy estimation by comparing MU spikes only against other
+        candidate spikes, ignoring baseline or negative ipts values.
+        If False, the noise cluster is defined as all samples not selected as
+        MU spikes.
+    roa_with_reference_mupulses : str {"recalculate", "maintain"}, default "recalculate"
+        Whether to re-calculate the rate of agreement (ROA) between "MUPULSES"
+        and "REFERENCE_MUPULSES".
+
+        ``recalculate``
+            The ROA is computed in the new resized file. This can
+            be done only if both "MUPULSES" and "REFERENCE_MUPULSES" are
+            present.
+
+        ``maintain``
+            The original ROA measure already contained in the emgfile is
+            returned without any computation.
+    custom_dataframes : list or None, default None
+        A list of strings pointing to the additional dataframes to resize. The
+        strings should match the emgfile keys associated to the pd.DataFrames.
+    ignore_negative_ipts : None
+        This parameter is deprecated and will be removed in future releases.
+        Please transform the 'ipts' before if needed. To replicate the
+        behaviour of 'ignore_negative_ipts=True' you can use
+        'ipts * np.abs(ipts)'.
 
     Returns
     -------
@@ -256,7 +470,7 @@ def resize_emgfile(
     Manually select the area to resize the emgfile based on mean EMG signal
     and recalculate the silhouette score in the new portion of the signal.
 
-    >>> emgfile = emg.askopenfile(filesource="DEMUSE", ignore_negative_ipts=True)
+    >>> emgfile = emg.askloadmodule()
     >>> rs_emgfile, start_, end_ = emg.resize_emgfile(
     ...     emgfile,
     ...     how="mean_emg",
@@ -274,130 +488,243 @@ def resize_emgfile(
     ... )
     """
 
+    # Manage deprecated parameters
+    # TODO DeprecationWarning issued by compute_sil. Remove if the future.
+
+    # Create the object to store the resized emgfile.
+    rs_emgfile = copy.deepcopy(emgfile)
+
+    # Verify which STANDARD keys are present
+    _has_raw_signal = "RAW_SIGNAL" in rs_emgfile
+    _has_ref_signal = "REF_SIGNAL" in rs_emgfile
+    _has_ipts = "IPTS" in rs_emgfile
+    _has_mupulses = "MUPULSES" in rs_emgfile
+    # "EMG_LENGTH" no need to check
+    _has_binary_mus_firing = "BINARY_MUS_FIRING" in rs_emgfile
+    _has_accuracy = "ACCURACY" in rs_emgfile
+
+    # Verify which NON-STANDARD keys are present
+    _has_reference_mupulses = "REFERENCE_MUPULSES" in rs_emgfile
+    _has_roa = "ROA_WITH_REFERENCE_MUPULSES" in rs_emgfile
+
     # Identify the area of interest
     if isinstance(area, list) and len(area) == 2:
         start_ = area[0]
         end_ = area[1]
-
     else:
         # Visualise and select the area to resize
         title = (
-            "Select the start/end area to resize by hovering the mouse" +
-            "\nand pressing the 'a'-key. Wrong points can be removed with " +
-            "right \nclick or canc/delete key. When ready, press enter."
+            "Select the start/end area to resize by hovering the mouse"
+            "\nand pressing the 'a'-key. Wrong points can be removed with "
+            "the \n'd' -key. When ready, press enter."
         )
         points = showselect(
-            emgfile,
+            emgfile=rs_emgfile,
             how=how,
+            refsig_channel=refsig_channel,
             title=title,
             titlesize=10,
         )
         start_, end_ = points[0], points[1]
 
+    # Force boundaries dtype
+    start_ = int(start_)
+    end_ = int(end_)
+
     # Double check that start_, end_ are within the real range.
     if start_ < 0:
         start_ = 0
-    # Continued inside if...
 
-    # Create the object to store the resized emgfile.
-    rs_emgfile = copy.deepcopy(emgfile)
-
-    if emgfile["SOURCE"] in ["DEMUSE", "OTB", "CUSTOMCSV", "DELSYS"]:
-        """
-        ACCURACY should be re-computed on the new portion of the file if
-        possible. Need to be resized: ==>
-        emgfile =   {
-            "SOURCE": SOURCE,
-            ==> "RAW_SIGNAL": RAW_SIGNAL,
-            ==> "REF_SIGNAL": REF_SIGNAL,
-            ==> "ACCURACY": ACCURACY,
-            ==> "IPTS": IPTS,
-            ==> "MUPULSES": MUPULSES,
-            "FSAMP": FSAMP,
-            "IED": IED,
-            ==> "EMG_LENGTH": EMG_LENGTH,
-            "NUMBER_OF_MUS": NUMBER_OF_MUS,
-            ==> "BINARY_MUS_FIRING": BINARY_MUS_FIRING,
-        }
-        """
-
-        # Double check that start_, end_ are within the real range.
-        if end_ > emgfile["RAW_SIGNAL"].shape[0]:
-            end_ = emgfile["RAW_SIGNAL"].shape[0]
-
-        # Resize the reference signal and identify the first value of the
-        # index to resize the mupulses. Then, reset the index.
-        rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
-        rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].reset_index(drop=True)
-        rs_emgfile["RAW_SIGNAL"] = rs_emgfile["RAW_SIGNAL"].loc[start_:end_]
-        first_idx = rs_emgfile["RAW_SIGNAL"].index[0]
-        rs_emgfile["RAW_SIGNAL"] = rs_emgfile["RAW_SIGNAL"].reset_index(drop=True)
-        rs_emgfile["IPTS"] = rs_emgfile["IPTS"].loc[start_:end_].reset_index(drop=True)
-        rs_emgfile["EMG_LENGTH"] = int(len(rs_emgfile["RAW_SIGNAL"].index))
-        rs_emgfile["BINARY_MUS_FIRING"] = (
-            rs_emgfile["BINARY_MUS_FIRING"].loc[start_:end_].reset_index(drop=True)
+    if _has_raw_signal is True:
+        if end_ > rs_emgfile["RAW_SIGNAL"].shape[0]:
+            end_ = rs_emgfile["RAW_SIGNAL"].shape[0]
+    elif _has_ref_signal is True:
+        if end_ > rs_emgfile["REF_SIGNAL"].shape[0]:
+            end_ = rs_emgfile["REF_SIGNAL"].shape[0]
+    else:
+        raise KeyError(
+            "No RAW_SIGNAL or REF_SIGNAL is present in the emgfile."
         )
 
-        for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
-            # Mask the array based on a filter and return the values in an
-            # array. However, make sure that all the numbers are int32 to
-            # prevent falling to int16 when small sections are resized.
-            # This may cause overflow.
-            rs_emgfile["MUPULSES"][mu] = rs_emgfile["MUPULSES"][mu].astype(
-                np.int32
-            )
+    # Resize STANDARD dataframes and identify the first value of the
+    # index to resize the mupulses. Then, reset the index.
+    first_idx = 0
 
-            rs_emgfile["MUPULSES"][mu] = (
-                rs_emgfile["MUPULSES"][mu][
-                    (rs_emgfile["MUPULSES"][mu] >= start_)
-                    & (rs_emgfile["MUPULSES"][mu] < end_)
-                ]
-                - first_idx
-            )
+    # Raw signal
+    if _has_raw_signal is True:
+        rs_emgfile["RAW_SIGNAL"] = rs_emgfile["RAW_SIGNAL"].iloc[start_:end_]
+        first_idx = np.int64(rs_emgfile["RAW_SIGNAL"].index[0])
+        rs_emgfile["RAW_SIGNAL"] = rs_emgfile["RAW_SIGNAL"].reset_index(
+            drop=True,
+        )
 
-        # Compute SIL or leave original ACCURACY
-        if accuracy == "recalculate":
-            if rs_emgfile["NUMBER_OF_MUS"] > 0:
-                if not rs_emgfile["IPTS"].empty:
-                    # Calculate SIL
-                    for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
-                        res = compute_sil(
-                            ipts=rs_emgfile["IPTS"][mu],
-                            mupulses=rs_emgfile["MUPULSES"][mu],
-                            ignore_negative_ipts=ignore_negative_ipts,
-                        )
-                        rs_emgfile["ACCURACY"].iloc[mu] = res
+        # EMG length
+        rs_emgfile["EMG_LENGTH"] = int(rs_emgfile["RAW_SIGNAL"].shape[0])
 
-                else:
-                    raise ValueError(
-                        "Impossible to calculate ACCURACY (SIL). IPTS not " +
-                        "found. If IPTS is not present or empty, set " +
-                        "accuracy='maintain'"
+    # Ref signal
+    if _has_ref_signal is True:
+        rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].iloc[
+            start_:end_
+        ].reset_index(drop=True)
+
+    # IPTS
+    if _has_ipts is True:
+        rs_emgfile["IPTS"] = rs_emgfile["IPTS"].iloc[
+            start_:end_
+        ].reset_index(drop=True)
+
+    # Binary MU firings
+    if _has_binary_mus_firing is True:
+        rs_emgfile["BINARY_MUS_FIRING"] = rs_emgfile["BINARY_MUS_FIRING"].iloc[
+            start_:end_
+        ].reset_index(drop=True)
+
+    # MUPULSES, list of arrays
+    if _has_mupulses is True:
+        # If MUs are present, NUMBER_OF_MUS must be set.
+        n_mus = rs_emgfile.get("NUMBER_OF_MUS", None)
+        if n_mus is None:
+            rs_emgfile["NUMBER_OF_MUS"] = int(len(rs_emgfile["MUPULSES"]))
+            n_mus = rs_emgfile["NUMBER_OF_MUS"]
+        # Do the rest only if any MU is present
+        if n_mus > 0:
+            for mu in range(n_mus):
+                # Mask the array based on a filter and return the values in
+                # an array.
+                rs_emgfile["MUPULSES"][mu] = (
+                    rs_emgfile["MUPULSES"][mu][
+                        (rs_emgfile["MUPULSES"][mu] >= start_)
+                        & (rs_emgfile["MUPULSES"][mu] < end_)
+                    ] - first_idx
+                )
+
+    # REFERENCE MUPULSES, list of arrays
+    if _has_reference_mupulses is True:
+        # We assume that NUMBER_OF_MUS is already managed, at least by resizing
+        # MUPULSES. Do the rest only if any MU is present.
+        n_mus = rs_emgfile.get("NUMBER_OF_MUS", None)
+        if n_mus > 0:
+            for mu in range(n_mus):
+                rs_emgfile["REFERENCE_MUPULSES"][mu] = (
+                    rs_emgfile["REFERENCE_MUPULSES"][mu][
+                        (rs_emgfile["REFERENCE_MUPULSES"][mu] >= start_)
+                        & (rs_emgfile["REFERENCE_MUPULSES"][mu] < end_)
+                    ] - first_idx
+                )
+
+    # Compute SIL or leave original ACCURACY
+    if accuracy == "recalculate":
+        if _has_accuracy is True and rs_emgfile.get("NUMBER_OF_MUS", 0) > 0:
+            if _has_ipts is False:
+                raise ValueError(
+                    "Impossible to calculate ACCURACY (SIL). IPTS not "
+                    "found. If IPTS is not present or empty, set "
+                    "accuracy='maintain'"
+                )
+            if not rs_emgfile["IPTS"].empty:
+                # Calculate SIL
+                for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
+                    res = compute_sil(
+                        ipts=rs_emgfile["IPTS"][mu],
+                        mupulses=rs_emgfile["MUPULSES"][mu],
+                        compute_on_peaks_only=compute_on_peaks_only,
+                        ignore_negative_ipts=ignore_negative_ipts,
+                    )  # TODO ignore_negative_ipts deprecated => remove
+                    rs_emgfile["ACCURACY"].iloc[mu] = res
+
+    elif accuracy != "maintain":
+        raise ValueError(
+            "Accuracy can only be 'recalculate' or 'maintain'."
+            f"{accuracy} was passed instead."
+        )
+
+    # Compute ROA or leave original
+    if roa_with_reference_mupulses == "recalculate":
+        if _has_roa is True and rs_emgfile.get("NUMBER_OF_MUS", 0) > 0:
+            if _has_reference_mupulses is False:
+                raise ValueError(
+                    "Impossible to calculate ROA. REFERENCE_MUPULSES not "
+                    "found. If REFERENCE_MUPULSES is not present or empty, "
+                    "set roa_with_reference_mupulses='maintain'"
+                )
+            if len(rs_emgfile["REFERENCE_MUPULSES"]) > 0:
+                # Calculate ROA
+                for mu in range(rs_emgfile["NUMBER_OF_MUS"]):
+                    res = compute_pulses_agreement_rate(
+                        estimated_pulses=rs_emgfile["MUPULSES"][mu],
+                        reference_pulses=rs_emgfile["REFERENCE_MUPULSES"][mu],
+                        method="dice_coefficient",
                     )
+                    rs_emgfile["ROA_WITH_REFERENCE_MUPULSES"].iloc[mu] = res
 
-        elif accuracy == "maintain":
-            # rs_emgfile["ACCURACY"] = rs_emgfile["ACCURACY"]
-            pass
+    elif roa_with_reference_mupulses != "maintain":
+        raise ValueError(
+            "roa_with_reference_mupulses can only be 'recalculate' or "
+            f"'maintain'. {accuracy} was passed instead."
+        )
 
-        else:
-            raise ValueError(
-                f"Accuracy can only be 'recalculate' or 'maintain'. {accuracy} was passed instead."
+    # Custom dataframes
+    if custom_dataframes is not None:
+        if not isinstance(custom_dataframes, (list, tuple)):
+            raise TypeError(
+                "custom_dataframes must be a list (or tuple) of emgfile keys."
+            )
+        for k in custom_dataframes:
+            if not isinstance(rs_emgfile[k], pd.DataFrame):
+                raise TypeError(
+                    f"custom_dataframes contains '{k}', but emgfile['{k}'] "
+                    "is not a pandas DataFrame."
+                )
+            rs_emgfile[k] = rs_emgfile[k].iloc[start_:end_].reset_index(
+                drop=True,
             )
 
-        return rs_emgfile, start_, end_
+    return standardise_emgfile_dtypes(rs_emgfile), start_, end_
 
-    elif emgfile["SOURCE"] in ["OTB_REFSIG", "CUSTOMCSV_REFSIG", "DELSYS_REFSIG"]:
-        # Double check that start_, end_ are within the real range.
-        if end_ > emgfile["REF_SIGNAL"].shape[0]:
-            end_ = emgfile["REF_SIGNAL"].shape[0]
 
-        rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].loc[start_:end_]
-        rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].reset_index(drop=True)
+def select_bad_channels(emgfile, manual_offset=0):
+    """
+    Select noisy channels via visual inspection.
 
-        return rs_emgfile, start_, end_
+    This function opens a modal graphical dialog that allows the user to
+    visually inspect stacked EMG channels and mark noisy or unwanted
+    channels. Channel selection is performed interactively; the calling
+    code is blocked until the dialog is closed.
 
-    else:
-        raise ValueError("\nFile source not recognised\n")
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+    manual_offset : int or float, default 0
+        This parameter sets the scaling of the channels. If 0 (default), the
+        channels' amplitude is scaled automatically to fit the plotting window.
+        If > 0, the channels will be scaled based on the specified value.
+
+    Returns
+    -------
+    edited_emgfile : dict or None
+        The EMG file dictionary with an updated ``"GOOD_CHANNELS"`` entry
+        (mapping channel indices as strings to booleans) if the user
+        confirms the selection.
+        Returns ``None`` if the dialog is cancelled.
+
+    Examples
+    --------
+    >>> import openhdemg.library as emg
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> edited_emgfile = emg.select_bad_channels(emgfile)
+    >>> if edited_emgfile is not None:
+    ...     print(edited_emgfile["GOOD_CHANNELS"])
+    >>> else:
+    ...     print("Selection cancelled by the user")
+    """
+
+    edited_emgfile = run_manual_emgchannels_selection_dialog(
+        emgfile=emgfile,
+        manual_offset=manual_offset,
+    )
+
+    return edited_emgfile
 
 
 class EMGFileSectionsIterator:
@@ -479,6 +806,7 @@ class EMGFileSectionsIterator:
     def set_split_points_by_showselect(
         self,
         how="ref_signal",
+        refsig_channel=0,
         title="",
         titlesize=10,
         nclic=-1,
@@ -490,10 +818,14 @@ class EMGFileSectionsIterator:
         based on the visualisation of the reference signal or of the EMG
         signal amplitude.
 
-        Points can be added by pressing keyboard letters while hovering over
-        the point to resize. Right mouse click removes the point. Press 'enter'
-        to confirm the selection. Sections are cut starting from the first
-        point and then on the consecutove points.
+        Users can move the mouse to track coordinates and press:
+
+        - "A" or "a" to add a point at the current cursor location
+        - "D" or "d" to delete the last selected point
+        - "Enter" to confirm the selection and close the window
+
+        Sections are cut starting from the first point and then on the
+        consecutive points.
 
         Parameters
         ----------
@@ -506,6 +838,8 @@ class EMGFileSectionsIterator:
 
             ``mean_emg``
                 Visualise the mean EMG signal to select the area to resize.
+        refsig_channel : int or str, Default 0
+            The name of the reference signal channel (column) to plot.
         title : str
             The title of the plot. It is optional but strongly recommended.
             It should describe the task to do. A default title is provided when
@@ -554,14 +888,17 @@ class EMGFileSectionsIterator:
         # Fallback title
         if len(title) == 0:
             title = (
-                "Select the points where to resize by hovering the mouse" +
-                "\nand pressing the 'a'-key. Wrong points can be removed " +
-                "with right\nclick or canc/delete keys. When ready, press " +
-                "enter."
+                "Select the points by hovering the mouse and pressing the" +
+                "'a'-key.\nWrong points can be removed with the 'd' -key." +
+                "\nWhen ready, press enter."
             )
 
         split_points = showselect(
-            emgfile=self.file, how=how, title=title, titlesize=titlesize,
+            emgfile=self.file,
+            how=how,
+            refsig_channel=refsig_channel,
+            title=title,
+            titlesize=titlesize,
             nclic=nclic,
         )
 
@@ -782,7 +1119,14 @@ class EMGFileSectionsIterator:
 
         self.split_points = split_points
 
-    def split(self, accuracy="recalculate", ignore_negative_ipts=False):
+    def split(
+        self,
+        accuracy="recalculate",
+        compute_on_peaks_only=True,
+        roa_with_reference_mupulses="recalculate",
+        custom_dataframes=None,
+        ignore_negative_ipts=None,
+    ):
         """
         Splits the file into sections using the set split points.
 
@@ -797,12 +1141,34 @@ class EMGFileSectionsIterator:
             ``maintain``
                 The original accuracy measure already contained in the emgfile
                 is returned without any computation.
-        ignore_negative_ipts : bool, default False
-            This parameter determines the silhouette score estimation. If True,
-            only positive ipts values are used during peak-noise clustering.
-            This is particularly important for compensating sources with large
-            negative components. This parameter is considered only if
-            accuracy=="recalculate".
+        compute_on_peaks_only : bool, default True
+            If True, the silhouette (SIL) score is computed using **only the
+            ipts peaks**, rather than all values in the source signal. This can
+            improve accuracy estimation by comparing MU spikes only against
+            other candidate spikes, ignoring baseline or negative ipts values.
+            If False, the noise cluster is defined as all samples not selected
+            as MU spikes.
+        roa_with_reference_mupulses : str {"recalculate", "maintain"}, default "recalculate"
+            Whether to re-calculate the rate of agreement (ROA) between
+            "MUPULSES" and "REFERENCE_MUPULSES".
+
+            ``recalculate``
+                The ROA is computed in the new resized file. This can
+                be done only if both "MUPULSES" and "REFERENCE_MUPULSES" are
+                present.
+
+            ``maintain``
+                The original ROA measure already contained in the emgfile is
+                returned without any computation.
+        custom_dataframes : list or None, default None
+            A list of strings pointing to the additional dataframes to resize.
+            The strings should match the emgfile keys associated to the
+            pd.DataFrames.
+        ignore_negative_ipts : None
+            This parameter is deprecated and will be removed in future
+            releases. Please transform the 'ipts' before if needed. To
+            replicate the behaviour of 'ignore_negative_ipts=True' you can use
+            'ipts * np.abs(ipts)'.
 
         Returns
         -------
@@ -826,7 +1192,10 @@ class EMGFileSectionsIterator:
             rs_emgfile, _, _ = resize_emgfile(
                 self.file, area=[start, end],
                 accuracy=accuracy,
-                ignore_negative_ipts=ignore_negative_ipts,
+                compute_on_peaks_only=compute_on_peaks_only,
+                roa_with_reference_mupulses=roa_with_reference_mupulses,
+                custom_dataframes=custom_dataframes,
+                ignore_negative_ipts=ignore_negative_ipts,  # TODO deprecated, remove later
             )
             self.sections.append(rs_emgfile)
 
@@ -1275,7 +1644,7 @@ def compute_idr(emgfile):
     if isinstance(emgfile["MUPULSES"], list):
         # Empty dict to fill with dataframes containing the MUPULSES
         # information
-        idr = {x: np.nan**2 for x in range(emgfile["NUMBER_OF_MUS"])}
+        idr = {x: np.nan for x in range(emgfile["NUMBER_OF_MUS"])}
 
         for mu in range(emgfile["NUMBER_OF_MUS"]):
             # Manage the exception of a single MU and add MUPULSES in column 0
@@ -1333,12 +1702,12 @@ def delete_mus(
         A string indicating how to behave in case of a file with a single MU.
 
         ``ignore``
-        Ignore the process and return the original emgfile. (Default)
+            Ignore the process and return the original emgfile. (Default)
 
         ``remove``
-        Remove the MU and return the emgfile without the MU.
-        This should allow full compatibility with the use of this file
-        in following processing (i.e., save/load and analyse).
+            Remove the MU and return the emgfile without the MU.
+            This should allow full compatibility with the use of this file
+            in following processing (i.e., save/load and analyse).
     delete_delsys_muaps : Bool, default True
         If true, deletes also the associated MUAPs computed by the Delsys
         software stored in emgfile["EXTRAS"].
@@ -1357,15 +1726,28 @@ def delete_mus(
     >>> emgfile = emg.delete_mus(emgfile=emgfile, munumber=[1,4,5])
     """
 
+    # Check for "NUMBER_OF_MUS"
+    if emgfile.get("NUMBER_OF_MUS", None) is None:
+        raise ValueError(
+            "The emgile does not contain the key 'NUMBER_OF_MUS' or this is"
+            "set to None."
+        )
+
+    # Check if any MU
+    if emgfile["NUMBER_OF_MUS"] == 0:
+        warnings.warn("The file does not contain any MU.")
+        return emgfile
+
+    # TODO uniform this behaviour in the future
     # Check how to behave in case of a single MU
     if if_single_mu == "ignore":
         # Check how many MUs we have, if we only have 1 MU, the entire file
         # should be deleted instead.
-        if emgfile["NUMBER_OF_MUS"] <= 1:
+        if emgfile["NUMBER_OF_MUS"] == 1:
             warnings.warn(
-                "There is only 1 MU in the file, and it has not been removed. You can change this behaviour with if_single_mu='remove'"
+                "There is only 1 MU in the file, and it has not been removed. "
+                "You can change this behaviour with if_single_mu='remove'"
             )
-
             return emgfile
 
     elif if_single_mu == "remove":
@@ -1373,9 +1755,8 @@ def delete_mus(
 
     else:
         raise ValueError(
-            "if_single_mu must be one of 'ignore' or 'remove', {} was passed instead".format(
-                if_single_mu
-            )
+            "if_single_mu must be one of 'ignore' or 'remove', "
+            f"{if_single_mu} was passed instead"
         )
 
     # Create the object to store the new emgfile without the specified MUs.
@@ -1386,99 +1767,148 @@ def delete_mus(
         "SOURCE" : SOURCE,
         "RAW_SIGNAL" : RAW_SIGNAL,
         "REF_SIGNAL" : REF_SIGNAL,
+
         ==> "ACCURACY" : ACCURACY
         ==> "IPTS" : IPTS,
         ==> "MUPULSES" : MUPULSES,
+
         "FSAMP" : FSAMP,
         "IED" : IED,
         "EMG_LENGTH" : EMG_LENGTH,
+
         ==> "NUMBER_OF_MUS" : NUMBER_OF_MUS,
         ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
+
         ==> "EXTRAS" : EXTRAS but only for DELSYS file
+
+        ==> "MU_LABELS" : optional labels for the MUs
+        ==> "REFERENCE_MUPULSES" : optional set of reference MUPULSES
+        ==> "ROA_WITH_REFERENCE_MUPULSES" : optional ROA dataframe
     }
     """
 
-    # Common part working for all the possible inputs to munumber
+    # Convert munumber to a list of int
+    if isinstance(munumber, int):
+        munumber = [munumber]
+    elif not isinstance(munumber, list):
+        raise TypeError(
+            "While calling the 'delete_mus' function, you should pass an "
+            "integer or a list to 'munumber= '."
+        )
+
+    # Make sure that only ordered unique values are contained
+    munumber = sorted(set(int(x) for x in munumber))
+
     # Drop ACCURACY values and reset the index
-    del_emgfile["ACCURACY"] = del_emgfile["ACCURACY"].drop(munumber)
-    # .drop() Works with lists and integers
-    del_emgfile["ACCURACY"] = del_emgfile["ACCURACY"].reset_index(drop=True)
+    if del_emgfile.get("ACCURACY", None) is not None:
+        del_emgfile["ACCURACY"] = del_emgfile["ACCURACY"].drop(munumber)
+        del_emgfile["ACCURACY"] = del_emgfile["ACCURACY"].reset_index(
+            drop=True
+        )
+
+    # Drop ROA_WITH_REFERENCE_MUPULSES values and reset the index
+    _this_str = "ROA_WITH_REFERENCE_MUPULSES"
+    if del_emgfile.get(_this_str, None) is not None:
+        del_emgfile[_this_str] = del_emgfile[_this_str].drop(munumber)
+        del_emgfile[_this_str] = del_emgfile[_this_str].reset_index(
+            drop=True
+        )
 
     # Drop IPTS by columns and rename the columns
-    del_emgfile["IPTS"] = del_emgfile["IPTS"].drop(munumber, axis=1)
-    del_emgfile["IPTS"].columns = range(del_emgfile["IPTS"].shape[1])
+    if del_emgfile.get("IPTS", None) is not None:
+        del_emgfile["IPTS"] = del_emgfile["IPTS"].drop(munumber, axis=1)
+        del_emgfile["IPTS"].columns = range(del_emgfile["IPTS"].shape[1])
 
     # Drop BINARY_MUS_FIRING by columns and rename the columns
-    del_emgfile["BINARY_MUS_FIRING"] = del_emgfile["BINARY_MUS_FIRING"].drop(
-        munumber, axis=1
-    )
-    del_emgfile["BINARY_MUS_FIRING"].columns = range(
-        del_emgfile["BINARY_MUS_FIRING"].shape[1]
-    )
+    if del_emgfile.get("BINARY_MUS_FIRING", None) is not None:
+        del_emgfile["BINARY_MUS_FIRING"] = del_emgfile[
+            "BINARY_MUS_FIRING"
+        ].drop(munumber, axis=1)
+        del_emgfile["BINARY_MUS_FIRING"].columns = range(
+            del_emgfile["BINARY_MUS_FIRING"].shape[1]
+        )
 
-    if isinstance(munumber, int):
-        # Delete MUPULSES by position in the list.
-        del del_emgfile["MUPULSES"][munumber]
-
-        # Subrtact one MU to the total number
-        del_emgfile["NUMBER_OF_MUS"] = del_emgfile["NUMBER_OF_MUS"] - 1
-
-    elif isinstance(munumber, list):
-        # Delete all the content in the del_emgfile["MUPULSES"] and append
-        # only the MUs that we want to retain (exclude deleted MUs).
-        # This is a workaround to directly deleting, for safer implementation.
+    # Delete all the content in the del_emgfile["MUPULSES"] and append
+    # only the MUs that we want to retain (exclude deleted MUs).
+    # This is a workaround to directly deleting, for safer implementation.
+    if del_emgfile.get("MUPULSES", None) is not None:
         del_emgfile["MUPULSES"] = []
         for mu in range(emgfile["NUMBER_OF_MUS"]):
             if mu not in munumber:
                 del_emgfile["MUPULSES"].append(emgfile["MUPULSES"][mu])
 
-        # Subrtact the number of deleted MUs to the total number
-        del_emgfile["NUMBER_OF_MUS"] = del_emgfile["NUMBER_OF_MUS"] - len(munumber)
+    # Delete REFERENCE_MUPULSES as for MUPULSES
+    if del_emgfile.get("REFERENCE_MUPULSES", None) is not None:
+        del_emgfile["REFERENCE_MUPULSES"] = []
+        for mu in range(emgfile["NUMBER_OF_MUS"]):
+            if mu not in munumber:
+                del_emgfile["REFERENCE_MUPULSES"].append(
+                    emgfile["REFERENCE_MUPULSES"][mu]
+                )
 
-    else:
-        raise Exception(
-            "While calling the delete_mus function, you should pass an integer or a list to munumber= "
-        )
+    # Subrtact the number of deleted MUs to the total number
+    del_emgfile["NUMBER_OF_MUS"] = del_emgfile["NUMBER_OF_MUS"] - len(munumber)
+
+    # Update MU labels (optional)
+    if del_emgfile.get("MU_LABELS", None) is not None:
+        # Convert removal list to strings for comparison
+        labels_to_remove = [str(mu) for mu in munumber]
+        filtered_values = [
+            v for k, v in sorted(
+                del_emgfile["MU_LABELS"].items(), key=lambda x: int(x[0])
+            )
+            if k not in labels_to_remove
+        ]
+        del_emgfile["MU_LABELS"] = {
+            str(i): v for i, v in enumerate(filtered_values)
+        }  # Reindex keys from 0
 
     # Verify if all the MUs have been removed. In that case, restore column
     # names in empty pd.DataFrames.
     if del_emgfile["NUMBER_OF_MUS"] == 0:
         # pd.DataFrame
-        del_emgfile["IPTS"] = pd.DataFrame(columns=[0])
-        del_emgfile["BINARY_MUS_FIRING"] = pd.DataFrame(columns=[0])
+        if del_emgfile.get("IPTS", None) is not None:
+            del_emgfile["IPTS"] = pd.DataFrame(columns=[0])
+        if del_emgfile.get("BINARY_MUS_FIRING", None) is not None:
+            del_emgfile["BINARY_MUS_FIRING"] = pd.DataFrame(columns=[0])
+        if del_emgfile.get("ACCURACY", None) is not None:
+            del_emgfile["ACCURACY"] = pd.DataFrame(columns=[0])
         # list of ndarray
-        del_emgfile["MUPULSES"] = [np.array([])]
+        if del_emgfile.get("MUPULSES", None) is not None:
+            del_emgfile["MUPULSES"] = []
 
-    if emgfile["SOURCE"] == "DELSYS" and delete_delsys_muaps:
-        # Remove also DELSYS MUAPs
-        if isinstance(munumber, int):
-            munumber = [munumber]
+    if del_emgfile.get("SOURCE", None) is not None:
+        if del_emgfile["SOURCE"] == "DELSYS" and delete_delsys_muaps:
+            # Remove also DELSYS MUAPs
+            data = del_emgfile["EXTRAS"]
 
-        data = del_emgfile["EXTRAS"]
-
-        for mu in munumber:
-            # Get MU ID
-            mu_id = f"MU_{mu}_"
-            # Remove all columns with MU ID
-            data = data[[col for col in data.columns if not col.startswith(mu_id)]]
-
-        # Rescale the numbers in the remaining column names
-        col_list = list(data.columns)
-        if len(col_list) % 4 != 0:
-            raise ValueError("Unexpected number of channels in Delsys MUAPS")
-        new_col_list = []
-        for mu in range(del_emgfile["NUMBER_OF_MUS"]):
-            new_col_list.extend(
-                [
-                    f"MU_{mu}_CH_0",
-                    f"MU_{mu}_CH_1",
-                    f"MU_{mu}_CH_2",
-                    f"MU_{mu}_CH_3",
+            for mu in munumber:
+                # Get MU ID
+                mu_id = f"MU_{mu}_"
+                # Remove all columns with MU ID
+                data = data[
+                    [col for col in data.columns if not col.startswith(mu_id)]
                 ]
-            )
-        data.columns = new_col_list
 
-        del_emgfile["EXTRAS"] = data
+            # Rescale the numbers in the remaining column names
+            col_list = list(data.columns)
+            if len(col_list) % 4 != 0:
+                raise ValueError(
+                    "Unexpected number of channels in Delsys MUAPS"
+                )
+            new_col_list = []
+            for mu in range(del_emgfile["NUMBER_OF_MUS"]):
+                new_col_list.extend(
+                    [
+                        f"MU_{mu}_CH_0",
+                        f"MU_{mu}_CH_1",
+                        f"MU_{mu}_CH_2",
+                        f"MU_{mu}_CH_3",
+                    ]
+                )
+            data.columns = new_col_list
+
+            del_emgfile["EXTRAS"] = data
 
     return del_emgfile
 
@@ -1498,6 +1928,11 @@ def delete_empty_mus(emgfile):
         The dictionary containing the emgfile without the empty MUs.
     """
 
+    # Check if any MUs
+    if emgfile["NUMBER_OF_MUS"] == 0:
+        warnings.warn("The file does not contain any MU.")
+        return copy.deepcopy(emgfile)
+
     # Find the index of empty MUs
     ind = []
     for i, mu in enumerate(range(emgfile["NUMBER_OF_MUS"])):
@@ -1509,9 +1944,330 @@ def delete_empty_mus(emgfile):
     return emgfile
 
 
+def find_duplicates_within(
+    emgfile,
+    correlation_max_lag=50e-3,
+    peak_window_half_width=2.5e-3,
+    duplicate_threshold=30,
+    which="accuracy",
+):
+    """
+    Find duplicate MUs within the same file based on discharge times.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+    correlation_max_lag : float, default 50e-3
+        Maximum lag (in seconds) used when computing the cross-correlation
+        between MU spike trains. Defines the full search range for possible
+        synchronisation peaks. Larger values allow detection of synchrony
+        over wider time shifts. This must be < 1.
+    peak_window_half_width : float, default 2.5e-3
+        Half-width (in seconds) of the window used around the cross-correlation
+        peak to compute the duplication sensitivity metric. This window should
+        capture the narrow temporal jitter expected for duplicate MUs.
+        This must be < 1 and < `correlation_max_lag`.
+    duplicate_threshold : float, default 30
+        Threshold (in percent) for classifying two MUs as duplicates.
+        The sensitivity metric is computed as the sum of the cross-correlation
+        values within a ±`peak_window_half_width` window around the
+        correlation peak, normalised by the size of the larger spike train.
+    which : str {"accuracy", "covisi"}, default "accuracy"
+        How to classify the duplicated MUs.
+
+        ``accuracy``
+            The MU with the lowest accuracy is considered duplicate. The
+            emgfile must already contain the 'ACCURACY' dataframe.
+
+        ``covisi``
+            The MU with the highest CoV of interspike interval is is considered
+            duplicate.
+
+    Returns
+    -------
+    duplicates : list of int
+        Sorted list of MU indices classified as duplicates and therefore
+        recommended for removal.
+    duplicates_info : list of dict
+        Detailed information about each detected duplicate MU pair.
+        Each element of the list is a dictionary describing one MU-MU
+        comparison that exceeded the duplication threshold. The dictionary
+        contains:
+
+        ``pair`` : tuple of int
+            A tuple "(mu1, mu2)" containing the indices of the two MUs
+            identified as potential duplicates.
+
+        ``accuracy`` : tuple of float, optional
+            Present only when which="accuracy".
+            Contains the SIL (accuracy) values of the two units in the same
+            order as "pair". The MU with the lowest SIL is considered the
+            duplicate.
+
+        ``covisi`` : tuple of float, optional
+            Present only when which="covisi".
+            Contains the CoV of the interspike interval for the two units, in
+            the same order as "pair". The MU with the highest CoV-ISI is
+            considered the duplicate.
+
+    See also
+    --------
+    - remove_duplicates_within : Remove duplicate MUs within the same file
+        based on discharge times.
+
+    Examples
+    --------
+    Starting from a generic file, the results will look similar to the
+    following if which="accuracy":
+
+    >>> duplicates, duplicate_info = find_duplicates_within(
+    ...     emgfile,
+    ...     which="accuracy",
+    ... )
+    >>> duplicates
+    [0, 3, 4]
+
+    >>> duplicate_info
+    [
+        {
+            'pair': (0, 1),
+            'accuracy': (0.8768360226084906, 0.9552696780856847)
+        },
+        {
+            'pair': (1, 3),
+            'accuracy': (0.9552696780856847, 0.8969855881081578)
+        },
+        {
+            'pair': (1, 4),
+            'accuracy': (0.9552696780856847, 0.9178590868820631)
+        }
+    ]
+
+    Or similar to the following if which="covisi":
+
+    >>> duplicates, duplicate_info = find_duplicates_within(
+    ...     emgfile,
+    ...     which="covisi",
+    ... )
+    >>> duplicates
+    [0, 1, 2, 3]
+
+    >>> duplicate_info
+    [
+        {
+            'pair': (0, 1),
+            'covisi': (76.9574103452168, 16.266055150945718)
+        },
+        {
+            'pair': (1, 3),
+            'covisi': (16.266055150945718, 19.07156533711372)
+        },
+        {
+            'pair': (1, 4),
+            'covisi': (16.266055150945718, 15.38224044131706)
+        },
+        {
+            'pair': (2, 4),
+            'covisi': (23.264925152223373, 15.38224044131706)
+        }
+    ]
+
+    The returned ``duplicates`` list can be used later to remove the duplicate
+    units by passing it to the ``delete_mus`` function:
+
+    >>> duplicates, duplicate_info = find_duplicates_within(
+    ...     emgfile,
+    ...     which="accuracy",
+    ... )
+    >>> emgfile = emg.delete_mus(emgfile, munumber=duplicates)
+    """
+
+    # If emgfile["NUMBER_OF_MUS"] == 0 and emgfile["MUPULSES"] == [],
+    # returns [], []
+
+    if which not in ["accuracy", "covisi"]:
+        raise ValueError(
+            f"Invalid input '{which}'. Please use: 'accuracy' or 'covisi'."
+        )
+
+    emgfile = copy.deepcopy(emgfile)
+
+    c_lag = round(correlation_max_lag * emgfile["FSAMP"])
+    p_lag = round(peak_window_half_width * emgfile["FSAMP"])
+
+    duplicates = []
+    duplicate_info = []
+
+    # Calculate CoV ISI if needed
+    if which == "covisi":
+        covisi = []
+        for mu in range(emgfile["NUMBER_OF_MUS"]):
+            pulses = emgfile["MUPULSES"][mu]
+            if len(pulses) < 4:
+                covisi.append(np.inf)
+            else:
+                isi = np.diff(pulses)
+                covisi.append((np.std(isi) / np.mean(isi)) * 100)
+
+    # Start searching for the duplicates
+    for mu1_idx in range(emgfile["NUMBER_OF_MUS"]):
+        if mu1_idx in duplicates:
+            continue
+
+        if which == "accuracy":
+            mark1 = emgfile["ACCURACY"].iat[mu1_idx, 0]
+        else:
+            mark1 = covisi[mu1_idx]
+
+        for mu2_idx in range(mu1_idx + 1, emgfile["NUMBER_OF_MUS"]):
+            if mu2_idx in duplicates:
+                continue
+
+            # Cross-correlation over full ±lag range
+            xcorr = discrete_spike_xcorr(
+                spikes1=emgfile["MUPULSES"][mu1_idx],
+                spikes2=emgfile["MUPULSES"][mu2_idx],
+                max_lag=c_lag,
+            )
+
+            indmax = int(np.argmax(xcorr))
+            lower_bound = p_lag
+            upper_bound = len(xcorr) - 1 - p_lag
+
+            # The peak must be safely away from the edges
+            if not (lower_bound < indmax < upper_bound):
+                continue
+
+            # Compute duplication sensitivity
+            start = indmax - p_lag
+            end = indmax + p_lag + 1
+            sens_num = np.sum(xcorr[start:end])
+            sens_den = max(
+                len(emgfile["MUPULSES"][mu1_idx]),
+                len(emgfile["MUPULSES"][mu2_idx]),
+            )
+            sens = (sens_num / sens_den) * 100 if sens_den > 0 else 0
+
+            # If they are duplicates, mark the lower-accuracy MU
+            if sens > duplicate_threshold:
+                if which == "accuracy":
+                    mark2 = emgfile["ACCURACY"].iat[mu2_idx, 0]
+
+                    # Store info BEFORE marking duplicates
+                    duplicate_info.append({
+                        "pair": (mu1_idx, mu2_idx),
+                        "accuracy": (float(mark1), float(mark2))
+                    })
+
+                    # Duplicate is lowest SIL
+                    if mark1 >= mark2:
+                        duplicates.append(mu2_idx)
+                    else:
+                        duplicates.append(mu1_idx)
+                        break  # break early: mu1 itself is invalid now
+
+                else:  # covisi
+                    mark2 = covisi[mu2_idx]
+
+                    duplicate_info.append({
+                        "pair": (mu1_idx, mu2_idx),
+                        "covisi": (float(mark1), float(mark2))
+                    })
+
+                    # Duplicate is highest covisi
+                    if mark1 >= mark2:
+                        duplicates.append(mu1_idx)
+                        break  # break early: mu1 itself is invalid now
+                    else:
+                        duplicates.append(mu2_idx)
+
+    # Sort duplicate units and make sure that each MU index appears only once
+    duplicates = sorted(set(duplicates))
+
+    return duplicates, duplicate_info
+
+
+def remove_duplicates_within(
+    emgfile,
+    correlation_max_lag=50e-3,
+    peak_window_half_width=2.5e-3,
+    duplicate_threshold=30,
+    which="accuracy",
+):
+    """
+    Remove duplicate MUs within the same file based on discharge times.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+    correlation_max_lag : float, default 50e-3
+        Maximum lag (in seconds) used when computing the cross-correlation
+        between MU spike trains. Defines the full search range for possible
+        synchronisation peaks. Larger values allow detection of synchrony
+        over wider time shifts. This must be < 1.
+    peak_window_half_width : float, default 2.5e-3
+        Half-width (in seconds) of the window used around the cross-correlation
+        peak to compute the duplication sensitivity metric. This window should
+        capture the narrow temporal jitter expected for duplicate MUs.
+        This must be < 1 and < `correlation_max_lag`.
+    duplicate_threshold : float, default 30
+        Threshold (in percent) for classifying two MUs as duplicates.
+        The sensitivity metric is computed as the sum of the cross-correlation
+        values within a ±`peak_window_half_width` window around the
+        correlation peak, normalised by the size of the larger spike train.
+    which : str {"accuracy", "covisi"}, default "accuracy"
+        How to remove the duplicated MUs.
+
+        ``accuracy``
+            The MU with the lowest accuracy is removed. The emgfile must
+            already contain the 'ACCURACY' dataframe.
+
+        ``covisi``
+            The MU with the highest CoV of interspike interval is removed.
+
+    Returns
+    -------
+    emgfile : dict
+        The dictionary containing the emgfile without duplicated MUs.
+
+    See also
+    --------
+    - find_duplicates_within : Find duplicate MUs within the same file based
+        on discharge times.
+    - remove_duplicates_between : Remove duplicated MUs across two different
+        files based on STA.
+    """
+
+    # Find duplicates
+    duplicates, _ = find_duplicates_within(
+        emgfile=emgfile,
+        correlation_max_lag=correlation_max_lag,
+        peak_window_half_width=peak_window_half_width,
+        duplicate_threshold=duplicate_threshold,
+        which=which,
+    )
+
+    # Delete duplicate MUs
+    emgfile = delete_mus(emgfile, munumber=duplicates)
+
+    return emgfile
+
+
 def sort_mus(emgfile):
     """
     Sort the MUs in order of recruitment.
+
+    The following emgfile keys are sorted:
+
+    - `IPTS`
+    - `MUPULSES`
+    - `BINARY_MUS_FIRING`
+    - `ACCURACY`
+    - `REFERENCE_MUPULSES`
+    - `ROA_WITH_REFERENCE_MUPULSES`
+    - `MU_LABELS`
 
     Parameters
     ----------
@@ -1524,74 +2280,84 @@ def sort_mus(emgfile):
         The dictionary containing the sorted emgfile.
     """
 
-    # If we only have 1 MU, there is no necessity to sort it.
-    if emgfile["NUMBER_OF_MUS"] <= 1:
-        return emgfile
-
     # Create the object to store the sorted emgfile.
     # Create a deepcopy to avoid changing the original emgfile
     sorted_emgfile = copy.deepcopy(emgfile)
-    """
-    Need to be changed: ==>
-    emgfile =   {
-                "SOURCE" : SOURCE,
-                "RAW_SIGNAL" : RAW_SIGNAL,
-                "REF_SIGNAL" : REF_SIGNAL,
-                ==> "ACCURACY": ACCURACY,
-                ==> "IPTS" : IPTS,
-                ==> "MUPULSES" : MUPULSES,
-                "FSAMP" : FSAMP,
-                "IED" : IED,
-                "EMG_LENGTH" : EMG_LENGTH,
-                "NUMBER_OF_MUS" : NUMBER_OF_MUS,
-                ==> "BINARY_MUS_FIRING" : BINARY_MUS_FIRING,
-                }
-    """
+
+    # Pre-check
+    n_mus = emgfile.get("NUMBER_OF_MUS", None)
+    if n_mus is None:
+        raise KeyError("NUMBER_OF_MUS is not present.")
+    if "MUPULSES" not in emgfile:
+        raise KeyError("MUPULSES is not present.")
+    if n_mus <= 1:
+        # If we only have 1 MU, there is no necessity to sort it.
+        return sorted_emgfile
 
     # Identify the sorting_order by the first MUpulse of every MUs
-    df = []
-    for mu in range(emgfile["NUMBER_OF_MUS"]):
-        if len(emgfile["MUPULSES"][mu]) > 0:
-            df.append(emgfile["MUPULSES"][mu][0])
-        else:
-            df.append(np.inf)
+    def _first_pulse(mu):
+        pulses = emgfile["MUPULSES"][mu]
+        return pulses[0] if len(pulses) > 0 else np.inf
+    sorting_order = sorted(range(n_mus), key=_first_pulse)
 
-    df = pd.DataFrame(df, columns=["firstpulses"])
-    df.sort_values(by="firstpulses", inplace=True)
-    sorting_order = list(df.index)
-
-    # Sort ACCURACY (single column)
+    # Sort MUPULSES and REFERENCE_MUPULSES (list of arrays).
+    # Also MU_LABELS (dict{str: str}).
     for origpos, newpos in enumerate(sorting_order):
-        sorted_emgfile["ACCURACY"].loc[origpos] = emgfile["ACCURACY"].loc[newpos]
+        if "MUPULSES" in sorted_emgfile:
+            # Preferable to use the sorting_order as a double-check in
+            # alternative to: sorted_emgfile["MUPULSES"] = sorted(
+            #   sorted_emgfile["MUPULSES"], key=min, reverse=False))
+            sorted_emgfile["MUPULSES"][origpos] = emgfile["MUPULSES"][newpos]
 
-    # Sort IPTS (multiple columns, sort by columns, then reset columns' name)
-    sorted_emgfile["IPTS"] = sorted_emgfile["IPTS"].reindex(columns=sorting_order)
-    sorted_emgfile["IPTS"].columns = np.arange(emgfile["NUMBER_OF_MUS"])
+        if "REFERENCE_MUPULSES" in sorted_emgfile:
+            sorted_emgfile["REFERENCE_MUPULSES"][
+                origpos
+            ] = emgfile["REFERENCE_MUPULSES"][newpos]
 
-    # Sort BINARY_MUS_FIRING (multiple columns, sort by columns,
-    # then reset columns' name)
-    sorted_emgfile["BINARY_MUS_FIRING"] = sorted_emgfile["BINARY_MUS_FIRING"].reindex(
-        columns=sorting_order
-    )
-    sorted_emgfile["BINARY_MUS_FIRING"].columns = np.arange(emgfile["NUMBER_OF_MUS"])
+    if "MU_LABELS" in sorted_emgfile:
+        new_labels = {}
+        for origpos, newpos in enumerate(sorting_order):
+            new_labels[str(origpos)] = emgfile["MU_LABELS"].get(
+                str(newpos), "none",
+            )
+        sorted_emgfile["MU_LABELS"] = new_labels
 
-    # Sort MUPULSES.
-    # Preferable to use the sorting_order as a double-check in alternative to:
-    # sorted_emgfile["MUPULSES"] = sorted(
-    #   sorted_emgfile["MUPULSES"], key=min, reverse=False)
-    # )
-    for origpos, newpos in enumerate(sorting_order):
-        sorted_emgfile["MUPULSES"][origpos] = emgfile["MUPULSES"][newpos]
+    # Sort ACCURACY and ROA_WITH_REFERENCE_MUPULSES (single column)
+    if "ACCURACY" in sorted_emgfile:
+        sorted_emgfile["ACCURACY"] = emgfile["ACCURACY"].reindex(
+            sorting_order
+        ).reset_index(drop=True)
+
+    if "ROA_WITH_REFERENCE_MUPULSES" in sorted_emgfile:
+        sorted_emgfile["ROA_WITH_REFERENCE_MUPULSES"] = emgfile[
+            "ROA_WITH_REFERENCE_MUPULSES"
+        ].reindex(sorting_order).reset_index(drop=True)
+
+    # Sort IPTS and BINARY_MUS_FIRING (multiple columns, sort by columns, then
+    # reset columns' name)
+    if "IPTS" in sorted_emgfile:
+        sorted_emgfile["IPTS"] = sorted_emgfile["IPTS"].reindex(
+            columns=sorting_order
+        )
+        sorted_emgfile["IPTS"].columns = np.arange(n_mus)
+
+    if "BINARY_MUS_FIRING" in sorted_emgfile:
+        sorted_emgfile["BINARY_MUS_FIRING"] = sorted_emgfile[
+            "BINARY_MUS_FIRING"
+        ].reindex(columns=sorting_order)
+        sorted_emgfile["BINARY_MUS_FIRING"].columns = np.arange(n_mus)
 
     return sorted_emgfile
 
 
-def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
+def compute_covsteady(
+    emgfile,
+    start_steady=-1,
+    end_steady=-1,
+    refsig_channel=0,
+):
     """
-    Calculates the covsteady.
-
-    This function calculates the coefficient of variation of the steady-state
-    phase (covsteady of the REF_SIGNAL).
+    Calculate the CoV of REF_SIGNAL during the steady-state phase.
 
     Parameters
     ----------
@@ -1601,6 +2367,8 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
         The start and end point (in samples) of the steady-state phase.
         If < 0 (default), the user will need to manually select the start and
         end of the steady-state phase.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
 
     Returns
     -------
@@ -1636,12 +2404,13 @@ def compute_covsteady(emgfile, start_steady=-1, end_steady=-1):
 
     if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
         title = (
-            "Select the start/end area of the steady-state by hovering the " +
-            "mouse \nand pressing the 'a'-key. Wrong points can be removed " +
-            "with right \nclick or canc/delete key. When ready, press enter."
+            "Select the start/end area to resize by hovering the mouse" +
+            "\nand pressing the 'a'-key. Wrong points can be removed with " +
+            "the \n'd' -key. When ready, press enter."
         )
         points = showselect(
             emgfile=emgfile,
+            refsig_channel=refsig_channel,
             title=title,
             titlesize=10,
         )
@@ -1664,7 +2433,8 @@ def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
     emgfile : dict
         The dictionary containing the emgfile.
     order : int, default 2
-        The filter order.
+        The filter order. Note that a band-pass transformation doubles the
+        order, so `order=2` produces a 4th-order band-pass filter.
     lowcut : int, default 20
         The lower cut-off frequency in Hz.
     highcut : int, default 500
@@ -1674,14 +2444,18 @@ def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
     -------
     filteredrawsig : dict
         The dictionary containing the emgfile with a filtered RAW_SIGNAL.
-        Currently, the returned filteredrawsig cannot be accurately compressed
-        when using the functions ``save_json_emgfile()`` and ``asksavefile()``.
-        We therefore suggest you to save the unfiltered emgfile if you want to
-        obtain maximum compression.
 
     See also
     --------
     - filter_refsig : low-pass filter the REF_SIGNAL.
+
+    Notes
+    -----
+    Currently, the returned filteredrawsig cannot be accurately compressed
+    when using the functions ``save_json_emgfile()`` and ``asksavefile()``.
+    We therefore suggest you to use high-level functions and classes for
+    binary files such as: 'save_openhdemg_module', 'asksavemodule',
+    'load_openhdemg_module', 'askopenmodule', 'openhdemg_Collection'.
     """
 
     filteredrawsig = copy.deepcopy(emgfile)
@@ -1696,30 +2470,38 @@ def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
         output="sos",
         fs=filteredrawsig["FSAMP"],
     )
-    for col in filteredrawsig["RAW_SIGNAL"]:
-        filteredrawsig["RAW_SIGNAL"][col] = signal.sosfiltfilt(
-            sos,
-            x=filteredrawsig["RAW_SIGNAL"][col],
-        )
+
+    raw = filteredrawsig["RAW_SIGNAL"]
+    x = raw.to_numpy(dtype=np.float64, copy=False)
+    y = signal.sosfiltfilt(sos, x, axis=0)
+
+    filteredrawsig["RAW_SIGNAL"] = pd.DataFrame(
+        y,
+        index=raw.index,
+        columns=raw.columns,
+    )
 
     return filteredrawsig
 
 
-def filter_refsig(emgfile, order=4, cutoff=15):
+def filter_refsig(emgfile, order=4, cutoff=15, refsig_channels=[0]):
     """
     Low-pass filter the REF_SIGNAL.
 
     This function is used to low-pass filter the REF_SIGNAL and remove noise.
-    The filter is a Zero-lag low-pass Butterworth.
+    The filter is a Zero-lag low-pass Butterworth applied to the selected
+    channels.
 
     Parameters
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
     order : int, default 4
-        The filter order.
+        The effective filter order.
     cutoff : int, default 15
         The cut-off frequency in Hz.
+    refsig_channels : list, default [0]
+        The reference signal channels (DataFrame columns) to filter.
 
     Returns
     -------
@@ -1734,9 +2516,15 @@ def filter_refsig(emgfile, order=4, cutoff=15):
 
     filteredrefsig = copy.deepcopy(emgfile)
 
-    # Calculate the components of the filter and apply them with filtfilt to
-    # obtain Zero-lag filtering. sos should be preferred over filtfilt as
-    # second-order sections have fewer numerical problems.
+    # Normalise channels input
+    if isinstance(refsig_channels, (int, str)):
+        refsig_channels = [refsig_channels]
+    elif not isinstance(refsig_channels, list):
+        raise TypeError(
+            "refsig_channels must be a list (or a single channel). "
+            f"{type(refsig_channels)} was passed instead."
+        )
+
     sos = signal.butter(
         N=order,
         Wn=cutoff,
@@ -1744,15 +2532,103 @@ def filter_refsig(emgfile, order=4, cutoff=15):
         output="sos",
         fs=filteredrefsig["FSAMP"],
     )
-    filteredrefsig["REF_SIGNAL"][0] = signal.sosfiltfilt(
-        sos,
-        x=filteredrefsig["REF_SIGNAL"][0],
-    )
+
+    ref = filteredrefsig["REF_SIGNAL"]
+
+    # Filter only selected channels and assign back
+    x = ref.loc[:, refsig_channels].to_numpy(dtype=np.float64, copy=False)
+    y = signal.sosfiltfilt(sos, x, axis=0)
+    ref.loc[:, refsig_channels] = y
+
+    filteredrefsig["REF_SIGNAL"] = ref
 
     return filteredrefsig
 
 
-def remove_offset(emgfile, offsetval=0, auto=0):
+def remove_powerline_harmonics(
+    sig,
+    fsamp,
+    notch_freq=50.0,
+    notch_width=5.0
+):
+    """
+    Remove power-line interference by zeroing FFT bins around all harmonics
+    of the mains frequency.
+
+    Parameters
+    ----------
+    sig : np.ndarray
+        2-D array of shape (n_channels, n_samples).
+        Each row is a signal and each column is a time sample.
+    fsamp : float
+        Sampling frequency in Hz.
+    notch_freq : float, default 50.0
+        Fundamental power-line frequency (e.g., 50 or 60 Hz).
+    notch_width : float, default 5.0
+        Width of each notch (± notch_width/2), in Hz.
+
+    Returns
+    -------
+    np.ndarray
+        Filtered signals with the same shape as `sig`.
+
+    Examples
+    --------
+    Remove powerline harmonics in emgfile["RAW_SIGNAL"].
+
+    >>> import openhdemg.library as emg
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> emgfile = emg.emg_from_samplefile()
+    >>> filtered_sig = emg.remove_powerline_harmonics(
+    ...     sig=np.transpose(emgfile["RAW_SIGNAL"].to_numpy()),
+    ...     fsamp=emgfile["FSAMP"],
+    ... )
+    >>> emgfile["RAW_SIGNAL"] = pd.DataFrame(
+    ...     filtered_sig.T,
+    ...     dtype=np.float64,
+    ... )
+    """
+
+    # Ensure 2-D
+    sig = np.atleast_2d(sig).copy()
+    _, n_samples = sig.shape
+
+    # FFT
+    Y = np.fft.rfft(sig, axis=1)
+    freqs = np.fft.rfftfreq(n_samples, d=1/fsamp)
+
+    # Convert notch width to number of FFT bins
+    bin_width = freqs[1] - freqs[0]
+    half_bins = int(np.ceil((notch_width / 2) / bin_width))
+
+    # Determine harmonic indices
+    max_harmonic = int(freqs.max() // notch_freq)
+    harmonic_bins = (
+        np.arange(1, max_harmonic + 1) * notch_freq / bin_width
+    ).astype(int)
+
+    # Build mask of frequency bins to keep
+    mask = np.ones_like(freqs, dtype=bool)
+
+    for h_idx in harmonic_bins:
+        lo = max(h_idx - half_bins, 0)
+        hi = min(h_idx + half_bins + 1, len(freqs))
+        mask[lo:hi] = False
+
+    # Apply notch mask
+    Y[:, ~mask] = 0
+
+    # Inverse FFT → time domain
+    return np.fft.irfft(Y, n=n_samples, axis=1)
+
+
+def remove_offset(
+    emgfile,
+    offsetval=0,
+    auto=0,
+    refsig_channels=[0],
+):
     """
     Remove the offset from the REF_SIGNAL.
 
@@ -1760,14 +2636,20 @@ def remove_offset(emgfile, offsetval=0, auto=0):
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    offsetval : float, default 0
-        Value of the offset. If offsetval is 0 (default), the user will be
-        asked to manually select an aerea to compute the offset value.
-        Otherwise, the value passed to offsetval will be used.
-        Negative offsetval can be passed.
+    offsetval : float or list, default 0
+        Value of the offset(s) to subtract.
+
+        - If a single value (float/int), the same offset is subtracted from all
+          selected channels.
+        - If a list, it must have the same length as `refsig_channels`
+          and each value is subtracted from the corresponding channel.
+        - If 0, the user is asked to manually select an area to compute the
+          offset (one channel at a time).
     auto : int, default 0
-        If auto > 0, the script automatically removes the offset based on the
-        number of samples passed in input.
+        If auto > 0, automatically compute and remove the offset using the
+        first `auto` samples.
+    refsig_channels : list, default [0]
+        The reference signal channels (DataFrame columns) to process.
 
     Returns
     -------
@@ -1780,60 +2662,93 @@ def remove_offset(emgfile, offsetval=0, auto=0):
     - filter_refsig : low-pass filter REF_SIGNAL.
     """
 
-    # Check that all the inputs are correct
-    if not isinstance(offsetval, (float, int)):
+    if not isinstance(auto, int):
         raise TypeError(
-            f"offsetval must be one of the following types: float, int. {type(offsetval)} was passed instead."
-        )
-    if not isinstance(auto, (float, int)):
-        raise TypeError(
-            f"auto must be one of the following types: float, int. {type(auto)} was passed instead."
+            f"auto must be an int. {type(auto)} was passed instead."
         )
 
-    # Create the object to store the filtered refsig.
     # Create a deepcopy to avoid changing the original refsig
     offs_emgfile = copy.deepcopy(emgfile)
+
+    # Normalise channels input
+    if isinstance(refsig_channels, (int, str)):
+        refsig_channels = [refsig_channels]
+    elif not isinstance(refsig_channels, list):
+        raise TypeError(
+            "refsig_channels must be a list (or a single channel). "
+            f"{type(refsig_channels)} was passed instead."
+        )
 
     # Act differently if automatic removal of the offset is active (>0) or not
     if auto <= 0:
         if offsetval != 0:
             # Directly subtract the offset value.
-            offs_emgfile["REF_SIGNAL"][0] = offs_emgfile["REF_SIGNAL"][0] - offsetval
+            if isinstance(offsetval, (float, int)):
+                for ch in refsig_channels:
+                    offs_emgfile["REF_SIGNAL"][ch] = (
+                        offs_emgfile["REF_SIGNAL"][ch] - float(offsetval)
+                    )
+            elif isinstance(offsetval, (list, tuple)):
+                if len(offsetval) != len(refsig_channels):
+                    raise ValueError(
+                        "If offsetval is a list, it must have the same "
+                        "length as refsig_channels. "
+                        f"Got len(offsetval)={len(offsetval)} and "
+                        f"len(refsig_channels)={len(refsig_channels)}."
+                    )
+                for ch, off in zip(refsig_channels, offsetval):
+                    if not isinstance(off, (float, int)):
+                        raise TypeError(
+                            "All elements of offsetval must be float/int. "
+                            f"{type(off)} was found."
+                        )
+                    offs_emgfile["REF_SIGNAL"][ch] = (
+                        offs_emgfile["REF_SIGNAL"][ch] - float(off)
+                    )
+            else:
+                raise TypeError(
+                    "offsetval must be a float or a list of float. "
+                    f"{type(offsetval)} was passed instead."
+                )
 
         else:
             # Select the area to calculate the offset
             # (average value of the selected area)
             title = (
-                "Select the start/end area to calculate the offset by " +
-                "hovering the mouse \nand pressing the 'a'-key. Wrong " +
-                " points can be removed with right \nclick or canc/delete " +
-                "key. When ready, press enter."
+                "Select the start/end area to calculate offset by hovering " +
+                "the mouse \nand pressing the 'a'-key. Wrong points can be " +
+                "removed with the \n'd' -key. When ready, press enter."
             )
-            points = showselect(
-                emgfile=offs_emgfile,
-                title=title,
-                titlesize=10,
-            )
-            start_, end_ = points[0], points[1]
+            for ch in refsig_channels:
+                points = showselect(
+                    emgfile=offs_emgfile,
+                    how="ref_signal",
+                    refsig_channel=ch,
+                    title=title,
+                    titlesize=10,
+                )
+                start_, end_ = points[0], points[1]
 
-            offsetval = offs_emgfile["REF_SIGNAL"].loc[start_:end_].mean()
-            # We need to convert the series offsetval into float
-            offs_emgfile["REF_SIGNAL"][0] = (
-                offs_emgfile["REF_SIGNAL"][0] - float(offsetval[0])
-            )
+                off = offs_emgfile["REF_SIGNAL"][ch].loc[start_:end_].mean()
+                offs_emgfile["REF_SIGNAL"][ch] = offs_emgfile[
+                    "REF_SIGNAL"
+                ][ch] - float(off)
 
     else:
-        # Compute and subtract the offset value.
-        offsetval = offs_emgfile["REF_SIGNAL"].iloc[0:auto].mean()
-        # We need to convert the series offsetval into float
-        offs_emgfile["REF_SIGNAL"][0] = (
-            offs_emgfile["REF_SIGNAL"][0] - float(offsetval[0])
-        )
+        # Compute and subract the automatic offsets to each selected column
+        offsets = offs_emgfile[
+            "REF_SIGNAL"
+        ].iloc[:auto, :].loc[:, refsig_channels].mean(axis=0)
+
+        for ch in refsig_channels:
+            offs_emgfile["REF_SIGNAL"][ch] = offs_emgfile[
+                "REF_SIGNAL"
+            ][ch] - float(offsets[ch])
 
     return offs_emgfile
 
 
-def get_mvc(emgfile, how="showselect", conversion_val=0):
+def get_mvc(emgfile, how="showselect", conversion_val=0, refsig_channel=0):
     """
     Measure the maximum voluntary contraction (MVC).
 
@@ -1855,6 +2770,8 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
         conversion_val=9.81, the output will be in Newton (N).
         If conversion_val=0 (default), the results will simply be in the
         original measure unit. conversion_val can be any custom int or float.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
 
     Returns
     -------
@@ -1889,30 +2806,32 @@ def get_mvc(emgfile, how="showselect", conversion_val=0):
     """
 
     if how == "all":
-        mvc = emgfile["REF_SIGNAL"].max()
+        mvc = emgfile["REF_SIGNAL"][refsig_channel].max()
 
     elif how == "showselect":
         # Select the area to measure the MVC (maximum value)
         title = (
-            "Select the start/end area to compute MVC by hovering the " +
-            "mouse \nand pressing the 'a'-key. Wrong points can be removed " +
-            "with right \nclick or canc/delete key. When ready, press enter."
+            "Select the start/end area to calculate MVC by hovering " +
+            "the mouse \nand pressing the 'a'-key. Wrong points can be " +
+            "removed with the \n'd' -key. When ready, press enter."
         )
         points = showselect(
             emgfile=emgfile,
+            how="ref_signal",
+            refsig_channel=refsig_channel,
             title=title,
             titlesize=10,
         )
         start_, end_ = points[0], points[1]
 
-        mvc = emgfile["REF_SIGNAL"].loc[start_:end_].max()
+        mvc = emgfile["REF_SIGNAL"].iloc[start_:end_][refsig_channel].max()
 
     else:
         raise ValueError(
-            f"how must be one of 'showselect' or 'all', {how} was passed instead"
+            f"'how' must be 'showselect' or 'all', {how} was passed instead"
         )
 
-    mvc = float(mvc[0])
+    mvc = float(mvc)
 
     if conversion_val != 0:
         mvc = mvc * conversion_val
@@ -1925,6 +2844,7 @@ def compute_rfd(
     ms=[50, 100, 150, 200],
     startpoint=None,
     conversion_val=0,
+    refsig_channel=0,
 ):
     """
     Calculate the RFD.
@@ -1949,6 +2869,8 @@ def compute_rfd(
         conversion_val=9.81, the output will be in Newton/Sec (N/Sec).
         If conversion_val=0 (default), the results will simply be Original
         measure unit/Sec. conversion_val can be any custom int or float.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
 
     Returns
     -------
@@ -2006,12 +2928,14 @@ def compute_rfd(
     else:
         # Otherwise select the starting point for the RFD
         title = (
-            "Select the start/end area to compute the RFD by hovering the " +
-            "mouse \nand pressing the 'a'-key. Wrong points can be removed " +
-            "with right \nclick or canc/delete key. When ready, press enter."
+            "Select the start point to calculate RFD by hovering " +
+            "the mouse \nand pressing the 'a'-key. Wrong points can be " +
+            "removed with the \n'd' -key. When ready, press enter."
         )
         points = showselect(
             emgfile,
+            how="ref_signal",
+            refsig_channel=refsig_channel,
             title=title,
             titlesize=10,
             nclic=1,
@@ -2024,15 +2948,16 @@ def compute_rfd(
     for thisms in ms:
         ms_insamples = round((int(thisms) * emgfile["FSAMP"]) / 1000)
 
-        n_0 = emgfile["REF_SIGNAL"].loc[start_]
-        n_next = emgfile["REF_SIGNAL"].loc[start_ + ms_insamples]
+        force_sig = emgfile["REF_SIGNAL"][refsig_channel]
+        n_0 = force_sig.iloc[start_]
+        n_next = force_sig.iloc[start_ + ms_insamples]
 
         rfdval = (n_next - n_0) / (thisms / 1000)
         # (ms/1000 to convert mSec in Sec)
 
         rfd_dict[thisms] = rfdval
 
-    rfd = pd.DataFrame(rfd_dict)
+    rfd = pd.DataFrame([rfd_dict])
 
     if conversion_val != 0:
         rfd = rfd * conversion_val

@@ -3,16 +3,18 @@ This module contains all the mathematical functions that are necessary for the
 library.
 """
 
-import copy
-import pandas as pd
-import numpy as np
-import numpy.polynomial.polynomial as poly
-import math
-from scipy import signal
-from scipy.spatial.distance import cdist
-from scipy.fftpack import fft
 import sys
+import copy
+import math
 import warnings
+
+import numpy as np
+import pandas as pd
+from scipy import signal
+from scipy.fftpack import fft
+from scipy.signal import find_peaks
+from scipy.spatial.distance import cdist
+import numpy.polynomial.polynomial as poly
 
 
 def min_max_scaling(data=None, series_or_df=None, col_by_col=False):
@@ -336,7 +338,74 @@ def norm_twod_xcorr(sig1=None, sig2=None, mode="full", df1=None, df2=None):
     return normxcorr, normxcorr_max
 
 
-def compute_sil(ipts, mupulses, ignore_negative_ipts=False):
+def discrete_spike_xcorr(spikes1, spikes2, max_lag):
+    """
+    Compute a discrete cross-correlation between two spike trains over a
+    limited range of lags.
+
+    This function counts coincidences between spikes in ``spikes1`` and
+    ``spikes2`` at different temporal offsets (lags) ranging from ``-max_lag``
+    to ``+max_lag``. It is intended for comparing the similarity of two spike
+    trains (MUPULSES) within a specified maximum lag window.
+
+    Parameters
+    ----------
+    spikes1 : list or array-like of int
+        Indices of spikes in the first spike train.
+    spikes2 : list or array-like of int
+        Indices of spikes in the second spike train.
+    max_lag : int
+        Maximum lag (in sample points) to consider. The function computes
+        cross-correlation at lags -max_lag, ..., 0, ..., +max_lag.
+
+    Returns
+    -------
+    xcorr : np.ndarray of shape (2*max_lag + 1,)
+        Cross-correlation values for each lag. The central element
+        (``xcorr[lag]``) corresponds to zero lag, negative indices correspond
+        to negative lags, and positive indices correspond to positive lags.
+        Each value represents the number of coinciding spikes between
+        ``spikes1`` and the shifted ``spikes2``.
+
+    See also
+    --------
+    - remove_duplicates_within : Remove duplicate MUs within the same file
+        based on discharge times.
+
+    Examples
+    --------
+    >>> import openhdemg.library as emg
+    >>> spikes1 = [1, 5, 10]
+    >>> spikes2 = [2, 5, 9]
+    >>> emg.discrete_spike_xcorr(spikes1, spikes2, max_lag=2)
+    array([0. 1. 1. 1. 0.])
+    """
+
+    max_lag = int(max_lag)
+    xcorr = np.zeros(2 * max_lag + 1)
+    spikes1 = set(spikes1)
+
+    try:
+        iter(spikes2)
+    except TypeError:
+        spikes2 = [spikes2]
+
+    for pos, l in enumerate(range(-max_lag, max_lag + 1)):
+        count = 0
+        for val2 in spikes2:
+            if (val2 + l) in spikes1:
+                count += 1
+        xcorr[pos] = count
+
+    return xcorr
+
+
+def compute_sil(
+    ipts,
+    mupulses,
+    compute_on_peaks_only=True,
+    ignore_negative_ipts=None,
+):
     """
     Calculate the Silhouette score for a single MU.
 
@@ -344,20 +413,34 @@ def compute_sil(ipts, mupulses, ignore_negative_ipts=False):
     point-to-centroid distances and the same measure calculated between
     clusters. The output measure is normalised in a range between 0 and 1.
 
+    !!! note "Since version 0.2.0"
+        The behaviour of this function has changed to ensure a more accurate
+        SIL estimation. To maintain the old behaviour, you can set
+        ``compute_on_peaks_only=False``.
+
     Parameters
     ----------
-    ipts : pd.Series
+    ipts : pd.Series or np.ndarray
         The  decomposed source (or pulse train, IPTS[mu]) of the MU of
         interest.
-    mupulses : ndarray
+    mupulses : np.ndarray
         The time of firing (MUPULSES[mu]) of the MU of interest.
-    ignore_negative_ipts : bool, default False
-        If True, only use positive ipts during peak and noise clustering. This
-        is particularly important for sources with large negative components.
+    compute_on_peaks_only : bool, default=True
+        If True, the silhouette (SIL) score is computed using **only the ipts
+        peaks**, rather than all values in the source signal. This can improve
+        accuracy estimation by comparing MU spikes only against other
+        candidate spikes, ignoring baseline or negative ipts values.
+        If False, the noise cluster is defined as all samples not selected as
+        MU spikes.
+    ignore_negative_ipts : None
+        This parameter is deprecated and will be removed in future releases.
+        Please transform the 'ipts' before if needed. To replicate the
+        behaviour of 'ignore_negative_ipts=True' you can use
+        'ipts * np.abs(ipts)'.
 
     Returns
     -------
-    sil : float
+    sil : np.float64
         The SIL score.
 
     See also
@@ -366,8 +449,7 @@ def compute_sil(ipts, mupulses, ignore_negative_ipts=False):
 
     Examples
     --------
-    Calculate the SIL score for the third MU (MU number 2) ignoring the
-    negative component of the decomposed source.
+    Calculate the SIL score for the third MU (MU number 2).
 
     >>> import openhdemg.library as emg
     >>> emgfile = emg.emg_from_samplefile()
@@ -375,27 +457,52 @@ def compute_sil(ipts, mupulses, ignore_negative_ipts=False):
     >>> sil_value = emg.compute_sil(
     ...     ipts=emgfile["IPTS"][mu_of_interest],
     ...     mupulses=emgfile["MUPULSES"][mu_of_interest],
-    ...     ignore_negative_ipts=True,
     ... )
+    0.9155651076123175
     """
 
     # Manage exception of no firings
     if len(mupulses) == 0:
-        return np.nan
+        return 0.0
 
     # Extract source and peaks and align source and peaks based on IPTS
-    source = ipts.to_numpy()
+    if isinstance(ipts, pd.Series):
+        source = ipts.to_numpy()
+        peaks_idxs = mupulses - ipts.index[0]
+    else:
+        source = np.asarray(ipts).reshape(-1)
+        peaks_idxs = mupulses
 
-    if ignore_negative_ipts:
-        # Ignore negative values, this is particularly needed for negative
-        # unbalanced sources.
-        source = source * np.abs(source)
+    # Manage deprecated parameters
+    if ignore_negative_ipts is not None:
+        msg = (
+            "The 'ignore_negative_ipts' parameter is deprecated since v0.2 " +
+            "and will be removed. Please transform the 'ipts' before. To " +
+            "replicate the behaviour of 'ignore_negative_ipts=True' you can " +
+            "use 'ipts * np.abs(ipts)'."
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        if ignore_negative_ipts:
+            source = source * np.abs(source)
 
-    peaks_idxs = mupulses - ipts.index[0]
+    # For better accuracy, the peak and noise clusters should be calculated
+    # only on source peaks, not on all the ipts.
+    if compute_on_peaks_only is True:
+        # Use only peak values for noise cluster
+        peak_cluster = source[peaks_idxs]
 
-    # Create clusters
-    peak_cluster = source[peaks_idxs]
-    noise_cluster = np.delete(source, peaks_idxs)
+        _all_peaks_index, _ = find_peaks(source, distance=1)
+        mask_noise = ~np.isin(_all_peaks_index, peaks_idxs)
+        noise_cluster = source[_all_peaks_index[mask_noise]]
+
+    else:
+        # Use all source values for noise cluster
+        peak_cluster = source[peaks_idxs]
+        noise_cluster = np.delete(source, peaks_idxs)
+
+    # Manage exception of all signal is peak
+    if len(noise_cluster) == 0:
+        return 1.0
 
     # Create centroids for each cluster
     peak_centroid = np.mean(peak_cluster)
@@ -419,9 +526,12 @@ def compute_sil(ipts, mupulses, ignore_negative_ipts=False):
     ).sum()
 
     # Calculate silhouette coefficient
-    sil = (inter_sums - intra_sums) / max(intra_sums, inter_sums)
+    max_val = max(intra_sums, inter_sums)
+    if max_val == 0:  # Avoid division by zero
+        return 0.0
+    sil = (inter_sums - intra_sums) / max_val
 
-    return sil
+    return np.float64(sil)
 
 
 def compute_pnr(
@@ -457,7 +567,7 @@ def compute_pnr(
 
     Returns
     -------
-    pnr : float
+    pnr : np.float64
         The PNR in decibels.
 
     See also
@@ -627,7 +737,100 @@ def compute_pnr(
     noise_cluster = np.square(noise_cluster)
     pnr = 10 * np.log10(np.mean(peak_cluster) / np.mean(noise_cluster))
 
-    return pnr
+    return np.float64(pnr)
+
+
+def compute_pulses_agreement_rate(
+    estimated_pulses,
+    reference_pulses,
+    tolerance=1,
+    method="dice_coefficient",
+):
+    """
+    Calculate the Rate of Agreement (ROA) between two MUPULSES sets.
+
+    Usually used to estimate the ROA between the MUPULSES of a single MU
+    detected during the decomposition (or after the manual cleaning), with a
+    reference array of values (for example, simulation ground truth or MUPULSES
+    detected using different computational methods).
+
+    Currently, only the 'dice_coefficient' method is implemented. This
+    parameter is included for future compatibility with alternative agreement
+    metrics.
+
+    Parameters
+    ----------
+    estimated_pulses : ndarray
+        The estimated time of firing (e.g., MUPULSES[mu]) of the MU of
+        interest.
+    reference_pulses : ndarray
+        The reference time of firing (e.g., REFERENCE_MUPULSES[mu]) of the same
+        MU of interest.
+    tolerance : int, default 1
+        Maximum accepted absolute sample difference between an estimated and
+        reference discharge for them to be counted as a match. A value of 0
+        means exact sample matching. tolerance=n allows +/-n samples of shift.
+    method : str, optional
+        The metric used to calculate agreement. Currently only supports 
+        "dice_coefficient" (default), which calculates ROA as:
+        (2 * TP) / (2 * TP + FP + FN) * 100.
+
+    Returns
+    -------
+    roa : np.float64
+        The ROA in %.
+    """
+
+    if method != "dice_coefficient":
+        raise NotImplementedError(
+            f"Method '{method}' is not implemented. Use 'dice_coefficient'."
+        )
+
+    if tolerance < 0:
+        raise ValueError("'tolerance' must be >= 0.")
+
+    # Ignore duplicate values. np.unique also sorts the arrays.
+    estimated_pulses = np.unique(estimated_pulses)
+    reference_pulses = np.unique(reference_pulses)
+
+    # For the Dice coefficient:
+    # denominator = 2 * TP + FP + FN.
+    # Since FP = n_estimated - TP and FN = n_reference - TP, this simplifies to
+    # n_estimated + n_reference.
+    denominator = estimated_pulses.size + reference_pulses.size
+
+    if denominator == 0:
+        return np.float64(0.0)
+
+    if tolerance == 0:
+        # Exact matching: faster than the Python while-loop.
+        tp = np.intersect1d(
+            estimated_pulses,
+            reference_pulses,
+            assume_unique=True,
+        ).size
+
+        return np.float64((2 * tp / denominator) * 100)
+
+    # One-to-one matching within tolerance.
+    i = 0
+    j = 0
+    tp = 0
+
+    while i < reference_pulses.size and j < estimated_pulses.size:
+        ref = reference_pulses[i]
+        est = estimated_pulses[j]
+
+        if abs(est - ref) <= tolerance:
+            tp += 1
+            i += 1
+            j += 1
+        elif est < ref - tolerance:
+            j += 1
+        else:
+            i += 1
+
+    return np.float64((2 * tp / denominator) * 100)
 
 
 def derivatives_beamforming(sig, row, teta):

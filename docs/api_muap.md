@@ -1,7 +1,6 @@
 Description
 -----------
-This module contains functions to produce and analyse MUs anction potentials
-(MUAPs).
+This module contains functions to produce and analyse MUs anction potentials (MUAPs).
 
 <br/>
 
@@ -68,7 +67,14 @@ This module contains functions to produce and analyse MUs anction potentials
 
 <br/>
 
-::: openhdemg.library.muap.Tracking_gui
+::: openhdemg.library.muap.run_xcorr_muaps_tracking_gui
+    options:
+        show_root_full_path: False
+        show_root_heading: True
+
+<br/>
+
+::: openhdemg.library.muap.XCORR_MUAPs_Tracking_gui
     options:
         show_root_full_path: False
         show_root_heading: True
@@ -96,11 +102,16 @@ This module contains functions to produce and analyse MUs anction potentials
 
 <br/>
 
-::: openhdemg.library.muap.MUcv_gui
+::: openhdemg.library.muap.run_mle_mucv_gui
     options:
         show_root_full_path: False
         show_root_heading: True
-        merge_init_into_class: True 
-        show_if_no_docstring: False     
+
+<br/>
+
+::: openhdemg.library.muap.MLE_MUCV_gui
+    options:
+        show_root_full_path: False
+        show_root_heading: True
 
 <br/>

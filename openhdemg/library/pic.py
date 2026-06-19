@@ -5,9 +5,10 @@ persistent inward currents.
 Currently includes delta F.
 """
 
-import pandas as pd
-import numpy as np
 from itertools import combinations
+
+import numpy as np
+import pandas as pd
 
 
 def compute_deltaf(

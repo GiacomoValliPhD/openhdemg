@@ -2,21 +2,23 @@
 
 Welcome to the *openhdemg* Documentation Versions page!  
 
-By default, you are viewing the website and documentation for the **latest stable release**.  
+By default, you are viewing the website and documentation for the **latest release**.  
 If you're looking for a specific version, simply select it from the list below.  
 
 ---
 
 ## 🚀 Latest Version  
 
-**[v0.1.2 (Latest)](https://www.giacomovalli.com/openhdemg/){:target="_blank"}**  
-_Latest features, updates, and improvements._  
+**[v0.2.0-Beta1 (Latest)](https://www.giacomovalli.com/openhdemg/){:target="_blank"}**  
+_Latest features, updates, and improvements, **but in beta version**!_  
 
 ---
 
 ## 📖 Previous Versions
 
 Here are the older versions of the documentation:
+
+- [v0.1.2](https://www.giacomovalli.com/openhdemg/v0.1.2/){:target="_blank"}
 
 - [v0.1.1](https://www.giacomovalli.com/openhdemg/v0.1.1/){:target="_blank"}
 

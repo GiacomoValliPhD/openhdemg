@@ -2,45 +2,24 @@
 Description
 -----------
 This module contains all the functions that are necessary to open or save
+openhdemg binary files for modules and collections, in addition to
 MATLAB (.mat), text (.txt), JSON (.json) or custom (.csv) files.
 MATLAB files are used to store data from the DEMUSE, OTBiolab+ and Delsys
-software while JSON files are used to save and load files from this
+software while binary and JSON files are used to save and load files from this
 library.
-The choice of saving files in the open standard JSON file format was
-preferred over the MATLAB file format since it has a better integration
-with Python and has a very high cross-platform compatibility.
 
-Function's scope
-----------------
-emg_from_samplefile :
-    Used to load the sample file provided with the library.
-emg_from_otb and emg_from_demuse :
-    Used to load .mat files coming from the DEMUSE or the OTBiolab+
-    software. Demuse has a fixed file structure while the OTB file, in
-    order to be compatible with this library should be exported with a
-    strict structure as described in the function emg_from_otb.
-    In both cases, the input file is a .mat file.
-emg_from_delsys :
-    Used to load a combination of .mat and .txt files exported by the Delsys
-    Neuromap and Neuromap explorer software containing the raw EMG signal and
-    the decomposition outcome.
-emg_from_customcsv :
-    Used to load custom file formats contained in .csv files.
-refsig_from_otb, refsig_from_delsys and refsig_from_customcsv:
-    Used to load files from the OTBiolab+ (.mat) and the Delsys Neuromap
-    software (.mat) or from a custom .csv file that contain only the
-    reference signal.
-save_json_emgfile, emg_from_json :
-    Used to save the working file to a .json file or to load the .json
-    file.
-askopenfile, asksavefile :
-    A quick GUI implementation that allows users to select the file to
-    open or save.
+If you are using an openhdemg version >= 0.2, it is recommended to use binary
+data (modules and collections), as these provide the best performance and
+flexibility within the openhdemg framework, but also for optimal portability
+across operating systems and storage in private and public repositories.
+Indeed, our binary structures allow to compress files and check their
+integrity, if needed.
 
-Notes
------
-Once opened, the file is returned as a dict with keys:
-    "SOURCE" : source of the file (i.e., "CUSTOMCSV", "DEMUSE", "OTB", "DELSYS")
+The content of the loaded emgfile can differ depending on the file type.
+In general, decomposed files are dictionaries containing at least the following
+keys:
+
+    "SOURCE" : source of the file (e.g., "OPENHDEMG", "CUSTOMCSV")
     "FILENAME" : the name of the opened file
     "RAW_SIGNAL" : the raw EMG signal
     "REF_SIGNAL" : the reference signal
@@ -52,52 +31,1763 @@ Once opened, the file is returned as a dict with keys:
     "EMG_LENGTH" : length of the emg file (in samples)
     "NUMBER_OF_MUS" : total number of MUs
     "BINARY_MUS_FIRING" : binary representation of MUs firings
-    "EXTRAS" : additional custom values
+    "EXTRAS" : additional custom values in a pd.DataFrame
 
-The only exception is when files are loaded with just the reference signal:
+More keys might be present if additional pd.DataFrames or Dictionaries are
+present in the emgfiles saved with 'save_emgfile_module'.
+
+Similarly, less keys might be present if there is no decomposition result or no
+EMG signal.
+
+As an example, when files are loaded with just the reference signal:
+
     "SOURCE": source of the file (i.e., "CUSTOMCSV_REFSIG", "OTB_REFSIG", "DELSYS_REFSIG")
     "FILENAME" : the name of the opened file
     "FSAMP": sampling frequency
     "REF_SIGNAL": the reference signal
     "EXTRAS" : additional custom values
 
-Additional informations can be found in the info module (emg.info()) and in
+Additional information can be found in the info module (emg.info()) and in
 the function's description.
 """
 
 # Some functions contained in this file are called internally and should not
-# be exposed to the final user.
-# Functions should be exposed in the __init__ file as:
-#   from openhdemg.library.openfiles import (
-#       emg_from_otb,
-#       emg_from_demuse,
-#       emg_from_delsys,
-#       emg_from_customcsv,
-#       refsig_from_otb,
-#       refsig_from_delsys,
-#       refsig_from_customcsv,
-#       save_json_emgfile,
-#       emg_from_json,
-#       askopenfile,
-#       asksavefile,
-#       emg_from_samplefile,
-#   )
+# be exposed to the final user. Refer to the __init__ file.
 
+import os
+import sys
+import gzip
+import json
+import copy
+import shutil
+import fnmatch
+import hashlib
+import platform
+import warnings
+from io import StringIO
+from pathlib import Path
+from datetime import datetime, timezone
 
-from scipy.io import loadmat
-import pandas as pd
 import numpy as np
-from openhdemg.library.electrodes import *
+import pandas as pd
+from scipy.io import loadmat
+
+import openhdemg
+from openhdemg.library.electrodes import (
+    OTBelectrodes_ied, OTBelectrodes_Nelectrodes,
+)
 from openhdemg.library.mathtools import compute_sil
 from openhdemg.library.tools import create_binary_firings, mupulses_from_binary
-from tkinter import *
-from tkinter import filedialog
-import json
-import gzip
-import warnings
-import os
-import fnmatch
-from io import StringIO
+
+from openhdemg.ui.widgets import (
+    run_custom_file_dialog, run_custom_directory_dialog,
+)
+
+
+# --------------------------------------------------------------------- #
+# Functions to open binary openhdemg modules and collections.
+
+def is_safe_openhdemg_folder(path, marker_name=".openhdemg_module"):
+    """
+    Check if a given folder is safe to overwrite as an openhdemg directory.
+
+    This function verifies that the target folder:
+
+    1. Exists and is a directory.
+    2. Is not a dangerous system directory (like '/', 'C:\\', etc.).
+    3. Contains the expected marker file (e.g., '.openhdemg_module' or
+        '.openhdemg_collection') indicating it was previously created by
+        openhdemg.
+
+    Parameters
+    ----------
+    path : Path or str
+        The path to check.
+    marker_name : str, default '.openhdemg_module'
+        The name of the marker file that identifies a valid openhdemg
+        directory.
+
+    Returns
+    -------
+    bool
+        True if the folder is safe to remove or overwrite, False otherwise.
+
+    Notes
+    -----
+    An empty folder is considered a safe folder.
+    """
+
+    path = Path(path).resolve()
+
+    # 1. Sanity check
+    if not path.exists():
+        return False
+    if not path.is_dir():
+        return False
+
+    # 2. Protect against system-critical or top-level folders
+    system = platform.system().lower()
+    # Common dangerous paths across all OSes
+    dangerous_paths = {
+        Path("/").resolve(),
+        Path("/bin").resolve(),
+        Path("/boot").resolve(),
+        Path("/dev").resolve(),
+        Path("/etc").resolve(),
+        Path("/lib").resolve(),
+        Path("/lib64").resolve(),
+        Path("/mnt").resolve(),
+        Path("/opt").resolve(),
+        Path("/proc").resolve(),
+        Path("/root").resolve(),
+        Path("/run").resolve(),
+        Path("/sbin").resolve(),
+        Path("/srv").resolve(),
+        Path("/sys").resolve(),
+        Path("/usr").resolve(),
+        Path("/var").resolve(),
+        Path("/tmp").resolve(),
+        Path("/home").resolve(),
+        Path("/media").resolve(),
+    }
+    if system == "darwin":
+        dangerous_paths.update({
+            Path("/Applications").resolve(),
+            Path("/System").resolve(),
+            Path("/Users").resolve(),
+            Path("/Volumes").resolve(),
+        })
+    elif system == "windows":
+        dangerous_paths.update({
+            Path("C:\\").resolve(),
+            Path("C:\\Windows").resolve(),
+            Path("C:\\Program Files").resolve(),
+            Path("C:\\Program Files (x86)").resolve(),
+            Path("C:\\Users").resolve(),
+            Path("C:\\ProgramData").resolve(),
+            Path(os.environ.get("TEMP", "C:\\Temp")).resolve(),
+            Path("D:\\").resolve(),
+            Path("E:\\").resolve(),
+        })
+    # Check dangerous directories
+    if path in dangerous_paths:
+        return False
+
+    # 3. Verify it looks like an openhdemg folder
+    marker = path / marker_name
+    manifest = path / "manifest.json"
+    if marker.exists() and manifest.exists():
+        return True
+
+    # 4. If folder is empty, it’s safe (nothing to lose)
+    if not any(path.iterdir()):
+        return True
+
+    # Otherwise, treat as unsafe
+    return False
+
+
+def sha256_file(path, chunk_size=8192):
+    """
+    Compute the SHA-256 checksum of a file.
+
+    Reads the file at the given path in binary mode and computes a
+    SHA-256 hash over its contents in chunks to avoid excessive
+    memory usage.
+
+    Parameters
+    ----------
+    path : Path
+        Path to the file for which the checksum should be computed.
+    chunk_size : int, default 8192
+        Number of bytes read per iteration.
+
+    Returns
+    -------
+    str
+        The SHA-256 hex digest of the file, prefixed with ``"sha256:"``.
+
+    Examples
+    --------
+    >>> from pathlib import Path
+    >>> sha256_file(Path("data.bin"))
+    'sha256:9f2c2e6d14efc02e3f6b4f41a93d85e1b3...'
+    """
+
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(chunk_size), b""):
+            h.update(chunk)
+    return "sha256:" + h.hexdigest()
+
+
+def save_openhdemg_module(
+    emgfile,
+    path,
+    module_name,
+    filename=None,
+    compresslevel=None,
+    add_checksum=False,
+):
+    """
+    Save an openhdemg module to a structured directory.
+
+    This function serialises an `emgfile` into a folder containing a manifest
+    file (``manifest.json``) and binary uncompressed or gzip-compressed data
+    files. It supports optional checksum generation and performs automatic
+    overwriting of existing module directories.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+    path : str
+        Directory where the module folder should be created. The use of
+        absolute paths should be preferred.
+    module_name : str
+        Name of the module folder to create under ``path``.
+    filename : str, default None
+        Optional filename to override the existing ``emgfile["FILENAME"]``.
+    compresslevel : {None, int}, default None
+        Compression level (0-9). If ``None``, saves as raw binary files
+        without compression. Saving the file without compression will allow
+        for random access in the future (not yet implemented). Consider saving
+        always uncompressed binary if you are working with large files. If you
+        prefer working with compressed files to save space, we suggest using a
+        `compresslevel=1`` for the best compression/performance balance.
+    add_checksum : bool, default False
+        If ``True``, compute and store a SHA-256 checksum for each
+        binary file to enable integrity verification on load.
+        Default is ``False``.
+
+    Returns
+    -------
+    Path
+        Path to the root directory where the openhdemg module has been saved.
+
+    See also
+    --------
+    - asksavemodule : Select the folder where to save the module with an UI
+        and save it.
+
+    Notes
+    -----
+    If a folder with the same ``module_name`` already exists at ``path``,
+    it will be completely overwritten.
+
+    The resulting folder contains:
+
+    - ``.openhdemg_module`` : Marker file indicating an openhdemg module
+    - ``manifest.json`` : Metadata and file index
+    - ``files/`` : Binary data files (optionally compressed)
+    """
+
+    # Create root folder based on file name and path
+    root = Path(path).resolve() / module_name  # TODO resolve
+    if root.exists():
+        if is_safe_openhdemg_folder(
+            path=root, marker_name=".openhdemg_module",
+        ):
+            shutil.rmtree(root)  # Overwrite folder content
+        else:
+            raise RuntimeError(f"Unsafe or unknown folder: {root}")
+    root.mkdir(parents=True, exist_ok=True)
+
+    # Create directory to store all the files
+    files_path = root / "files"
+    files_path.mkdir(parents=True, exist_ok=True)
+
+    # Path to the manifest file for this module
+    manifest_path = root / "manifest.json"
+    manifest_path.touch(exist_ok=True)
+
+    # Path to the marker file for this module
+    marker_path = root / ".openhdemg_module"
+    marker_path.touch(exist_ok=True)
+
+    # "manifest.json" and ".openhdemg_module" determine an openhdemg
+    # folder when is_safe_openhdemg_folder() is called.
+
+    # Create the manifest file
+    manifest = {
+        # For monitoring and compatibility purposes
+        "_metadata": {
+            "created": datetime.now(timezone.utc).isoformat(),
+            "system_byte_order": sys.byteorder,  # 'little' or 'big'
+            "os": platform.system(),  # 'Windows', 'Linux', 'Darwin'
+            "os_version": platform.version(),  # detailed version string
+            "platform": platform.platform(),  # eg. 'Windows-10-10.0.19045-SP0'
+            "python_version": platform.python_version(),
+            "openhdemg_version": openhdemg.__version__,
+            "data_structure_version": "1.0"
+        },
+        # For the actual emgfile
+        "SOURCE": {
+            "data_type": "str",
+            "text": "OPENHDEMG",
+        },
+        "FILENAME": {
+            "data_type": "str",
+            "text": emgfile["FILENAME"] if filename is None else filename,
+        },
+        "FSAMP": {
+            "data_type": "float",
+            "value": emgfile["FSAMP"],
+        },
+    }
+
+    # Make sure that these are json serialisable
+    # np Dtypes are not!
+    IED = emgfile.get("IED", None)
+    if IED is not None:
+        manifest["IED"] = {
+            "data_type": "float",
+            "value": float(emgfile["IED"]),
+        }
+
+    EMG_LENGTH = emgfile.get("EMG_LENGTH", None)
+    if EMG_LENGTH is not None:
+        manifest["EMG_LENGTH"] = {
+            "data_type": "int",
+            "value": int(emgfile["EMG_LENGTH"]),
+        }
+
+    NUMBER_OF_MUS = emgfile.get("NUMBER_OF_MUS", None)
+    if NUMBER_OF_MUS is not None:
+        manifest["NUMBER_OF_MUS"] = {
+            "data_type": "int",
+            "value": int(emgfile["NUMBER_OF_MUS"]),
+        }
+
+    # Add any custom informative dict to the manifest
+    dicts_keys = [key for key, val in emgfile.items() if isinstance(val, dict)]
+    if len(dicts_keys) > 0:
+        for key in dicts_keys:
+            # Verify if the dict is json serialisable
+            try:
+                json.dumps(emgfile[key])
+            except (TypeError, OverflowError):
+                warnings.warn(
+                    message=(
+                        f"The dict {key} is not json serialisable. "
+                        "It will not be saved"
+                    )
+                )
+                continue
+            manifest[key] = {
+                "data_type": "dict",
+                "value": emgfile[key],
+            }
+
+    # Save any DataFrames and reference in manifest
+    df_keys = [
+        key for key, val in emgfile.items() if isinstance(val, pd.DataFrame)
+    ]
+    for key in df_keys:
+        # Verify if the dataframe contains data
+        df = emgfile.get(key, None)
+        if df.empty:
+            # Add info to the manifest
+            manifest[key] = {
+                "data_type": "empty pd.DataFrame",
+                "columns": list(df.columns),
+                "columns_dtypes": [type(c).__name__ for c in df.columns],
+                "shape": list(df.shape),
+            }
+            continue
+
+        # np.ascontiguousarray returns a contiguous array (ndim >= 1) in C
+        # order. It also forces a common data type to the one of highest
+        # precision.
+        arr = np.ascontiguousarray(df.to_numpy())
+
+        # Write file
+        if compresslevel is None:
+            # Uncompressed
+            out_path = files_path / f"{key}.bin"
+            compression = None
+            with open(out_path, "wb") as f:
+                f.write(arr.tobytes())
+        else:
+            # Compressed
+            out_path = files_path / f"{key}.bin.gz"
+            compression = "gzip"
+            with gzip.open(out_path, "wb", compresslevel=compresslevel) as f:
+                f.write(arr.tobytes())
+
+        # Add checksum for integrity checks if desired
+        if add_checksum:
+            checksum = sha256_file(out_path)
+        else:
+            checksum = None
+
+        # Add info to the manifest
+        manifest[key] = {
+            "data_type": "pd.DataFrame",
+            "data_file_path": str(out_path.relative_to(root)),
+            "compression": compression,
+            "order": "C",
+            "columns": list(df.columns),
+            "columns_dtypes": [type(c).__name__ for c in df.columns],
+            "shape": list(arr.shape),
+            "dtypes": [str(dtype) for dtype in df.dtypes],
+            "endian_dtype": arr.dtype.str,
+            "checksum": checksum
+        }
+
+    # Save MUPULSES and REFERENCE_MUPULSES and reference them in manifest
+    for mupulses_name in ["MUPULSES", "REFERENCE_MUPULSES"]:
+        MUPULSES = emgfile.get(mupulses_name, None)
+        if MUPULSES is not None:
+
+            MUPULSES_offsets = []
+            MUPULSES_lengths = []
+            dtypes = []
+            endian_dtypes = []
+
+            # Write file
+            if compresslevel is None:
+                # Uncompressed
+                MUPULSES_path = files_path / f"{mupulses_name}.bin"
+                compression = None
+                with open(MUPULSES_path, "wb") as f:
+                    pos = 0
+                    # Save as a ragged array with reference to split points
+                    for arr in MUPULSES:
+                        arr = np.ascontiguousarray(arr)
+                        f.write(arr.tobytes())
+                        MUPULSES_lengths.append(arr.shape[0])
+                        MUPULSES_offsets.append(pos)
+                        dtypes.append(str(arr.dtype))
+                        endian_dtypes.append(arr.dtype.str)
+                        pos += arr.nbytes
+            else:
+                # Compressed
+                MUPULSES_path = files_path / f"{mupulses_name}.bin.gz"
+                compression = "gzip"
+                with gzip.open(
+                    MUPULSES_path, "wb", compresslevel=compresslevel,
+                ) as f:
+                    pos = 0
+                    # Save as a ragged array with reference to split points
+                    for arr in MUPULSES:
+                        arr = np.ascontiguousarray(arr)
+                        f.write(arr.tobytes())
+                        MUPULSES_lengths.append(arr.shape[0])
+                        MUPULSES_offsets.append(pos)
+                        dtypes.append(str(arr.dtype))
+                        endian_dtypes.append(arr.dtype.str)
+                        pos += arr.nbytes
+
+            # Add checksum for integrity checks if desired
+            if add_checksum:
+                checksum = sha256_file(MUPULSES_path)
+            else:
+                checksum = None
+
+            # Add info to the manifest
+            manifest[mupulses_name] = {
+                "data_type": "list_of_1D_np.ndarray",  # e.g., (137,)  # TODO document this
+                "data_file_path": str(MUPULSES_path.relative_to(root)),
+                "compression": compression,
+                "order": "C",
+                "lengths": MUPULSES_lengths,
+                "offsets": MUPULSES_offsets,
+                "dtypes": dtypes,
+                "endian_dtypes": endian_dtypes,
+                "checksum": checksum
+            }
+
+    # Save the manifest file
+    manifest_path.write_text(json.dumps(manifest, indent=4))
+
+    # Return the folder where the openhdemg module has been saved
+    return root
+
+
+def asksavemodule(
+    emgfile,
+    filename=None,
+    compresslevel=None,
+    add_checksum=False,
+):
+    """
+    Select or create the folder where to save the module with an UI.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+    filename : str or None, default None
+        Optional filename to override the existing ``emgfile["FILENAME"]``.
+        If ``None``, the saving name will be used.
+    compresslevel : {None, int}, default None
+        Compression level (0-9). If ``None``, saves as raw binary files
+        without compression. Saving the file without compression will allow
+        for random access in the future (not yet implemented). Consider saving
+        always uncompressed binary if you are working with large files. If you
+        prefer working with compressed files to save space, we suggest using a
+        `compresslevel=1`` for the best compression/performance balance.
+    add_checksum : bool, default False
+        If ``True``, compute and store a SHA-256 checksum for each
+        binary file to enable integrity verification on load.
+        Default is ``False``.
+
+    Returns
+    -------
+    Path
+        Path to the root directory where the openhdemg module has been saved.
+
+    See also
+    --------
+    - save_openhdemg_module : Save an openhdemg module to a structured
+        directory.
+
+    Notes
+    -----
+    If a folder with the same ``module_name`` already exists at ``path``,
+    it will be completely overwritten.
+
+    The resulting folder contains:
+
+    - ``.openhdemg_module`` : Marker file indicating an openhdemg module
+    - ``manifest.json`` : Metadata and file index
+    - ``files/`` : Binary data files (optionally compressed)
+    """
+
+    # Get the filepath
+    dirpath = run_custom_directory_dialog(
+        window_title="Select a folder to save the module",
+        mode="save",
+    )
+    parent_path, dirname = os.path.split(dirpath)
+
+    print("\n---------------\nSaving module\n")
+
+    # Save the module
+    path = save_openhdemg_module(
+        emgfile=emgfile,
+        path=parent_path,
+        module_name=dirname,
+        filename=dirname if filename is None else filename,
+        compresslevel=compresslevel,
+        add_checksum=add_checksum,
+    )
+
+    print(f"Module saved at {path}\n---------------\n")
+
+    return path
+
+
+def load_openhdemg_module(
+    path,
+    module_name,
+    verify_checksum=False,
+    return_metadata=False,
+):
+    """
+    Load an openhdemg module saved with `save_openhdemg_module`.
+
+    This function reconstructs the original `emgfile` dictionary
+    (including pandas DataFrames and NumPy arrays) from the directory
+    created by `save_openhdemg_module`. Optionally, it verifies the integrity
+    of stored binary files using SHA-256 checksums if they are present in
+    the manifest.
+
+    Parameters
+    ----------
+    path : str
+        Directory containing the module folder. The use of absolute paths
+        should be preferred.
+    module_name : str
+        Name of the module folder to load. The module folder is the one
+        containing the module's ``manifest.json`` file and associated binary
+        files.
+    verify_checksum : bool, default False
+        If ``True``, verify SHA-256 checksums of all data files when
+        present in the manifest.
+    return_metadata : bool, default False
+        Whether to return the module metadata. If true, an additional object
+        is returned.
+
+    Returns
+    -------
+    emgfile : dict
+        A reconstructed dictionary representing the original `emgfile`.
+        Keys and values mirror those in the saved structure, including:
+
+            - Scalar data (e.g. ``FSAMP``, ``EMG_LENGTH``)
+            - ``pandas.DataFrame`` objects
+            - Lists of NumPy array (``MUPULSES``)
+            - Other emgfile-related metadata from the manifest
+    metadata : dict
+        This is returned only if ``return_metadata`` is ``True``. An example of
+        it content is:
+
+            - "created": "2025-10-06T15:36:11.084657+00:00",
+            - "system_byte_order": "little",
+            - "os": "Windows",
+            - "os_version": "10.0.19045",
+            - "platform": "Windows-10-10.0.19045-SP0",
+            - "python_version": "3.13.1",
+            - "openhdemg_version": "0.2.0-beta.1",
+            - "data_structure_version": "1.0"
+
+    See also
+    --------
+    - askloadmodule : Select the module folder to load with an UI.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the manifest file (``manifest.json``) is missing from the module
+        directory.
+    ValueError
+        If ``verify_checksum`` is enabled and a checksum mismatch is detected.
+    Warning
+        If unexpected keys or malformed entries are found in the manifest.
+    """
+
+    # Read the manifest file
+    root = Path(path).resolve()
+    root = root / module_name
+    manifest_path = root / "manifest.json"
+    if not manifest_path.exists():
+        raise FileNotFoundError(f"Manifest file not found at {root}")
+    manifest = json.loads(manifest_path.read_text())
+
+    # Initialise emgfile dict
+    emgfile = {}
+
+    # Remove _metadata
+    _metadata = manifest.pop("_metadata")
+
+    # Load all the present data
+    for key, info in manifest.items():
+        if not isinstance(info, dict):
+            warnings.warn(f"Unexpected manifest description for key: '{key}'")
+            continue
+
+        # str
+        if info["data_type"] == "str":
+            emgfile[key] = str(info["text"])
+
+        # float
+        if info["data_type"] == "float":
+            emgfile[key] = float(info["value"])
+
+        # int
+        if info["data_type"] == "int":
+            emgfile[key] = int(info["value"])
+
+        # dict
+        if info["data_type"] == "dict":
+            emgfile[key] = info["value"]
+
+        # pd.DataFrame
+        if info["data_type"] == "pd.DataFrame":
+            file_path = root / info["data_file_path"]
+            # Verify checksum
+            if verify_checksum and info.get("checksum") is not None:
+                hash_val = sha256_file(file_path)
+                if hash_val != info["checksum"]:
+                    raise ValueError(
+                        f"Checksum mismatch for {key}. "
+                        f"Expected {info['checksum']}, got {hash_val}."
+                    )
+            # Load file
+            if info.get("compression") == "gzip":
+                with gzip.open(file_path, "rb") as f:
+                    arr = np.frombuffer(
+                        f.read(), dtype=info["endian_dtype"],
+                    )
+            else:
+                with open(file_path, "rb") as f:
+                    arr = np.fromfile(f, dtype=info["endian_dtype"])
+                    # TODO this allows to avoid preloading the data into
+                    # memory and will allow for partial loading.
+            # Reshape and assign columns dtypes
+            arr = arr.reshape(info["shape"], order=info["order"])
+            columns = []
+            for val, tname in zip(info["columns"], info["columns_dtypes"]):
+                if tname == "int":
+                    val = int(val)
+                elif tname == "float":
+                    val = float(val)
+                columns.append(val)  # str fine as is
+            df = pd.DataFrame(arr, columns=columns)
+            for col, dtype_str in zip(df.columns, info["dtypes"]):
+                df[col] = df[col].astype(dtype_str)
+            # Assign
+            emgfile[key] = df
+
+        # empty pd.DataFrame
+        if info["data_type"] == "empty pd.DataFrame":
+            columns = []
+            for val, tname in zip(info["columns"], info["columns_dtypes"]):
+                if tname == "int":
+                    val = int(val)
+                elif tname == "float":
+                    val = float(val)
+                columns.append(val)  # str fine as is
+            df = pd.DataFrame(columns=columns)
+            # Assign
+            emgfile[key] = df
+
+        # Load list of 1D arrays (MUPULSES)
+        if info["data_type"] == "list_of_1D_np.ndarray":
+            file_path = root / info["data_file_path"]
+            # Verify checksum
+            if verify_checksum and info.get("checksum") is not None:
+                hash_val = sha256_file(file_path)
+                if hash_val != info["checksum"]:
+                    raise ValueError(
+                        f"Checksum mismatch for {key}. "
+                        f"Expected {info['checksum']}, got {hash_val}."
+                    )
+            # Load file
+            opener = gzip.open if info.get("compression") == "gzip" else open
+            with opener(file_path, "rb") as f:
+                raw_bytes = f.read()
+            # Split different MUs
+            offsets = info["offsets"]
+            lengths = info["lengths"]
+            endian_dtypes = info["endian_dtypes"]
+            arrays = []
+            for offset, length, edtype in zip(offsets, lengths, endian_dtypes):
+                dt = np.dtype(edtype)
+                nbytes = dt.itemsize * length
+                arr = np.frombuffer(
+                    raw_bytes[offset: offset + nbytes], dtype=edtype,
+                )
+                arrays.append(arr)
+            emgfile[key] = arrays
+
+    # Return required objects
+    if return_metadata:
+        return emgfile, _metadata
+    else:
+        return emgfile
+
+
+def askloadmodule(
+    verify_checksum=False,
+    return_metadata=False,
+    return_path=False,
+):
+    """
+    Select the module folder to load with an UI and load it.
+
+    This function reconstructs the original `emgfile` dictionary
+    (including pandas DataFrames and NumPy arrays) from the directory
+    created by `save_openhdemg_module`. Optionally, it verifies the integrity
+    of stored binary files using SHA-256 checksums if they are present in
+    the manifest.
+
+    Parameters
+    ----------
+    verify_checksum : bool, default False
+        If ``True``, verify SHA-256 checksums of all data files when
+        present in the manifest.
+    return_metadata : bool, default False
+        Whether to return the module metadata. If true, an additional object
+        is returned.
+    return_path : bool, default False
+        Whether to return the path to the module, including module name.
+
+    Returns
+    -------
+    emgfile : dict
+        A reconstructed dictionary representing the original `emgfile`.
+        Keys and values mirror those in the saved structure, including:
+
+            - Scalar data (e.g. ``FSAMP``, ``EMG_LENGTH``)
+            - ``pandas.DataFrame`` objects
+            - Lists of NumPy array (``MUPULSES``)
+            - Other emgfile-related metadata from the manifest
+    metadata : dict, optional
+        This is returned only if ``return_metadata`` is ``True``. An example of
+        it content is:
+
+            - "created": "2025-10-06T15:36:11.084657+00:00",
+            - "system_byte_order": "little",
+            - "os": "Windows",
+            - "os_version": "10.0.19045",
+            - "platform": "Windows-10-10.0.19045-SP0",
+            - "python_version": "3.13.1",
+            - "openhdemg_version": "0.2.0-beta.1",
+            - "data_structure_version": "1.0"
+    path : pathlib.Path, optional
+        The resolved (absolute) path to the module, including module name.
+        This is returned only if ``return_path`` is ``True``.
+
+    See also
+    --------
+    - load_openhdemg_module : Load an openhdemg module saved with
+        `save_openhdemg_module`.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the manifest file (``manifest.json``) is missing from the module
+        directory.
+    ValueError
+        If ``verify_checksum`` is enabled and a checksum mismatch is detected.
+    RuntimeError
+        If the selected directory is not a valid openhdemg module folder.
+    Warning
+        If unexpected keys or malformed entries are found in the manifest.
+    """
+
+    path_to_module = run_custom_directory_dialog(
+        window_title="Select the module folder to load"
+    )
+
+    # Check if a file has been selected. If not, return None
+    if path_to_module is None:
+        return path_to_module
+
+    if not is_safe_openhdemg_folder(
+        path=path_to_module,
+        marker_name=".openhdemg_module",
+    ):
+        raise RuntimeError(
+            f"'{path_to_module}' is not a valid openhdemg module folder."
+        )
+
+    print("\n--------------\nLoading module\n")
+
+    # Open file
+    path = Path(path_to_module).resolve()
+    res = load_openhdemg_module(
+        path=path.parent,
+        module_name=path.name,
+        verify_checksum=verify_checksum,
+        return_metadata=return_metadata,
+    )
+
+    print("\n--------------\nModule loaded\n")
+
+    if return_path is True:
+        return res, path
+    else:
+        return res
+
+
+class openhdemg_Collection():
+    """
+    A container for managing openhdemg collections.
+
+    This class represents a collection of openhdemg modules, along with
+    shared data (e.g. reference signals) and  participant metadata.
+    It provides methods to set, retrieve, and reset each component, and to
+    save/load the entire collection to disk in a structured and versioned
+    format.
+
+    Attributes
+    ----------
+    root : pathlib.Path or None
+        Root directory where the collection is saved.
+    manifest_path : pathlib.Path or None
+        Path to the manifest file (``manifest.json``).
+    marker_path : pathlib.Path or None
+        Path to the marker file (``.openhdemg_collection``) identifying
+        a valid collection directory.
+    modules : dict
+        Dictionary of openhdemg modules belonging to the collection.
+    shared_dataframe : pandas.DataFrame or None
+        Shared data (e.g. reference or synchronisation signals).
+    participant_info : dict or None
+        Dictionary containing participant-level metadata (e.g. ID, age, etc.).
+    manifest : dict
+        Dictionary describing the structure and metadata of the collection.
+
+    Methods
+    -------
+    set_root()
+        Define the root directory for the collection.
+    get_root()
+        Return the collection root path as a string.
+    reset_root()
+        Reset root and related paths to None.
+    set_shared_dataframe()
+        Assign a shared DataFrame for data common to all the modules.
+    get_shared_dataframe()
+        Retrieve a deep copy of the shared DataFrame.
+    reset_shared_dataframe()
+        Reset the shared DataFrame to None.
+    set_participant_info()
+        Set and validate participant information (must be JSON serialisable).
+    get_participant_info()
+        Retrieve a deep copy of participant information.
+    reset_participant_info()
+        Reset the participant information to None.
+    add_module()
+        Add a module to the collection.
+    get_module()
+        Retrieve a module by name.
+    remove_module()
+        Remove a module from the collection.
+    save_module()
+        Save a single module to disk.
+    save_shared_dataframe()
+        Save the shared DataFrame to disk and update the manifest.
+    save_manifest()
+        Write the current manifest file (``manifest.json``).
+    save()
+        Save the entire collection to disk, overwriting existing content.
+    asksave()
+        Save the entire collection to disk using a UI to select the location.
+    load_manifest()
+        Load the manifest file (manifest.json) and update internal metadata.
+    load_module()
+        Load a specific module from disk and add it to the collection.
+    load_shared_dataframe()
+        Load the shared DataFrame from disk and add it to the collection.
+    load()
+        Load the entire openhdemg collection from disk.
+    askload()
+        Load the entire openhdemg collection using an UI to select the
+        directory.
+    """
+
+    def __init__(self):
+        self.root = None
+        self.manifest_path = None
+        self.marker_path = None
+        self.modules = {}
+        self.shared_dataframe = None
+        self.participant_info = None
+        self.manifest = {
+            # For monitoring and compatibility purposes
+            "_metadata": {
+                "created": datetime.now(timezone.utc).isoformat(),
+                "edited": None,
+                "os": platform.system(),  # 'Windows', 'Linux', 'Darwin'
+                "python_version": platform.python_version(),
+                "openhdemg_version": openhdemg.__version__,
+                "data_structure_version": "1.0"
+            },
+            # Modified by the user
+            "modules": [],
+            "shared_dataframe": None,
+            "participant_info": None,
+        }
+
+    def set_root(self, root):
+        """
+        Define the root directory for the collection.
+
+        Parameters
+        ----------
+        root : str or pathlib.Path
+            Path to the root directory where the collection will be saved.
+        """
+
+        self.root = Path(root).resolve()
+        self.manifest_path = self.root / "manifest.json"
+        self.marker_path = self.root / ".openhdemg_collection"
+
+    def get_root(self):
+        """
+        Return the root directory.
+
+        Returns
+        -------
+        str
+            Absolute path of the collection root directory.
+        """
+
+        return str(self.root)
+
+    def reset_root(self):
+        """
+        Reset root and related paths to ``None``.
+        """
+
+        self.root = None
+        self.manifest_path = None
+        self.marker_path = None
+
+    def set_shared_dataframe(self, df):
+        """
+        Set the shared DataFrame for the collection.
+
+        This DataFrame should contain data that is common across modules
+        (e.g. triggers, reference signals, synchronisation traces).
+
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            Shared data to attach to the collection. A deep copy is stored.
+        """
+
+        self.shared_dataframe = copy.deepcopy(df)
+
+    def get_shared_dataframe(self):
+        """
+        Get a deep copy of the shared DataFrame.
+
+        Returns
+        -------
+        pandas.DataFrame or None
+            The shared DataFrame, or ``None`` if not set.
+        """
+
+        return copy.deepcopy(self.shared_dataframe)
+
+    def reset_shared_dataframe(self):
+        """
+        Reset the shared_dataframe to ``None``.
+        """
+
+        self.shared_dataframe = None
+
+    def set_participant_info(self, info):
+        """
+        Set participant information and ensure it is JSON serialisable.
+
+        Parameters
+        ----------
+        info : dict
+            Dictionary containing participant details such as ID, age,
+            height, weight, and notes.
+
+        Raises
+        ------
+        TypeError
+            If the dictionary is not JSON serialisable.
+        """
+
+        # Verify if the dict is json serialisable
+        try:
+            json.dumps(info)
+        except (TypeError, OverflowError) as e:
+            raise TypeError(
+                "The 'info' dictionary is not JSON serialisable. "
+                "It cannot be stored or saved."
+            ) from e
+
+        # Update participant_info and the manifest
+        self.participant_info = copy.deepcopy(info)
+
+    def get_participant_info(self):
+        """
+        Get a deep copy of participant information.
+
+        Returns
+        -------
+        dict or None
+            Participant information, or ``None`` if not set.
+        """
+
+        return copy.deepcopy(self.participant_info)
+
+    def reset_participant_info(self):
+        """
+        Reset the participant_info to ``None`` and update the manifest
+        accordingly.
+        """
+
+        self.participant_info = None
+
+    def add_module(self, module, module_name, replace=True):
+        """
+        Add a module to the collection.
+
+        Parameters
+        ----------
+        module : dict
+            Module data to add.
+        module_name : str
+            Name of the module (used as an identifier).
+        replace : bool, default=True
+            If ``False``, a warning is raised and the module is not replaced
+            when a module with the same name already exists.
+
+        Warns
+        -----
+        UserWarning
+            If ``replace=False`` and the module already exists.
+        """
+
+        if replace is False:
+            if self.modules.get(module_name, None) is not None:
+                warnings.warn(
+                    message=(
+                        f"Module {module_name} is already present. "
+                        "The module was not added. You can change this "
+                        "behaviour with 'replace=True'"
+                    )
+                )
+                return
+        self.modules[module_name] = module
+
+    def get_module(self, module_name):
+        """
+        Retrieve a module by name.
+
+        Parameters
+        ----------
+        module_name : str
+            Name of the module.
+
+        Returns
+        -------
+        dict or None
+            A deep copy of the module dictionary, or ``None`` if not found.
+        """
+
+        return copy.deepcopy(self.modules.get(module_name, None))
+
+    def remove_module(self, module_name):
+        """
+        Remove a module from the collection and its reference from the
+        manifest.
+
+        Parameters
+        ----------
+        module_name : str
+            Name of the module to remove.
+
+        Returns
+        -------
+        dict
+            A deep copy of the removed module.
+
+        Raises
+        ------
+        KeyError
+            If the key is not found.
+        """
+
+        removed_module = self.modules.pop(module_name)
+
+        # Remove module key from manifest.
+        # Do not enforce it since self.manifest["modules"] will not contain
+        # anything until first save.
+        if module_name in self.manifest["modules"]:
+            self.manifest["modules"].remove(module_name)
+
+        return copy.deepcopy(removed_module)
+
+    def save_module(
+        self,
+        module_name,
+        filename=None,
+        compresslevel=None,
+        add_checksum=False,
+        save_updated_manifest=True,
+    ):
+        """
+        Save an individual module to disk.
+
+        Parameters
+        ----------
+        module_name : str
+            Name of the module to save.
+        filename : str, default None
+            Optional filename to override the existing ``emgfile["FILENAME"]``.
+        compresslevel : {None, int}, default None
+            Compression level (0-9). If ``None``, saves as raw binary files
+            without compression. Saving the file without compression will allow
+            for random access in the future (not yet implemented). Consider
+            saving always uncompressed binary if you are working with large
+            files. If you prefer working with compressed files to save space,
+            we suggest using a `compresslevel=1`` for the best
+            compression/performance balance.
+        add_checksum : bool, default False
+            If ``True``, compute and store a SHA-256 checksum for each
+            binary file to enable integrity verification on load.
+            Default is ``False``.
+        save_updated_manifest : bool, default True
+            If True, automatically save also the updated manifest. If False,
+            The user should take care of this by calling the ``save_manifest``
+            method.
+
+        Raises
+        ------
+        ValueError
+            If the module does not exist in the collection.
+        """
+
+        # Check if the root is set.
+        self._check_root_set()
+
+        # Check if the data to save is present.
+        module = self.modules.get(module_name, None)
+        if not isinstance(module, dict):
+            raise ValueError(
+                f"module '{module_name}' not found. Available modules "
+                f"are: {self.modules.keys()}"
+            )
+
+        save_openhdemg_module(
+            emgfile=module,
+            path=self.root,
+            module_name=module_name,
+            filename=filename,
+            compresslevel=compresslevel,
+            add_checksum=add_checksum,
+        )
+
+        if module_name not in self.manifest["modules"]:
+            self.manifest["modules"].append(module_name)
+
+        if save_updated_manifest is True:
+            self.save_manifest()
+
+    def save_shared_dataframe(
+        self,
+        compresslevel=None,
+        add_checksum=False,
+        save_updated_manifest=True,
+    ):
+        """
+        Save the shared DataFrame to disk.
+
+        Parameters
+        ----------
+        compresslevel : {None, int}, default None
+            Compression level (0-9). If ``None``, saves as raw binary files
+            without compression. Saving the file without compression will allow
+            for random access in the future (not yet implemented). Consider
+            saving always uncompressed binary if you are working with large
+            files. If you prefer working with compressed files to save space,
+            we suggest using a `compresslevel=1`` for the best
+            compression/performance balance.
+        add_checksum : bool, default False
+            If ``True``, compute and store a SHA-256 checksum for each
+            binary file to enable integrity verification on load.
+            Default is ``False``.
+        save_updated_manifest : bool, default True
+            If True, automatically save also the updated manifest. If False,
+            The user should take care of this by calling the ``save_manifest``
+            method.
+
+        Warns
+        -----
+        UserWarning
+            If no shared DataFrame is set or if it is empty.
+        """
+
+        # Check if the root is set.
+        self._check_root_set()
+
+        # Additional checks
+        df = self.shared_dataframe
+        if df is None:
+            warnings.warn(
+                "No shared_dataframe has been set. Use the "
+                "'set_shared_dataframe' method before saving."
+            )
+            return
+        if not isinstance(df, pd.DataFrame):
+            raise ValueError(
+                "The shared_dataframe must be a pd.DataFrame. " +
+                f"It is a {type(df)} instead."
+            )
+        if df.empty:
+            warnings.warn("Empty shared_dataframe has not been saved")
+            return
+
+        # np.ascontiguousarray returns a contiguous array (ndim >= 1) in C
+        # order. It also forces a common data type to the one of highest
+        # precision.
+        arr = np.ascontiguousarray(df.to_numpy())
+
+        # Write file
+        if compresslevel is None:
+            # Uncompressed
+            out_path = self.root / "shared_dataframe.bin"
+            compression = None
+            with open(out_path, "wb") as f:
+                f.write(arr.tobytes())
+        else:
+            # Compressed
+            out_path = self.root / "shared_dataframe.bin.gz"
+            compression = "gzip"
+            with gzip.open(out_path, "wb", compresslevel=compresslevel) as f:
+                f.write(arr.tobytes())
+
+        # Add checksum for integrity checks if desired
+        if add_checksum:
+            checksum = sha256_file(out_path)
+        else:
+            checksum = None
+
+        # Add info to the manifest
+        self.manifest["shared_dataframe"] = {
+            "data_type": "pd.DataFrame",
+            "data_file_path": str(out_path.relative_to(self.root)),
+            "compression": compression,
+            "order": "C",
+            "columns": list(df.columns),
+            "columns_dtypes": [type(c).__name__ for c in df.columns],
+            "shape": list(arr.shape),
+            "dtypes": [str(dtype) for dtype in df.dtypes],
+            "endian_dtype": arr.dtype.str,
+            "checksum": checksum
+        }
+
+        if save_updated_manifest is True:
+            self.save_manifest()
+
+    def save_manifest(self):
+        """
+        Write the current manifest to disk in JSON format.
+        """
+
+        # Check if the root is set.
+        self._check_root_set()
+
+        # Add participant info to the manifest
+        if self.participant_info is not None:
+            self.manifest["participant_info"] = {
+                "data_type": "dict",
+                "value": self.participant_info,
+            }
+
+        # Update the manifest _metadata
+        self.manifest["_metadata"]["edited"] = datetime.now(
+            timezone.utc
+        ).isoformat()
+        self.manifest["_metadata"]["os"] = platform.system()
+        self.manifest["_metadata"]["python_version"] = platform.python_version()
+        self.manifest["_metadata"]["openhdemg_version"] = openhdemg.__version__
+        self.manifest["_metadata"]["data_structure_version"] = "1.0"
+
+        self.manifest_path.write_text(json.dumps(self.manifest, indent=4))
+
+    def save(
+        self,
+        update_filename=True,
+        compresslevel=None,
+        add_checksum=False,
+    ):
+        """
+        Save the entire collection to disk.
+
+        Deletes any pre-existing content in the target directory if it is
+        recognised as a valid openhdemg folder (checked via marker file).
+
+        Parameters
+        ----------
+        update_filename : bool, default True
+            If True, override the existing ``emgfile["FILENAME"]`` for all
+            modules to match module name.
+        compresslevel : {None, int}, default None
+            Compression level (0-9). If ``None``, saves as raw binary files
+            without compression. Saving the file without compression will allow
+            for random access in the future (not yet implemented). Consider
+            saving always uncompressed binary if you are working with large
+            files. If you prefer working with compressed files to save space,
+            we suggest using a `compresslevel=1`` for the best
+            compression/performance balance.
+        add_checksum : bool, default False
+            If ``True``, compute and store a SHA-256 checksum for each
+            binary file to enable integrity verification on load.
+            Default is ``False``.
+
+        Raises
+        ------
+        ValueError
+            If root is not set or no modules have been added.
+        RuntimeError
+            If the target folder is not a safe openhdemg folder.
+        """
+
+        # Check if the root is set.
+        self._check_root_set()
+
+        # Check if the data to save is present.
+        if not self.modules:
+            raise ValueError(
+                "No modules were found to save. You can add new modules "
+                "to the collection using the 'add_module' method."
+            )
+
+        # Check if the folder exists and can be overwritten
+        if self.root.exists():
+            if is_safe_openhdemg_folder(
+                path=self.root, marker_name=self.marker_path.name,
+            ):
+                shutil.rmtree(self.root)  # Overwrite folder content
+            else:
+                raise RuntimeError(f"Unsafe or unknown folder: {self.root}")
+        self.root.mkdir(parents=True, exist_ok=True)
+
+        # Create a manifest and marker file for this module
+        self.manifest_path.touch(exist_ok=True)
+        self.marker_path.touch(exist_ok=True)
+
+        # Save modules and update manifest
+        for module_name in self.modules.keys():
+            self.save_module(
+                module_name=module_name,
+                filename=module_name if update_filename else None,
+                compresslevel=compresslevel,
+                add_checksum=add_checksum,
+                save_updated_manifest=False,
+            )
+
+        # Save shared_dataframe and update manifest
+        if self.shared_dataframe is not None:
+            self.save_shared_dataframe(
+                compresslevel=compresslevel, add_checksum=add_checksum,
+            )
+
+        # Save the updated manifest file (including participant info)
+        self.save_manifest()
+
+    def asksave(
+        self,
+        update_filename=True,
+        compresslevel=None,
+        add_checksum=False,
+    ):
+        """
+        Save the entire collection to disk using an UI to select the target
+        directory.
+
+        Deletes any pre-existing content in the target directory if it is
+        recognised as a valid openhdemg folder (checked via marker file).
+
+        Parameters
+        ----------
+        update_filename : bool, default True
+            If True, override the existing ``emgfile["FILENAME"]`` for all
+            modules to match module name.
+        compresslevel : {None, int}, default None
+            Compression level (0-9). If ``None``, saves as raw binary files
+            without compression. Saving the file without compression will allow
+            for random access in the future (not yet implemented). Consider
+            saving always uncompressed binary if you are working with large
+            files. If you prefer working with compressed files to save space,
+            we suggest using a `compresslevel=1`` for the best
+            compression/performance balance.
+        add_checksum : bool, default False
+            If ``True``, compute and store a SHA-256 checksum for each
+            binary file to enable integrity verification on load.
+            Default is ``False``.
+
+        Raises
+        ------
+        ValueError
+            If root is not set or no modules have been added.
+        RuntimeError
+            If the target folder is not a safe openhdemg folder.
+        """
+
+        # Get the module root
+        root = run_custom_directory_dialog(
+            window_title=(
+                "Select or create a folder to contain the saved collection"
+            )
+        )
+        self.set_root(root=root)
+
+        print("\n-----------------\nSaving collection\n")
+
+        # Save the module
+        self.save(
+            update_filename=update_filename,
+            compresslevel=compresslevel,
+            add_checksum=add_checksum,
+        )
+
+        print(f"Module saved at {root}\n-----------------\n")
+
+    def load_manifest(self):
+        """
+        Load the manifest file (manifest.json) and update internal metadata.
+
+        Returns
+        -------
+        dict
+            Retrieve a deep copy of the loaded manifest dictionary.
+
+        Raises
+        ------
+        ValueError
+            If `manifest_path` is not set (e.g. `set_root()` not called).
+        FileNotFoundError
+            If the manifest file path is set but the file does not exist.
+        """
+
+        # Check if the root is set.
+        self._check_root_set()
+
+        # Additional checks
+        if self.manifest_path is None:
+            raise ValueError(
+                "'manifest_path' not set. Use 'set_root()' "
+                "before loading the manifest."
+            )
+        if not self.manifest_path.exists():
+            raise FileNotFoundError(
+                f"Manifest file not found at: {self.manifest_path}"
+            )
+
+        # Load the manifest
+        self.manifest = json.loads(self.manifest_path.read_text())
+
+        return copy.deepcopy(self.manifest)
+
+    def load_module(
+        self,
+        module_name,
+        verify_checksum=False,
+        return_metadata=False,
+    ):
+        """
+        Load a specific module from disk and add it to the collection.
+
+        Parameters
+        ----------
+        module_name : str
+            Name of the module folder to load. The module folder is the one
+            containing the module's ``manifest.json`` file and associated
+            binary files.
+        verify_checksum : bool, default False
+            If ``True``, verify SHA-256 checksums of all data files when
+            present in the manifest.
+        return_metadata : bool, default False
+            Whether to return the module metadata. If true, an additional
+            object is returned.
+
+        Returns
+        -------
+        dict or (dict, dict)
+            The loaded module dictionary, or a tuple ``(module, metadata)``
+            if ``return_metadata=True``.
+
+        Raises
+        ------
+        ValueError
+            If the root is not set, if the manifest does not contain modules,
+            if the specified module name is not listed in the manifest or if
+            checksum verification fails.
+        FileNotFoundError
+            If the module file cannot be found at the expected path.
+        """
+
+        # Check if the root is set.
+        self._check_root_set()
+
+        # Check if any module is present in the manifest
+        if len(self.manifest["modules"]) == 0:
+            raise ValueError(
+                "No module detected in the manifest. "
+                "Try to use 'load_manifest()' first."
+            )
+        if module_name not in self.manifest["modules"]:
+            raise ValueError(
+                f"The module {module_name} is not listed in the manifest."
+            )
+
+        # Load the module
+        if return_metadata is False:
+            emgfile = load_openhdemg_module(
+                path=self.root,
+                module_name=module_name,
+                verify_checksum=verify_checksum,
+                return_metadata=return_metadata,
+            )
+        else:
+            emgfile, metadata = load_openhdemg_module(
+                path=self.root,
+                module_name=module_name,
+                verify_checksum=verify_checksum,
+                return_metadata=return_metadata,
+            )
+
+        # Add the module to the collection
+        self.add_module(
+            module=emgfile,
+            module_name=module_name,
+            replace=True,
+        )
+
+        if return_metadata is False:
+            return emgfile
+        else:
+            return emgfile, metadata
+
+    def load_shared_dataframe(self, verify_checksum=False):
+        """
+        Load the shared DataFrame from disk and add it to the collection.
+
+        Parameters
+        ----------
+        verify_checksum : bool, default False
+            If ``True``, verify SHA-256 checksums of all data files when
+            present in the manifest.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A deep copy of the loaded shared DataFrame or None if not present.
+
+        Raises
+        ------
+        ValueError
+            If the root is not set, if the manifest does not contain
+            a ``shared_dataframe`` entry, or if checksum verification fails.
+        FileNotFoundError
+            If the binary file corresponding to the shared DataFrame
+            cannot be found at the expected path.
+        """
+
+        # Check if the root is set.
+        self._check_root_set()
+
+        # Check if the shared_dataframe key is present in the manifest
+        info = self.manifest.get("shared_dataframe", False)
+        if info is False:
+            raise ValueError(
+                "No 'shared_dataframe' key detected in the manifest. "
+                "Try to use 'load_manifest()' first."
+            )
+        # Check if the shared_dataframe was saved and needs to be loaded
+        if info is None:
+            warnings.warn("No 'shared_dataframe' detected.")
+            return None
+
+        file_path = self.root / info["data_file_path"]
+
+        # Verify checksum
+        if verify_checksum and info.get("checksum") is not None:
+            hash_val = sha256_file(file_path)
+            if hash_val != info["checksum"]:
+                raise ValueError(
+                    f"Checksum mismatch for shared_dataframe. "
+                    f"Expected {info['checksum']}, got {hash_val}."
+                )
+        # Load file
+        if info.get("compression") == "gzip":
+            with gzip.open(file_path, "rb") as f:
+                arr = np.frombuffer(f.read(), dtype=info["endian_dtype"])
+        else:
+            with open(file_path, "rb") as f:
+                arr = np.fromfile(f, dtype=info["endian_dtype"])
+                # TODO this allows to avoid preloading the data into memory
+                # and will allow for partial loading.
+        # Reshape and assign columns dtypes
+        arr = arr.reshape(info["shape"], order=info["order"])
+        columns = []
+        for val, tname in zip(info["columns"], info["columns_dtypes"]):
+            if tname == "int":
+                val = int(val)
+            elif tname == "float":
+                val = float(val)
+            columns.append(val)  # str fine as is
+        df = pd.DataFrame(arr, columns=columns)
+        for col, dtype_str in zip(df.columns, info["dtypes"]):
+            df[col] = df[col].astype(dtype_str)
+
+        # Assign
+        self.shared_dataframe = df
+
+        return copy.deepcopy(self.shared_dataframe)
+
+    def load(self, verify_checksum=False):
+        """
+        Load the entire openhdemg collection from disk.
+
+        This method loads the manifest and reconstructs all modules and the
+        shared DataFrame into memory. Use ``load_module`` or
+        ``load_shared_dataframe`` instead for selective loading.
+
+        Parameters
+        ----------
+        verify_checksum : bool, default False
+            If ``True``, verifies the integrity of all binary files against the
+            checksums stored in the manifest.
+
+        Raises
+        ------
+        ValueError
+            If the root is not set or if the target folder is not recognised
+            as a valid openhdemg collection (missing or invalid marker file).
+        FileNotFoundError
+            If the root directory or manifest file does not exist.
+        """
+
+        # Check if the root is set.
+        self._check_root_set()
+
+        # Check if the root folder exists.
+        if not self.root.exists():
+            raise FileNotFoundError(f"Root folder does not exist: {self.root}")
+
+        # Verify this is a valid openhdemg folder.
+        if not is_safe_openhdemg_folder(
+            path=self.root,
+            marker_name=self.marker_path.name,
+        ):
+            raise RuntimeError(
+                f"'{self.root}' is not a valid openhdemg collection folder."
+            )
+
+        # Verify the manifest exists
+        if not self.manifest_path.exists():
+            raise FileNotFoundError(
+                f"Manifest file not found at: {self.manifest_path}"
+            )
+
+        # Load the manifest
+        self.manifest = json.loads(self.manifest_path.read_text())
+
+        # Load the modules
+        for module in self.manifest["modules"]:
+            self.load_module(
+                module_name=module,
+                verify_checksum=verify_checksum,
+                return_metadata=False,
+            )
+
+        # Load the load_shared_dataframe
+        self.load_shared_dataframe(verify_checksum=verify_checksum)
+
+    def askload(self, verify_checksum=False):
+        """
+        Load the entire openhdemg collection from disk using an UI to select
+        the directory.
+
+        This method loads the manifest and reconstructs all modules and the
+        shared DataFrame into memory. Use ``load_module`` or
+        ``load_shared_dataframe`` instead for selective loading.
+
+        Parameters
+        ----------
+        verify_checksum : bool, default False
+            If ``True``, verifies the integrity of all binary files against the
+            checksums stored in the manifest.
+
+        Raises
+        ------
+        ValueError
+            If the root is not set or if the target folder is not recognised
+            as a valid openhdemg collection (missing or invalid marker file).
+        FileNotFoundError
+            If the root directory or manifest file does not exist.
+        """
+
+        # Get the module root
+        root = run_custom_directory_dialog(
+            window_title="Select the collection folder to load",
+        )
+        self.set_root(root=root)
+
+        self.load(verify_checksum=verify_checksum)
+
+    def _check_root_set(self):
+        # Check if the root is set. Raise ValueError if not.
+        if not isinstance(self.root, Path):
+            raise ValueError(
+                "'root' not set. Use the 'set_root' method first."
+            )
 
 
 # --------------------------------------------------------------------- #
@@ -1634,6 +3324,17 @@ def save_json_emgfile(emgfile, filepath, compresslevel=4):
     """
     Save the emgfile or emg_refsig as a JSON file.
 
+    !!! note "Since version 0.2.0"
+        The recommended workflow for saving and loading openhdemg data now
+        relies on the following high-level functions and classes for binary
+        files:
+
+        - `save_openhdemg_module`
+        - `asksavemodule`
+        - `load_openhdemg_module`
+        - `askloadmodule`
+        - `openhdemg_Collection`
+
     Parameters
     ----------
     emgfile : dict
@@ -1650,7 +3351,19 @@ def save_json_emgfile(emgfile, filepath, compresslevel=4):
         we suggest values between 2 and 6, with 4 providing the best balance.
     """
 
-    if emgfile["SOURCE"] in ["DEMUSE", "OTB", "CUSTOMCSV", "DELSYS"]:
+    if emgfile["SOURCE"] == "OPENHDEMG":
+        warnings.warn(
+            "openhdemg modules and collections should be saved using "
+            "high-level functions and classes for binary files "
+            "(save_openhdemg_module, asksavemodule, load_openhdemg_module, "
+            "askloadmodule, openhdemg_Collection). Saving them "
+            "using save_json_emgfile might fail or omit data."
+        )
+
+    full_emgfile_sources = [
+        "DEMUSE", "OTB", "CUSTOMCSV", "DELSYS", "OPENHDEMG",
+    ]
+    if emgfile["SOURCE"] in full_emgfile_sources:
         """
         We need to convert all the components of emgfile to a dictionary and
         then to json object.
@@ -1776,7 +3489,12 @@ def save_json_emgfile(emgfile, filepath, compresslevel=4):
             json.dump(refsig, f)
 
     else:
-        raise ValueError("\nFile source not recognised\n")
+        raise ValueError(
+            "\nFile source not recognised. Use instead high-level functions "
+            "and classes for binary files (save_openhdemg_module, "
+            "asksavemodule, load_openhdemg_module, askloadmodule, "
+            "openhdemg_Collection).\n"
+        )
 
 
 def emg_from_json(filepath):
@@ -1828,7 +3546,7 @@ def emg_from_json(filepath):
     source = json.loads(jsonemgfile["SOURCE"])
     filename = json.loads(jsonemgfile["FILENAME"])
 
-    if source in ["DEMUSE", "OTB", "CUSTOMCSV", "DELSYS"]:
+    if source in ["DEMUSE", "OTB", "CUSTOMCSV", "DELSYS", "OPENHDEMG"]:
         # RAW_SIGNAL
         # df are stored in json as a dictionary, it can be directly extracted
         # and converted into a pd.DataFrame.
@@ -1942,17 +3660,25 @@ def emg_from_json(filepath):
 
 
 # ---------------------------------------------------------------------
-# Function to open files from a GUI in a single line of code.
+# Functions to open files from a GUI in a single line of code.
 
-def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
+def askopenfile(filesource="OPENHDEMG", **kwargs):
     """
     Select and open files with a GUI.
 
+    !!! note "Since version 0.2.0"
+        The recommended workflow for saving and loading openhdemg data now
+        relies on the following high-level functions and classes for binary
+        files:
+
+        - `save_openhdemg_module`
+        - `asksavemodule`
+        - `load_openhdemg_module`
+        - `askloadmodule`
+        - `openhdemg_Collection`
+
     Parameters
     ----------
-    initialdir : str or Path, default "/"
-        The directory of the file to load (excluding file name).
-        This can be a simple string, the use of Path is not necessary.
     filesource : str {"OPENHDEMG", "DEMUSE", "OTB", "DELSYS", "CUSTOMCSV", "OTB_REFSIG", "DELSYS_REFSIG", CUSTOMCSV_REFSIG}, default "OPENHDEMG"
         The source of the file. See notes for how files should be exported
         from other softwares or platforms.
@@ -2068,8 +3794,9 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
 
     Returns
     -------
-    emgfile : dict
-        The dictionary containing the emgfile.
+    emgfile : dict or None
+        The dictionary containing the emgfile. If the selection process was
+        cancelled, it returns None.
 
     See also
     --------
@@ -2161,43 +3888,40 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
     >>> info.data(emgfile)
     """
 
-    # Set initialdir (actually not working on Windows, but it's not a problem
-    # of the code implementation)
-    if isinstance(initialdir, str):
-        if initialdir == "/":
-            initialdir = "/Decomposed Test files/"
+    # Warn for the use of a deprecated parameter
+    if kwargs.get("initialdir") is not None:
+        msg = (
+            "The initialdir parameter is deprecated and no longer valid. " +
+            "The UI now remembers the last accessed directory."
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
 
-    # Create and hide the tkinter root window necessary for the GUI based
-    # open-file function
-    root = Tk()
-    root.withdraw()
-
+    # Get the path to the file
     if filesource in ["DEMUSE", "OTB", "OTB_REFSIG", "DELSYS_REFSIG"]:
-        file_toOpen = filedialog.askopenfilename(
-            initialdir=initialdir,
-            title=f"Select a {filesource} file to load",
+        file_toOpen = run_custom_file_dialog(
+            mode="open",
+            filesource=filesource,
             filetypes=[("MATLAB files", "*.mat")],
         )
     elif filesource == "DELSYS":
-        emg_file_toOpen = filedialog.askopenfilename(
-            initialdir=initialdir,
-            title="Select a DELSYS file with raw EMG to load",
+        emg_file_toOpen = run_custom_file_dialog(
+            mode="open",
+            filesource=filesource,
             filetypes=[("MATLAB files", "*.mat")],
         )
-        mus_file_toOpen = filedialog.askdirectory(
-            initialdir=initialdir,
-            title="Select the folder containing the DELSYS decomposition",
+        mus_file_toOpen = run_custom_directory_dialog(
+            window_title="Select the folder containing DELSYS decomposition",
         )
     elif filesource == "OPENHDEMG":
-        file_toOpen = filedialog.askopenfilename(
-            initialdir=initialdir,
-            title="Select an OPENHDEMG file to load",
+        file_toOpen = run_custom_file_dialog(
+            mode="open",
+            filesource=filesource,
             filetypes=[("JSON files", "*.json")],
         )
     elif filesource in ["CUSTOMCSV", "CUSTOMCSV_REFSIG"]:
-        file_toOpen = filedialog.askopenfilename(
-            initialdir=initialdir,
-            title=f"Select a {filesource} file to load",
+        file_toOpen = run_custom_file_dialog(
+            mode="open",
+            filesource=filesource,
             filetypes=[("CSV files", "*.csv")],
         )
     else:
@@ -2207,8 +3931,11 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
             "'OPENHDEMG', 'CUSTOMCSV', 'CUSTOMCSV_REFSIG'\n"
         )
 
-    # Destroy the root since it is no longer necessary
-    root.destroy()
+    # Check if a file has been selected. If not, return None
+    if file_toOpen is None:
+        return file_toOpen
+
+    print("Loading file\n------------\n")
 
     # Open file depending on file origin
     if filesource == "DEMUSE":
@@ -2280,7 +4007,7 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
             fsamp=kwargs.get("custom_fsamp", 2048),
         )
 
-    print("\n-----------\nFile loaded\n-----------\n")
+    print("File loaded\n------------\n")
 
     return emgfile
 
@@ -2288,6 +4015,17 @@ def askopenfile(initialdir="/", filesource="OPENHDEMG", **kwargs):
 def asksavefile(emgfile, compresslevel=4):
     """
     Select where to save files with a GUI.
+
+    !!! note "Since version 0.2.0"
+        The recommended workflow for saving and loading openhdemg data now
+        relies on the following high-level functions and classes for binary
+        files:
+
+        - `save_openhdemg_module`
+        - `asksavemodule`
+        - `load_openhdemg_module`
+        - `askloadmodule`
+        - `openhdemg_Collection`
 
     Parameters
     ----------
@@ -2305,19 +4043,12 @@ def asksavefile(emgfile, compresslevel=4):
     - askopenfile : select and open files with a GUI.
     """
 
-    # Create and hide the tkinter root window necessary for the GUI based
-    # open-file function
-    root = Tk()
-    root.withdraw()
-
-    filepath = filedialog.asksaveasfilename(
-        defaultextension=".json",
+    # Get the filepath
+    filepath = run_custom_file_dialog(
+        mode="save",
+        filesource="OPENHDEMG",
         filetypes=[("JSON files", "*.json")],
-        title="Save JSON file",
     )
-
-    # Destroy the root since it is no longer necessary
-    root.destroy()
 
     print("\n-----------\nSaving file\n")
 

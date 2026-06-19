@@ -2,7 +2,7 @@
 
 Welcome to the tutorial on setting up your working environment.
 
-This is the first step necessary to start using *openhdemg*, both if you want to use the library's functions and develop your scripts, or if you only want to use the [graphical user interface (GUI)](../gui_intro.md).
+This is the first step necessary to start using *openhdemg* if you want to use the library's functions and develop your scripts. Users who prefer a graphical workflow should visit the ***[openhdemg software](https://www.giacomovalli.com/openhdemg_software/){:target="_blank"}*** page.
 
 The working environment refers to the set of resources necessary to carry out a particular task or job. In the context of this tutorial, we refer to the combination of a computer, a programming language, an integrated development environment and a set of algorithms.
 
@@ -27,7 +27,7 @@ To install Python 3 on Windows:
 1. Visit the official Python website: [https://www.python.org/downloads/](https://www.python.org/downloads/){:target="_blank"}
 2. Click on the "Downloads" tab.
 3. Scroll down to the section titled "Windows".
-4. Click on "Windows installer" under the latest compatible version of Python (i.e., Python 3.11.6). *openhdemg* is currently working with Python 3.11 or earlier versions (tested from Python 3.8.x to 3.11.x).
+4. Click on "Windows installer" under the latest compatible version of Python (e.g., Python 3.13.x). *openhdemg* is currently working with Python 3.13 or earlier versions (tested from Python 3.10.x to 3.13.x).
 5. Run the downloaded installer.
 6. On the installer, make sure to check the box "Add Python to PATH" and then click "Install Now."
 7. Python will be installed to your system (optionally, you can verify the installation by opening a command prompt and typing python --version).
@@ -46,8 +46,8 @@ To install Python 3 on Mac:
 
 1. Visit the official Python website: [https://www.python.org/downloads/](https://www.python.org/downloads/){:target="_blank"}
 2. Click on the "Downloads" tab.
-3. Scroll down to the section titled "Python Releases for macOS."
-4. Click on "macOS 64-bit universal2 installer" under the latest compatible version of Python (i.e., Python 3.11.6). *openhdemg* is currently working with Python 3.11 or earlier versions (tested from Python 3.8.x to 3.11.x).
+3. Scroll down to the section titled "macOS."
+4. Click on "Download macOS installer" under the latest compatible version of Python (e.g., Python 3.13.x). *openhdemg* is currently working with Python 3.13 or earlier versions (tested from Python 3.10.x to 3.13.x).
 5. Run the downloaded installer package.
 6. Follow the instructions on the installer to complete the installation.
 7. Python will be installed to your system. (optionally, you can verify the installation by opening a terminal and typing python3 --version).
@@ -129,17 +129,7 @@ pip install openhdemg
 
 *openhdemg* will be installed. Once the installation process is completed, you will see in the terminal the message `Successfully installed openhdemg`.
 
-If you want to use the GUI, type in the terminal:
-
-```shell
-python -m openhdemg.gui.openhdemg_gui
-```
-
-And the GUI will start:
-
-![openhdemg GUI](../md_graphics/index/gui_preview_v2.png)
-
-If you instead want to write your own script using the functions contained in *openhdemg*, follow these steps:
+Now, you can write your own script using the functions contained in *openhdemg* following these steps:
 
 1. click on the Explorer view on the left sidebar.
 2. Click on the icon to create a new file in your workspace folder (`Test_folder` in this case).

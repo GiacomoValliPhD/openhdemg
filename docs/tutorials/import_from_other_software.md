@@ -1,29 +1,173 @@
-*openhdemg* is designed to seamlessly interface with various software applications, enabling a smooth integration of data and workflows.
+The flexibility of the *openhdemg* framework allows you to interface with various software applications, enabling a smooth integration of data and workflows.
 
-In this article, we will explore how you can import EMG data from other software into *openhdemg*.
+Since the release of v0.2.0, the import workflow aims to be completely platform neutral. This means that *openhdemg* should not depend on private internals from every acquisition system or decomposition program. The safest and most reproducible workflow is instead to:
 
-The *openhdemg* team is committed to simplifying the data import process. Through continuous efforts, they regularly introduce new functions designed to automatically load files exported from third-party software. These efforts prioritize compatibility with the most commonly used software applications; however, it's important to note that the provided functions may not always fulfill every user's unique needs. If you cannot find a solution that fits your needs, you can always implement your own function to load any file with the *openhdemg* data structure. More info about the *openhdemg* data structure can be found in the tutorial [Structure of the emgfile](emgfile_structure.md).
+1. export the data from the original platform using an official export option;
+2. write a small custom loading function that converts that export into an *openhdemg* `emgfile`;
+3. validate the resulting `emgfile`;
+4. save it as an *openhdemg* binary module.
 
-## From .csv files
+Once the file is saved as a module, the rest of your analysis can be independent from the original platform. You can load the module with *openhdemg*, share it with collaborators, and process it with the standard library functions.
 
-Since it is not possible to predict any data format, we created dedicated functions to load any possible dataset from .csv files. Several considerations guided us in choosing the .csv format for loading custom files:
+More info about the *openhdemg* data structure can be found in the tutorial [Structure of the emgfile](emgfile_structure.md).
 
-- Ubiquitous Data Structure: .csv (Comma-Separated Values) stands out as one of the most widely used data structures in data analyses.
-  
-- Universal Export Compatibility: It can be exported from virtually any software, making it a versatile choice for compatibility with various data sources.
-  
-- Language and Software Agnosticism: .csv files can be read by any programming language, ensuring flexibility and ease of integration across diverse software environments, including popular tools like Microsoft Excel.
+## The Standard Workflow
 
-- Structured Layout: With its clear organization into columns and rows, .csv simplifies the storage of labeled information. This structured format not only enhances data interpretation but also facilitates seamless integration into analytical workflows.
+The standard workflow is:
 
-Therefore, anybody developing scripts and algorithms for data analysis is familar with the .csv format. If you are not, just think that any table that you usually populate in Microsoft Excel, LibreOffice Calc, Google Sheets and many other tools, can be easily exported in .csv format.
+1. Export from the original software
+
+    Use the export tools officially supported by the acquisition or decomposition platform. Common examples are `.csv`, `.mat`, `.txt`, etc... Avoid building a workflow around temporary files, private binary files, or undocumented internal structures unless there is no supported alternative.
+
+2. Convert the export into an `emgfile`
+
+    An `emgfile` is a Python dictionary with recognised keys such as `RAW_SIGNAL`, `REF_SIGNAL`, `MUPULSES`, `FSAMP`, etc... See [Structure of the emgfile](emgfile_structure.md) for the complete structure.
+
+3. Standardise the data types
+
+    Use `standardise_emgfile_dtypes()` after creating or modifying an `emgfile`. This keeps recognised keys in the expected pandas, NumPy, and scalar data types.
+
+4. Inspect the imported file
+
+    Check the file structure with `emg.info().data(emgfile)`, inspect the signals visually, and verify that the signal or motor unit discharge times are accurate.
+
+5. Save a binary module
+
+    Save the validated `emgfile` with `save_openhdemg_module()` or `asksavemodule()`. Modules are the recommended persistence format for version 0.2.0 and later. See [Save and load binary modules](binary_modules.md).
+
+## Decide What You Need To Import
+
+The minimum content depends on the workflow.
+
+| Goal | Minimum useful content |
+| --- | --- |
+| Raw HDsEMG file for decomposition | `SOURCE`, `FILENAME`, `RAW_SIGNAL`, `FSAMP`. `REF_SIGNAL` and `EMG_LENGTH` are strongly recommended. |
+| Reference-signal-only file | `SOURCE`, `FILENAME`, `REF_SIGNAL`, `FSAMP`. |
+| Decomposed file for MU analysis | `SOURCE`, `FILENAME`, `RAW_SIGNAL`, `REF_SIGNAL`, `ACCURACY`, `IPTS`, `MUPULSES`, `FSAMP`, `IED` `EMG_LENGTH`, `NUMBER_OF_MUS`, `BINARY_MUS_FIRING`. |
+
+## DataFrame Column Rules
+
+Use pandas DataFrames for signals and tabular data.
+
+All standard DataFrames except `REF_SIGNAL` and `EXTRAS` should have columns named as base-0 integers:
+
+```python
+raw_signal = pd.DataFrame(raw_signal_array)
+raw_signal.columns = range(raw_signal.shape[1])
+```
+
+This applies to standard DataFrames such as `RAW_SIGNAL`, `ACCURACY`, `IPTS` and `BINARY_MUS_FIRING`.
+
+`REF_SIGNAL` is more flexible. String column names are accepted and can make Python scripts easier to read. However, integer-based column names can make interaction with the ***[openhdemg software](https://www.giacomovalli.com/openhdemg_software/){:target="_blank"}*** more straightforward, because channel selection is often naturally expressed as channel 0, channel 1, and so on. Therefore, this is mostly a personal preference.
+
+If your file does not contain a reference signal, it is good practice to include a zero-filled `REF_SIGNAL` with one column named `0`. This improves compatibility with workflows that expect a reference signal to exist:
+
+```python
+ref_signal = pd.DataFrame(0, index=raw_signal.index, columns=[0])
+```
+
+## Example custom load function
+
+Below you can find an example function to create an emgfile starting from a MATLAB (.mat) file. Please note that virtually any file can be opened in Python. You will only need to know the [structure of the emgfile](emgfile_structure.md) to reconstruct an *openhdemg* compatible python dictionary.
+
+```python
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from scipy.io import loadmat
+
+import openhdemg.library as emg
+
+
+def load_custom_mat_64ch(filepath):
+    """Load a custom .mat export into a raw openhdemg emgfile.
+
+    This example assumes that the .mat file contains:
+    - res["SamplingFrequency"]: sampling frequency in Hz;
+    - res["Data"]: a samples-by-signals array;
+    - columns 0 to 63: raw HDsEMG channels;
+    - column 64: one reference signal.
+
+    Adapt the key names and column positions to match your own official export.
+    """
+
+    # Load a matlab file using scipy
+    res = loadmat(filepath, simplify_cells=True)
+
+    # Create the emgfile dictionary
+    emgfile = {}
+
+    # Define basic entries
+    emgfile["SOURCE"] = "EMG_SOFTWARE_ABC"
+    emgfile["FILENAME"] = Path(filepath).stem
+    emgfile["FSAMP"] = float(res["SamplingFrequency"])
+    emgfile["IED"] = 8
+
+    # Extract the EMG and reference signal and their duration. Signals'
+    # duration MUST be the same. If your signals have a different duration,
+    # you will need to resample them.
+
+    # RAW_SIGNAL must be a samples-by-channels DataFrame.
+    # Standard openhdemg DataFrames should use base-0 integer columns.
+    emgfile["RAW_SIGNAL"] = pd.DataFrame(
+        res["Data"][:, 0:64],
+        columns=[*range(0, 64)],
+        dtype=np.float64,
+    )
+    emgfile["EMG_LENGTH"] = emgfile["RAW_SIGNAL"].shape[0]
+
+    # REF_SIGNAL can contain one or more reference-signal columns.
+    # Here the single reference signal is stored as column 0.
+    emgfile["REF_SIGNAL"] = pd.DataFrame(
+        res["Data"][:, 64],
+        columns=[0],
+        dtype=np.float64,
+    )
+
+    # Standardise recognised openhdemg keys before returning the emgfile.
+    emgfile = emg.standardise_emgfile_dtypes(emgfile)
+
+    return emgfile
+```
+
+## Save The Imported File
+
+After importing and checking the file, save it as an *openhdemg* binary module:
+
+```python
+import openhdemg.library as emg
+
+emg.save_openhdemg_module(
+    emgfile=emgfile,
+    path="C:/Users/.../Desktop/openhdemg_modules",
+    module_name="participant_01_trial_01",
+)
+```
+
+You can also use a dialog:
+
+```python
+emg.asksavemodule(emgfile=emgfile)
+```
+
+<br>
+
+## Built-In Compatibility Importers
+
+The functions below remain available for backward compatibility and should be understood as compatibility helpers, not as the only or preferred way to make *openhdemg* work with another platform.
+
+!!! note "Recommended v0.2.0 workflow"
+    Built-in import functions such as `emg_from_otb()`, `emg_from_demuse()`, `emg_from_delsys()`, and `emg_from_customcsv()` are still available and can be useful when your exported files match the expected format. However, for new projects, the most robust workflow is to create a custom loader based on an official export from the platform that produced the data.
+
+### From .csv files
 
 *openhdemg* currently has two functions dedicated to loading data from .csv files. Please refer to the [API](../api_openfiles.md) of the specific function to see what data your .csv file should contain to be opened in *openhdemg*:
 
 - [emg_from_customcsv()](../api_openfiles.md#openhdemg.library.openfiles.emg_from_customcsv): This function is used to import the decomposition outcome from a custom .csv file.
 - [refsig_from_customcsv()](../api_openfiles.md#openhdemg.library.openfiles.refsig_from_customcsv): This function is used to import the reference signal from a custom .csv file.
 
-### Export the decomposition outcome
+#### Export the decomposition outcome
 
 The decomposition outcome can differ between decomposition algorithms and, therefore, the function [emg_from_customcsv()](../api_openfiles.md#openhdemg.library.openfiles.emg_from_customcsv) is quite flexible, so that it can adapt to different user needs.
 
@@ -72,7 +216,7 @@ If some of the possible variables are not present, simply don't specify them in 
 
 Once you structured your table in Excel or any other tool, you can easily save it as type: "CSV (Comma delimited)", and that's all it takes.
 
-### Export the reference signal
+#### Export the reference signal
 
 In some cases, like for example for MVC trials, you might want to export only the reference signal. Exporting the reference signal is as simple as exporting a table with only one column. Also in this case, you can decide to label the column containing the refere signal with *openhdemg* standard names or with custom names. Please refer to the previous section for further details.
 
@@ -80,7 +224,7 @@ Also the function [refsig_from_customcsv()](../api_openfiles.md#openhdemg.librar
 
 Once you structured your table in Excel or any other tool, you can easily save it as type: "CSV (Comma delimited)", and that's all it takes.
 
-## From DEMUSE
+### From DEMUSE
 
 For years, DEMUSE has been the only commercially available tool for MUs decomposition non related to a specific acquisition device. DEMUSE is essentially a MATLAB-based application and it allows to export files in .mat format. Also in this case, it is quite easy to save files, as the only thing the user needs to do after decomposition and manual editing of the spike train, is to click: "save results".
 
@@ -88,7 +232,7 @@ Once the results are saved, these can be loaded in *openhdemg* with the function
 
 - [emg_from_demuse()](../api_openfiles.md#openhdemg.library.openfiles.emg_from_demuse): This function is used to import the decomposition outcome saved from the DEMUSE tool.
 
-## From OTBioLab+
+### From OTBioLab+
 
 OTBioLab+ is the software used to record EMG signals from the OTB "Quattrocento", "Sessantaquattro+" and other devices. However, it also allows to perform MUs decomposition and editing. Once the decomposition is done, the user can export the decomposition outcome in different file formats. Among them, the option to export .mat files is the one that provides the most convenient and easy way to export all the needed information.
 
@@ -99,7 +243,7 @@ OTBioLab+ is the software used to record EMG signals from the OTB "Quattrocento"
 
 Depending on whether you want to export all the decomposition outcome or only the reference signal, follow these steps:
 
-### Export the decomposition outcome
+#### Export the decomposition outcome
 
 Once the decomposition and manual editing is completed, the software saves the decomposition outcome in a new tab. The decomposition outcome includes:
 
@@ -122,7 +266,7 @@ Now that the .mat file has been created, it can be easily loaded in *openhdemg* 
 
 Interestingly, this function allows also to import additional signals compared to what you saw before. Therefore, you could also export other signals together with what previously mentioned. Please note that files saved with "extra" information can only be loaded from the library (the use of "EXTRAS" is not supported in the graphical user interface) and the parameter "extras=" must be specified when calling the function. Please read the [specific API](../api_openfiles.md#openhdemg.library.openfiles.emg_from_otb) for more information.
 
-### Export the reference signal
+#### Export the reference signal
 
 In some cases, like for example for MVC trials, you might want to export only the reference signal. This can be simply done by:
 
@@ -134,7 +278,7 @@ Now that the .mat file has been created, it can be easily loaded in *openhdemg* 
 
 Interestingly, this function allows also to import additional signals. Therefore, you could also export other signals together withthe reference signal. Please note that files saved with "extra" information can only be loaded from the library (the use of "EXTRAS" is not supported in the graphical user interface) and the parameter "extras=" must be specified when calling the function. Please read the [specific API](../api_openfiles.md#openhdemg.library.openfiles.refsig_from_otb) for more information.
 
-## From Delsys
+### From Delsys
 
 !!! Please note, the following two functions underwent limited testing. If they don't work, [report to us](../contacts.md) the issue and we will try to make you load your files !!!
 
@@ -147,7 +291,7 @@ Delsys has a number of software that can be used to record EMG signals from thei
 
 Depending on whether you want to export all the decomposition outcome or only the reference signal, follow these steps:
 
-### Export the decomposition outcome
+#### Export the decomposition outcome
 
 For the raw EMG signal:
 
@@ -171,7 +315,7 @@ Now that the .mat and .txt files have been created, they can be easily loaded in
 
 Interestingly, this function allows also to import the MUAPs computed by Deslys during the decomposition. The computed MUAPs will be stored under the "EXTRAS" key and will be easily accessible with the function [extract_delsys_muaps()](../api_muap.md#openhdemg.library.muap.extract_delsys_muaps).
 
-### Export the reference signal
+#### Export the reference signal
 
 You can export the reference signal in a .mat file from the NeuroMap software by following the steps proposed in the previous section. Once the .mat file has been created, it can be easily loaded in *openhdemg* with the function [refsig_from_delsys()](../api_openfiles.md#openhdemg.library.openfiles.refsig_from_delsys).
 

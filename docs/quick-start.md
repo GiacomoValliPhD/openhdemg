@@ -1,27 +1,24 @@
-Let's implement together, step-by-step, a script to analyse all the relevant motor units' (MUs) properties.
+Let's implement together, step-by-step, a basic script to analyse some relevant motor unit (MU) properties.
 
 In particular, we will go through:
 
 1. **Install** *opendemg*
-2. **Load** a file
+2. **Load** an example file
 3. **Visualise** the content of the file
-4. **Edit** the reference signal
-5. **Remove** unwanted MUs
+4. **Remove** unwanted MUs
+5. **Edit** the reference signal
 6. **Analyse** fundamental MUs properties
 7. **Save** the edited file and the results of the analysis
 
 ## 1. Install
 
+!!! note "Setup Python environment"
+    If you don't know how to use Python, first have a look at the tutorial explaining how to [Setup your Python environment](tutorials/setup_working_env.md).
+
 *openhdemg* can be easily installed using pip:
 
 ```shell
 pip install openhdemg
-```
-
-or conda:
-
-```shell
-conda install -c conda-forge openhdemg
 ```
 
 Once the installation of *openhdemg* is succesfull, you can install all the required packages from the reqirements.txt file.
@@ -52,9 +49,10 @@ emgfile = emg.emg_from_samplefile()
 
 *emgfile* is organised as a Python dictionary and contains different elements (which are labelled by keys).
 
-For a full list of keys contained in the *emgfile* refer to the [openfiles documentation](api_openfiles.md#notes).
+!!! note "emgfile keys"
+    Since version 0.2.0, the `emgfile` structure is flexible: keys that are not relevant to the current file can be absent. When a standard key is present, it should keep the standard name and expected data type. For a full explanation, see the [Structure of the emgfile](tutorials/emgfile_structure.md) tutorial and the [openfiles documentation](api_openfiles.md#notes).
 
-Each element in the emgfile can be accessed as `emgfile["element"]`.
+Each key in the emgfile can be accessed as `emgfile["KEY_NAME"]`.
 
 So, if we want to access, for example, the reference signal, we can use `emgfile["REF_SIGNAL"]`.
 
@@ -111,12 +109,15 @@ import openhdemg.library as emg
 emgfile = emg.emg_from_samplefile()
 
 # Plot MUs firing times and ref signal
-emg.plot_mupulses(emgfile=emgfile)
+emg.plot_mupulses(
+    emgfile=emgfile,
+    addrefsig=True,
+)
 ```
 
 ![MUs_pulses_non_sorted](md_graphics/quick-start/mus_pulses_non_sorted.png)
 
-Looks good, but I would rather have the MUs ordered by recruitment order and also with thinner lines!
+Looks good, but I would rather have the MUs ordered by recruitment order.
 
 We can do that with the function [sort_mus](api_tools.md#openhdemg.library.tools.sort_mus) and changing the parameters in [plot_mupulses](api_plotemg.md#openhdemg.library.plotemg.plot_mupulses).
 
@@ -130,8 +131,15 @@ emgfile = emg.emg_from_samplefile()
 # Sort MUs based on recruitment order
 emgfile = emg.sort_mus(emgfile=emgfile)
 
+# Define plot styling
+line2d_kwargs_ax1 = {"linewidth": 0.7}
+
 # Plot MUs firing times and ref signal
-emg.plot_mupulses(emgfile=emgfile, linewidths=0.4)
+emg.plot_mupulses(
+    emgfile=emgfile,
+    addrefsig=True,
+    line2d_kwargs_ax1=line2d_kwargs_ax1,
+)
 ```
 
 ![MUs_pulses_sorted](md_graphics/quick-start/mus_pulses_sorted.png)
@@ -151,47 +159,16 @@ emgfile = emg.emg_from_samplefile()
 emgfile = emg.sort_mus(emgfile=emgfile)
 
 # Plot MUs instantaneous discharge rate
-emg.plot_idr(emgfile=emgfile)
+emg.plot_idr(emgfile=emgfile, addrefsig=True)
 ```
 
 ![MUs_pulses_sorted_idr](md_graphics/quick-start/mus_pulses_sorted_idr.png)
 
-## 4. Edit the reference signal
-
-The MUs look quite good; however, the reference signal is a bit noisy and the offset is not to 0.
-
-The noise can be removed filtering the reference signal with the function [filter_refsig](api_tools.md#openhdemg.library.tools.filter_refsig) that, by default, applies a 4th order, zero-lag, low-pass Butterworth filter with a cutoff frequency of 15 Hz.
-
-Instead, the offset can be removed with the function [remove_offset](api_tools.md#openhdemg.library.tools.remove_offset) that automatically detects the offset based on a number of samples at the beginning of the recording.
-
-```Python
-# Import the library with the short name 'emg'
-import openhdemg.library as emg
-
-# Load the sample file
-emgfile = emg.emg_from_samplefile()
-
-# Sort MUs based on recruitment order
-emgfile = emg.sort_mus(emgfile=emgfile)
-
-# Filter the ref signal
-emgfile = emg.filter_refsig(emgfile=emgfile)
-
-# Remove the offset based on the first 1024 samples (that corresponds to 0.5
-# seconds when sampling the signal at 2048 Hz).
-emgfile = emg.remove_offset(emgfile=emgfile, auto=1024)
-
-# Plot MUs instantaneous discharge rate
-emg.plot_idr(emgfile=emgfile)
-```
-
-![MUs_pulses_sorted_idr_filteroffs](md_graphics/quick-start/mus_pulses_sorted_idr_filteroffs.png)
-
-## 5. Remove unwanted MUs
+## 4. Remove unwanted MUs
 
 There might be cases in which we need to remove one or more MUs from our *emgfile*.
 
-From the visual inspection of our plots, we can see that the firings pattern of MU number 2 (remember, Python is in base 0!!!) is not really regular. We might therefore have doubts about its quality.
+From the visual inspection of our plots, we can see that the firing pattern of MU number 2 (remember, Python is in base 0!!!) is highly variable. In this case, we might want to use the ***[openhdemg software](https://www.giacomovalli.com/openhdemg_software/){:target="_blank"}*** to manually clean that MU, or we might decide to directly remove it from our file, if we think that the quality of the decomposition for that MU is too low and cannot be manually improved.
 
 A way to assess the quality of the MUs is to look at the separation between the signal and the noise. This is efficiently measured by accuracy scores.
 
@@ -219,7 +196,34 @@ print(emgfile["ACCURACY"])
 
 Our suspicion was right, MU number 2 has the lowest accuracy score.
 
-In order to remove this MU, we can use the function [delete_mus](api_tools.md#openhdemg.library.tools.delete_mus).
+If we wish to proceed with removing this MU, we can use the function [delete_mus](api_tools.md#openhdemg.library.tools.delete_mus).
+
+```Python
+# Import the library with the short name 'emg'
+import openhdemg.library as emg
+
+# Load the sample file
+emgfile = emg.emg_from_samplefile()
+
+# Sort MUs based on recruitment order
+emgfile = emg.sort_mus(emgfile=emgfile)
+
+# Remove MU number 2
+emgfile = emg.delete_mus(emgfile=emgfile, munumber=2)
+
+# Plot MUs instantaneous discharge rate
+emg.plot_idr(emgfile=emgfile, addrefsig=True)
+```
+
+![IDR_mu2removed](md_graphics/quick-start/idr_mu2removed.png)
+
+## 5. Edit the reference signal
+
+Now, the MUs look quite good; however, the reference signal is a bit noisy and the offset is not to 0.
+
+The noise can be removed filtering the reference signal with the function [filter_refsig](api_tools.md#openhdemg.library.tools.filter_refsig) that, by default, applies a 4th order, zero-lag, low-pass Butterworth filter with a cutoff frequency of 15 Hz.
+
+Instead, the offset can be removed with the function [remove_offset](api_tools.md#openhdemg.library.tools.remove_offset) that automatically detects the offset based on a number of samples at the beginning of the recording.
 
 ```Python
 # Import the library with the short name 'emg'
@@ -242,18 +246,19 @@ emgfile = emg.remove_offset(emgfile=emgfile, auto=1024)
 emgfile = emg.delete_mus(emgfile=emgfile, munumber=2)
 
 # Plot MUs instantaneous discharge rate
-emg.plot_idr(emgfile=emgfile)
+emg.plot_idr(emgfile=emgfile, addrefsig=True)
 ```
 
-![IDR_mu2removed](md_graphics/quick-start/idr_mu2removed.png)
+![MUs_pulses_sorted_idr_filteroffs](md_graphics/quick-start/mus_pulses_sorted_idr_filteroffs.png)
 
-## 6. Analyse fundamental MUs properties
 
-Now that we removed the unwanted MUs and adjusted the reference signal, we can proceed with the analysis of some fundamental MUs properties like the thresholds of recruitment and derecruitment and the discharge rate.
+## 6. Analyse fundamental MU properties
+
+Now that we removed the unwanted MUs and adjusted the reference signal, we can proceed with the analysis of some fundamental MU properties like the thresholds of recruitment and derecruitment and the discharge rate.
 
 In the past, this used to require many lines of code, but thanks to *openhdemg*, we can now do that with 1 line of code using the function [basic_mus_properties](api_analysis.md#openhdemg.library.analysis.basic_mus_properties).
 
-After calling the function [basic_mus_properties](api_analysis.md#openhdemg.library.analysis.basic_mus_properties), the user will be asked to select the start and the end of the steady-state phase. This can be done positioning the mouse on the desired point and then pressing a keybord key (such as 'a'). To remove points, right click with your mouse.
+After calling the function [basic_mus_properties](api_analysis.md#openhdemg.library.analysis.basic_mus_properties), the user will be asked to select the start and the end of the steady-state phase. This can be done positioning the mouse on the desired point and then pressing the keybord key 'a'. To remove points, you can use the 'd' key. Press 'Enter' when the selection is complete.
 
 ```Python
 # Import the library with the short name 'emg'
@@ -343,7 +348,7 @@ results = emg.basic_mus_properties(
 results.to_csv("C:/Users/.../Desktop/Results.csv")
 ```
 
-Our results are now safe but, additionally, we might want to save also the *emgfile* with all the changes that we made. This can be easily done with the function [asksavefile](api_openfiles.md#openhdemg.library.openfiles.asksavefile) that will save your *emgfile* in the open standard JSON file format which has a better integration with Python and has a very high cross-platform compatibility.
+Our results are now safe but, additionally, we might want to save also the *emgfile* with all the changes that we made. This can be easily done with the function [asksavemodule](api_openfiles.md#openhdemg.library.openfiles.asksavemodule) that will save your *emgfile* in the open-source binary openhdemg module. A module is a structured folder containing a manifest and binary data files, and since v0.2.0 is the preferred data structure for openhdemg.
 
 ```Python
 # Import the library with the short name 'emg'
@@ -377,7 +382,7 @@ results = emg.basic_mus_properties(
 results.to_csv("C:/Users/.../Desktop/Results.csv")
 
 # Save the edited emgfile
-emg.asksavefile(emgfile=emgfile)
+emg.asksavemodule(emgfile=emgfile)
 ```
 
 ## 8. Important notes

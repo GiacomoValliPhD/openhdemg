@@ -1,8 +1,6 @@
 Description
 -----------
-This module contains informations about the electrodes commonly used for
-HD-EMG recordings.
-Functions to sort the electrode position are also included.
+This module contains informations about the electrodes commonly used for HD-EMG recordings. Functions to sort the electrode position are also included.
 
 Notes
 -----

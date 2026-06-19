@@ -3,12 +3,14 @@ This module contains all the functions used to analyse the MUs properties when
 not involving the MUs action potential shape.
 """
 
-import pandas as pd
-import numpy as np
-from openhdemg.library.tools import showselect, compute_idr, compute_covsteady
-from openhdemg.library.mathtools import compute_pnr, compute_sil
-import warnings
 import math
+import warnings
+
+import numpy as np
+import pandas as pd
+
+from openhdemg.library.mathtools import compute_pnr, compute_sil
+from openhdemg.library.tools import showselect, compute_idr, compute_covsteady
 
 
 def compute_thresholds(
@@ -17,6 +19,7 @@ def compute_thresholds(
     type_="abs_rel",
     n_firings=1,
     mvc=0,
+    refsig_channel=0,
 ):
     """
     Calculates recruitment/derecruitment thresholds.
@@ -60,6 +63,9 @@ def compute_thresholds(
         The maximum voluntary contraction (MVC).
         if mvc is 0, the user is asked to input MVC; otherwise, the value
         passed is used.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to use for
+        the anlysis.
 
     Returns
     -------
@@ -113,28 +119,33 @@ def compute_thresholds(
     # Extract the variables of interest from the EMG file
     NUMBER_OF_MUS = emgfile["NUMBER_OF_MUS"]
     MUPULSES = emgfile["MUPULSES"]
-    REF_SIGNAL = emgfile["REF_SIGNAL"]
+    REF_SIGNAL = emgfile["REF_SIGNAL"][refsig_channel]
 
     # Check that all the inputs are correct
     if event_ not in ["rt_dert", "rt", "dert"]:
         raise ValueError(
-            f"event_ must be one of : 'rt_dert', 'rt', 'dert'. {event_} was passed instead."
+            "event_ must be one of : 'rt_dert', 'rt', 'dert'. "
+            f"{event_} was passed instead."
         )
 
     if type_ not in ["abs_rel", "rel", "abs"]:
         raise ValueError(
-            f"event_ must be one of : 'abs_rel', 'rel', 'abs'. {event_} was passed instead."
+            "event_ must be one of : 'abs_rel', 'rel', 'abs'. "
+            f"{event_} was passed instead."
         )
 
     if not isinstance(mvc, (float, int)):
         raise TypeError(
-            f"mvc must be one of the following types: float, int. {type(mvc)} was passed instead."
+            "mvc must be one of the following types: float, int. "
+            f"{type(mvc)} was passed instead."
         )
 
     if type_ != "rel" and mvc == 0:
         # Ask the user to input MVC
         mvc = float(
-            input("--------------------------------\nEnter MVC value in newton: ")
+            input(
+                "--------------------------------\nEnter MVC value in newton: "
+            )
         )
 
     # Create an object to append the results
@@ -147,10 +158,10 @@ def compute_thresholds(
             mup_rec = MUPULSES[mu][0:n_firings]
             mup_derec = MUPULSES[mu][-n_firings:]
             # Calculate absolute and relative RT and DERT if requested
-            abs_RT = ((float(REF_SIGNAL.iloc[mup_rec, 0].mean()) * mvc) / 100)
-            abs_DERT = ((float(REF_SIGNAL.iloc[mup_derec, 0].mean()) * mvc) / 100)
-            rel_RT = float(REF_SIGNAL.iloc[mup_rec, 0].mean())
-            rel_DERT = float(REF_SIGNAL.iloc[mup_derec, 0].mean())
+            abs_RT = ((float(REF_SIGNAL.iloc[mup_rec].mean()) * mvc) / 100)
+            abs_DERT = ((float(REF_SIGNAL.iloc[mup_derec].mean()) * mvc) / 100)
+            rel_RT = float(REF_SIGNAL.iloc[mup_rec].mean())
+            rel_DERT = float(REF_SIGNAL.iloc[mup_derec].mean())
 
         else:
             abs_RT = np.nan
@@ -197,6 +208,7 @@ def compute_dr(
     end_steady=-1,
     event_="rec_derec_steady",
     idr_range=None,
+    refsig_channel=0,
 ):
     """
     Calculate the discharge rate (DR).
@@ -240,6 +252,8 @@ def compute_dr(
         calculation. lower_limit and upper_limit should be in pulses per
         second. See examples section.
         If idr_range is None, all the firings are used for DR calculation.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
 
     Returns
     -------
@@ -325,7 +339,10 @@ def compute_dr(
     """
 
     # Check that all the inputs are correct
-    errormessage = f"event_ must be one of the following strings: rec, derec, rec_derec, steady, rec_derec_steady. {event_} was passed instead."
+    errormessage = (
+        "event_ must be one of the following strings: rec, derec, rec_derec, "
+        f"steady, rec_derec_steady. {event_} was passed instead."
+    )
     if event_ not in [
         "rec",
         "derec",
@@ -337,11 +354,13 @@ def compute_dr(
 
     if not isinstance(n_firings_RecDerec, int):
         raise TypeError(
-            f"n_firings_RecDerec must be an integer. {type(n_firings_RecDerec)} was passed instead."
+            "n_firings_RecDerec must be an integer. "
+            f"{type(n_firings_RecDerec)} was passed instead."
         )
     if not isinstance(n_firings_steady, int):
         raise TypeError(
-            f"n_firings_steady must be an integer. {type(n_firings_steady)} was passed instead."
+            "n_firings_steady must be an integer. "
+            f"{type(n_firings_steady)} was passed instead."
         )
 
     idr = compute_idr(emgfile=emgfile)
@@ -350,13 +369,13 @@ def compute_dr(
     if idr_range is not None:
         if not isinstance(idr_range, list):
             raise ValueError(
-                "idr_range can be None or a list of 2 numbers. " +
+                "idr_range can be None or a list of 2 numbers. "
                 f"A{type(idr_range)} was passed instead."
             )
         else:
             if len(idr_range) != 2:
                 raise ValueError(
-                    "idr_range can be None or a list of 2 numbers. " +
+                    "idr_range can be None or a list of 2 numbers. "
                     f"The list contains {len(idr_range)} numbers instead."
                 )
         for mu in idr.keys():
@@ -365,14 +384,18 @@ def compute_dr(
 
     # Check if we need to manually select the area for the steady-state phase
     title = (
-        "Select the start/end area of the steady-state by hovering the mouse" +
-        "\nand pressing the 'a'-key. Wrong points can be removed with right " +
-        "\nclick or canc/delete key. When ready, press enter."
+        "Select the start/end area of the steady-state by hovering the mouse"
+        "\nand pressing the 'a'-key. Wrong points can be removed with the "
+        "\n'd' -key. When ready, press enter."
     )
     if event_ == "rec_derec_steady" or event_ == "steady":
-        if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
+        c1 = start_steady < 0 and end_steady < 0
+        c2 = start_steady < 0 or end_steady < 0
+        if c1 or c2:
             points = showselect(
                 emgfile,
+                how="ref_signal",
+                refsig_channel=refsig_channel,
                 title=title,
                 titlesize=10,
             )
@@ -461,7 +484,9 @@ def compute_dr(
         elif event_ == "derec":
             toappend_dr.append({"DR_derec": drderec, "DR_all": drall})
         elif event_ == "rec_derec":
-            toappend_dr.append({"DR_rec": drrec, "DR_derec": drderec, "DR_all": drall})
+            toappend_dr.append(
+                {"DR_rec": drrec, "DR_derec": drderec, "DR_all": drall}
+            )
         elif event_ == "steady":
             toappend_dr.append(
                 {
@@ -498,9 +523,11 @@ def basic_mus_properties(
     end_steady=-1,
     idr_range=None,
     accuracy="default",
-    ignore_negative_ipts=False,
+    compute_on_peaks_only=True,
     constrain_pulses=[True, 3],
     mvc=0,
+    refsig_channel=0,
+    ignore_negative_ipts=None,
 ):
     """
     Calculate basic MUs properties on a trapezoidal contraction.
@@ -559,12 +586,13 @@ def basic_mus_properties(
         ``SIL_PNR``
             Both the Silhouette score and the pulse to noise ratio are
             computed.
-    ignore_negative_ipts : bool, default False
-        This parameter determines the silhouette score estimation. If True,
-        only positive ipts values are used during peak and noise clustering.
-        This is particularly important for compensating sources with large
-        negative components. This parameter is considered only when
-        accuracy=="SIL" or accuracy=="SIL_PNR".
+    compute_on_peaks_only : bool, default True
+        If True, the silhouette (SIL) score is computed using **only the ipts
+        peaks**, rather than all values in the source signal. This can improve
+        accuracy estimation by comparing MU spikes only against other
+        candidate spikes, ignoring baseline or negative ipts values.
+        If False, the noise cluster is defined as all samples not selected as
+        MU spikes.
     constrain_pulses : list, default [True, 3]
         This parameter determines the PNR estimation. If
         constrain_pulses[0]==True, the times of firing are considered those in
@@ -577,6 +605,13 @@ def basic_mus_properties(
         The maximum voluntary contraction (MVC). It is suggest to report
         MVC in Newton (N). If 0 (default), the user will be asked to imput it
         manually. Otherwise, the passed value will be used.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
+    ignore_negative_ipts : None
+        This parameter is deprecated and will be removed in future releases.
+        Please transform the 'ipts' before if needed. To replicate the
+        behaviour of 'ignore_negative_ipts=True' you can use
+        'ipts * np.abs(ipts)'.
 
     Returns
     -------
@@ -628,13 +663,17 @@ def basic_mus_properties(
 
     # Check if we need to select the steady-state phase
     title = (
-        "Select the start/end area of the steady-state by hovering the mouse" +
-        "\nand pressing the 'a'-key. Wrong points can be removed with right " +
-        "\nclick or canc/delete key. When ready, press enter."
+        "Select the start/end area of the steady-state by hovering the mouse"
+        "\nand pressing the 'a'-key. Wrong points can be removed with the "
+        "\n'd' -key. When ready, press enter."
     )
-    if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
+    c1 = start_steady < 0 and end_steady < 0
+    c2 = start_steady < 0 or end_steady < 0
+    if c1 or c2:
         points = showselect(
             emgfile,
+            how="ref_signal",
+            refsig_channel=refsig_channel,
             title=title,
             titlesize=10,
         )
@@ -650,7 +689,8 @@ def basic_mus_properties(
     # First: create a dataframe that contains all the output
     exportable_df = []
 
-    # Second: add basic information (MVC, MU number, ACCURACY, Average ACCURACY)
+    # Second: add basic information:
+    # (MVC, MU number, ACCURACY, Average ACCURACY).
     if mvc == 0:
         # Ask the user to input MVC
         mvc = float(
@@ -688,8 +728,9 @@ def basic_mus_properties(
             sil = compute_sil(
                 ipts=emgfile["IPTS"][mu],
                 mupulses=emgfile["MUPULSES"][mu],
+                compute_on_peaks_only=compute_on_peaks_only,
                 ignore_negative_ipts=ignore_negative_ipts,
-            )
+            )  # TODO ignore_negative_ipts deprecated => remove
             toappend.append({"SIL": sil})
         toappend = pd.DataFrame(toappend)
         exportable_df = pd.concat([exportable_df, toappend], axis=1)
@@ -727,8 +768,9 @@ def basic_mus_properties(
             sil = compute_sil(
                 ipts=emgfile["IPTS"][mu],
                 mupulses=emgfile["MUPULSES"][mu],
+                compute_on_peaks_only=compute_on_peaks_only,
                 ignore_negative_ipts=ignore_negative_ipts,
-            )
+            )  # TODO ignore_negative_ipts deprecated => remove
             toappend.append({"SIL": sil})
         toappend = pd.DataFrame(toappend)
         exportable_df = pd.concat([exportable_df, toappend], axis=1)
@@ -760,14 +802,28 @@ def basic_mus_properties(
 
     else:
         raise ValueError(
-            f"accuracy must be one of 'default', 'SIL', 'PNR', 'SIL_PNR'. {accuracy} was passed instead"
+            "accuracy must be one of 'default', 'SIL', 'PNR', 'SIL_PNR'. "
+            f"{accuracy} was passed instead"
         )
+
+    # If present, append ROA_WITH_REFERENCE_MUPULSES
+    if "ROA_WITH_REFERENCE_MUPULSES" in emgfile:
+        # Report the ROA
+        toappend = emgfile["ROA_WITH_REFERENCE_MUPULSES"]
+        toappend.columns = ["ROA with reference MUPULSES"]
+        exportable_df = pd.concat([exportable_df, toappend], axis=1)
+
+        # Calculate avrage ROA
+        avg_roa = exportable_df["ROA with reference MUPULSES"].mean()
+        toappend = pd.DataFrame([{"avg_ROA": avg_roa}])
+        exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
     # Calculate RT and DERT
     mus_thresholds = compute_thresholds(
         emgfile=emgfile,
         n_firings=n_firings_rt_dert,
         mvc=mvc,
+        refsig_channel=refsig_channel,
     )
     exportable_df = pd.concat([exportable_df, mus_thresholds], axis=1)
 
@@ -780,6 +836,7 @@ def basic_mus_properties(
         start_steady=start_steady,
         end_steady=end_steady,
         idr_range=idr_range,
+        refsig_channel=refsig_channel,
     )
     exportable_df = pd.concat([exportable_df, mus_dr], axis=1)
 
@@ -791,6 +848,7 @@ def basic_mus_properties(
         end_steady=end_steady,
         event_="steady",
         idr_range=idr_range,
+        refsig_channel=refsig_channel,
     )
     exportable_df = pd.concat([exportable_df, covisi], axis=1)
 
@@ -799,6 +857,7 @@ def basic_mus_properties(
         emgfile=emgfile,
         start_steady=start_steady,
         end_steady=end_steady,
+        refsig_channel=refsig_channel,
     )
     covsteady = pd.DataFrame([{"COV_steady": covsteady}])
     exportable_df = pd.concat([exportable_df, covsteady], axis=1)
@@ -814,6 +873,7 @@ def compute_covisi(
     event_="rec_derec_steady",
     idr_range=None,
     single_mu_number=-1,
+    refsig_channel=0,
 ):
     """
     Calculate the COVisi.
@@ -861,6 +921,8 @@ def compute_covisi(
         If single_mu_number >= 0, only the COVisi of the entire contraction
         will be returned. If -1 (default), COVisi will be calculated for all
         the MUs.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
 
     Returns
     -------
@@ -922,7 +984,10 @@ def compute_covisi(
     """
 
     # Check that all the inputs are correct
-    errormessage = f"event_ must be one of the following strings: rec, derec, rec_derec, steady, rec_derec_steady. {event_} was passed instead."
+    errormessage = (
+        "event_ must be one of the following strings: rec, derec, rec_derec, "
+        f"steady, rec_derec_steady. {event_} was passed instead."
+    )
     if event_ not in [
         "rec",
         "derec",
@@ -934,7 +999,8 @@ def compute_covisi(
 
     if not isinstance(n_firings_RecDerec, int):
         raise TypeError(
-            f"n_firings_RecDerec must be an integer. {type(n_firings_RecDerec)} was passed instead."
+            "n_firings_RecDerec must be an integer. "
+            f"{type(n_firings_RecDerec)} was passed instead."
         )
 
     # We use the idr pd.DataFrame to calculate the COVisi
@@ -944,13 +1010,13 @@ def compute_covisi(
     if idr_range is not None:
         if not isinstance(idr_range, list):
             raise ValueError(
-                "idr_range can be None or a list of 2 numbers. " +
-                f"A{type(idr_range)} was passed instead."
+                "idr_range can be None or a list of 2 numbers. "
+                f"A {type(idr_range)} was passed instead."
             )
         else:
             if len(idr_range) != 2:
                 raise ValueError(
-                    "idr_range can be None or a list of 2 numbers. " +
+                    "idr_range can be None or a list of 2 numbers. "
                     f"The list contains {len(idr_range)} numbers instead."
                 )
         idr_range[0] = emgfile["FSAMP"] / idr_range[0]
@@ -969,13 +1035,17 @@ def compute_covisi(
         # phase.
         if event_ == "rec_derec_steady" or event_ == "steady":
             title = (
-                "Select the start/end area of the steady-state by hovering the mouse" +
-                "\nand pressing the 'a'-key. Wrong points can be removed with right " +
-                "\nclick or canc/delete key. When ready, press enter."
+                "Select the start/end area of the steady-state by hovering the"
+                " mouse\nand pressing the 'a'-key. Wrong points can be removed"
+                " with the\n'd' -key. When ready, press enter."
             )
-            if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
+            c1 = start_steady < 0 and end_steady < 0
+            c2 = start_steady < 0 or end_steady < 0
+            if c1 or c2:
                 points = showselect(
                     emgfile,
+                    how="ref_signal",
+                    refsig_channel=refsig_channel,
                     title=title,
                     titlesize=10,
                 )
@@ -1061,6 +1131,7 @@ def compute_drvariability(
     end_steady=-1,
     event_="rec_derec_steady",
     idr_range=None,
+    refsig_channel=0,
 ):
     """
     Calculate the DR variability.
@@ -1104,6 +1175,8 @@ def compute_drvariability(
         variability calculation. lower_limit and upper_limit should be in
         pulses per second. See compute_dr() examples section.
         If idr_range is None, all the firings are used for DR calculation.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
 
     Returns
     -------
@@ -1158,7 +1231,10 @@ def compute_drvariability(
     """
 
     # Check that all the inputs are correct
-    errormessage = f"event_ must be one of the following strings: rec, derec, rec_derec, steady, rec_derec_steady. {event_} was passed instead."
+    errormessage = (
+        "event_ must be one of the following strings: rec, derec, rec_derec, "
+        f"steady, rec_derec_steady. {event_} was passed instead."
+    )
     if event_ not in [
         "rec",
         "derec",
@@ -1170,7 +1246,8 @@ def compute_drvariability(
 
     if not isinstance(n_firings_RecDerec, int):
         raise type(
-            f"n_firings_RecDerec must be an integer. {type(n_firings_RecDerec)} was passed instead."
+            "n_firings_RecDerec must be an integer. "
+            f"{type(n_firings_RecDerec)} was passed instead."
         )
 
     # We use the idr pd.DataFrame to calculate the COVisi
@@ -1180,13 +1257,13 @@ def compute_drvariability(
     if idr_range is not None:
         if not isinstance(idr_range, list):
             raise ValueError(
-                "idr_range can be None or a list of 2 numbers. " +
+                "idr_range can be None or a list of 2 numbers. "
                 f"A{type(idr_range)} was passed instead."
             )
         else:
             if len(idr_range) != 2:
                 raise ValueError(
-                    "idr_range can be None or a list of 2 numbers. " +
+                    "idr_range can be None or a list of 2 numbers. "
                     f"The list contains {len(idr_range)} numbers instead."
                 )
         for mu in idr.keys():
@@ -1196,13 +1273,17 @@ def compute_drvariability(
     # Check if we need to manually select the area for the steady-state phase
     if event_ == "rec_derec_steady" or event_ == "steady":
         title = (
-            "Select the start/end area of the steady-state by hovering the mouse" +
-            "\nand pressing the 'a'-key. Wrong points can be removed with right " +
-            "\nclick or canc/delete key. When ready, press enter."
+            "Select the start/end area of the steady-state by hovering the "
+            "mouse\nand pressing the 'a'-key. Wrong points can be removed with"
+            " the\n'd' -key. When ready, press enter."
         )
-        if (start_steady < 0 and end_steady < 0) or (start_steady < 0 or end_steady < 0):
+        c1 = start_steady < 0 and end_steady < 0
+        c2 = start_steady < 0 or end_steady < 0
+        if c1 or c2:
             points = showselect(
                 emgfile,
+                how="ref_signal",
+                refsig_channel=refsig_channel,
                 title=title,
                 titlesize=10,
             )
@@ -1227,7 +1308,9 @@ def compute_drvariability(
         if (event_ == "rec_derec_steady" or event_ == "steady"):
             idr_indexed = idr[mu].set_index("mupulses")
             selected_idr = idr_indexed["idr"].loc[start_steady: end_steady]
-            drvariabilitysteady = (selected_idr.std() / selected_idr.mean()) * 100
+            drvariabilitysteady = (
+                selected_idr.std() / selected_idr.mean()
+            ) * 100
 
         # COVisi all contraction
         selected_idr = idr[mu]["idr"]

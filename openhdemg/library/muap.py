@@ -1,30 +1,42 @@
 """
-This module contains functions to produce and analyse MUs anction potentials
+This module contains functions to produce and analyse MU anction potentials
 (MUAPs).
 """
 
+import gc
+import copy
+import time
+import warnings
+from functools import reduce
+
+import numpy as np
 import pandas as pd
-import sys
+from scipy import signal
+from joblib import Parallel, delayed  # TODO can this be replaced???
+
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QFont, QIcon, QTextCursor, QTextCharFormat, QColor
+from PySide6.QtWidgets import (
+    QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QComboBox,
+    QPushButton, QPlainTextEdit, QDockWidget, QSizePolicy, QMessageBox,
+)
+
+from openhdemg.library.plotemg import (
+    plot_idr, plot_muaps, plot_muaps_for_cv,
+)
 from openhdemg.library.tools import delete_mus
+from openhdemg.library.electrodes import sort_rawemg
 from openhdemg.library.mathtools import (
     norm_twod_xcorr, norm_xcorr, find_mle_teta, mle_cv_est,
 )
-from openhdemg.library.electrodes import sort_rawemg
-from openhdemg.library.plotemg import (
-    plot_idr, plot_muaps, plot_muaps_for_cv, get_unique_fig_name,
-)
-from scipy import signal
-import matplotlib.pyplot as plt
-from functools import reduce
-import numpy as np
-import time
-from joblib import Parallel, delayed
-import copy
-import os
-import tkinter as tk
-from tkinter import ttk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import warnings
+
+from openhdemg.ui import check_app
+
+matplotlib.use("QtAgg")
 
 
 def diff(sorted_rawemg):
@@ -767,6 +779,7 @@ def tracking(
     show=False,
     gui=True,
     gui_addrefsig=True,
+    gui_refsig_channel=0,
     gui_csv_separator="\t",
 ):
     """
@@ -870,6 +883,8 @@ def tracking(
     gui_addrefsig : bool, default True
         If True, the REF_SIGNAL is plotted in front of the IDR with a
         separated y-axes. This is used only when gui=True.
+    gui_refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
     gui_csv_separator : str, default "\t"
         The field delimiter used by the GUI to create the .csv copied to the
         clipboard. This is used only when gui=True.
@@ -1016,8 +1031,9 @@ def tracking(
             emgfile2_sorted = double_diff(sorted_rawemg=emgfile2_sorted)
         else:
             raise ValueError(
-                f"derivation can be one of 'mono', 'sd', 'dd'. {derivation} was passed instead"
-                )
+                "derivation can be one of 'mono', 'sd', 'dd'. "
+                f"{derivation} was passed instead."
+            )
 
         # Get the STAs
         sta_emgfile1 = sta(
@@ -1159,11 +1175,11 @@ def tracking(
         )
 
     # Print the full results
-    pd.set_option("display.max_rows", None)
     convert_dict = {"MU_file1": int, "MU_file2": int, "XCC": float}
     tracking_res = tracking_res.astype(convert_dict)
     tracking_res.reset_index(drop=True, inplace=True)
     text = "Filtered tracking results:\n\n" if filter else "Total tracking results:\n\n"
+    pd.set_option("display.max_rows", None)
     print(text, tracking_res, "\n")
     pd.reset_option("display.max_rows")
 
@@ -1201,7 +1217,7 @@ def tracking(
         if tracking_res.empty:
             return tracking_res
 
-        tracking_gui = Tracking_gui(
+        tracking_gui = run_xcorr_muaps_tracking_gui(
             emgfile1=emgfile1,
             emgfile2=emgfile2,
             tracking_res=tracking_res,
@@ -1209,20 +1225,75 @@ def tracking(
             sta_emgfile2=sta_emgfile2,
             align_muaps=False if isinstance(custom_muaps, list) else True,
             addrefsig=gui_addrefsig,
+            refsig_channel=gui_refsig_channel,
             csv_separator=gui_csv_separator,
         )
 
         # Get and return updated tracking_res
-        return tracking_gui.get_results()
+        return tracking_gui.tracking_res
 
     else:
         return tracking_res
 
 
-# TODO add delete excluded pairs button
 class Tracking_gui():
     """
-    GUI for the visual inspection and manual selection of the tracking results.
+    The class Tracking_gui has been deprecated. Please use the function
+    run_xcorr_muaps_tracking_gui instead.
+    """
+    def __init__(
+        self,
+        emgfile1,
+        emgfile2,
+        tracking_res,
+        sta_emgfile1,
+        sta_emgfile2,
+        align_muaps=True,
+        addrefsig=True,
+        refsig_channel=0,
+        csv_separator="\t",
+    ):
+
+        warnings.warn(
+            self.__doc__.replace("\n", " "), DeprecationWarning, stacklevel=2,
+        )
+        self.window = run_xcorr_muaps_tracking_gui(
+            emgfile1,
+            emgfile2,
+            tracking_res,
+            sta_emgfile1,
+            sta_emgfile2,
+            align_muaps=align_muaps,
+            addrefsig=addrefsig,
+            refsig_channel=refsig_channel,
+            csv_separator=csv_separator,
+        )
+        # For backward compatibility
+        self.tracking_res = self.window.tracking_res
+
+    def get_results(self):
+        # Get the edited tracking_res
+
+        return self.window.tracking_res
+
+
+def run_xcorr_muaps_tracking_gui(
+    emgfile1,
+    emgfile2,
+    tracking_res,
+    sta_emgfile1,
+    sta_emgfile2,
+    align_muaps=True,
+    addrefsig=True,
+    refsig_channel=0,
+    csv_separator="\t",
+):
+    """
+    Run the Graphical User Interface for the visual inspection and validation
+    of the tracking results.
+
+    Please note that this GUI can also be run directly from the ``tracking()``
+    function.
 
     Parameters
     ----------
@@ -1247,20 +1318,24 @@ class Tracking_gui():
     addrefsig : bool, default True
         If True, the REF_SIGNAL is plotted in front of the IDR with a
         separated y-axes.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
     csv_separator : str, default "\t"
         The field delimiter used to create the .csv copied to the clipboard.
 
-    Methods
+    Returns
     -------
-    get_results()
-        Returns the results of the tracking including the MU from file 1,
-        MU from file 2, the normalised cross-correlation value (XCC) and the
-        inclusion or exclusion of the MUs pair after the GUI is closed.
+    QtWidget
+        A class with base QMainWindow which contains the attribute
+        ``tracking_res``. tracking_res is a pd.DataFrame containing the
+        tracked pairs, the XCC value and the inclusion state.
 
     See also
     --------
+    - XCORR_MUAPs_Tracking_gui : GUI for visual inspection and validation of
+        the tracking results.
     - tracking : Track MUs across two files comparing the MUAPs' shape and
-    distribution.
+        distribution.
 
     Examples
     --------
@@ -1286,7 +1361,7 @@ class Tracking_gui():
 
     Inspect the tracking results with a convenient GUI.
 
-    >>> tracking = emg.Tracking_gui(
+    >>> gui = emg.run_xcorr_muaps_tracking_gui(
     ...     emgfile1=emgfile_1,
     ...     emgfile2=emgfile_2,
     ...     tracking_res=tracking_res,
@@ -1298,13 +1373,101 @@ class Tracking_gui():
 
     Return the updated results for further use in the code.
 
-    >>> updated_results = tracking.get_results()
+    >>> updated_results = gui.tracking_res
         MU_file1  MU_file2       XCC Inclusion
     0          0         2  0.897364  Excluded
     1          1         0  0.947486  Included
     2          2         1  0.923901  Included
     3          4         8  0.893922  Included
+
+    ![](md_graphics/docstrings/muap/xcorr_muaps_tracking_gui.png)
     """
+
+    app, app_created, path_to_icon = check_app()
+
+    # Execute in blocking mode
+    window = XCORR_MUAPs_Tracking_gui(
+        emgfile1,
+        emgfile2,
+        tracking_res,
+        sta_emgfile1,
+        sta_emgfile2,
+        align_muaps=align_muaps,
+        addrefsig=addrefsig,
+        refsig_channel=refsig_channel,
+        csv_separator=csv_separator,
+        path_to_icon=path_to_icon,
+    )
+    window.show()
+    app.exec()  # TODO maybe in these calls we need to check if app_created
+
+    return window
+
+
+class XCORR_MUAPs_Tracking_gui(QMainWindow):
+    """
+    GUI for visual inspection and validation of the tracking results.
+
+    Check the implementation of ``run_xcorr_muaps_tracking_gui()`` to see how
+    it can be used. It is always suggested to call the
+    ``XCORR_MUAPs_Tracking_gui`` from ``run_xcorr_muaps_tracking_gui()``
+    instead of directly running its instance, as this is also managing the
+    ``QApplication``.
+
+    Parameters
+    ----------
+    emgfile1 : dict
+        The dictionary containing the first emgfile.
+    emgfile2 : dict
+        The dictionary containing the second emgfile.
+    tracking_res : pd.DataFrame
+        The results of the tracking including the MU from file 1,
+        MU from file 2 and the normalised cross-correlation value (XCC).
+        This is obtained with the function `tracking()`.
+    sta_emgfile1 : dict
+        dict containing a dict of STA (pd.DataFrame) for every MUs from
+        emgfile1. This is obtained with the function `sta()`.
+    sta_emgfile2 : dict
+        dict containing a dict of STA (pd.DataFrame) for every MUs from
+        emgfile2. This is obtained with the function `sta()`.
+    align_muaps : bool, default True
+        Whether to align the MUAPs before plotting. If true, the visualised
+        MUAPs time window will be 1/2 of the original (because the maximum
+        allowed shift during MUAPs alignment is 50%).
+    addrefsig : bool, default True
+        If True, the REF_SIGNAL is plotted in front of the IDR with a
+        separated y-axes.
+    refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
+    csv_separator : str, default "\t"
+        The field delimiter used to create the .csv copied to the clipboard.
+    path_to_icon : None or str, default None
+        The path to the window icon. Use none if this widget inherits from a
+        parent.
+
+    Attributes
+    ----------
+    tracking_res : pd.DataFrame
+        The dataframe containing the tracked pairs, the XCC value and the
+        inclusion state.
+
+    Signals
+    -------
+    - xcorr_muaps_tracking_gui_window_closed : Qt Signal. Emitted when the
+        XCORR_MUAPs_Tracking_gui window is closed by the user. Can be used to
+        block code execution until the window is closed.
+
+    See also
+    --------
+    - run_xcorr_muaps_tracking_gui : Run the GUI for visually inspecting the
+        results of MUAPs tracking.
+    - tracking : Track MUs across two files comparing the MUAPs' shape and
+        distribution.
+    """
+
+    # Signals
+    # Emitted when window is closed
+    xcorr_muaps_tracking_gui_window_closed = Signal()
 
     def __init__(
         self,
@@ -1315,8 +1478,11 @@ class Tracking_gui():
         sta_emgfile2,
         align_muaps=True,
         addrefsig=True,
+        refsig_channel=0,
         csv_separator="\t",
+        path_to_icon=None,
     ):
+
         # Define needed variables
         self.emgfile1 = emgfile1
         self.emgfile2 = emgfile2
@@ -1325,172 +1491,178 @@ class Tracking_gui():
         self.sta_emgfile2 = sta_emgfile2
         self.align_muaps = align_muaps
         self.addrefsig = addrefsig
+        self.refsig_channel = refsig_channel
         self.csv_separator = csv_separator
 
         # Add included/excluded label to self.tracking_res
-        self.tracking_res = self.tracking_res.assign(Inclusion="Included")
+        self.tracking_res = self.tracking_res.assign(
+            Inclusion="Included",
+        ).astype({"Inclusion": str})
 
-        # Define GUI structure
-        # After that, set up the GUI
-        self.root = tk.Tk()
-        self.root.title('MUAPs tracking')
-        root_path = os.path.dirname(os.path.abspath(__file__))
-        iconpath = os.path.join(
-            root_path,
-            "..",
-            "gui",
-            "gui_files",
-            "Icon_transp.ico"
-        )
-        if sys.platform.startswith("darwin"):  # macOS
-            self.root.iconbitmap(iconpath)
-        else:  # Windows
-            self.root.iconbitmap(iconpath, iconpath)
+        # Set up the GUI
+        super().__init__()
+        self.setWindowTitle("Validation of XCORR MUAPs tracking results")
+        if path_to_icon is not None:
+            icon = QIcon(path_to_icon)
+            self.setWindowIcon(icon)
 
-        # Create outer frames, assign structure and minimum spacing
-        # Top
-        top_frm = tk.Frame(self.root, padx=10)
-        top_frm.grid(
-            row=0, column=0, columnspan=3, sticky=tk.NSEW, pady=(10, 8),
-        )
-        # Central - Left
-        self.central_left_frm = tk.Frame(
-            self.root, padx=1, pady=1, background="gray",
-        )
-        self.central_left_frm.grid(
-            row=1, rowspan=2, column=0, columnspan=2, sticky=tk.NSEW,
-        )
-        # Central - Right Top
-        self.central_right_top_frm = tk.Frame(
-            self.root, padx=0, pady=1, background="gray",
-        )
-        self.central_right_top_frm.grid(
-            row=1, column=2, columnspan=1, sticky=tk.NSEW,
-        )
-        # Central - Right Bottom
-        self.central_right_bottom_frm = tk.Frame(
-            self.root, padx=0, pady=1, background="gray",
-        )
-        self.central_right_bottom_frm.grid(
-            row=2, column=2, columnspan=1, sticky=tk.NSEW,
-        )
-        # Bottom
-        bottom_frm = tk.Frame(self.root, padx=1, pady=0, background="gray")
-        bottom_frm.grid(row=3, column=0, columnspan=3, sticky=tk.NSEW)
+        # Place a status bar to enable grip
+        self.status_bar = self.statusBar()
+        self.status_bar.setSizeGripEnabled(True)
 
-        # Assign rows and columns weight to avoid empty spaces
-        self.root.rowconfigure(1, weight=1)
-        self.root.rowconfigure(2, weight=1)
+        # Figures placeholder
+        self.figure_muaps = None
+        self.figure_idr1 = None
+        self.figure_idr2 = None
 
-        self.root.columnconfigure(0, weight=1)
-        self.root.columnconfigure(1, weight=1)
-        self.root.columnconfigure(2, weight=1)
+        # --- Create central widget ---
+        # Top control bar with labels and widgets
+        controls_row = QHBoxLayout()
+        controls_row.setContentsMargins(0, 0, 0, 0)
+        rows_width = 150
 
-        # Label MU pair selection and create combobox to change MUs pair
-        # File 1
-        mu_pair_label = ttk.Label(top_frm, text="Pair of MUs to visualise:")
-        mu_pair_label.pack(side=tk.LEFT)
+        label = QLabel("Pair of MUs to visualise: ")
+        label.setAlignment(Qt.AlignVCenter | Qt.AlignLeft)
+        controls_row.addWidget(label)
 
-        mu_pairs = list(self.tracking_res.index)
-        self.select_mu_pair_cb = ttk.Combobox(
-            top_frm,
-            values=mu_pairs,
-            state='readonly',
-            width=5,
-        )
-        self.select_mu_pair_cb.pack(side=tk.LEFT, padx=(2, 15))
-        self.select_mu_pair_cb.current(0)
-        # gui_plot() takes one positional argument (self), but the bind()
-        # method is passing two arguments: the event object and the function
-        # itself. Use lambda to avoid the error.
-        self.select_mu_pair_cb.bind(
-            '<<ComboboxSelected>>',
-            lambda event: self.gui_plot(),
-        )
+        self.combo_mupair = QComboBox()
+        self.combo_mupair.setFixedWidth(rows_width)
+        pairs_names = [str(n) for n in self.tracking_res.index]
+        self.combo_mupair.addItems(pairs_names)
+        controls_row.addWidget(self.combo_mupair)
 
-        # Button to copy the dataframe to clipboard
-        copy_btn = ttk.Button(
-            top_frm,
-            text="Copy results",
-            command=self.copy_to_clipboard,
-        )
-        copy_btn.pack(side=tk.RIGHT, padx=(20, 0))
+        controls_row.addStretch()
 
-        # Button to include/exclude MUAPs
-        btn_include_muaps = ttk.Button(
-            top_frm,
-            text="Include/Exclude",
-            command=self.include_exclude,
-        )
-        btn_include_muaps.pack(side=tk.RIGHT, padx=(0, 20))
+        self.included_label = QLabel("INCLUDED")
+        self.included_label.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
+        self.included_label.setFixedWidth(rows_width)
+        controls_row.addWidget(self.included_label)
 
-        # Inclusion label
-        self.inclusion_label = ttk.Label(
-            top_frm, text="INCLUDED", foreground="green",
-        )
-        self.inclusion_label.pack(side=tk.RIGHT, padx=(20, 20))
+        include_button = QPushButton("Include / Exclude")
+        include_button.setFixedWidth(rows_width)
+        controls_row.addWidget(include_button)
 
-        # Text frame to show the tracking results
-        self.textbox = tk.Text(bottom_frm, height=10, relief="flat")
-        self.textbox.pack(
-            expand=True, side=tk.BOTTOM, fill=tk.X)
-        self.textbox.insert(
-            '1.0',
-            self.tracking_res.to_string(float_format="{:.2f}".format),
+        copy_button = QPushButton("Copy results")
+        copy_button.setFixedWidth(rows_width)
+        controls_row.addWidget(copy_button)
+
+        # Connect top widgets
+        self.combo_mupair.currentTextChanged.connect(self.gui_plot)
+        include_button.clicked.connect(self.include_exclude)
+        copy_button.clicked.connect(self.copy_to_clipboard)
+
+        # Combine into a top widget to prevent vertical expansion
+        top_widget = QWidget()
+        top_widget.setLayout(controls_row)
+        top_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+        # Create complex container for the 3 figures.
+        self.muaps_canvas = FigureCanvasQTAgg()
+        self.idr1_canvas = FigureCanvasQTAgg()
+        self.idr2_canvas = FigureCanvasQTAgg()
+
+        self.v_canvas_layout = QVBoxLayout()
+        self.v_canvas_layout.addWidget(self.idr1_canvas, stretch=1)
+        self.v_canvas_layout.addWidget(self.idr2_canvas, stretch=1)
+        self.h_canvas_layout = QHBoxLayout()
+        self.h_canvas_layout.addWidget(self.muaps_canvas, stretch=2)
+        self.h_canvas_layout.addLayout(self.v_canvas_layout, stretch=1)
+        self.h_canvas_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Add to main layout
+        cw_container = QWidget()
+        cw_layout = QVBoxLayout()
+        cw_layout.addWidget(top_widget)
+        cw_layout.addLayout(self.h_canvas_layout)
+        cw_container.setLayout(cw_layout)
+        self.setCentralWidget(cw_container)
+
+        # --- Create bottom dock widget ---
+        self.text_box = QPlainTextEdit()
+        self.text_box.setReadOnly(True)
+        self.text_box.setLineWrapMode(QPlainTextEdit.NoWrap)
+        font = QFont("Courier New")
+        font.setStyleHint(QFont.Monospace)
+        self.text_box.setFont(font)
+        self.text_box.setPlainText(
+            self.tracking_res.to_string(float_format="%.2f")
         )
 
-        # Highlight the specific row
-        self.highlight_row(0)
+        dock = QDockWidget("Output")
+        dock.setContentsMargins(5, 0, 5, 0)
+        dock.setWidget(self.text_box)
+        self.addDockWidget(Qt.BottomDockWidgetArea, dock)
+        dock.setFeatures(
+            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable
+        )
+        dock.setMinimumHeight(150)
 
-        # Lower the window to prevent flashing
-        self.root.lower()
+        # Display the first MU
+        self.gui_plot(self.combo_mupair.currentText())
 
-        # Plot the first MU pair
-        self.gui_plot()
+    def clear_figure_and_canvas(self):
+        self.figure_muaps = None
+        self.figure_idr1 = None
+        self.figure_idr2 = None
+        self.muaps_canvas = None
+        self.idr1_canvas = None
+        self.idr2_canvas = None
 
-        # Bring back the GUI in the foreground
-        self.root.lift()
-        self.root.attributes('-topmost', True)
-        self.root.after_idle(self.root.attributes, '-topmost', False)
+        # Iteratively clean the canvas in the central widget
+        item = self.h_canvas_layout.takeAt(0)
+        widget = item.widget()
+        widget.setParent(None)
+        widget.close()
+        widget.deleteLater()
+        del widget
+        del item
 
-        # Start mainloop
-        self.root.mainloop()
+        while self.v_canvas_layout.count():
+            item = self.v_canvas_layout.takeAt(0)
+            widget = item.widget()
+            widget.setParent(None)
+            widget.close()
+            widget.deleteLater()
+            del widget
+            del item
+
+        # Force garbage collection to fasten memory cleanup
+        gc.collect()
 
     def highlight_row(self, row_number):
-        # Highlight a row in self.textbox
+        # Clear previous formatting
+        cursor = self.text_box.textCursor()
+        cursor.select(QTextCursor.Document)
+        clear_format = QTextCharFormat()
+        cursor.setCharFormat(clear_format)
 
-        # Define a tag for highlighting
-        self.textbox.tag_configure("highlight", background="yellow")
+        # Highlight the target line
+        cursor.movePosition(QTextCursor.Start)
+        for _ in range(row_number + 1):
+            cursor.movePosition(QTextCursor.Down)
 
-        # Update rownumber for the table format
-        row_number += 2
+        cursor.select(QTextCursor.LineUnderCursor)
+        fmt = QTextCharFormat()
+        fmt.setBackground(QColor("yellow"))
+        cursor.setCharFormat(fmt)
 
-        # Calculate the start and end index of the row in the text widget
-        start_index = f"{row_number}.0"
-        end_index = f"{row_number}.end"
-
-        # Add the highlight tag to the row
-        self.textbox.tag_add("highlight", start_index, end_index)
-
-    def gui_plot(self):
+    def gui_plot(self, text):
         # Display the MUAPs and IDR.
 
+        # Free memory
+        self.clear_figure_and_canvas()
+
         # Update the textbox highlight
-        pair = int(self.select_mu_pair_cb.get())
-        self.textbox.tag_delete("highlight")
+        pair = int(text)
         self.highlight_row(pair)
 
         # Update the inclusion_label
         if self.tracking_res.loc[pair, "Inclusion"] == "Excluded":
-            self.inclusion_label.config(
-                text="EXCLUDED",
-                foreground="red"
-            )
+            self.included_label.setText("EXCLUDED")
+            self.included_label.setStyleSheet("color: red;")
         else:
-            self.inclusion_label.config(
-                text="INCLUDED",
-                foreground="green"
-            )
+            self.included_label.setText("INCLUDED")
+            self.included_label.setStyleSheet("color: green;")
 
         # Get MUs number
         mu1 = int(self.tracking_res["MU_file1"].loc[pair])
@@ -1503,108 +1675,84 @@ class Tracking_gui():
                     self.sta_emgfile2[mu2],
                     finalduration=0.5,
                 )
-            muaps_fig = plot_muaps(
+            self.figure_muaps = plot_muaps(
                 sta_dict=[aligned_sta1, aligned_sta2],
                 title="",
-                figsize=[5, 5],
+                figsize=[20, 15],
                 showimmediately=False,
-                tight_layout=False,
+                tight_layout=True,
+                use_plt=False,
             )
         else:
-            muaps_fig = plot_muaps(
+            self.figure_muaps = plot_muaps(
                 sta_dict=[self.sta_emgfile1[mu1], self.sta_emgfile2[mu2]],
                 title="",
-                figsize=[5, 5],
+                figsize=[20, 15],
                 showimmediately=False,
-                tight_layout=False,
+                tight_layout=True,
+                use_plt=False,
             )
 
-        # If canvas already exist, destroy it
-        if hasattr(self, 'muaps_canvas'):
-            self.muaps_canvas.get_tk_widget().destroy()
-
-        # Place the MUAPs figure in the canvas
-        self.muaps_canvas = FigureCanvasTkAgg(
-            muaps_fig, master=self.central_left_frm,
-        )
-        self.muaps_canvas.draw_idle()  # Await resizing
-        self.muaps_canvas.get_tk_widget().pack(
-            expand=True, fill="both", padx=0, pady=0,
-        )
-        plt.close(muaps_fig)
+        # Add to canvas
+        self.muaps_canvas = FigureCanvasQTAgg(self.figure_muaps)
+        self.h_canvas_layout.insertWidget(0, self.muaps_canvas, stretch=2)
 
         # Display IDR mu1 figure
-        idr_mu1_fig = plot_idr(
+        self.figure_idr1 = plot_idr(
             emgfile=self.emgfile1,
             munumber=mu1,
             addrefsig=self.addrefsig,
-            figsize=[3, 3],
+            refsig_channel=self.refsig_channel,
+            figsize=[15, 9],
             showimmediately=False,
-            tight_layout=False,
-            axes_kwargs={"labels": {"title": "File 1"}}
+            tight_layout=True,
+            line2d_kwargs_ax1={"markersize": 7},
+            axes_kwargs={"labels": {"title": "File 1"}},
+            use_plt=False,
         )
 
-        if hasattr(self, 'idr_mu1_canvas'):
-            self.idr_mu1_canvas.get_tk_widget().destroy()
-
-        self.idr_mu1_canvas = FigureCanvasTkAgg(
-            idr_mu1_fig, master=self.central_right_top_frm,
-        )
-        self.idr_mu1_canvas.draw_idle()  # Await resizing
-        self.idr_mu1_canvas.get_tk_widget().pack(
-            expand=True, fill="both", padx=0, pady=0,
-        )
-        plt.close(idr_mu1_fig)
+        # Add to canvas
+        self.idr1_canvas = FigureCanvasQTAgg(self.figure_idr1)
+        self.v_canvas_layout.addWidget(self.idr1_canvas, stretch=1)
 
         # Display IDR mu2 figure
-        idr_mu2_fig = plot_idr(
+        self.figure_idr2 = plot_idr(
             emgfile=self.emgfile2,
             munumber=mu2,
             addrefsig=self.addrefsig,
-            figsize=[3, 3],
+            refsig_channel=self.refsig_channel,
+            figsize=[15, 9],
             showimmediately=False,
-            tight_layout=False,
-            line2d_kwargs_ax1={"color": plt.get_cmap("tab10")(1)},
-            axes_kwargs={"labels": {"title": "File 2"}}
+            tight_layout=True,
+            line2d_kwargs_ax1={
+                "color": plt.get_cmap("tab10")(1), "markersize": 7,
+            },
+            axes_kwargs={"labels": {"title": "File 2"}},
+            use_plt=False,
         )
 
-        if hasattr(self, 'idr_mu2_canvas'):
-            self.idr_mu2_canvas.get_tk_widget().destroy()
-
-        self.idr_mu2_canvas = FigureCanvasTkAgg(
-            idr_mu2_fig, master=self.central_right_bottom_frm,
-        )
-        self.idr_mu2_canvas.draw_idle()  # Await resizing
-        self.idr_mu2_canvas.get_tk_widget().pack(
-            expand=True, fill="both", padx=0, pady=0,
-        )
-        plt.close(idr_mu2_fig)
+        # Add to canvas
+        self.idr2_canvas = FigureCanvasQTAgg(self.figure_idr2)
+        self.v_canvas_layout.addWidget(self.idr2_canvas, stretch=1)
 
     def include_exclude(self):
         # Include or exclude the current MU pair
 
         # Check if the current pair is included or excluded and update label
-        pair = int(self.select_mu_pair_cb.get())
+        pair = int(self.combo_mupair.currentText())
         if self.tracking_res.loc[pair, "Inclusion"] == "Included":
             self.tracking_res.loc[pair, "Inclusion"] = "Excluded"
-            self.inclusion_label.config(
-                text="EXCLUDED",
-                foreground="red"
-            )
+            self.included_label.setText("EXCLUDED")
+            self.included_label.setStyleSheet("color: red;")
         else:
             self.tracking_res.loc[pair, "Inclusion"] = "Included"
-            self.inclusion_label.config(
-                text="INCLUDED",
-                foreground="green"
-            )
+            self.included_label.setText("INCLUDED")
+            self.included_label.setStyleSheet("color: green;")
 
         # Update table
-        self.textbox.replace(
-            '1.0',
-            'end',
-            self.tracking_res.to_string(float_format="{:.2f}".format),
+        self.text_box.setPlainText(
+            self.tracking_res.to_string(float_format="%.2f")
         )
-        self.textbox.tag_delete("highlight")
         self.highlight_row(pair)
 
     def copy_to_clipboard(self):
@@ -1615,7 +1763,35 @@ class Tracking_gui():
     def get_results(self):
         # Get the edited tracking_res
 
+        msg = (
+            "the method 'get_results()' is deprecated. Please access the " +
+            "results via the class attribute 'self.tracking_res' (e.g., " +
+            "results = gui.tracking_res)"
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+
         return self.tracking_res
+
+    def closeEvent(self, event):
+        # Ask user whether to exit and clear memory
+        reply = QMessageBox.question(
+            self,
+            "Exit tracking validation?",
+            "Make sure to copy the results first.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        if reply == QMessageBox.No:
+            event.ignore()
+            return
+
+        self.clear_figure_and_canvas()
+
+        # Emit a closing signal
+        self.xcorr_muaps_tracking_gui_window_closed.emit()
+
+        # Always call the base method to ensure normal closing behavior
+        super().closeEvent(event)
 
 
 def remove_duplicates_between(
@@ -1636,8 +1812,10 @@ def remove_duplicates_between(
     show=False,
     gui=True,
     gui_addrefsig=True,
+    gui_refsig_channel=0,
     gui_csv_separator="\t",
     which="munumber",
+    custom_tracking_res=None,
 ):
     """
     Remove duplicated MUs across two different files based on STA.
@@ -1731,6 +1909,8 @@ def remove_duplicates_between(
     gui_addrefsig : bool, default True
         If True, the REF_SIGNAL is plotted in front of the IDR with a
         separated y-axes. This is used only when gui=True.
+    gui_refsig_channel : int or str, Default 0
+        The name of the reference signal channel (dataframe column) to plot.
     gui_csv_separator : str, default "\t"
         The field delimiter used by the GUI to create the .csv copied to the
         clipboard. This is used only when gui=True.
@@ -1742,6 +1922,10 @@ def remove_duplicates_between(
 
         ``accuracy``
             The MU with the lowest accuracy is removed.
+    custom_tracking_res : None or pd.DataFrame, default None
+        If custom tracking results are provided, the internal tracking
+        procedure is skipped and duplicates removal is performed based on the
+        provided info.
 
     Returns
     -------
@@ -1752,9 +1936,12 @@ def remove_duplicates_between(
         MU from file 2 and the normalised cross-correlation value (XCC).
         If gui=True, an additional column indicating the inclusion/exclusion
         of the MUs pairs will also be present in tracking_res.
+        If custom_tracking_res were provided, these will be returned instead.
 
     See also
     --------
+    - remove_duplicates_within : Remove duplicate MUs within the same file
+        based on discharge times.
     - sta : computes the STA of every MUs.
     - norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
         two MUs.
@@ -1851,27 +2038,31 @@ def remove_duplicates_between(
     emgfile2 = copy.deepcopy(emgfile2)
 
     # Get tracking results to identify duplicated MUs
-    tracking_res = tracking(
-        emgfile1=emgfile1,
-        emgfile2=emgfile2,
-        firings=firings,
-        derivation=derivation,
-        timewindow=timewindow,
-        threshold=threshold,
-        matrixcode=matrixcode,
-        orientation=orientation,
-        n_rows=n_rows,
-        n_cols=n_cols,
-        custom_sorting_order=custom_sorting_order,
-        custom_muaps=custom_muaps,
-        exclude_belowthreshold=True,
-        filter=filter,
-        multiprocessing=multiprocessing,
-        show=show,
-        gui=gui,
-        gui_addrefsig=gui_addrefsig,
-        gui_csv_separator=gui_csv_separator,
-    )
+    if custom_tracking_res is None:
+        tracking_res = tracking(
+            emgfile1=emgfile1,
+            emgfile2=emgfile2,
+            firings=firings,
+            derivation=derivation,
+            timewindow=timewindow,
+            threshold=threshold,
+            matrixcode=matrixcode,
+            orientation=orientation,
+            n_rows=n_rows,
+            n_cols=n_cols,
+            custom_sorting_order=custom_sorting_order,
+            custom_muaps=custom_muaps,
+            exclude_belowthreshold=True,
+            filter=filter,
+            multiprocessing=multiprocessing,
+            show=show,
+            gui=gui,
+            gui_addrefsig=gui_addrefsig,
+            gui_refsig_channel=gui_refsig_channel,
+            gui_csv_separator=gui_csv_separator,
+        )
+    else:
+        tracking_res = custom_tracking_res
 
     # If the tracking gui has been used to include/exclude pairs, use the
     # included pairs only.
@@ -2096,13 +2287,46 @@ def estimate_cv_via_mle(emgfile, signal):
     return cv
 
 
-# TODO add function to return the results
 class MUcv_gui():
     """
-    Graphical user interface for the estimation of MUs conduction velocity.
+    The class MUcv_gui has been deprecated. Please use the function
+    run_mle_mucv_gui instead. This offers additional parameters.
+    """
+    def __init__(
+        self,
+        emgfile,
+        sorted_rawemg,
+        n_firings=[0, 50],
+        muaps_timewindow=50,
+        figsize=[25, 20],
+        csv_separator="\t",
+    ):
+        warnings.warn(
+            self.__doc__.replace("\n", " "), DeprecationWarning, stacklevel=2,
+        )
+        run_mle_mucv_gui(
+            emgfile,
+            sorted_rawemg=sorted_rawemg,
+            n_firings=n_firings,
+            muaps_timewindow=muaps_timewindow,
+            csv_separator=csv_separator,
+        )
 
-    GUI for the estimation of MUs conduction velocity (CV) and amplitude of
-    the action potentials (root mean square - RMS).
+
+def run_mle_mucv_gui(
+    emgfile,
+    sorted_rawemg,
+    n_firings=[0, 50],
+    muaps_timewindow=50,
+    diff_mode="double",
+    csv_separator="\t",
+):
+    """
+    Run the Graphical User Interface for the estimation of MU conduction
+    velocity via Maximum Likelyhood Estimation.
+
+    It allows to estimate also the amplitude of the action potentials
+    (root mean square - RMS).
 
     Parameters
     ----------
@@ -2122,22 +2346,42 @@ class MUcv_gui():
             The STA is calculated over all the firings.
     muaps_timewindow : int, default 50
         Timewindow to compute ST MUAPs in milliseconds.
-    figsize : list, default [20, 15]
-        Size of the initial MUAPs figure in centimeters [width, height].
+    diff_mode : str {"double", "single", "mono"}, default double
+        The type of differential derivation to use.
+
+        ``double``
+            Double differential derivation.
+
+        ``single``
+            Single differential derivation.
+
+        ``mono``
+            No differential derivation applied. This should only be used if the
+            EMG signal is already recorded or converted to a differential
+            mode. MU CV should never be estimated on the monopolar signal.
     csv_separator : str, default "\t"
         The field delimiter used to create the .csv copied to the clipboard.
 
+    Returns
+    -------
+    QtWidget
+        A class with base QMainWindow which contains the attribute ``res_df``.
+        res_df is a pd.DataFrame containing the estimated CV, RMS, XCC and the
+        selected channels.
+
     See also
     --------
+    - MLE_MUCV_gui : Graphical User Interface for the estimation of MU
+    conduction velocity via Maximum Likelyhood Estimation.
     - estimate_cv_via_mle : Estimate signal conduction velocity via maximum
         likelihood estimation.
 
     Examples
     --------
-    Call the GUI.
+    Run the GUI for MU CV estimation via MLE.
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
+    >>> emgfile = emgfile = emg.emg_from_samplefile()
     >>> emgfile = emg.filter_rawemg(emgfile)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile,
@@ -2145,13 +2389,117 @@ class MUcv_gui():
     ...     orientation=180,
     ...     dividebycolumn=True
     ... )
-    >>> gui = emg.MUcv_gui(
+    >>> gui = emg.run_mle_mucv_gui(
     ...     emgfile=emgfile,
     ...     sorted_rawemg=sorted_rawemg,
-    ...     n_firings=[0,50],
-    ...     muaps_timewindow=50
+    ...     n_firings=[0, 50],
+    ...     muaps_timewindow=50,
+    ...     diff_mode="double",
     ... )
+
+    Get the results for further processing
+
+    >>> results = gui.res_df
+             CV        RMS       XCC Column  From_Row  To_Row
+    0  3.825479  84.266813  0.958324   col1         8      10
+    1  0.000000   0.000000  0.000000    0.0         0       0
+    2  3.802607  25.026962  0.958163   col2         3       7
+    3  3.596453  30.766466  0.918730   col2         5       7
+    4  0.000000   0.000000  0.000000    0.0         0       0
+
+    ![](md_graphics/docstrings/muap/mle_mucv_gui.png)
     """
+
+    app, app_created, path_to_icon = check_app()
+
+    # Execute in blocking mode
+    window = MLE_MUCV_gui(
+        emgfile,
+        sorted_rawemg,
+        n_firings=n_firings,
+        muaps_timewindow=muaps_timewindow,
+        diff_mode=diff_mode,
+        csv_separator=csv_separator,
+        path_to_icon=path_to_icon,
+    )
+    window.show()
+    app.exec()
+
+    return window
+
+
+class MLE_MUCV_gui(QMainWindow):
+    """
+    Graphical User Interface for the estimation of MU conduction velocity via
+    Maximum Likelyhood Estimation.
+
+    It allows to estimate also the amplitude of the action potentials
+    (root mean square - RMS).
+
+    Check the implementation of ``run_mle_mucv_gui()`` to see how it can be
+    used. It is always suggested to call the ``MLE_MUCV_gui`` from
+    ``run_mle_mucv_gui()`` instead of directly running its instance, as
+    this is also managing the ``QApplication``.
+
+    Parameters
+    ----------
+    emgfile : dict
+        The dictionary containing the emgfile.
+    sorted_rawemg : dict
+        A dict containing the sorted electrodes.
+        Every key of the dictionary represents a different column of the
+        matrix.
+        Rows are stored in the dict as a pd.DataFrame.
+    n_firings : list or str {"all"}, default [0, 50]
+        The range of firings to be used for the STA.
+        If a MU has less firings than the range, the upper limit
+        is adjusted accordingly.
+
+        ``all``
+            The STA is calculated over all the firings.
+    muaps_timewindow : int, default 50
+        Timewindow to compute ST MUAPs in milliseconds.
+    diff_mode : str {"double", "single", "mono"}, default double
+        The type of differential derivation to use.
+
+        ``double``
+            Double differential derivation.
+
+        ``single``
+            Single differential derivation.
+
+        ``mono``
+            No differential derivation applied. This should only be used if the
+            EMG signal is already recorded or converted to a differential
+            mode. MU CV should never be estimated on the monopolar signal.
+    csv_separator : str, default "\t"
+        The field delimiter used to create the .csv copied to the clipboard.
+    path_to_icon : None or str, default None
+        The path to the window icon. Use none if this widget inherits from a
+        parent.
+
+    Attributes
+    ----------
+    res_df : pd.DataFrame
+        The dataframe containing the estimated CV, RMS, XCC and the selected
+        channels.
+
+    Signals
+    -------
+    - mle_mucv_gui_window_closed : Qt Signal. Emitted when the MLE_MUCV_gui
+        window is closed by the user. Can be used to block code execution
+        until the window is closed.
+
+    See also
+    --------
+    - run_mle_mucv_gui : Run the GUI for estimating MU conduction velocity via
+        Maximum Likelyhood Estimation.
+    - estimate_cv_via_mle : Estimate signal conduction velocity via maximum
+        likelihood estimation.
+    """
+
+    # Signals
+    mle_mucv_gui_window_closed = Signal()  # Emitted when window is closed
 
     def __init__(
         self,
@@ -2159,165 +2507,37 @@ class MUcv_gui():
         sorted_rawemg,
         n_firings=[0, 50],
         muaps_timewindow=50,
-        figsize=[25, 20],
+        diff_mode="double",
         csv_separator="\t",
+        path_to_icon=None,
     ):
         # On start, compute the necessary information
         self.emgfile = emgfile
-        self.dd = double_diff(sorted_rawemg)
+        if diff_mode == "double":
+            differential = double_diff(sorted_rawemg)
+        elif diff_mode == "single":
+            differential = diff(sorted_rawemg)
+        elif diff_mode == "mono":
+            differential = sorted_rawemg
+        else:
+            raise ValueError(
+                "diff_mode can only be 'double', 'single' or 'mono'. " +
+                f"'{diff_mode}' was passed instead."
+            )
+
         self.st = sta(
             emgfile=emgfile,
-            sorted_rawemg=self.dd,
+            sorted_rawemg=differential,
             firings=n_firings,
             timewindow=muaps_timewindow,
         )
         self.sta_xcc = xcc_sta(self.st)
-        self.figsize = figsize
         self.csv_separator = csv_separator
 
-        # After that, set up the GUI
-        self.root = tk.Tk()
-        self.root.title('MUs CV estimation')
-        root_path = os.path.dirname(os.path.abspath(__file__))
-        iconpath = os.path.join(
-            root_path,
-            "..",
-            "gui",
-            "gui_files",
-            "Icon_transp.ico"
-        )
-        if sys.platform.startswith("darwin"):  # macOS
-            self.root.iconbitmap(iconpath)
-        else:  # Windows
-            self.root.iconbitmap(iconpath, iconpath)
-
-        # Create outer frames, assign structure and minimum spacing
-        # Left
-        left_frm = tk.Frame(self.root, padx=2, pady=2)
-        left_frm.pack(side=tk.LEFT, expand=True, fill="both")
-        # Right
-        right_frm = tk.Frame(self.root, padx=4, pady=4)
-        right_frm.pack(side=tk.TOP, anchor="nw", expand=True, fill="y")
-
-        # Create inner frames
-        # Top left
-        top_left_frm = tk.Frame(left_frm, padx=2, pady=2)
-        top_left_frm.pack(side=tk.TOP, anchor="nw", fill="x")
-        # Bottom left
-        self.bottom_left_frm = tk.Frame(left_frm, padx=2, pady=2)
-        self.bottom_left_frm.pack(
-            side=tk.TOP, anchor="nw", expand=True, fill="both",
-        )
-
-        # Label MU number combobox
-        munumber_label = ttk.Label(top_left_frm, text="MU number", width=15)
-        munumber_label.grid(row=0, column=0, columnspan=1, sticky=tk.W)
-
-        # Create a combobox to change MU
-        self.all_mus = list(range(emgfile["NUMBER_OF_MUS"]))
-
-        self.selectmu_cb = ttk.Combobox(
-            top_left_frm,
-            textvariable=tk.StringVar(),
-            values=self.all_mus,
-            state='readonly',
-            width=15,
-        )
-        self.selectmu_cb.grid(row=1, column=0, columnspan=1, sticky=tk.W)
-        self.selectmu_cb.current(0)
-        # gui_plot() takes one positional argument (self), but the bind()
-        # method is passing two arguments: the event object and the function
-        # itself. Use lambda to avoid the error.
-        self.selectmu_cb.bind(
-            '<<ComboboxSelected>>',
-            lambda event: self.gui_plot(),
-        )
-
-        # Add empty column
-        emp = ttk.Label(top_left_frm, text="", width=15)
-        emp.grid(row=0, column=1, columnspan=1, sticky=tk.W)
-
-        # Create the widgets to calculate CV
-        # Label and combobox to select the matrix column
-        col_label = ttk.Label(top_left_frm, text="Column", width=15)
-        col_label.grid(row=0, column=2, columnspan=1, sticky=tk.W)
-
-        self.columns = list(self.st[0].keys())
-
-        self.col_cb = ttk.Combobox(
-            top_left_frm,
-            textvariable=tk.StringVar(),
-            values=self.columns,
-            state='readonly',
-            width=15,
-        )
-        self.col_cb.grid(row=1, column=2, columnspan=1, sticky=tk.W)
-        self.col_cb.current(0)
-
-        # Label and combobox to select the matrix channels
-        self.rows = list(range(len(list(self.st[0][self.columns[0]].columns))))
-
-        start_label = ttk.Label(top_left_frm, text="From row", width=15)
-        start_label.grid(row=0, column=3, columnspan=1, sticky=tk.W)
-
-        self.start_cb = ttk.Combobox(
-            top_left_frm,
-            textvariable=tk.StringVar(),
-            values=self.rows,
-            state='readonly',
-            width=15,
-        )
-        self.start_cb.grid(row=1, column=3, columnspan=1, sticky=tk.W)
-        self.start_cb.current(0)
-
-        self.stop_label = ttk.Label(top_left_frm, text="To row", width=15)
-        self.stop_label.grid(row=0, column=4, columnspan=1, sticky=tk.W)
-
-        self.stop_cb = ttk.Combobox(
-            top_left_frm,
-            textvariable=tk.StringVar(),
-            values=self.rows,
-            state='readonly',
-            width=15,
-        )
-        self.stop_cb.grid(row=1, column=4, columnspan=1, sticky=tk.W)
-        self.stop_cb.current(max(self.rows))
-
-        # Button to start CV estimation
-        self.ied = emgfile["IED"]
-        self.fsamp = emgfile["FSAMP"]
-        button_est = ttk.Button(
-            top_left_frm,
-            text="Estimate",
-            command=self.compute_cv,
-            width=15,
-        )
-        button_est.grid(row=1, column=5, columnspan=1, sticky="we")
-
-        # Configure column weights
-        for c in range(6):
-            if c == 1:
-                top_left_frm.columnconfigure(c, weight=20)
-            else:
-                top_left_frm.columnconfigure(c, weight=1)
-
-        # Align the right_frm
-        alignment_label = ttk.Label(right_frm, text="", width=15)
-        alignment_label.pack(side=tk.TOP, fill="x")
-
-        # Create a button to copy the dataframe to clipboard
-        copy_btn = ttk.Button(
-            right_frm,
-            text="Copy results",
-            command=self.copy_to_clipboard,
-            width=15,
-        )
-        copy_btn.pack(side=tk.TOP, fill="x", pady=(0, 5))
-
-        # Add text frame to show the results (only CV and RMS)
+        # Prepare a table to store the results
         self.res_df = pd.DataFrame(
             data=0.00,
-            index=self.all_mus,
+            index=[*range(self.emgfile["NUMBER_OF_MUS"])],
             columns=["CV", "RMS", "XCC", "Column", "From_Row", "To_Row"],
         )
         # Set the dtypes for each column
@@ -2329,55 +2549,170 @@ class MUcv_gui():
             "From_Row": "int64",
             "To_Row": "int64",
         })
-        # Set values
-        self.textbox = tk.Text(right_frm, width=25)
-        self.textbox.pack(side=tk.TOP, expand=True, fill="y")
-        self.textbox.insert(
-            '1.0',
-            self.res_df.loc[:, ["CV", "RMS", "XCC"]].to_string(
-                float_format="{:.2f}".format
-            ),
+
+        # Set up the GUI
+        super().__init__()
+        self.setWindowTitle("MU CV estimation via MLE")
+        if path_to_icon is not None:
+            icon = QIcon(path_to_icon)
+            self.setWindowIcon(icon)
+
+        # Place a status bar to enable grip
+        self.status_bar = self.statusBar()
+        self.status_bar.setSizeGripEnabled(True)
+
+        # Figure placeholder
+        self.figure = None
+
+        # --- Create central widget ---
+        # Top control bar with labels and widgets
+        control_layout = QVBoxLayout()
+        label_row = QHBoxLayout()
+        widget_row = QHBoxLayout()
+        rows_width = 150
+
+        # Labels
+        labels = ["MU number", "Column", "From row", "To row", ""]
+        for text in labels:
+            label = QLabel(text)
+            label.setAlignment(Qt.AlignLeft)
+            label_row.addWidget(label)
+            label.setFixedWidth(rows_width)
+            if text == "MU number":
+                label_row.addStretch()
+
+        # Dropdowns and button
+        self.combo_munumber = QComboBox()
+        self.combo_munumber.setFixedWidth(rows_width)
+        self.combo_col = QComboBox()
+        self.combo_col.setFixedWidth(rows_width)
+        self.combo_fromrow = QComboBox()
+        self.combo_fromrow.setFixedWidth(rows_width)
+        self.combo_torow = QComboBox()
+        self.combo_torow.setFixedWidth(rows_width)
+        estimate_button = QPushButton("Estimate")
+        estimate_button.setFixedWidth(rows_width)
+
+        # Populate dropdowns with items
+        mu_names = [str(n) for n in range(self.emgfile["NUMBER_OF_MUS"])]
+        column_names = list(self.st[0].keys())
+        row_names = [
+            str(r) for r in range(len(self.st[0][column_names[0]].columns))
+        ]
+
+        self.combo_munumber.addItems(mu_names)
+        self.combo_col.addItems(column_names)
+        self.combo_fromrow.addItems(row_names)
+        self.combo_torow.addItems(row_names)
+        self.combo_torow.setCurrentIndex(self.combo_torow.count() - 1)
+
+        # Add to widget row
+        widget_row.addWidget(self.combo_munumber)
+        widget_row.addStretch()
+        widget_row.addWidget(self.combo_col)
+        widget_row.addWidget(self.combo_fromrow)
+        widget_row.addWidget(self.combo_torow)
+        widget_row.addWidget(estimate_button)
+
+        # Connect left widgets
+        self.combo_munumber.currentTextChanged.connect(self.gui_plot)
+        estimate_button.clicked.connect(self.compute_cv)
+
+        # Combine into a top widget to prevent vertical expansion
+        top_widget = QWidget()
+        control_layout.addLayout(label_row)
+        control_layout.addLayout(widget_row)
+        top_widget.setLayout(control_layout)
+        top_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+        # Create figure canvas
+        self.fig_canvas = FigureCanvasQTAgg()
+
+        # Add to main layout
+        container = QWidget()
+        self.cw_layout = QVBoxLayout()
+        self.cw_layout.setContentsMargins(0, 0, 0, 0)
+        self.cw_layout.addWidget(top_widget)
+        self.cw_layout.addWidget(self.fig_canvas)
+        container.setLayout(self.cw_layout)
+        self.setCentralWidget(container)
+
+        # --- Create right dock widget ---
+        right_widget = QWidget()
+        layout = QVBoxLayout(right_widget)
+        layout.setContentsMargins(5, 5, 5, 0)
+        layout.setSpacing(5)
+
+        # Button on top
+        copy_button = QPushButton("Copy results")
+        copy_button.clicked.connect(self.copy_to_clipboard)
+        layout.addWidget(copy_button)
+
+        # Expanding text box with scrollbars
+        self.text_box = QPlainTextEdit()
+        self.text_box.setReadOnly(True)
+        self.text_box.setLineWrapMode(QPlainTextEdit.NoWrap)
+        font = QFont("Courier New")
+        font.setStyleHint(QFont.Monospace)
+        self.text_box.setFont(font)
+        self.text_box.setPlainText(self.res_df.to_string(float_format="%.2f"))
+        layout.addWidget(self.text_box, stretch=1)
+
+        # Put this widget directly in a dock
+        dock = QDockWidget("Output")
+        dock.setWidget(right_widget)
+        self.addDockWidget(Qt.RightDockWidgetArea, dock)
+        dock.setFeatures(
+            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable
         )
+        dock.setMinimumWidth(325)
 
-        # Plot MU 0 while opening the GUI,
-        # this will move the GUI in the background ??.
-        self.gui_plot()
+        # Display the MUAPs from the first MU at startup
+        self.gui_plot(self.combo_munumber.currentText())
 
-        # Bring back the GUI in the foreground
-        self.root.lift()
-        self.root.attributes('-topmost', True)
-        self.root.after_idle(self.root.attributes, '-topmost', False)
+    def clear_figure_and_canvas(self):
+        self.figure = None
+        self.fig_canvas = None
 
-        # Start the main loop
-        self.root.mainloop()
+        # Iteratively clean the 2 levels of the central widget
+        item = self.cw_layout.takeAt(1)
+        widget = item.widget()
+        widget.setParent(None)
+        widget.close()
+        widget.deleteLater()
+        del widget
+        del item
+
+        # Force garbage collection to fasten memory cleanup
+        gc.collect()
 
     # Define functions necessary for the GUI
     # Use empty docstrings to hide the functions from the documentation.
-    def gui_plot(self):
+    def gui_plot(self, text):
+        # The text is automatically passed from the connected signal.
         # Plot the MUAPs used to estimate CV.
 
+        # Free memory
+        self.clear_figure_and_canvas()
+
         # Get MU number
-        mu = int(self.selectmu_cb.get())
+        mu = int(text)
 
         # Get the figure
-        fig = plot_muaps_for_cv(
+        self.figure = plot_muaps_for_cv(
             sta_dict=self.st[mu],
             xcc_sta_dict=self.sta_xcc[mu],
+            tight_layout=False,
             showimmediately=False,
-            figsize=self.figsize,
+            use_plt=False,
+        )
+        self.figure.subplots_adjust(
+            left=0.05, right=0.95, top=0.9, bottom=0.05,
         )
 
-        # If canvas already exists, destroy it
-        if hasattr(self, 'canvas'):
-            self.canvas.get_tk_widget().destroy()
-
-        # Place the figure in the GUI
-        self.canvas = FigureCanvasTkAgg(fig, master=self.bottom_left_frm)
-        self.canvas.draw_idle()  # Await resizing
-        self.canvas.get_tk_widget().pack(
-            expand=True, fill="both", padx=0, pady=0,
-        )
-        plt.close()
+        # Create figure canvas
+        self.fig_canvas = FigureCanvasQTAgg(self.figure)
+        self.cw_layout.addWidget(self.fig_canvas)
 
     def copy_to_clipboard(self):
         # Copy the dataframe to clipboard in csv format.
@@ -2389,15 +2724,27 @@ class MUcv_gui():
         # Compute conduction velocity.
 
         # Get the muaps of the selected columns.
-        sig = self.st[int(self.selectmu_cb.get())][self.col_cb.get()]
-        col_list = list(range(int(self.start_cb.get()), int(self.stop_cb.get())+1))
+        current_mu = int(self.combo_munumber.currentText())
+        current_col = self.combo_col.currentText()
+        sig = self.st[current_mu][current_col]
+        from_row = int(self.combo_fromrow.currentText())
+        to_row = int(self.combo_torow.currentText())
+        if to_row <= from_row:
+            QMessageBox.critical(
+                self,
+                "Invalid Range",
+                "'To row' must be greater than 'From row'",
+            )
+            return
 
+        col_list = list(range(from_row, to_row + 1))
         sig = sig.iloc[:, col_list]
 
         # Verify that the signal is correcly oriented
         if len(sig) < len(sig.columns):
             raise ValueError(
-                "The number of signals exceeds the number of samples. Verify that each row represents a signal"
+                "The number of signals exceeds the number of samples. " +
+                "Verify that each row represents a signal"
             )
 
         # Estimate CV
@@ -2407,24 +2754,38 @@ class MUcv_gui():
         sig = sig.to_numpy()
         rms = np.mean(np.sqrt((np.mean(sig**2, axis=0))))
 
-        # Update the self.res_df and the self.textbox
-        mu = int(self.selectmu_cb.get())
+        # Update the self.res_df and the self.text_box
+        self.res_df.loc[current_mu, "CV"] = cv
+        self.res_df.loc[current_mu, "RMS"] = rms
 
-        self.res_df.loc[mu, "CV"] = cv
-        self.res_df.loc[mu, "RMS"] = rms
+        xcc_col_list = list(range(from_row + 1, to_row + 1))
+        xcc = self.sta_xcc[current_mu][current_col].iloc[:, xcc_col_list]
+        xcc = xcc.mean().mean()
+        self.res_df.loc[current_mu, "XCC"] = xcc
 
-        xcc_col_list = list(range(int(self.start_cb.get())+1, int(self.stop_cb.get())+1))
-        xcc = self.sta_xcc[mu][self.col_cb.get()].iloc[:, xcc_col_list].mean().mean()
-        self.res_df.loc[mu, "XCC"] = xcc
+        self.res_df.loc[current_mu, "Column"] = current_col
+        self.res_df.loc[current_mu, "From_Row"] = from_row
+        self.res_df.loc[current_mu, "To_Row"] = to_row
 
-        self.res_df.loc[mu, "Column"] = str(self.col_cb.get())
-        self.res_df.loc[mu, "From_Row"] = int(self.start_cb.get())
-        self.res_df.loc[mu, "To_Row"] = int(self.stop_cb.get())
+        self.text_box.setPlainText(self.res_df.to_string(float_format="%.2f"))
 
-        self.textbox.replace(
-            '1.0',
-            'end',
-            self.res_df.loc[:, ["CV", "RMS", "XCC"]].to_string(
-                float_format="{:.2f}".format
-            ),
+    def closeEvent(self, event):
+        # Ask user whether to exit and clear memory
+        reply = QMessageBox.question(
+            self,
+            "Exit MU CV estimation?",
+            "Make sure to copy the results first.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
         )
+        if reply == QMessageBox.No:
+            event.ignore()
+            return
+
+        self.clear_figure_and_canvas()
+
+        # Emit a closing signal
+        self.mle_mucv_gui_window_closed.emit()
+
+        # Always call the base method to ensure normal closing behavior
+        super().closeEvent(event)

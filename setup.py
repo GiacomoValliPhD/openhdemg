@@ -1,4 +1,4 @@
-# Copyright (C) 2022 - 2024. The openhdemg community.
+# Copyright (C) 2022 - 2026. The openhdemg community.
 
 # To read the content of the README or description file
 from pathlib import Path
@@ -9,26 +9,29 @@ from setuptools import setup
 import openhdemg
 
 INSTALL_REQUIRES = [
-    "customtkinter==5.2.2",
-    "CTkMessagebox==2.7",
     "matplotlib==3.9.3",
     "numpy<=2.2.0",
-    "openpyxl==3.1.5",
     "pandas==2.2.3",
-    "pandastable==0.13.1",
+    "PySide6==6.9.0",
     "scipy<=1.14.1",
-    "seaborn==0.13.2",
     "scikit-learn==1.5.2",
 ]
+
+EXTRAS_REQUIRE = {}
+# EXTRAS_REQUIRE = {
+#     "gurobi": [
+#         "gurobipy",
+#     ],
+# }
+# pip install "openhdemg[gurobi]"
 
 PACKAGES = [
     "openhdemg",
     "openhdemg.library",
     "openhdemg.library.decomposed_test_files",
     "openhdemg.compatibility",
-    "openhdemg.gui",
-    "openhdemg.gui.gui_files",
-    "openhdemg.gui.gui_modules",
+    "openhdemg.ui",
+    "openhdemg.ui.icons",
     "openhdemg.tests",
     "openhdemg.tests.fixtures",
     "openhdemg.tests.integration",
@@ -60,7 +63,7 @@ if __name__ == "__main__":
         description="Open-source analysis of High-Density EMG data",
         long_description=long_descr,
         long_description_content_type="text/markdown",
-        license="GPL-3.0",
+        license="BSD-3-Clause",
         project_urls={
             "Documentation": "https://giacomovalli.com/openhdemg",
             "Release Notes": "https://giacomovalli.com/openhdemg/what%27s-new",
@@ -69,6 +72,7 @@ if __name__ == "__main__":
         },
         version=openhdemg.__version__,
         install_requires=INSTALL_REQUIRES,
+        extras_require=EXTRAS_REQUIRE,
         include_package_data=True,
         packages=PACKAGES,
         package_data={"openhdemg": ["*"]},
