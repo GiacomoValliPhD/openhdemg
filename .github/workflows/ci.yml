@@ -21,10 +21,23 @@ jobs:
           path: ~/.cache
           restore-keys: |
             mkdocs-material-
-      - run: pip install mkdocs-material
-      - run: pip install mkdocs-material-extensions
-      - run: pip install mkdocs-autorefs
-      - run: pip install mkdocstrings
-      - run: pip install mkdocstrings-python
+
+      # Old unpinned dependencies
+      # - run: pip install mkdocs-material
+      # - run: pip install mkdocs-material-extensions
+      # - run: pip install mkdocs-autorefs
+      # - run: pip install mkdocstrings
+      # - run: pip install mkdocstrings-python
+      # - run: pip install livereload
+
+      - run: pip install griffe==1.5.7
+      - run: pip install mkdocs==1.6.1
+      - run: pip install mkdocs-autorefs==1.3.1
+      - run: pip install mkdocs-get-deps==0.2.0
+      - run: pip install mkdocs-material==9.6.4
+      - run: pip install mkdocs-material-extensions==1.3.1
+      - run: pip install mkdocstrings==0.28.1
+      - run: pip install mkdocstrings-python==1.15.0
       - run: pip install livereload
-      - run: PYTHONPATH=. mkdocs gh-deploy --force
+
+      - run: mkdocs gh-deploy --force
