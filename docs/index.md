@@ -6,8 +6,6 @@
         <img alt="PyPI" src="https://img.shields.io/pypi/pyversions/openhdemg/0.2.0b1?logo=Python&logoColor=gold&color=blue"></a>
     <a href="https://www.youtube.com/@openhdemg" alt="YouTube" target="_blank">
         <img src="https://img.shields.io/badge/youtube-Watch_videos-red.svg?color=blue&logoColor=gold&logo=youtube" /></a>
-    <a href="https://twitter.com/openhdemg" alt="Twitter" target="_blank">
-        <img src="https://img.shields.io/badge/twitter-Follow_us-red.svg?color=blue&logoColor=gold&logo=twitter" /></a>
     <a href="https://www.linkedin.com/company/openhdemg/" alt="LinkedIn" target="_blank">
         <img  src="https://img.shields.io/badge/linkedin-Follow_us-blue?logo=linkedin&logoColor=gold&color=blue" /> </a>
 </p>
