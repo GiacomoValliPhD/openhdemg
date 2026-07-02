@@ -6,8 +6,6 @@
         <img alt="PyPI" src="https://img.shields.io/pypi/pyversions/openhdemg/0.2.0b1?logo=Python&logoColor=gold&color=blue"></a>
     <a href="https://www.youtube.com/@openhdemg" alt="YouTube" target="_blank">
         <img src="https://img.shields.io/badge/youtube-Watch_videos-red.svg?color=blue&logoColor=gold&logo=youtube" /></a>
-    <a href="https://twitter.com/openhdemg" alt="Twitter" target="_blank">
-        <img src="https://img.shields.io/badge/twitter-Follow_us-red.svg?color=blue&logoColor=gold&logo=twitter" /></a>
     <a href="https://www.linkedin.com/company/openhdemg/" alt="LinkedIn" target="_blank">
         <img  src="https://img.shields.io/badge/linkedin-Follow_us-blue?logo=linkedin&logoColor=gold&color=blue" /> </a>
 </p>
@@ -52,9 +50,9 @@ pip install --pre --upgrade openhdemg
 If you want an overview of what you can do with the *openhdemg* library, have a look at the [Quick Start section](https://www.giacomovalli.com/openhdemg/quick-start/) and then explore all the functions in the **API reference**.
 
 ## Good to know
-In addition to the rich set of modules and functions presented in the **API reference**, the *openhdemg* library is now integrated in the ***[openhdemg software](https://www.giacomovalli.com/openhdemg_software/){:target="_blank"}***, which offers a practical interface from which many tasks can be performed without writing a single line of code!
+In addition to the rich set of modules and functions presented in the **API reference**, the *openhdemg* library is now integrated in the ***[openhdemg software](https://www.giacomovalli.com/openhdemg_software/)***, which offers a practical interface from which many tasks can be performed without writing a single line of code!
 
-Please visit the official website page dedicated to the software for more info by clicking *[here](https://www.giacomovalli.com/openhdemg_software/){:target="_blank"}*.
+Please visit the official website page dedicated to the software for more info by clicking *[here](https://www.giacomovalli.com/openhdemg_software/)*.
 
 <br/>
 
@@ -72,6 +70,6 @@ The field of EMG analysis in humans has always been characterized by a lack of a
 
 In order to overcome these problems, we developed a fully transparent framework for the analysis of motor unit properties.
 
-This project is intended for the users that already know the Python language, for those willing to learn it and even for those not interested in coding, thanks to the friendly ***[openhdemg software](https://www.giacomovalli.com/openhdemg_software/){:target="_blank"}***.
+This project is intended for the users that already know the Python language, for those willing to learn it and even for those not interested in coding, thanks to the friendly ***[openhdemg software](https://www.giacomovalli.com/openhdemg_software/)***.
 
 Both the *openhdemg* project and its contributors adhere to the Open Science Principles and especially to the idea of public release of data and other scientific resources necessary for conducting honest research.
