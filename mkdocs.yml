@@ -85,7 +85,9 @@ nav:
   - Contacts: contacts.md
   - Cite us: cite-us.md
   - Contribute: contribute.md
-  - ISEK-JEK Tutorials: isek_jek_tutorials.md
+  - Tutorial articles:
+    - ISEK-JEK Tutorials: isek_jek_tutorials.md
+    - Common synaptic input: csi_tutorial.md
   - API Reference:
     - openfiles: api_openfiles.md
     - tools: api_tools.md
