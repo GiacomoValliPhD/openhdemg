@@ -153,8 +153,8 @@ extra:
   social:
     - icon: fontawesome/brands/github 
       link: https://github.com/GiacomoValliPhD/openhdemg
-    - icon: fontawesome/brands/twitter 
-      link: https://twitter.com/openhdemg
+    - icon: fontawesome/brands/linkedin 
+      link: https://www.linkedin.com/company/openhdemg
     - icon: fontawesome/brands/youtube 
       link: https://www.youtube.com/@openhdemg
   consent:
@@ -168,6 +168,10 @@ extra:
       - accept
       - manage
       - reject
+
+# Hooks
+hooks:
+  - hooks/line_endings.py
 
 # Need to have or pip install:
 # mkdocs
