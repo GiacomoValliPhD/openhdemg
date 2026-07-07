@@ -1,5 +1,5 @@
 """
-This module contains functions to produce and analyse MU anction potentials
+This module contains functions to produce and analyse MU action potentials
 (MUAPs).
 """
 
@@ -14,7 +14,6 @@ import pandas as pd
 from scipy import signal
 from joblib import Parallel, delayed  # TODO can this be replaced???
 
-import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 
@@ -34,9 +33,10 @@ from openhdemg.library.mathtools import (
     norm_twod_xcorr, norm_xcorr, find_mle_teta, mle_cv_est,
 )
 
-from openhdemg.ui import check_app
-
-matplotlib.use("QtAgg")
+from openhdemg.ui.qt_matplotlib import (
+    check_app, close_and_delete_widget, release_canvas_figure,
+    run_window_blocking, set_canvas_figure,
+)
 
 
 def diff(sorted_rawemg):
@@ -54,7 +54,7 @@ def diff(sorted_rawemg):
     Returns
     -------
     sd : dict
-        A dict containing the double differential signal.
+        A dict containing the single differential signal.
         Every key of the dictionary represents a different column of the
         matrix.
         Rows are stored in the dict as a pd.DataFrame.
@@ -75,7 +75,7 @@ def diff(sorted_rawemg):
     >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="DEMUSE")
     >>> sorted_rawemg = emg.sort_rawemg(
-    >>>     emgfile,
+    ...     emgfile,
     ...     code="None",
     ...     orientation=180,
     ...     dividebycolumn=True,
@@ -164,7 +164,7 @@ def double_diff(sorted_rawemg):
     >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="DEMUSE")
     >>> sorted_rawemg = emg.sort_rawemg(
-    >>>     emgfile,
+    ...     emgfile,
     ...     code="None",
     ...     orientation=180,
     ...     dividebycolumn=True,
@@ -186,7 +186,7 @@ def double_diff(sorted_rawemg):
     63486  0.008138 -0.016785  0.013733 ... -1.068115e-02  0.027466 NaN
     63487  0.008647 -0.010681  0.019836 ... -1.068115e-02 -0.016276 NaN
 
-    Calculate single differential of an OTB file where the channels need to be
+    Calculate double differential of an OTB file where the channels need to be
     sorted.
 
     >>> import openhdemg.library as emg
@@ -226,7 +226,7 @@ def extract_delsys_muaps(emgfile):
     Extract MUAPs obtained from Delsys decomposition.
 
     The extracted MUAPs will be stored in the same structure of the MUAPs
-    obtained with the ``sta`` funtion.
+    obtained with the ``sta`` function.
 
     Parameters
     ----------
@@ -781,6 +781,7 @@ def tracking(
     gui_addrefsig=True,
     gui_refsig_channel=0,
     gui_csv_separator="\t",
+    gui_parent=None,
 ):
     """
     Track MUs across two files comparing the MUAPs' shape and distribution.
@@ -888,6 +889,8 @@ def tracking(
     gui_csv_separator : str, default "\t"
         The field delimiter used by the GUI to create the .csv copied to the
         clipboard. This is used only when gui=True.
+    gui_parent : QWidget or None, default None
+        Optional Qt parent used when embedding the tracking GUI.
 
     Returns
     -------
@@ -909,7 +912,7 @@ def tracking(
 
     Notes
     -----
-    Parallel processing can significantly improve performances compared to
+    Parallel processing can significantly improve performance compared to
     serial processing. In this function, parallel processing has been
     implemented for the tasks involving 2-dimensional cross-correlation.
 
@@ -933,7 +936,7 @@ def tracking(
     ...     filter=True,
     ...     show=False,
     ...     gui=True,
-    >>> )
+    ... )
 
     Track MUs between two OTB files and show the filtered results.
 
@@ -1070,7 +1073,7 @@ def tracking(
 
         # Compare mu_file1 against all the MUs in file2
         for mu_file2 in range(emgfile2["NUMBER_OF_MUS"]):
-            # Firs, align the STAs
+            # First, align the STAs
             if not isinstance(custom_muaps, list):
                 aligned_sta1, aligned_sta2 = align_by_xcorr(
                     sta_emgfile1[mu_file1],
@@ -1209,7 +1212,7 @@ def tracking(
                     showimmediately=False
                 )
 
-    plt.show()
+        plt.show()
 
     # Call the GUI and return the tracking_res
     if gui:
@@ -1227,10 +1230,12 @@ def tracking(
             addrefsig=gui_addrefsig,
             refsig_channel=gui_refsig_channel,
             csv_separator=gui_csv_separator,
+            parent=gui_parent,
         )
 
-        # Get and return updated tracking_res
-        return tracking_gui.tracking_res
+        # Transfer the result out of the closed Qt window. Nuitka may retain
+        # that window through compiled signal slots.
+        return tracking_gui.take_tracking_res()
 
     else:
         return tracking_res
@@ -1269,12 +1274,12 @@ class Tracking_gui():
             csv_separator=csv_separator,
         )
         # For backward compatibility
-        self.tracking_res = self.window.tracking_res
+        self.tracking_res = self.window.take_tracking_res()
 
     def get_results(self):
         # Get the edited tracking_res
 
-        return self.window.tracking_res
+        return self.tracking_res
 
 
 def run_xcorr_muaps_tracking_gui(
@@ -1287,6 +1292,7 @@ def run_xcorr_muaps_tracking_gui(
     addrefsig=True,
     refsig_channel=0,
     csv_separator="\t",
+    parent=None,
 ):
     """
     Run the Graphical User Interface for the visual inspection and validation
@@ -1322,13 +1328,14 @@ def run_xcorr_muaps_tracking_gui(
         The name of the reference signal channel (dataframe column) to plot.
     csv_separator : str, default "\t"
         The field delimiter used to create the .csv copied to the clipboard.
+    parent : QWidget or None, default None
+        Optional parent used when embedding the tracking window.
 
     Returns
     -------
     QtWidget
-        A class with base QMainWindow which contains the attribute
-        ``tracking_res``. tracking_res is a pd.DataFrame containing the
-        tracked pairs, the XCC value and the inclusion state.
+        A closed QMainWindow. Call ``take_tracking_res()`` to transfer the
+        edited result DataFrame.
 
     See also
     --------
@@ -1373,7 +1380,7 @@ def run_xcorr_muaps_tracking_gui(
 
     Return the updated results for further use in the code.
 
-    >>> updated_results = gui.tracking_res
+    >>> updated_results = gui.take_tracking_res()
         MU_file1  MU_file2       XCC Inclusion
     0          0         2  0.897364  Excluded
     1          1         0  0.947486  Included
@@ -1383,7 +1390,7 @@ def run_xcorr_muaps_tracking_gui(
     ![](md_graphics/docstrings/muap/xcorr_muaps_tracking_gui.png)
     """
 
-    app, app_created, path_to_icon = check_app()
+    _app, _, path_to_icon = check_app()
 
     # Execute in blocking mode
     window = XCORR_MUAPs_Tracking_gui(
@@ -1397,9 +1404,12 @@ def run_xcorr_muaps_tracking_gui(
         refsig_channel=refsig_channel,
         csv_separator=csv_separator,
         path_to_icon=path_to_icon,
+        parent=parent,
     )
-    window.show()
-    app.exec()  # TODO maybe in these calls we need to check if app_created
+    run_window_blocking(
+        window,
+        window.xcorr_muaps_tracking_gui_window_closed,
+    )
 
     return window
 
@@ -1444,12 +1454,15 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
     path_to_icon : None or str, default None
         The path to the window icon. Use none if this widget inherits from a
         parent.
+    parent : QWidget or None, default None
+        Optional parent used when embedding the tracking window.
 
     Attributes
     ----------
     tracking_res : pd.DataFrame
         The dataframe containing the tracked pairs, the XCC value and the
-        inclusion state.
+        inclusion state. Call :meth:`take_tracking_res` after the window closes
+        to transfer ownership to the caller.
 
     Signals
     -------
@@ -1481,9 +1494,11 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
         refsig_channel=0,
         csv_separator="\t",
         path_to_icon=None,
+        parent=None,
     ):
 
         # Define needed variables
+        self._cleaned_up = False
         self.emgfile1 = emgfile1
         self.emgfile2 = emgfile2
         self.tracking_res = tracking_res
@@ -1500,7 +1515,7 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
         ).astype({"Inclusion": str})
 
         # Set up the GUI
-        super().__init__()
+        super().__init__(parent)
         self.setWindowTitle("Validation of XCORR MUAPs tracking results")
         if path_to_icon is not None:
             icon = QIcon(path_to_icon)
@@ -1538,18 +1553,18 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
         self.included_label.setFixedWidth(rows_width)
         controls_row.addWidget(self.included_label)
 
-        include_button = QPushButton("Include / Exclude")
-        include_button.setFixedWidth(rows_width)
-        controls_row.addWidget(include_button)
+        self.include_button = QPushButton("Include / Exclude")
+        self.include_button.setFixedWidth(rows_width)
+        controls_row.addWidget(self.include_button)
 
-        copy_button = QPushButton("Copy results")
-        copy_button.setFixedWidth(rows_width)
-        controls_row.addWidget(copy_button)
+        self.copy_button = QPushButton("Copy results")
+        self.copy_button.setFixedWidth(rows_width)
+        controls_row.addWidget(self.copy_button)
 
         # Connect top widgets
         self.combo_mupair.currentTextChanged.connect(self.gui_plot)
-        include_button.clicked.connect(self.include_exclude)
-        copy_button.clicked.connect(self.copy_to_clipboard)
+        self.include_button.clicked.connect(self.include_exclude)
+        self.copy_button.clicked.connect(self.copy_to_clipboard)
 
         # Combine into a top widget to prevent vertical expansion
         top_widget = QWidget()
@@ -1600,31 +1615,40 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
         # Display the first MU
         self.gui_plot(self.combo_mupair.currentText())
 
-    def clear_figure_and_canvas(self):
+    def clear_figure_and_canvas(self, delete_canvases=False):
+        """Release current Figures and optionally destroy their canvases."""
+
+        canvases = (
+            getattr(self, "muaps_canvas", None),
+            getattr(self, "idr1_canvas", None),
+            getattr(self, "idr2_canvas", None),
+        )
+        for canvas in canvases:
+            release_canvas_figure(canvas)
+
         self.figure_muaps = None
         self.figure_idr1 = None
         self.figure_idr2 = None
-        self.muaps_canvas = None
-        self.idr1_canvas = None
-        self.idr2_canvas = None
 
-        # Iteratively clean the canvas in the central widget
-        item = self.h_canvas_layout.takeAt(0)
-        widget = item.widget()
-        widget.setParent(None)
-        widget.close()
-        widget.deleteLater()
-        del widget
-        del item
-
-        while self.v_canvas_layout.count():
-            item = self.v_canvas_layout.takeAt(0)
-            widget = item.widget()
-            widget.setParent(None)
-            widget.close()
-            widget.deleteLater()
-            del widget
-            del item
+        if delete_canvases:
+            close_and_delete_widget(
+                self.muaps_canvas,
+                self.h_canvas_layout,
+                release_figure=True,
+            )
+            close_and_delete_widget(
+                self.idr1_canvas,
+                self.v_canvas_layout,
+                release_figure=True,
+            )
+            close_and_delete_widget(
+                self.idr2_canvas,
+                self.v_canvas_layout,
+                release_figure=True,
+            )
+            self.muaps_canvas = None
+            self.idr1_canvas = None
+            self.idr2_canvas = None
 
         # Force garbage collection to fasten memory cleanup
         gc.collect()
@@ -1693,9 +1717,7 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
                 use_plt=False,
             )
 
-        # Add to canvas
-        self.muaps_canvas = FigureCanvasQTAgg(self.figure_muaps)
-        self.h_canvas_layout.insertWidget(0, self.muaps_canvas, stretch=2)
+        set_canvas_figure(self.muaps_canvas, self.figure_muaps)
 
         # Display IDR mu1 figure
         self.figure_idr1 = plot_idr(
@@ -1711,9 +1733,7 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
             use_plt=False,
         )
 
-        # Add to canvas
-        self.idr1_canvas = FigureCanvasQTAgg(self.figure_idr1)
-        self.v_canvas_layout.addWidget(self.idr1_canvas, stretch=1)
+        set_canvas_figure(self.idr1_canvas, self.figure_idr1)
 
         # Display IDR mu2 figure
         self.figure_idr2 = plot_idr(
@@ -1731,9 +1751,7 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
             use_plt=False,
         )
 
-        # Add to canvas
-        self.idr2_canvas = FigureCanvasQTAgg(self.figure_idr2)
-        self.v_canvas_layout.addWidget(self.idr2_canvas, stretch=1)
+        set_canvas_figure(self.idr2_canvas, self.figure_idr2)
 
     def include_exclude(self):
         # Include or exclude the current MU pair
@@ -1761,7 +1779,7 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
         self.tracking_res.to_clipboard(excel=True, sep=self.csv_separator)
 
     def get_results(self):
-        # Get the edited tracking_res
+        # Get the edited tracking_res.
 
         msg = (
             "the method 'get_results()' is deprecated. Please access the " +
@@ -1772,12 +1790,88 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
 
         return self.tracking_res
 
+    def take_tracking_res(self):
+        """Transfer the edited tracking results out of the closed window."""
+
+        if self.tracking_res is None:
+            raise RuntimeError(
+                "The tracking results are unavailable or were already "
+                "retrieved."
+            )
+
+        tracking_res = self.tracking_res
+        self.tracking_res = None
+        self.cleanup(preserve_tracking_res=False)
+
+        try:
+            self.setParent(None)
+            self.deleteLater()
+        except RuntimeError:
+            pass
+
+        return tracking_res
+
+    def cleanup(self, preserve_tracking_res=True):
+        """Release plotting objects and input data retained by the window."""
+
+        if self._cleaned_up:
+            if not preserve_tracking_res:
+                self.tracking_res = None
+            return
+        self._cleaned_up = True
+
+        combo = getattr(self, "combo_mupair", None)
+        if combo is not None:
+            try:
+                combo.currentTextChanged.disconnect(self.gui_plot)
+            except (RuntimeError, TypeError):
+                pass
+
+        include_button = getattr(self, "include_button", None)
+        if include_button is not None:
+            try:
+                include_button.clicked.disconnect(self.include_exclude)
+            except (RuntimeError, TypeError):
+                pass
+
+        copy_button = getattr(self, "copy_button", None)
+        if copy_button is not None:
+            try:
+                copy_button.clicked.disconnect(self.copy_to_clipboard)
+            except (RuntimeError, TypeError):
+                pass
+
+        self.clear_figure_and_canvas(delete_canvases=True)
+
+        text_box = getattr(self, "text_box", None)
+        if text_box is not None:
+            try:
+                text_box.clear()
+            except RuntimeError:
+                pass
+
+        self.emgfile1 = None
+        self.emgfile2 = None
+        self.sta_emgfile1 = None
+        self.sta_emgfile2 = None
+        self.combo_mupair = None
+        self.include_button = None
+        self.copy_button = None
+        self.included_label = None
+        self.text_box = None
+        self.status_bar = None
+
+        if not preserve_tracking_res:
+            self.tracking_res = None
+
+        gc.collect()
+
     def closeEvent(self, event):
         # Ask user whether to exit and clear memory
         reply = QMessageBox.question(
             self,
             "Exit tracking validation?",
-            "Make sure to copy the results first.",
+            "The validated tracking results will be returned to the caller.",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
@@ -1785,7 +1879,7 @@ class XCORR_MUAPs_Tracking_gui(QMainWindow):
             event.ignore()
             return
 
-        self.clear_figure_and_canvas()
+        self.cleanup(preserve_tracking_res=True)
 
         # Emit a closing signal
         self.xcorr_muaps_tracking_gui_window_closed.emit()
@@ -1816,6 +1910,7 @@ def remove_duplicates_between(
     gui_csv_separator="\t",
     which="munumber",
     custom_tracking_res=None,
+    gui_parent=None,
 ):
     """
     Remove duplicated MUs across two different files based on STA.
@@ -1926,6 +2021,8 @@ def remove_duplicates_between(
         If custom tracking results are provided, the internal tracking
         procedure is skipped and duplicates removal is performed based on the
         provided info.
+    gui_parent : QWidget or None, default None
+        Optional Qt parent used when embedding the tracking GUI.
 
     Returns
     -------
@@ -2060,6 +2157,7 @@ def remove_duplicates_between(
             gui_addrefsig=gui_addrefsig,
             gui_refsig_channel=gui_refsig_channel,
             gui_csv_separator=gui_csv_separator,
+            gui_parent=gui_parent,
         )
     else:
         tracking_res = custom_tracking_res
@@ -2304,12 +2402,13 @@ class MUcv_gui():
         warnings.warn(
             self.__doc__.replace("\n", " "), DeprecationWarning, stacklevel=2,
         )
-        run_mle_mucv_gui(
+        self.res_df = run_mle_mucv_gui(
             emgfile,
             sorted_rawemg=sorted_rawemg,
             n_firings=n_firings,
             muaps_timewindow=muaps_timewindow,
             csv_separator=csv_separator,
+            return_results=True,
         )
 
 
@@ -2320,10 +2419,12 @@ def run_mle_mucv_gui(
     muaps_timewindow=50,
     diff_mode="double",
     csv_separator="\t",
+    parent=None,
+    return_results=False,
 ):
     """
     Run the Graphical User Interface for the estimation of MU conduction
-    velocity via Maximum Likelyhood Estimation.
+    velocity via Maximum Likelihood Estimation.
 
     It allows to estimate also the amplitude of the action potentials
     (root mean square - RMS).
@@ -2361,18 +2462,22 @@ def run_mle_mucv_gui(
             mode. MU CV should never be estimated on the monopolar signal.
     csv_separator : str, default "\t"
         The field delimiter used to create the .csv copied to the clipboard.
+    parent : QWidget or None, default None
+        Optional Qt parent used when embedding the CV window.
+    return_results : bool, default False
+        If True, return the result DataFrame directly. If False, return the
+        closed window for backward compatibility.
 
     Returns
     -------
-    QtWidget
-        A class with base QMainWindow which contains the attribute ``res_df``.
-        res_df is a pd.DataFrame containing the estimated CV, RMS, XCC and the
-        selected channels.
+    QtWidget or pandas.DataFrame
+        The closed window when ``return_results=False``. Otherwise, the
+        transferred result DataFrame.
 
     See also
     --------
     - MLE_MUCV_gui : Graphical User Interface for the estimation of MU
-    conduction velocity via Maximum Likelyhood Estimation.
+    conduction velocity via Maximum Likelihood Estimation.
     - estimate_cv_via_mle : Estimate signal conduction velocity via maximum
         likelihood estimation.
 
@@ -2381,7 +2486,7 @@ def run_mle_mucv_gui(
     Run the GUI for MU CV estimation via MLE.
 
     >>> import openhdemg.library as emg
-    >>> emgfile = emgfile = emg.emg_from_samplefile()
+    >>> emgfile = emg.emg_from_samplefile()
     >>> emgfile = emg.filter_rawemg(emgfile)
     >>> sorted_rawemg = emg.sort_rawemg(
     ...     emgfile,
@@ -2399,7 +2504,7 @@ def run_mle_mucv_gui(
 
     Get the results for further processing
 
-    >>> results = gui.res_df
+    >>> results = gui.take_results()
              CV        RMS       XCC Column  From_Row  To_Row
     0  3.825479  84.266813  0.958324   col1         8      10
     1  0.000000   0.000000  0.000000    0.0         0       0
@@ -2410,7 +2515,7 @@ def run_mle_mucv_gui(
     ![](md_graphics/docstrings/muap/mle_mucv_gui.png)
     """
 
-    app, app_created, path_to_icon = check_app()
+    _app, _, path_to_icon = check_app()
 
     # Execute in blocking mode
     window = MLE_MUCV_gui(
@@ -2421,17 +2526,22 @@ def run_mle_mucv_gui(
         diff_mode=diff_mode,
         csv_separator=csv_separator,
         path_to_icon=path_to_icon,
+        parent=parent,
     )
-    window.show()
-    app.exec()
+    run_window_blocking(
+        window,
+        window.mle_mucv_gui_window_closed,
+    )
 
+    if return_results:
+        return window.take_results()
     return window
 
 
 class MLE_MUCV_gui(QMainWindow):
     """
     Graphical User Interface for the estimation of MU conduction velocity via
-    Maximum Likelyhood Estimation.
+    Maximum Likelihood Estimation.
 
     It allows to estimate also the amplitude of the action potentials
     (root mean square - RMS).
@@ -2477,12 +2587,15 @@ class MLE_MUCV_gui(QMainWindow):
     path_to_icon : None or str, default None
         The path to the window icon. Use none if this widget inherits from a
         parent.
+    parent : QWidget or None, default None
+        Optional parent used when embedding the CV window.
 
     Attributes
     ----------
     res_df : pd.DataFrame
         The dataframe containing the estimated CV, RMS, XCC and the selected
-        channels.
+        channels. Call :meth:`take_results` after the window closes to transfer
+        ownership to the caller.
 
     Signals
     -------
@@ -2493,7 +2606,7 @@ class MLE_MUCV_gui(QMainWindow):
     See also
     --------
     - run_mle_mucv_gui : Run the GUI for estimating MU conduction velocity via
-        Maximum Likelyhood Estimation.
+        Maximum Likelihood Estimation.
     - estimate_cv_via_mle : Estimate signal conduction velocity via maximum
         likelihood estimation.
     """
@@ -2510,7 +2623,10 @@ class MLE_MUCV_gui(QMainWindow):
         diff_mode="double",
         csv_separator="\t",
         path_to_icon=None,
+        parent=None,
     ):
+        self._cleaned_up = False
+
         # On start, compute the necessary information
         self.emgfile = emgfile
         if diff_mode == "double":
@@ -2551,7 +2667,7 @@ class MLE_MUCV_gui(QMainWindow):
         })
 
         # Set up the GUI
-        super().__init__()
+        super().__init__(parent)
         self.setWindowTitle("MU CV estimation via MLE")
         if path_to_icon is not None:
             icon = QIcon(path_to_icon)
@@ -2590,8 +2706,8 @@ class MLE_MUCV_gui(QMainWindow):
         self.combo_fromrow.setFixedWidth(rows_width)
         self.combo_torow = QComboBox()
         self.combo_torow.setFixedWidth(rows_width)
-        estimate_button = QPushButton("Estimate")
-        estimate_button.setFixedWidth(rows_width)
+        self.estimate_button = QPushButton("Estimate")
+        self.estimate_button.setFixedWidth(rows_width)
 
         # Populate dropdowns with items
         mu_names = [str(n) for n in range(self.emgfile["NUMBER_OF_MUS"])]
@@ -2612,11 +2728,11 @@ class MLE_MUCV_gui(QMainWindow):
         widget_row.addWidget(self.combo_col)
         widget_row.addWidget(self.combo_fromrow)
         widget_row.addWidget(self.combo_torow)
-        widget_row.addWidget(estimate_button)
+        widget_row.addWidget(self.estimate_button)
 
         # Connect left widgets
         self.combo_munumber.currentTextChanged.connect(self.gui_plot)
-        estimate_button.clicked.connect(self.compute_cv)
+        self.estimate_button.clicked.connect(self.compute_cv)
 
         # Combine into a top widget to prevent vertical expansion
         top_widget = QWidget()
@@ -2644,9 +2760,9 @@ class MLE_MUCV_gui(QMainWindow):
         layout.setSpacing(5)
 
         # Button on top
-        copy_button = QPushButton("Copy results")
-        copy_button.clicked.connect(self.copy_to_clipboard)
-        layout.addWidget(copy_button)
+        self.copy_button = QPushButton("Copy results")
+        self.copy_button.clicked.connect(self.copy_to_clipboard)
+        layout.addWidget(self.copy_button)
 
         # Expanding text box with scrollbars
         self.text_box = QPlainTextEdit()
@@ -2670,18 +2786,19 @@ class MLE_MUCV_gui(QMainWindow):
         # Display the MUAPs from the first MU at startup
         self.gui_plot(self.combo_munumber.currentText())
 
-    def clear_figure_and_canvas(self):
-        self.figure = None
-        self.fig_canvas = None
+    def clear_figure_and_canvas(self, delete_canvas=False):
+        """Release the current Figure and optionally destroy its canvas."""
 
-        # Iteratively clean the 2 levels of the central widget
-        item = self.cw_layout.takeAt(1)
-        widget = item.widget()
-        widget.setParent(None)
-        widget.close()
-        widget.deleteLater()
-        del widget
-        del item
+        release_canvas_figure(getattr(self, "fig_canvas", None))
+        self.figure = None
+
+        if delete_canvas:
+            close_and_delete_widget(
+                self.fig_canvas,
+                self.cw_layout,
+                release_figure=True,
+            )
+            self.fig_canvas = None
 
         # Force garbage collection to fasten memory cleanup
         gc.collect()
@@ -2710,9 +2827,7 @@ class MLE_MUCV_gui(QMainWindow):
             left=0.05, right=0.95, top=0.9, bottom=0.05,
         )
 
-        # Create figure canvas
-        self.fig_canvas = FigureCanvasQTAgg(self.figure)
-        self.cw_layout.addWidget(self.fig_canvas)
+        set_canvas_figure(self.fig_canvas, self.figure)
 
     def copy_to_clipboard(self):
         # Copy the dataframe to clipboard in csv format.
@@ -2740,7 +2855,7 @@ class MLE_MUCV_gui(QMainWindow):
         col_list = list(range(from_row, to_row + 1))
         sig = sig.iloc[:, col_list]
 
-        # Verify that the signal is correcly oriented
+        # Verify that the signal is correctly oriented
         if len(sig) < len(sig.columns):
             raise ValueError(
                 "The number of signals exceeds the number of samples. " +
@@ -2769,12 +2884,88 @@ class MLE_MUCV_gui(QMainWindow):
 
         self.text_box.setPlainText(self.res_df.to_string(float_format="%.2f"))
 
+    def take_results(self):
+        """Transfer the CV result DataFrame out of the closed window."""
+
+        if self.res_df is None:
+            raise RuntimeError(
+                "The CV results are unavailable or were already retrieved."
+            )
+
+        results = self.res_df
+        self.res_df = None
+        self.cleanup(preserve_results=False)
+
+        try:
+            self.setParent(None)
+            self.deleteLater()
+        except RuntimeError:
+            pass
+
+        return results
+
+    def cleanup(self, preserve_results=True):
+        """Release plotting objects and input data retained by the CV window."""
+
+        if self._cleaned_up:
+            if not preserve_results:
+                self.res_df = None
+            return
+        self._cleaned_up = True
+
+        combo = getattr(self, "combo_munumber", None)
+        if combo is not None:
+            try:
+                combo.currentTextChanged.disconnect(self.gui_plot)
+            except (RuntimeError, TypeError):
+                pass
+
+        estimate_button = getattr(self, "estimate_button", None)
+        if estimate_button is not None:
+            try:
+                estimate_button.clicked.disconnect(self.compute_cv)
+            except (RuntimeError, TypeError):
+                pass
+
+        copy_button = getattr(self, "copy_button", None)
+        if copy_button is not None:
+            try:
+                copy_button.clicked.disconnect(self.copy_to_clipboard)
+            except (RuntimeError, TypeError):
+                pass
+
+        self.clear_figure_and_canvas(delete_canvas=True)
+
+        text_box = getattr(self, "text_box", None)
+        if text_box is not None:
+            try:
+                text_box.clear()
+            except RuntimeError:
+                pass
+
+        self.emgfile = None
+        self.st = None
+        self.sta_xcc = None
+        self.combo_munumber = None
+        self.combo_col = None
+        self.combo_fromrow = None
+        self.combo_torow = None
+        self.estimate_button = None
+        self.copy_button = None
+        self.text_box = None
+        self.status_bar = None
+
+        if not preserve_results:
+            self.res_df = None
+
+        gc.collect()
+
     def closeEvent(self, event):
         # Ask user whether to exit and clear memory
         reply = QMessageBox.question(
             self,
             "Exit MU CV estimation?",
-            "Make sure to copy the results first.",
+            "The estimated results will be returned to the caller.",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
@@ -2782,7 +2973,7 @@ class MLE_MUCV_gui(QMainWindow):
             event.ignore()
             return
 
-        self.clear_figure_and_canvas()
+        self.cleanup(preserve_results=True)
 
         # Emit a closing signal
         self.mle_mucv_gui_window_closed.emit()
