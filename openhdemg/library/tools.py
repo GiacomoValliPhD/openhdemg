@@ -181,6 +181,7 @@ def showselect(
     title="",
     titlesize=12,
     nclic=2,
+    gui_parent=None,
 ):
     """
     Visually select a part of the recording (X axis).
@@ -218,6 +219,8 @@ def showselect(
     nclic: int, default 2
         The number of clics to be collected. If nclic < 1, all the clicks are
         collected.
+    gui_parent : QWidget or None, default None
+        Optional Qt parent used when embedding the point selector.
 
     Returns
     -------
@@ -274,6 +277,7 @@ def showselect(
         y_label=y_label,
         title=title,
         title_fontsize=titlesize,
+        parent=gui_parent,
     )
 
     points = [round(point[0]) for point in res]
@@ -682,7 +686,11 @@ def resize_emgfile(
     return standardise_emgfile_dtypes(rs_emgfile), start_, end_
 
 
-def select_bad_channels(emgfile, manual_offset=0):
+def select_bad_channels(
+    emgfile,
+    manual_offset=0,
+    gui_parent=None,
+):
     """
     Select noisy channels via visual inspection.
 
@@ -699,6 +707,8 @@ def select_bad_channels(emgfile, manual_offset=0):
         This parameter sets the scaling of the channels. If 0 (default), the
         channels' amplitude is scaled automatically to fit the plotting window.
         If > 0, the channels will be scaled based on the specified value.
+    gui_parent : QWidget or None, default None
+        Optional Qt parent used when embedding the channel selector.
 
     Returns
     -------
@@ -722,6 +732,7 @@ def select_bad_channels(emgfile, manual_offset=0):
     edited_emgfile = run_manual_emgchannels_selection_dialog(
         emgfile=emgfile,
         manual_offset=manual_offset,
+        parent=gui_parent,
     )
 
     return edited_emgfile
