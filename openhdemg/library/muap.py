@@ -12,7 +12,8 @@ from functools import reduce
 import numpy as np
 import pandas as pd
 from scipy import signal
-from joblib import Parallel, delayed  # TODO can this be replaced???
+from joblib import Parallel, delayed
+from joblib.externals.loky import get_reusable_executor
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
@@ -758,6 +759,54 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     return aligned_sta1, aligned_sta2
 
 
+def _tracking_parallel_worker(
+    mu_file1,
+    number_of_mus_file2,
+    sta_emgfile1,
+    sta_emgfile2,
+    align_muaps,
+    exclude_belowthreshold,
+    threshold,
+):
+    """Compare one MU from the first file with every MU from the second."""
+
+    # Dict to fill with the 2d cross-correlation results
+    res = {"MU_file1": [], "MU_file2": [], "XCC": []}
+
+    # Compare mu_file1 against all the MUs in file2
+    for mu_file2 in range(number_of_mus_file2):
+        # First, align the STAs
+        if align_muaps:
+            aligned_sta1, aligned_sta2 = align_by_xcorr(
+                sta_emgfile1[mu_file1],
+                sta_emgfile2[mu_file2],
+                finalduration=0.5,
+            )
+        else:
+            aligned_sta1 = sta_emgfile1[mu_file1]
+            aligned_sta2 = sta_emgfile2[mu_file2]
+
+        # Second, compute 2d cross-correlation
+        df1, _ = unpack_sta(aligned_sta1)
+        df1.dropna(axis=1, inplace=True)
+        df2, _ = unpack_sta(aligned_sta2)
+        df2.dropna(axis=1, inplace=True)
+        _, normxcorr_max = norm_twod_xcorr(df1, df2, mode="full")
+
+        # Third, fill the tracking_res
+        if exclude_belowthreshold is False:
+            res["MU_file1"].append(mu_file1)
+            res["MU_file2"].append(mu_file2)
+            res["XCC"].append(normxcorr_max)
+
+        elif exclude_belowthreshold and normxcorr_max >= threshold:
+            res["MU_file1"].append(mu_file1)
+            res["MU_file2"].append(mu_file2)
+            res["XCC"].append(normxcorr_max)
+
+    return res
+
+
 # TODO update examples for code="None"
 # This function exploits parallel processing for MUAPs alignment and xcorr
 def tracking(
@@ -1066,52 +1115,26 @@ def tracking(
 
     print("\nTracking started:")
 
-    # Tracking function to run in parallel
-    def parallel(mu_file1):  # Loop all the MUs of file 1
-        # Dict to fill with the 2d cross-correlation results
-        res = {"MU_file1": [], "MU_file2": [], "XCC": []}
-
-        # Compare mu_file1 against all the MUs in file2
-        for mu_file2 in range(emgfile2["NUMBER_OF_MUS"]):
-            # First, align the STAs
-            if not isinstance(custom_muaps, list):
-                aligned_sta1, aligned_sta2 = align_by_xcorr(
-                    sta_emgfile1[mu_file1],
-                    sta_emgfile2[mu_file2],
-                    finalduration=0.5
-                )
-            else:
-                aligned_sta1 = sta_emgfile1[mu_file1]
-                aligned_sta2 = sta_emgfile2[mu_file2]
-
-            # Second, compute 2d cross-correlation
-            df1, _ = unpack_sta(aligned_sta1)
-            df1.dropna(axis=1, inplace=True)
-            df2, _ = unpack_sta(aligned_sta2)
-            df2.dropna(axis=1, inplace=True)
-            _, normxcorr_max = norm_twod_xcorr(
-                df1, df2, mode="full"
-            )
-
-            # Third, fill the tracking_res
-            if exclude_belowthreshold is False:
-                res["MU_file1"].append(mu_file1)
-                res["MU_file2"].append(mu_file2)
-                res["XCC"].append(normxcorr_max)
-
-            elif exclude_belowthreshold and normxcorr_max >= threshold:
-                res["MU_file1"].append(mu_file1)
-                res["MU_file2"].append(mu_file2)
-                res["XCC"].append(normxcorr_max)
-
-        return res
+    align_muaps = not isinstance(custom_muaps, list)
+    worker_args = (
+        emgfile2["NUMBER_OF_MUS"],
+        sta_emgfile1,
+        sta_emgfile2,
+        align_muaps,
+        exclude_belowthreshold,
+        threshold,
+    )
 
     if multiprocessing:
-        # Start parallel execution
-        res = Parallel(n_jobs=-1, verbose=1)(
-            delayed(parallel)(mu_file1) for mu_file1 in range(emgfile1["NUMBER_OF_MUS"])
-        )
-        print("\n")
+        try:
+            # Start parallel execution
+            res = Parallel(n_jobs=-1, verbose=1)(
+                delayed(_tracking_parallel_worker)(mu_file1, *worker_args)
+                for mu_file1 in range(emgfile1["NUMBER_OF_MUS"])
+            )
+            print("\n")
+        finally:
+            get_reusable_executor().shutdown(wait=True, kill_workers=True)
 
     else:
         # Start serial execution
@@ -1119,7 +1142,7 @@ def tracking(
 
         res = []
         for pos, mu_file1 in enumerate(range(emgfile1["NUMBER_OF_MUS"])):
-            res.append(parallel(mu_file1))
+            res.append(_tracking_parallel_worker(mu_file1, *worker_args))
             # Show progress
             t1 = time.time()
             print(
