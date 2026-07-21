@@ -73,6 +73,7 @@ nav:
       - Multiple reference signals: tutorials/multiple_reference_signals.md
       - Binary modules: tutorials/binary_modules.md
       - Collections: tutorials/collections.md
+      - Custom sorting orders: tutorials/sorting_orders.md
       - Import from other software: tutorials/import_from_other_software.md
     - Processing and analyses:
       - Decomposition and cleaning: tutorials/decomposition_and_cleaning.md

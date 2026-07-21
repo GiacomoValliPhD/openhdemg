@@ -67,25 +67,36 @@ class TestElectrodes(unittest.TestCase):
         emgfile = emg_from_demuse(
             filepath=getd("library", "demuse", "DEMUSE_D_R_mMU.mat"),
         )
-        for dividebycolumn in [True, False]:
-            res = sort_rawemg(
-                emgfile,
-                code="None",
-                dividebycolumn=dividebycolumn,
-                n_rows=13,
-                n_cols=5,
-            )
-        if dividebycolumn:
-            self.assertIsInstance(res, dict)
-            self.assertIsInstance(res["col0"], pd.DataFrame)
-        else:
-            self.assertIsInstance(res, pd.DataFrame)
+        for code in [None, "None"]:
+            for dividebycolumn in [True, False]:
+                res = sort_rawemg(
+                    emgfile,
+                    code=code,
+                    dividebycolumn=dividebycolumn,
+                    n_rows=13,
+                    n_cols=5,
+                )
+                if dividebycolumn:
+                    self.assertIsInstance(res, dict)
+                    self.assertIsInstance(res["col0"], pd.DataFrame)
+                else:
+                    self.assertIsInstance(res, pd.DataFrame)
 
         # Load the decomposed samplefile
         emgfile = emg_from_samplefile()
 
         # Test built in OTB sorting orders
-        for code in ["GR08MM1305", "GR04MM1305", "GR10MM0808"]:
+        codes = [
+            "GR08MM1305",
+            "GR04MM1305",
+            "GR10MM0808",
+            "HD04MM1305",
+            "HD08MM1305",
+            "HD05MM0804",
+            "HD10MM0804",
+            "HD10MM0808",
+        ]
+        for code in codes:
             for orientation in [0, 180]:
                 for dividebycolumn in [True, False]:
                     res = sort_rawemg(
