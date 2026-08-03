@@ -104,6 +104,7 @@ nav:
     - info: api_info.md
     - ui:
       - widgets: api_widgets.md
+      - bss_editor: api_bss_editor.md
     - compatibility: api_compatibility.md
 
 # Extensions

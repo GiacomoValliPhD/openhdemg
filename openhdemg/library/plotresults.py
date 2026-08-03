@@ -1237,8 +1237,6 @@ def plot_smoothed_dr_mutualinformation_matrix(
 
     Examples
     --------
-    Examples
-    --------
     Plot the thresholded pairwise mutual-information matrix.
 
     >>> import openhdemg.library as emg

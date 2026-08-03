@@ -1,4 +1,4 @@
-## What Is an `emgfile`
+## What is an `emgfile`
 
 The `emgfile` is the main data structure used by *openhdemg*. In practical terms, it is a Python dictionary that stores the signals, motor unit discharge times, sampling information, analysis results, and metadata needed by the library functions.
 
