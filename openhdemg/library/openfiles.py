@@ -77,7 +77,9 @@ from openhdemg.library.electrodes import (
     OTBelectrodes_ied, OTBelectrodes_Nelectrodes,
 )
 from openhdemg.library.mathtools import compute_sil
-from openhdemg.library.tools import create_binary_firings, mupulses_from_binary
+from openhdemg.library.tools import (
+    create_binary_firings, mupulses_from_binary, standardise_emgfile_dtypes,
+)
 
 from openhdemg.ui.widgets import (
     run_custom_file_dialog, run_custom_directory_dialog,
@@ -1804,10 +1806,10 @@ def emg_from_demuse(filepath, ignore_negative_ipts=False):
         (including file extension .mat).
         This can be a simple string, the use of Path is not necessary.
     ignore_negative_ipts : bool, default False
-        This parameter determines the silhouette score estimation. If True,
-        only positive ipts values are used during peak and noise clustering.
-        This is particularly important for compensating sources with large
-        negative components.
+        This parameter is deprecated and will be removed in future releases.
+        Please manually transform the 'ipts' if needed. To replicate the
+        behaviour of 'ignore_negative_ipts=True' you can use
+        'ipts * np.abs(ipts)'.
 
     Returns
     -------
@@ -2277,10 +2279,10 @@ def emg_from_otb(
         file. If not None, pass a regex pattern unequivocally identifying the
         variable in the .mat file to load as extras.
     ignore_negative_ipts : bool, default False
-        This parameter determines the silhouette score estimation. If True,
-        only positive ipts values are used during peak and noise clustering.
-        This is particularly important for compensating sources with large
-        negative components.
+        This parameter is deprecated and will be removed in future releases.
+        Please manually transform the 'ipts' if needed. To replicate the
+        behaviour of 'ignore_negative_ipts=True' you can use
+        'ipts * np.abs(ipts)'.
 
     Returns
     -------
@@ -3391,10 +3393,10 @@ def save_json_emgfile(emgfile, filepath, compresslevel=4):
         # Directly convert str or float to a json format.
         source = json.dumps(emgfile["SOURCE"])
         filename = json.dumps(emgfile["FILENAME"])
-        fsamp = json.dumps(emgfile["FSAMP"])
-        ied = json.dumps(emgfile["IED"])
-        emg_length = json.dumps(emgfile["EMG_LENGTH"])
-        number_of_mus = json.dumps(emgfile["NUMBER_OF_MUS"])
+        fsamp = json.dumps(float(emgfile["FSAMP"]))
+        ied = json.dumps(float(emgfile["IED"]))
+        emg_length = json.dumps(int(emgfile["EMG_LENGTH"]))
+        number_of_mus = json.dumps(int(emgfile["NUMBER_OF_MUS"]))
 
         # df
         # Access and convert the df to a json object.
@@ -3463,7 +3465,7 @@ def save_json_emgfile(emgfile, filepath, compresslevel=4):
         # Directly convert str or float to a json format.
         source = json.dumps(emgfile["SOURCE"])
         filename = json.dumps(emgfile["FILENAME"])
-        fsamp = json.dumps(emgfile["FSAMP"])
+        fsamp = json.dumps(float(emgfile["FSAMP"]))
 
         # df
         # Access and convert the df to a json object.
@@ -3710,11 +3712,10 @@ def askopenfile(filesource="OPENHDEMG", **kwargs):
         ``CUSTOMCSV_REFSIG``
             Custom file format (.csv) containing only the reference signal.
     ignore_negative_ipts : bool, default False
-        This parameter determines the silhouette score estimation. If True,
-        only positive ipts values are used during peak and noise clustering.
-        This is particularly important for compensating sources with large
-        negative components. Currently, this parameter is used when loading
-        files decomposed in DEMUSE or OTB.
+        This parameter is deprecated and will be removed in future releases.
+        Please manually transform the 'ipts' if needed. To replicate the
+        behaviour of 'ignore_negative_ipts=True' you can use
+        'ipts * np.abs(ipts)'.
     otb_ext_factor : int, default 8
         The extension factor used for the decomposition in the OTbiolab+
         software.
@@ -4089,4 +4090,4 @@ def emg_from_samplefile():
         version="1.5.8.0",
     )
 
-    return emgfile
+    return standardise_emgfile_dtypes(emgfile)

@@ -419,9 +419,9 @@ def sta(
                         # Avoid incomplete muaps
                         if len(ls) == tottime:
                             sta_values.append(ls)
-                else:
-                    # If no firings, set STA to zeros (while preserving the
-                    # empty channel.
+                # Handle both an empty MU and a selection with no complete
+                # windows, while preserving the empty channel.
+                if len(sta_values) == 0:
                     if np.all(np.isnan(emg_array)):
                         sta_values.append(np.full((tottime, ), np.nan))
                     else:
@@ -702,6 +702,11 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
     101 NaN  -7.008870   1.708984 ... 25.634764  40.100101  43.009445
     """
 
+    if not 0 < finalduration <= 1:
+        raise ValueError(
+            "finalduration must be greater than 0 and no greater than 1."
+        )
+
     # Obtain a pd.DataFrame for the 2d xcorr without empty column
     # but mantain the original pd.DataFrame with empty column to return the
     # aligned STAs.
@@ -712,45 +717,44 @@ def align_by_xcorr(sta_mu1, sta_mu2, finalduration=0.5):
 
     # Compute 2dxcorr to identify a common lag/delay
     normxcorr_df, _ = norm_twod_xcorr(
-        no_nan_sta1, no_nan_sta2, mode="same"
+        no_nan_sta1, no_nan_sta2, mode="same",
     )
 
     # Detect the time leads or lags from 2dxcorr
     corr_lags = signal.correlation_lags(
-        len(no_nan_sta1.index), len(no_nan_sta2.index), mode="same"
+        len(no_nan_sta1.index), len(no_nan_sta2.index), mode="same",
     )
     normxcorr_df = normxcorr_df.set_index(corr_lags)
     lag = normxcorr_df.idxmax().median()  # First signal compared to second
 
-    # Be sure that the lag/delay does not exceed values suitable for the final
+    # Limit the lag symmetrically so that enough overlap remains for the final
     # expected duration.
-    finalduration_samples = round(len(df1.index) * finalduration)
-    if lag > (finalduration_samples / 2):
-        lag = finalduration_samples / 2
+    original_length = len(df1.index)
+    finalduration_samples = round(original_length * finalduration)
 
-    # Align the signals
-    dfmin = normxcorr_df.index.min()
-    dfmax = normxcorr_df.index.max()
+    lag = int(round(lag))
+    max_lag = original_length - finalduration_samples
+    lag = int(np.clip(lag, -max_lag, max_lag))
 
-    start1 = dfmin + abs(lag) if lag > 0 else dfmin
-    stop1 = dfmax if lag > 0 else dfmax - abs(lag)
-
-    start2 = dfmin + abs(lag) if lag < 0 else dfmin
-    stop2 = dfmax if lag < 0 else dfmax - abs(lag)
-
-    df1cut = df1.set_index(corr_lags).loc[start1:stop1, :]
-    df2cut = df2.set_index(corr_lags).loc[start2:stop2, :]
+    # Align the signals by removing the non-overlapping samples.
+    if lag > 0:
+        df1cut = df1.iloc[lag:, :]
+        df2cut = df2.iloc[:-lag, :]
+    elif lag < 0:
+        shift = abs(lag)
+        df1cut = df1.iloc[:-shift, :]
+        df2cut = df2.iloc[shift:, :]
+    else:
+        df1cut = df1
+        df2cut = df2
 
     # Cut the signal to respect the final duration
-    tocutstart = round((len(df1cut.index) - finalduration_samples) / 2)
-    tocutend = round(len(df1cut.index) - tocutstart)
+    tocutstart = (len(df1cut.index) - finalduration_samples) // 2
+    tocutend = tocutstart + finalduration_samples
 
-    df1cut = df1cut.iloc[tocutstart:tocutend, :]
-    df2cut = df2cut.iloc[tocutstart:tocutend, :]
-
-    # Reset index to have a common index
-    df1cut.reset_index(drop=True, inplace=True)
-    df2cut.reset_index(drop=True, inplace=True)
+    # Derive the stop from the start to guarantee the exact requested length.
+    df1cut = df1cut.iloc[tocutstart:tocutend, :].reset_index(drop=True)
+    df2cut = df2cut.iloc[tocutstart:tocutend, :].reset_index(drop=True)
 
     # Convert the STA to the original dict structure
     aligned_sta1 = pack_sta(df1cut, d_keys)
@@ -1151,7 +1155,9 @@ def tracking(
             )
         print("\n")
 
-    # Convert res to pd.DataFrame
+    # Initialise the expected columns for zero-MU inputs. When results are
+    # available, the first worker DataFrame replaces this empty container.
+    tracking_res = pd.DataFrame(columns=["MU_file1", "MU_file2", "XCC"])
     for pos, i in enumerate(res):
         if pos == 0:
             tracking_res = pd.DataFrame(i)
@@ -2381,13 +2387,21 @@ def estimate_cv_via_mle(emgfile, signal):
     sig = signal.to_numpy()
     sig = sig.T
 
-    # Prepare the input 1D signals for find_mle_teta
+    # Select the signals used to determine the propagation direction.
     if np.shape(sig)[0] > 3:
-        sig1 = sig[1, :]
-        sig2 = sig[2, :]
+        first = 1
+        second = 2
     else:
-        sig1 = sig[0, :]
-        sig2 = sig[1, :]
+        first = 0
+        second = 1
+
+    corr = np.correlate(sig[first, :], sig[second, :], mode="full")
+    if np.argmax(corr) > len(corr) // 2:
+        sig = np.flipud(sig)
+
+    # Prepare the input 1D signals for find_mle_teta
+    sig1 = sig[first, :]
+    sig2 = sig[second, :]
 
     teta = find_mle_teta(
         sig1=sig1,
