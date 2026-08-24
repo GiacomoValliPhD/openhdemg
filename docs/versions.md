@@ -9,7 +9,7 @@ If you're looking for a specific version, simply select it from the list below.
 
 ## 🚀 Latest Version  
 
-**[v0.2.0-Beta1 (Latest)](https://www.giacomovalli.com/openhdemg/){:target="_blank"}**  
+**[v0.2.0-Beta2 (Latest)](https://www.giacomovalli.com/openhdemg/){:target="_blank"}**  
 _Latest features, updates, and improvements, **but in beta version**!_  
 
 ---
