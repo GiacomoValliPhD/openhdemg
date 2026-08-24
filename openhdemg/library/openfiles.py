@@ -3913,6 +3913,7 @@ def askopenfile(filesource="OPENHDEMG", **kwargs):
         mus_file_toOpen = run_custom_directory_dialog(
             window_title="Select the folder containing DELSYS decomposition",
         )
+        file_toOpen = True
     elif filesource == "OPENHDEMG":
         file_toOpen = run_custom_file_dialog(
             mode="open",
