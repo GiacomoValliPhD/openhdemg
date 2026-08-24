@@ -50,7 +50,7 @@ emgfile = emg.emg_from_samplefile()
 *emgfile* is organised as a Python dictionary and contains different elements (which are labelled by keys).
 
 !!! note "emgfile keys"
-    Since version 0.2.0, the `emgfile` structure is flexible: keys that are not relevant to the current file can be absent. When a standard key is present, it should keep the standard name and expected data type. For a full explanation, see the [Structure of the emgfile](tutorials/emgfile_structure.md) tutorial and the [openfiles documentation](api_openfiles.md#notes).
+    Since version 0.2.0, the `emgfile` structure is flexible: keys that are not relevant to the current file can be absent. When a standard key is present, it should keep the standard name and expected data type. For a full explanation, see the [Structure of the emgfile](tutorials/emgfile_structure.md) tutorial and the [openfiles documentation](api_openfiles.md).
 
 Each key in the emgfile can be accessed as `emgfile["KEY_NAME"]`.
 
