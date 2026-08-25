@@ -15,6 +15,7 @@ INSTALL_REQUIRES = [
     "PySide6==6.9.0",
     "scipy<=1.14.1",
     "scikit-learn==1.5.2",
+    "joblib==1.5.3",
 ]
 
 EXTRAS_REQUIRE = {}

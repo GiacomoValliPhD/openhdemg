@@ -2,7 +2,6 @@
 include README.md
 include LICENSE
 include CONTRIBUTING.md
-include requirements.txt
 
 # Add all the non .py files in openhdemg
 include openhdemg/ui/icons/Icon_transp.ico

@@ -55,7 +55,7 @@ The release of Version 1.0 is undoubtedly the most significant achievement for a
 
 ### Engagement milestones
 
-On the engagement side, the milestones aim to enhance the reach and outreach of *openhdemg* and to bring new [contributors](#meet-the-contributors) in the project. These milestones focus on expanding the visibility and impact of *openhdemg* within the HDsEMG community and beyond.
+On the engagement side, the milestones aim to enhance the reach and outreach of *openhdemg* and to bring new contributors in the project. These milestones focus on expanding the visibility and impact of *openhdemg* within the HDsEMG community and beyond.
 
 **Reach 1** &nbsp; :fontawesome-solid-clock: &nbsp; :fontawesome-solid-calendar-day:
 

@@ -1,3 +1,80 @@
+## :octicons-tag-24: 0.2.0-beta.2
+:octicons-clock-24: August 2026
+
+Version 0.2.0-beta.2 focuses on robustness, numerical accuracy, and better management of edge cases. Analyses and interactive workflows are now more reliable with empty files, incomplete discharge trains, invalid selections, and other complex inputs.
+
+### Backward Compatibility
+
+This release remains compatible with the `emgfile` and binary-module structures introduced in v0.2.0-beta.1.
+
+Some results may differ slightly from v0.2.0-beta.1 because several numerical and indexing issues have been corrected, particularly in edge cases.
+
+!!! warning "Differences in conduction velocity estimates"
+    Maximum-likelihood conduction-velocity estimates may differ slightly for some MUs. This release corrects interelectrode-distance conversion, delay estimation, and MUAP propagation-direction handling.
+
+### Major Achievements
+
+- **More accurate analyses**, including conduction velocity, discharge-rate variability, steady-state analyses, and MUAP alignment.
+- **Stronger edge-case handling** for files with no MUs, incomplete STA windows, and MUs with few or no firings.
+- **Improved memory and worker management** in interactive interfaces and parallel MU tracking.
+
+### Major Changes
+
+- Core MU analyses now return correctly structured empty results when no MUs are available.
+- Steady-state discharge-rate and variability calculations now select inter-discharge intervals more accurately.
+- Invalid MU identifiers, resize intervals, RFD selections, and analysis windows are detected earlier with clearer errors.
+- Parallel MU tracking and interactive interfaces release workers, figures, and retained data more effectively.
+- Plotting modules no longer force the QtAgg backend, improving compatibility across execution environments.
+- Test coverage has been expanded around numerical correctness, empty files, optional data, and invalid inputs.
+
+- **Updated analysis functions**:
+
+    - `compute_thresholds()`, `compute_dr()`, `compute_covisi()`, `compute_drvariability()`, and `basic_mus_properties()` now handle files containing no MUs.
+    - `compute_dr()`, `compute_covisi()`, and `compute_drvariability()` provide more accurate steady-state calculations.
+    - `compute_covsteady()` now consistently uses the selected reference-signal channel.
+    - `compute_rfd()` provides stronger validation of starting points and analysis intervals.
+    - `compute_pnr()` safely handles MUs with fewer than two firings.
+    - `min_max_scaling()` now preserves decimal results when integer or Boolean arrays are provided.
+
+- **Updated MUAP and conduction-velocity functions**:
+
+    - `sta()` now handles MUs without complete spike-triggered windows.
+    - `align_by_xcorr()` provides safer alignment and guarantees the requested output duration.
+    - `find_mle_teta()` and `estimate_cv_via_mle()` provide more accurate delay and conduction-velocity estimates.
+    - `tracking()` improves parallel execution, memory management, and handling of files without MUs.
+    - `remove_duplicates_between()` benefits from the updated tracking interface.
+
+- **Updated file and data-management functions**:
+
+    - `resize_emgfile()` rejects invalid or empty intervals.
+    - `delete_mus()`, `delete_empty_mus()`, and `sort_mus()` are more robust with invalid identifiers, empty MUs, and zero-MU files.
+    - `save_json_emgfile()` more reliably serialises NumPy scalar values.
+    - `emg_from_samplefile()` returns standardised data types.
+    - `askopenfile()` can again load Delsys files correctly.
+
+- **Updated electrode functions**:
+
+    - `sort_rawemg()` adds support for `HD04MM1305`, `HD08MM1305`, `HD05MM0804`, `HD10MM0804`, and `HD10MM0808`.
+    - The `GR10MM0808` sorting order has been corrected.
+    - Unsupported electrode codes and custom sorting orders are handled more consistently.
+
+- **Updated interface functions and classes**:
+
+    - `showselect()` and `select_bad_channels()` provide improved integration with parent interfaces.
+    - `run_xcorr_muaps_tracking_gui()` and `run_mle_mucv_gui()` provide safer transfer of results after closing the interface.
+    - `XCORR_MUAPs_Tracking_gui`, `MLE_MUCV_gui`, and `BSS_MU_Editor` provide improved cleanup of figures, canvases, callbacks, and retained data.
+    - `EMGFileSectionsIterator` validates empty argument lists and avoids modifying stored results when merging DataFrames.
+
+### Tutorials
+
+A new tutorial explains how to [create custom channel sorting orders](tutorials/sorting_orders.md).
+
+### Known Issues
+
+This remains a beta release. Please report unexpected behaviour through the [openhdemg GitHub issue tracker](https://github.com/GiacomoValliPhD/openhdemg/issues){:target="_blank"}.
+
+<br>
+
 ## :octicons-tag-24: 0.2.0-beta.1
 :octicons-clock-24: June 2026
 

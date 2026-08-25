@@ -140,6 +140,14 @@ def compute_thresholds(
             f"{type(mvc)} was passed instead."
         )
 
+    if NUMBER_OF_MUS == 0:
+        columns = [
+            f"{measure}_{event.upper()}"
+            for measure in type_.split("_")
+            for event in event_.split("_")
+        ]
+        return pd.DataFrame(columns=columns)
+
     if type_ != "rel" and mvc == 0:
         # Ask the user to input MVC
         mvc = float(
@@ -382,6 +390,19 @@ def compute_dr(
             idr[mu]["idr"] = idr[mu]["idr"][idr[mu]["idr"] > idr_range[0]]
             idr[mu]["idr"] = idr[mu]["idr"][idr[mu]["idr"] < idr_range[1]]
 
+    if emgfile["NUMBER_OF_MUS"] == 0:
+        columns = []
+        if event_ in ["rec", "rec_derec", "rec_derec_steady"]:
+            columns.append("DR_rec")
+        if event_ in ["derec", "rec_derec", "rec_derec_steady"]:
+            columns.append("DR_derec")
+        if event_ in ["steady", "rec_derec_steady"]:
+            columns.extend(
+                ["DR_start_steady", "DR_end_steady", "DR_all_steady"]
+            )
+        columns.append("DR_all")
+        return pd.DataFrame(columns=columns)
+
     # Check if we need to manually select the area for the steady-state phase
     title = (
         "Select the start/end area of the steady-state by hovering the mouse"
@@ -436,8 +457,7 @@ def compute_dr(
 
         if not math.isnan(index_startsteady):
             for pos, pulse in enumerate(idr[mu]["mupulses"]):
-                if pulse >= end_steady:
-                    index_endsteady = pos
+                if pulse > end_steady:
                     break
 
                 else:
@@ -707,12 +727,12 @@ def basic_mus_properties(
     toappend = []
     for i in range(emgfile["NUMBER_OF_MUS"]):
         toappend.append({"MU_number": i})
-    toappend = pd.DataFrame(toappend)
+    toappend = pd.DataFrame(toappend, columns=["MU_number"])
     exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
     if accuracy == "default":
         # Report the original accuracy
-        toappend = emgfile["ACCURACY"]
+        toappend = emgfile["ACCURACY"].copy()
         toappend.columns = ["Accuracy"]
         exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
@@ -732,7 +752,7 @@ def basic_mus_properties(
                 ignore_negative_ipts=ignore_negative_ipts,
             )  # TODO ignore_negative_ipts deprecated => remove
             toappend.append({"SIL": sil})
-        toappend = pd.DataFrame(toappend)
+        toappend = pd.DataFrame(toappend, columns=["SIL"])
         exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
         # Calculate avrage SIL
@@ -752,7 +772,7 @@ def basic_mus_properties(
                 constrain_pulses=constrain_pulses,
             )
             toappend.append({"PNR": pnr})
-        toappend = pd.DataFrame(toappend)
+        toappend = pd.DataFrame(toappend, columns=["PNR"])
         exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
         # Calculate avrage PNR
@@ -772,7 +792,7 @@ def basic_mus_properties(
                 ignore_negative_ipts=ignore_negative_ipts,
             )  # TODO ignore_negative_ipts deprecated => remove
             toappend.append({"SIL": sil})
-        toappend = pd.DataFrame(toappend)
+        toappend = pd.DataFrame(toappend, columns=["SIL"])
         exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
         # Calculate avrage SIL
@@ -791,7 +811,7 @@ def basic_mus_properties(
                 constrain_pulses=constrain_pulses,
             )
             toappend.append({"PNR": pnr})
-        toappend = pd.DataFrame(toappend)
+        toappend = pd.DataFrame(toappend, columns=["PNR"])
         exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
         # Calculate avrage PNR
@@ -809,7 +829,7 @@ def basic_mus_properties(
     # If present, append ROA_WITH_REFERENCE_MUPULSES
     if "ROA_WITH_REFERENCE_MUPULSES" in emgfile:
         # Report the ROA
-        toappend = emgfile["ROA_WITH_REFERENCE_MUPULSES"]
+        toappend = emgfile["ROA_WITH_REFERENCE_MUPULSES"].copy()
         toappend.columns = ["ROA with reference MUPULSES"]
         exportable_df = pd.concat([exportable_df, toappend], axis=1)
 
@@ -861,6 +881,9 @@ def basic_mus_properties(
     )
     covsteady = pd.DataFrame([{"COV_steady": covsteady}])
     exportable_df = pd.concat([exportable_df, covsteady], axis=1)
+
+    if emgfile["NUMBER_OF_MUS"] == 0:
+        exportable_df = exportable_df.iloc[0:0]
 
     return exportable_df
 
@@ -1019,15 +1042,28 @@ def compute_covisi(
                     "idr_range can be None or a list of 2 numbers. "
                     f"The list contains {len(idr_range)} numbers instead."
                 )
-        idr_range[0] = emgfile["FSAMP"] / idr_range[0]
-        idr_range[1] = emgfile["FSAMP"] / idr_range[1]
+        lower_limit = emgfile["FSAMP"] / idr_range[0]
+        upper_limit = emgfile["FSAMP"] / idr_range[1]
         for mu in idr.keys():
             idr[mu]["diff_mupulses"] = idr[mu]["diff_mupulses"][
-                idr[mu]["diff_mupulses"] < idr_range[0]
+                idr[mu]["diff_mupulses"] < lower_limit
             ]
             idr[mu]["diff_mupulses"] = idr[mu]["diff_mupulses"][
-                idr[mu]["diff_mupulses"] > idr_range[1]
+                idr[mu]["diff_mupulses"] > upper_limit
             ]
+
+    if emgfile["NUMBER_OF_MUS"] == 0:
+        if single_mu_number >= 0:
+            return pd.DataFrame(columns=["COVisi_all"])
+        columns = []
+        if event_ in ["rec", "rec_derec", "rec_derec_steady"]:
+            columns.append("COVisi_rec")
+        if event_ in ["derec", "rec_derec", "rec_derec_steady"]:
+            columns.append("COVisi_derec")
+        if event_ in ["steady", "rec_derec_steady"]:
+            columns.append("COVisi_steady")
+        columns.append("COVisi_all")
+        return pd.DataFrame(columns=columns)
 
     # Check if we need to analyse all the MUs or a single MU
     if single_mu_number < 0:
@@ -1068,9 +1104,11 @@ def compute_covisi(
 
             # COVisi all steady
             if (event_ == "rec_derec_steady" or event_ == "steady"):
-                idr_indexed = idr[mu].set_index("mupulses")
-                selected_idr = idr_indexed["diff_mupulses"].loc[
-                    start_steady: end_steady
+                # Select only intervals fully inside the steady-state window.
+                selected_idr = idr[mu].loc[
+                    (idr[mu]["mupulses"].shift(1) >= start_steady)
+                    & (idr[mu]["mupulses"] <= end_steady),
+                    "diff_mupulses",
                 ]
                 covisisteady = (selected_idr.std() / selected_idr.mean()) * 100
 
@@ -1245,7 +1283,7 @@ def compute_drvariability(
         raise ValueError(errormessage)
 
     if not isinstance(n_firings_RecDerec, int):
-        raise type(
+        raise TypeError(
             "n_firings_RecDerec must be an integer. "
             f"{type(n_firings_RecDerec)} was passed instead."
         )
@@ -1269,6 +1307,17 @@ def compute_drvariability(
         for mu in idr.keys():
             idr[mu]["idr"] = idr[mu]["idr"][idr[mu]["idr"] > idr_range[0]]
             idr[mu]["idr"] = idr[mu]["idr"][idr[mu]["idr"] < idr_range[1]]
+
+    if emgfile["NUMBER_OF_MUS"] == 0:
+        columns = []
+        if event_ in ["rec", "rec_derec", "rec_derec_steady"]:
+            columns.append("DRvar_rec")
+        if event_ in ["derec", "rec_derec", "rec_derec_steady"]:
+            columns.append("DRvar_derec")
+        if event_ in ["steady", "rec_derec_steady"]:
+            columns.append("DRvar_steady")
+        columns.append("DRvar_all")
+        return pd.DataFrame(columns=columns)
 
     # Check if we need to manually select the area for the steady-state phase
     if event_ == "rec_derec_steady" or event_ == "steady":
@@ -1306,8 +1355,12 @@ def compute_drvariability(
 
         # COVisi all steady
         if (event_ == "rec_derec_steady" or event_ == "steady"):
-            idr_indexed = idr[mu].set_index("mupulses")
-            selected_idr = idr_indexed["idr"].loc[start_steady: end_steady]
+            # Select only intervals fully inside the steady-state window.
+            selected_idr = idr[mu].loc[
+                (idr[mu]["mupulses"].shift(1) >= start_steady)
+                & (idr[mu]["mupulses"] <= end_steady),
+                "idr",
+            ]
             drvariabilitysteady = (
                 selected_idr.std() / selected_idr.mean()
             ) * 100
