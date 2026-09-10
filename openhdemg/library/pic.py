@@ -179,7 +179,16 @@ def compute_deltaf(
             r_ret = np.append(r_ret, np.nan)
             rcrt_diff = np.append(rcrt_diff, np.nan)
             ctrl_mod = np.append(ctrl_mod, np.nan)
-            continue  # TODO test
+
+            # Collect which MUs were control vs test
+            if mu1_rcrt < mu2_rcrt or (mu1_rcrt == mu2_rcrt and mu1_drcrt > mu2_drcrt):
+                controlU = 1 
+            else:
+                controlU = 2
+
+            controlmu.append(mucombo[-1][controlU-1])
+            testmu.append(mucombo[-1][1-controlU//2])
+            continue  #
 
         # Corr between units - not always necessary, can be set to 0 when
         # desired.
