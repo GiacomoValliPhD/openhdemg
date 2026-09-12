@@ -18,9 +18,13 @@
 
 ## Overview
 
-*openhdemg is a powerful toolbox for the analysis of HDsEMG recordings.*
+*openhdemg* is a growing ecosystem for the analysis of High-Density Electromyography (HD-EMG) signals and motor-unit discharge activity.
 
-*openhdemg* is an open-source framework written in Python 3 with many functionalities specifically designed for the analysis of High-Density surface Electromyography (HDsEMG) recordings. Some of its main features are listed below, but there is much more to discover! For a full list of available functions, please refer to the **API reference** section.
+It provides researchers and practitioners with modern tools for HD-EMG signal processing, motor-unit decomposition, discharge-train editing, data analysis and visualisation.
+
+*openhdemg* is developed in collaboration with the neuromuscular research community and is designed to grow with emerging scientific needs.
+
+The open-source *openhdemg* library is written in Python 3 with many functionalities specifically designed for the analysis of High-Density Electromyography (HD-EMG) recordings. Some of its main features are listed below, but there is much more to discover! For a full list of available functions, please refer to the **API reference** section.
 
 1. **Load** Raw HDsEMG signals or decomposed files from virtually any source (either via built-in or custom functions).
 2. **Visualise** your EMG or force/reference signal, as well as the motor unit firing times and their action potential shapes.
@@ -48,7 +52,7 @@ pip install --pre --upgrade openhdemg
 If you want an overview of what you can do with the *openhdemg* library, have a look at the [Quick Start](quick-start.md) section and then explore all the functions in the **API reference**.
 
 ## Good to know
-In addition to the rich set of modules and functions presented in the **API reference**, the *openhdemg* library is now integrated in the ***[openhdemg software](https://www.giacomovalli.com/openhdemg_software/){:target="_blank"}***, which offers a practical interface from which many tasks can be performed without writing a single line of code!
+In addition to the rich set of modules and functions presented in the **API reference**, the *openhdemg* library is now integrated in the free ***[openhdemg software](https://www.giacomovalli.com/openhdemg_software/){:target="_blank"}***, which offers a practical interface from which many tasks can be performed without writing a single line of code!
 
 Please visit the official website page dedicated to the software for more info by clicking *[here](https://www.giacomovalli.com/openhdemg_software/){:target="_blank"}*.
 
