@@ -19,10 +19,10 @@ def emg_from_rec(filepath, gam_filepath=None, gam_channels=None, ied=10.0):
 
     The acquisition system that produced ``filepath`` is identified from
     the system code embedded in its filename (the underscore-delimited
-    segment immediately preceding "_EMG_raw", e.g. "M02CF1" in
-    "Dy14042025_180733_M02CF1_EMG_raw.sig"). Based on the first letter of
-    that code, the file is loaded with the matching system-specific
-    loader:
+    segment immediately preceding "_EMG_raw" or "_SIG_raw", e.g. "M02CF1" in
+    "Dy14042025_180733_M02CF1_EMG_raw.sig" or "Dy14042025_180733_B01AA01_SIG_raw.sig"). 
+    Based on the first letter of that code, the file is loaded with the matching 
+    system-specific loader:
 
         "M" -> emg_from_rec_meacs
         "B" -> emg_from_rec_bam
@@ -33,8 +33,8 @@ def emg_from_rec(filepath, gam_filepath=None, gam_channels=None, ied=10.0):
     Parameters
     ----------
     filepath : str or Path
-        Path to the *_EMG_raw.sig file to load. This is typically the
-        path returned by the file-selection interface in
+        Path to the *_EMG_raw.sig or *_SIG_raw.sig file to load. 
+        This is typically the path returned by the file-selection interface in
         openhdemg.integrations.rec.rec.
     gam_filepath : str or Path or None, default None
         Optional path to a GAM auxiliaryfile. Its filename
@@ -85,15 +85,23 @@ def emg_from_rec(filepath, gam_filepath=None, gam_channels=None, ied=10.0):
     filepath = Path(filepath)
     FILENAME = filepath.name
 
-    stem_before_emg = FILENAME.split("_EMG_raw")[0]
-    if stem_before_emg == FILENAME or "_" not in stem_before_emg:
+    # Accept both "_EMG_raw" and "_SIG_raw" as the suffix marking the
+    # main signal file. 
+    matched_suffix = next(
+        (s for s in ("_EMG_raw", "_SIG_raw") if s in FILENAME), None
+    )
+    stem_before_suffix = (
+        FILENAME.split(matched_suffix)[0] if matched_suffix else FILENAME
+    )
+    if matched_suffix is None or "_" not in stem_before_suffix:
         raise ValueError(
             f"\nCould not identify the system code in {FILENAME}. "
-            "emg_from_rec() expects a *_EMG_raw.sig file with the system "
+            "emg_from_rec() expects a *_EMG_raw.sig or *_SIG_raw.sig file with the system"
             "code as the underscore-delimited segment right before "
-            "'_EMG_raw' (e.g. '..._M02CF1_EMG_raw.sig').\n"
+            "right before that suffix (e.g. '..._M02CF1_EMG_raw.sig' or "
+            "'..._B01AA01_SIG_raw.sig').\n"
         )
-    code_segment = stem_before_emg.rsplit("_", 1)[-1]
+    code_segment = stem_before_suffix.rsplit("_", 1)[-1]
 
     system_letter = code_segment[0].upper()
 
@@ -458,9 +466,9 @@ def emg_from_rec_bam(filepath, ied=10.0):
 
     RAW_SIGNAL = pd.DataFrame(raw, columns=[*range(n_chs)])
 
-    # Look for a synchronization/AUX file in the same folder
+    # Look for a synchronization/DIN file in the same folder
     aux_filepath = filepath.with_name(
-        filepath.name.replace("EMG_raw", "AUX1_raw")
+        filepath.name.replace("SIG_raw", "DIN_raw")
     )
 
     if aux_filepath.exists():
