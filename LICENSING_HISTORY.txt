@@ -1,0 +1,29 @@
+OPENHDEMG LICENSING HISTORY
+
+openhdemg releases up to version 0.1.x were distributed under the GNU General
+Public License version 3 (GPL-3.0).
+
+Starting from version 0.2, openhdemg is distributed under the BSD 3-Clause
+License (BSD-3-Clause).
+
+Previous releases remain available under the licence terms under which they
+were originally distributed. The change of licence does not revoke, limit, or
+withdraw any rights already granted under the licences applicable to those
+earlier releases.
+
+CONTRIBUTOR AUTHORISATIONS
+
+Contributors who provided copyrightable contributions to openhdemg version
+0.1.x have provided written authorisation permitting their contributions to be
+licensed and distributed as part of openhdemg version 0.2 and later under the
+BSD 3-Clause License.
+
+The entries below provide a public record of these authorisations. The
+corresponding written authorisations are retained separately by the project
+maintainer.
+
+Each contributor listed below has personally confirmed their respective entry by
+committing it, or otherwise explicitly approving its inclusion in this file.
+
+CONTRIBUTORS
+
