@@ -512,6 +512,7 @@ def asksavemodule(
     filename=None,
     compresslevel=None,
     add_checksum=False,
+    gui_parent=None,
 ):
     """
     Select or create the folder where to save the module with an UI.
@@ -534,6 +535,8 @@ def asksavemodule(
         If ``True``, compute and store a SHA-256 checksum for each
         binary file to enable integrity verification on load.
         Default is ``False``.
+    gui_parent : QWidget or None, default None
+        Optional Qt parent used when embedding the directory dialog.
 
     Returns
     -------
@@ -561,6 +564,7 @@ def asksavemodule(
     dirpath = run_custom_directory_dialog(
         window_title="Select a folder to save the module",
         mode="save",
+        parent=gui_parent,
     )
     parent_path, dirname = os.path.split(dirpath)
 
@@ -776,6 +780,7 @@ def askloadmodule(
     verify_checksum=False,
     return_metadata=False,
     return_path=False,
+    gui_parent=None,
 ):
     """
     Select the module folder to load with an UI and load it.
@@ -796,6 +801,8 @@ def askloadmodule(
         is returned.
     return_path : bool, default False
         Whether to return the path to the module, including module name.
+    gui_parent : QWidget or None, default None
+        Optional Qt parent used when embedding the directory dialog.
 
     Returns
     -------
@@ -842,7 +849,8 @@ def askloadmodule(
     """
 
     path_to_module = run_custom_directory_dialog(
-        window_title="Select the module folder to load"
+        window_title="Select the module folder to load",
+        parent=gui_parent,
     )
 
     # Check if a file has been selected. If not, return None
@@ -1447,6 +1455,7 @@ class openhdemg_Collection():
         update_filename=True,
         compresslevel=None,
         add_checksum=False,
+        gui_parent=None,
     ):
         """
         Save the entire collection to disk using an UI to select the target
@@ -1472,6 +1481,8 @@ class openhdemg_Collection():
             If ``True``, compute and store a SHA-256 checksum for each
             binary file to enable integrity verification on load.
             Default is ``False``.
+        gui_parent : QWidget or None, default None
+            Optional Qt parent used when embedding the directory dialog.
 
         Raises
         ------
@@ -1485,7 +1496,8 @@ class openhdemg_Collection():
         root = run_custom_directory_dialog(
             window_title=(
                 "Select or create a folder to contain the saved collection"
-            )
+            ),
+            parent=gui_parent,
         )
         self.set_root(root=root)
 
@@ -1752,7 +1764,7 @@ class openhdemg_Collection():
         # Load the load_shared_dataframe
         self.load_shared_dataframe(verify_checksum=verify_checksum)
 
-    def askload(self, verify_checksum=False):
+    def askload(self, verify_checksum=False, gui_parent=None):
         """
         Load the entire openhdemg collection from disk using an UI to select
         the directory.
@@ -1766,6 +1778,8 @@ class openhdemg_Collection():
         verify_checksum : bool, default False
             If ``True``, verifies the integrity of all binary files against the
             checksums stored in the manifest.
+        gui_parent : QWidget or None, default None
+            Optional Qt parent used when embedding the directory dialog.
 
         Raises
         ------
@@ -1779,6 +1793,7 @@ class openhdemg_Collection():
         # Get the module root
         root = run_custom_directory_dialog(
             window_title="Select the collection folder to load",
+            parent=gui_parent,
         )
         self.set_root(root=root)
 
@@ -3664,7 +3679,7 @@ def emg_from_json(filepath):
 # ---------------------------------------------------------------------
 # Functions to open files from a GUI in a single line of code.
 
-def askopenfile(filesource="OPENHDEMG", **kwargs):
+def askopenfile(filesource="OPENHDEMG", gui_parent=None, **kwargs):
     """
     Select and open files with a GUI.
 
@@ -3792,6 +3807,8 @@ def askopenfile(filesource="OPENHDEMG", **kwargs):
     custom_ied : int, default 8
         The inter-electrode distance in mm of the custom file.
         Ignore if loading other files.
+    gui_parent : QWidget or None, default None
+        Optional Qt parent used when embedding the file and directory dialogs.
 
     Returns
     -------
@@ -3903,15 +3920,18 @@ def askopenfile(filesource="OPENHDEMG", **kwargs):
             mode="open",
             filesource=filesource,
             filetypes=[("MATLAB files", "*.mat")],
+            parent=gui_parent,
         )
     elif filesource == "DELSYS":
         emg_file_toOpen = run_custom_file_dialog(
             mode="open",
             filesource=filesource,
             filetypes=[("MATLAB files", "*.mat")],
+            parent=gui_parent,
         )
         mus_file_toOpen = run_custom_directory_dialog(
             window_title="Select the folder containing DELSYS decomposition",
+            parent=gui_parent,
         )
         file_toOpen = True
     elif filesource == "OPENHDEMG":
@@ -3919,12 +3939,14 @@ def askopenfile(filesource="OPENHDEMG", **kwargs):
             mode="open",
             filesource=filesource,
             filetypes=[("JSON files", "*.json")],
+            parent=gui_parent,
         )
     elif filesource in ["CUSTOMCSV", "CUSTOMCSV_REFSIG"]:
         file_toOpen = run_custom_file_dialog(
             mode="open",
             filesource=filesource,
             filetypes=[("CSV files", "*.csv")],
+            parent=gui_parent,
         )
     else:
         raise ValueError(
@@ -4014,7 +4036,7 @@ def askopenfile(filesource="OPENHDEMG", **kwargs):
     return emgfile
 
 
-def asksavefile(emgfile, compresslevel=4):
+def asksavefile(emgfile, compresslevel=4, gui_parent=None):
     """
     Select where to save files with a GUI.
 
@@ -4039,6 +4061,8 @@ def asksavefile(emgfile, compresslevel=4):
         more computation. The relationship between compression level and time
         required for the compression is not linear. For optimised performance,
         we suggest values between 2 and 6, with 4 providing the best balance.
+    gui_parent : QWidget or None, default None
+        Optional Qt parent used when embedding the file dialog.
 
     See also
     --------
@@ -4050,6 +4074,7 @@ def asksavefile(emgfile, compresslevel=4):
         mode="save",
         filesource="OPENHDEMG",
         filetypes=[("JSON files", "*.json")],
+        parent=gui_parent,
     )
 
     print("\n-----------\nSaving file\n")
