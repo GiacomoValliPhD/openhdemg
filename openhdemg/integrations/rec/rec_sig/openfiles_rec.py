@@ -20,9 +20,9 @@ def emg_from_rec(filepath, gam_filepath=None, gam_channels=None, ied=10.0):
     The acquisition system that produced ``filepath`` is identified from
     the system code embedded in its filename (the underscore-delimited
     segment immediately preceding "_EMG_raw" or "_SIG_raw", e.g. "M02CF1" in
-    "Dy14042025_180733_M02CF1_EMG_raw.sig" or "Dy14042025_180733_B01AA01_SIG_raw.sig"). 
-    Based on the first letter of that code, the file is loaded with the matching 
-    system-specific loader:
+    "Dy14042025_180733_M02CF1_EMG_raw.sig" or
+    "Dy14042025_180733_B01AA01_SIG_raw.sig"). Based on the first letter of
+    that code, the file is loaded with the matching system-specific loader:
 
         "M" -> emg_from_rec_meacs
         "B" -> emg_from_rec_bam
@@ -33,7 +33,7 @@ def emg_from_rec(filepath, gam_filepath=None, gam_channels=None, ied=10.0):
     Parameters
     ----------
     filepath : str or Path
-        Path to the *_EMG_raw.sig or *_SIG_raw.sig file to load. 
+        Path to the *_EMG_raw.sig or *_SIG_raw.sig file to load.
         This is typically the path returned by the file-selection interface in
         openhdemg.integrations.rec.rec.
     gam_filepath : str or Path or None, default None
@@ -82,11 +82,14 @@ def emg_from_rec(filepath, gam_filepath=None, gam_channels=None, ied=10.0):
     ...     ied=10.0,
     ... )
     """
+
     filepath = Path(filepath)
     FILENAME = filepath.name
+    # TODO the extension should not be present in the emgfile FILENAME, use
+    # filepath.stem instead. Also below.
 
     # Accept both "_EMG_raw" and "_SIG_raw" as the suffix marking the
-    # main signal file. 
+    # main signal file.
     matched_suffix = next(
         (s for s in ("_EMG_raw", "_SIG_raw") if s in FILENAME), None
     )
@@ -96,10 +99,10 @@ def emg_from_rec(filepath, gam_filepath=None, gam_channels=None, ied=10.0):
     if matched_suffix is None or "_" not in stem_before_suffix:
         raise ValueError(
             f"\nCould not identify the system code in {FILENAME}. "
-            "emg_from_rec() expects a *_EMG_raw.sig or *_SIG_raw.sig file with the system"
-            "code as the underscore-delimited segment right before "
-            "right before that suffix (e.g. '..._M02CF1_EMG_raw.sig' or "
-            "'..._B01AA01_SIG_raw.sig').\n"
+            "emg_from_rec() expects a *_EMG_raw.sig or *_SIG_raw.sig file "
+            "with the system code as the underscore-delimited segment right "
+            "before right before that suffix (e.g. '..._M02CF1_EMG_raw.sig' "
+            "or '..._B01AA01_SIG_raw.sig').\n"
         )
     code_segment = stem_before_suffix.rsplit("_", 1)[-1]
 
@@ -137,7 +140,7 @@ def emg_from_rec(filepath, gam_filepath=None, gam_channels=None, ied=10.0):
             # the same number of samples, truncate everything (RAW_SIGNAL,
             # REF_SIGNAL, EMG_LENGTH and the GAM channels) to the shorter
             # of the two, so that all columns of REF_SIGNAL stay aligned
-            # sample-by-sample 
+            # sample-by-sample.
             min_len = min(emgfile["EMG_LENGTH"], gam_df.shape[0])
             if min_len != emgfile["EMG_LENGTH"]:
                 emgfile["RAW_SIGNAL"] = (
@@ -174,7 +177,8 @@ def emg_from_rec(filepath, gam_filepath=None, gam_channels=None, ied=10.0):
     emgfile = standardise_emgfile_dtypes(emgfile)
 
     return emgfile
-# ---------------------------------------------------------------------
+
+
 def aux_from_rec_gam(gam_filepath, gam_channels, emg_length):
     """
     Read one or more channels from a ReC GAM auxiliary file.
@@ -223,13 +227,14 @@ def aux_from_rec_gam(gam_filepath, gam_channels, emg_length):
     ...     emg_length=122880,
     ... )
     """
+
     gam_filepath = Path(gam_filepath)
 
     if isinstance(gam_channels, int):
         gam_channels = [gam_channels]
 
     n_gam_chs = 14
-    gam_dyn_range = 3.3 # volt
+    gam_dyn_range = 3.3  # volt
     gam_dtype = np.dtype("uint16")
 
     if any(ch < 0 or ch >= n_gam_chs for ch in gam_channels):
@@ -262,9 +267,13 @@ def aux_from_rec_gam(gam_filepath, gam_channels, emg_length):
             "and the GAM channels will be truncated to the shorter of "
             "the two.\n"
         )
+        # TODO why this function raises the warning but does not act?
+        # Would it be better that who raises the warning is also acting to fix it?
+        # Please clarify the intended behaviour.
 
     return pd.DataFrame(gam_selected)
-# ---------------------------------------------------------------------
+
+
 def emg_from_rec_meacs(filepath, ied=10.0):
     """
     Import the .sig file exportable from ReC/MEACS systems.
@@ -285,8 +294,8 @@ def emg_from_rec_meacs(filepath, ied=10.0):
         A dictionary containing all the useful variables. RAW_SIGNAL is
         expressed in microvolts (µV), centered on 0. Since .sig files
         contain no decomposition, ACCURACY, IPTS, MUPULSES and
-        BINARY_MUS_FIRING are returned empty and NUMBER_OF_MUS is 0.
-        
+        BINARY_MUS_FIRING are returned empty and NUMBER_OF_MUS is 0.  # TODO No, these keys should simply not exist
+
     Raises
     ------
     ValueError
@@ -300,14 +309,15 @@ def emg_from_rec_meacs(filepath, ied=10.0):
     >>> info = emg.info()
     >>> info.data(emgfile)
     """
-    fsamp_hz=2048
-    n_chs=32
-    dtype='uint16'
-    adc_res=16
-    din=2.4 # volt
-    gain=192
 
-    SOURCE = "REC"
+    fsamp_hz = 2048
+    n_chs = 32
+    dtype = 'uint16'
+    adc_res = 16
+    din = 2.4  # volt
+    gain = 192
+
+    SOURCE = "REC"  # TODO consider also if you would like it to be REC_MEACS or REC_BAM
     filepath = Path(filepath)
     FILENAME = filepath.name
 
@@ -341,7 +351,7 @@ def emg_from_rec_meacs(filepath, ied=10.0):
 
     RAW_SIGNAL = pd.DataFrame(raw, columns=[*range(n_chs)])
 
-     # Look for a synchronization/AUX file in the same folder
+    # Look for a synchronization/AUX file in the same folder
     aux_filepath = filepath.with_name(
         filepath.name.replace("EMG_raw", "AUX1_raw")
     )
@@ -362,6 +372,9 @@ def emg_from_rec_meacs(filepath, ied=10.0):
             )
             min_len = min(len(aux_raw), EMG_LENGTH)
             aux_raw = aux_raw[:min_len]
+            # TODO: If AUX is shorter than RAW_SIGNAL, should you also truncate RAW_SIGNAL and update
+            # EMG_LENGTH to min_len so RAW_SIGNAL, REF_SIGNAL, and EMG_LENGTH stay aligned?
+            # Same problem in emg_from_rec_bam?
 
         REF_SIGNAL = pd.DataFrame(aux_raw, columns=[0])
     else:
@@ -377,19 +390,14 @@ def emg_from_rec_meacs(filepath, ied=10.0):
         "FILENAME": FILENAME,
         "RAW_SIGNAL": RAW_SIGNAL,
         "REF_SIGNAL": REF_SIGNAL,
-        "ACCURACY": pd.DataFrame(columns=[0]),
-        "IPTS": pd.DataFrame(columns=[0]),
-        "MUPULSES": [],
         "FSAMP": float(fsamp_hz),
-        "IED":float(ied),
+        "IED": float(ied),
         "EMG_LENGTH": EMG_LENGTH,
-        "NUMBER_OF_MUS": 0,
-        "BINARY_MUS_FIRING": pd.DataFrame(columns=[0]),
-        "EXTRAS": pd.DataFrame(columns=[0]),
     }
 
     return emgfile
-# ---------------------------------------------------------------------
+
+
 def emg_from_rec_bam(filepath, ied=10.0):
     """
     Import the .sig file exportable from ReC/BAM systems.
@@ -408,14 +416,12 @@ def emg_from_rec_bam(filepath, ied=10.0):
     -------
     emgfile : dict
         A dictionary containing all the useful variables. RAW_SIGNAL is
-        expressed in microvolts (µV), centered on 0. Since .sig files
-        contain no decomposition, ACCURACY, IPTS, MUPULSES and
-        BINARY_MUS_FIRING are returned empty and NUMBER_OF_MUS is 0.
+        expressed in microvolts (µV), centered on 0.
 
     Raises
     ------
     ValueError
-        if the file is too short to contain even a single full sample 
+        if the file is too short to contain even a single full sample
         across all channels.
 
     Examples
@@ -425,12 +431,13 @@ def emg_from_rec_bam(filepath, ied=10.0):
     >>> info = emg.info()
     >>> info.data(emgfile)
     """
-    fsamp_hz=2048
-    n_chs=64
-    dtype='uint16'
-    adc_res=16
-    din=3.3 # volt
-    gain=1
+
+    fsamp_hz = 2048
+    n_chs = 64
+    dtype = 'uint16'
+    adc_res = 16
+    din = 3.3  # volt
+    gain = 1
 
     SOURCE = "REC"
     filepath = Path(filepath)
@@ -502,15 +509,9 @@ def emg_from_rec_bam(filepath, ied=10.0):
         "FILENAME": FILENAME,
         "RAW_SIGNAL": RAW_SIGNAL,
         "REF_SIGNAL": REF_SIGNAL,
-        "ACCURACY": pd.DataFrame(columns=[0]),
-        "IPTS": pd.DataFrame(columns=[0]),
-        "MUPULSES": [],
         "FSAMP": float(fsamp_hz),
         "IED": float(ied),
         "EMG_LENGTH": EMG_LENGTH,
-        "NUMBER_OF_MUS": 0,
-        "BINARY_MUS_FIRING": pd.DataFrame(columns=[0]),
-        "EXTRAS": pd.DataFrame(columns=[0]),
     }
 
     return emgfile
