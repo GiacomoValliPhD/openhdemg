@@ -33,10 +33,12 @@ PACKAGES = [
     "openhdemg.compatibility",
     "openhdemg.ui",
     "openhdemg.ui.icons",
+    "openhdemg.integrations",
     "openhdemg.tests",
     "openhdemg.tests.fixtures",
     "openhdemg.tests.integration",
     "openhdemg.tests.unit",
+    "openhdemg.tests.integrations",
 ]
 
 CLASSIFIERS = [
