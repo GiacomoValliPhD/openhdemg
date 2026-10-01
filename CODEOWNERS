@@ -11,7 +11,6 @@
 # When there are changes in the pic module, @GiacomoValliPhD
 # and @JABeauchamp will be requested for review.
 /openhdemg/library/pic.py @GiacomoValliPhD @JABeauchamp
-/openhdemg/library/tools.py @GiacomoValliPhD @JABeauchamp
 
 # When there are changes in the commonality module, @GiacomoValliPhD
 # and @cabralhv will be requested for review.

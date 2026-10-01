@@ -30,8 +30,9 @@ from openhdemg.library.tools import (
     showselect, standardise_emgfile_dtypes, create_binary_firings,
     mupulses_from_binary, resize_emgfile, EMGFileSectionsIterator, compute_idr,
     delete_mus, delete_empty_mus, sort_mus, compute_covsteady, filter_rawemg,
-    filter_refsig, remove_offset, get_mvc, compute_rfd, compute_svr,
+    filter_refsig, remove_offset, get_mvc, compute_rfd,
 )
+from openhdemg.library.pic import compute_svr
 import pandas as pd
 import numpy as np
 import scipy
