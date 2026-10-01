@@ -20,6 +20,7 @@ def compute_deltaf(
     corr_cutoff=0.7,
     controlunitmodulation_cutoff=0.5,
     clean=True,
+    correlation_metric="r",
 ):
     """
     Quantify delta F via paired motor unit analysis.
@@ -28,6 +29,11 @@ def compute_deltaf(
     supplied collection of motor units. Origional framework for deltaF provided
     in Gorassini et. al., 2002:
     https://journals.physiology.org/doi/full/10.1152/jn.00024.2001
+
+    !!! warning "Since version 0.2.0b3"
+        DeltaF estimates may differ from earlier releases because pairs whose
+        reporter derecruits before the test unit are now excluded. Pair labels
+        in ``average_method="all"`` now follow (reporter, test) order.
 
     Author: James (Drew) Beauchamp
 
@@ -65,7 +71,12 @@ def compute_deltaf(
         An exclusion criteria corresponding to the necessary modulation of
         control unit discharge rate during test unit firing in Hz.
     clean : bool, default True
-        To remove values that do not meet exclusion criteria
+        To remove values that do not meet exclusion criteria. Pairs with fewer  # TODO: Drew, Should it be "To remove values that do not meet inclusion criteria."?
+        than two firings in either MU, insufficient overlap, or a reporter
+        that derecruits before the test unit remain invalid even if False.
+    correlation_metric : str {"r", "r_squared"}, default "r"
+        Use Pearson r or its square when applying corr_cutoff. Both modes
+        require positive correlation. Only applied when clean=True.
 
     Returns
     -------
@@ -74,8 +85,10 @@ def compute_deltaf(
         The resulting df will be different depending on average_method.
         In particular, if average_method="all", delta_f[MU][row] will
         contain a tuple representing the indices of the two motor units
-        for each given pair (reporter, test) and their corresponding 
+        for each given pair (reporter, test) and their corresponding
         deltaF value.
+        Invalid pairs have NaN deltaF. With fewer than two MUs, "all" returns
+        an empty DataFrame; "test_unit_average" returns one NaN per MU.
 
     See also
     --------
@@ -105,7 +118,9 @@ def compute_deltaf(
     pairs (reporter, test).
 
     >>> delta_f_2 = emg.compute_deltaf(
-    ...     emgfile=emgfile, smoothfits=svrfits["gensvr"], average_method='all',
+    ...     emgfile=emgfile,
+    ...     smoothfits=svrfits["gensvr"],
+    ...     average_method='all',
     ... )
     delta_f_2
            MU        dF
@@ -121,13 +136,21 @@ def compute_deltaf(
     9  (3, 4)  2.709522
     """
 
+    # TODO: Drew, please check the optional r/r_squared parameter.
+    if correlation_metric not in ("r", "r_squared"):
+        raise ValueError("correlation_metric must be 'r' or 'r_squared'")
+
     dfret_ret = []
     mucombo_ret = np.empty(0, int)
 
     # If less than 2 MUs, can not quantify deltaF
     if emgfile["NUMBER_OF_MUS"] < 2:
-        dfret_ret = np.nan
-        mucombo_ret = np.nan*np.ones([1, 2]) 
+        # TODO: Drew, please check the zero/one-MU output convention.
+        mucombo_ret = np.arange(
+            emgfile["NUMBER_OF_MUS"]
+            if average_method == "test_unit_average" else 0,
+        )
+        dfret_ret = np.full(len(mucombo_ret), np.nan)
 
         delta_f = pd.DataFrame({'MU': mucombo_ret, 'dF': dfret_ret})
 
@@ -145,7 +168,7 @@ def compute_deltaf(
     ctrl_mod = []
     mucombo = []
     rcrt_diff = []
-    controlmu = [] 
+    controlmu = []
     for mucomb in list(combs):  # For all possible combinations of MUs
         # Extract possible MU combinations (a unique MU pair)
         mu1_id, mu2_id = mucomb[0], mucomb[1]
@@ -153,7 +176,8 @@ def compute_deltaf(
         mucombo.append((mu1_id, mu2_id))
 
         # First MU firings, recruitment, and decrecruitment
-        if np.size(np.where(emgfile["BINARY_MUS_FIRING"][mu1_id] == 1)) == 0:
+        # TODO: Drew, please check rejection of MUs with fewer than two firings.
+        if np.size(np.where(emgfile["BINARY_MUS_FIRING"][mu1_id] == 1)) < 2:
             mu1_rcrt, mu1_drcrt = 0, 0
         else:
             mu1_times = np.where(emgfile["BINARY_MUS_FIRING"][mu1_id] == 1)[0]
@@ -161,7 +185,7 @@ def compute_deltaf(
         # Skip first since idr is defined on second
 
         # Second MU firings, recruitment, and decrecruitment
-        if np.size(np.where(emgfile["BINARY_MUS_FIRING"][mu2_id] == 1)) == 0:
+        if np.size(np.where(emgfile["BINARY_MUS_FIRING"][mu2_id] == 1)) < 2:
             mu2_rcrt, mu2_drcrt = 0, 0
         else:
             mu2_times = np.where(emgfile["BINARY_MUS_FIRING"][mu2_id] == 1)[0]
@@ -173,8 +197,13 @@ def compute_deltaf(
             max(mu1_rcrt, mu2_rcrt), min(mu1_drcrt, mu2_drcrt),
         )
 
-        # If MUs do not overlapt by more than two or more samples
-        if len(muoverlap) < 2:
+        # TODO: Drew, please check rejection of early reporter derecruitment.
+        reporter_stops_early = (
+            (mu1_rcrt < mu2_rcrt and mu1_drcrt < mu2_drcrt)
+            or (mu2_rcrt < mu1_rcrt and mu2_drcrt < mu1_drcrt)
+        )
+        # Reject unavailable deltaF endpoints, preserving pair alignment.
+        if len(muoverlap) < 2 or reporter_stops_early:
             dfret = np.append(dfret, np.nan)
             r_ret = np.append(r_ret, np.nan)
             rcrt_diff = np.append(rcrt_diff, np.nan)
@@ -208,11 +237,6 @@ def compute_deltaf(
         if mu1_rcrt < mu2_rcrt:
             controlU = 1  # MU 1 is control unit, 2 is test unit
 
-            # If control (reporter) unit is not on for entirety of test
-            # unit, set last firing to control unit.
-            if mu1_drcrt < mu2_drcrt:
-                mu2_drcrt = mu1_drcrt
-                # This may understimate PICs, other methods can be employed
             # delta F: change in control MU discharge rate between test
             # unit recruitment and derecruitment.
             df = smoothfits[mu1_id][mu2_rcrt]-smoothfits[mu1_id][mu2_drcrt]
@@ -235,11 +259,6 @@ def compute_deltaf(
 
         elif mu1_rcrt > mu2_rcrt:
             controlU = 2  # MU 2 is control unit, 1 is test unit
-            if mu1_drcrt > mu2_drcrt:
-                # If control (reporter) unit is not on for entirety of
-                # test unit, set last firing to control unit.
-                mu1_drcrt = mu2_drcrt
-                # This may understimate PICs, other methods can be employed.
             # delta F: change in control MU discharge rate between test
             # unit recruitment and derecruitment.
             df = smoothfits[mu2_id][mu1_rcrt]-smoothfits[mu2_id][mu1_drcrt]
@@ -310,7 +329,11 @@ def compute_deltaf(
 
     if clean:  # Remove values that dont meet exclusion criteria
         rcrt_diff_bin = rcrt_diff > recruitment_difference_cutoff
-        corr_bin = r_ret > corr_cutoff
+        # TODO: Drew, please check r-squared filtering and positive-r requirement.
+        if correlation_metric == "r_squared":
+            corr_bin = (r_ret > 0) & (r_ret**2 > corr_cutoff)
+        else:
+            corr_bin = r_ret > corr_cutoff
         ctrl_mod_bin = ctrl_mod > controlunitmodulation_cutoff
         clns = np.asarray([rcrt_diff_bin & corr_bin & ctrl_mod_bin])
         dfret[~clns[0]] = np.nan
@@ -330,7 +353,8 @@ def compute_deltaf(
             mucombo_ret = np.append(mucombo_ret, int(ii))
     else:  # Return all values and corresponding combinations
         dfret_ret = dfret
-        mucombo_ret = mucombo
+        # TODO: Drew, please check the explicit (reporter, test) labels.
+        mucombo_ret = list(zip(controlmu, testmu))
 
     delta_f = pd.DataFrame({'MU': mucombo_ret, 'dF': dfret_ret})
 
