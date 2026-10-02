@@ -84,9 +84,7 @@ def emg_from_rec(filepath, gam_filepath=None, gam_channels=None, ied=10.0):
     """
 
     filepath = Path(filepath)
-    FILENAME = filepath.name
-    # TODO the extension should not be present in the emgfile FILENAME, use
-    # filepath.stem instead. Also below.
+    FILENAME = filepath.stem
 
     # Accept both "_EMG_raw" and "_SIG_raw" as the suffix marking the
     # main signal file.
@@ -260,16 +258,12 @@ def aux_from_rec_gam(gam_filepath, gam_channels, emg_length):
 
     gam_selected = gam_raw[:, gam_channels]
 
-    if gam_selected.shape[0] != emg_length:
-        warnings.warn(
-            f"\nGAM signal length ({gam_selected.shape[0]}) does not "
-            f"match RAW_SIGNAL length ({emg_length}). The whole emgfile "
-            "and the GAM channels will be truncated to the shorter of "
-            "the two.\n"
-        )
-        # TODO why this function raises the warning but does not act?
-        # Would it be better that who raises the warning is also acting to fix it?
-        # Please clarify the intended behaviour.
+    
+    # TODO why this function raises the warning but does not act?
+    # Would it be better that who raises the warning is also acting to fix it?
+    # Please clarify the intended behaviour.
+    # SOLVED: we agree that the warning here can be useless. The truncation is done in emg_from_rec(), so that all the signals are truncated to the same length. 
+    # If the warning message is necessary it can be moved to emg_from_rec() line 137.
 
     return pd.DataFrame(gam_selected)
 
@@ -292,9 +286,7 @@ def emg_from_rec_meacs(filepath, ied=10.0):
     -------
     emgfile : dict
         A dictionary containing all the useful variables. RAW_SIGNAL is
-        expressed in microvolts (µV), centered on 0. Since .sig files
-        contain no decomposition, ACCURACY, IPTS, MUPULSES and
-        BINARY_MUS_FIRING are returned empty and NUMBER_OF_MUS is 0.  # TODO No, these keys should simply not exist
+        expressed in microvolts (µV), centered on 0. 
 
     Raises
     ------
@@ -317,7 +309,7 @@ def emg_from_rec_meacs(filepath, ied=10.0):
     din = 2.4  # volt
     gain = 192
 
-    SOURCE = "REC"  # TODO consider also if you would like it to be REC_MEACS or REC_BAM
+    SOURCE = "REC_MEACS"  
     filepath = Path(filepath)
     FILENAME = filepath.name
 
@@ -364,17 +356,10 @@ def emg_from_rec_meacs(filepath, ied=10.0):
         ).astype(np.float64)
 
         aux_raw = (aux_raw / max_lev) * din / gain  # Volts, no *1e6
-        if len(aux_raw) != EMG_LENGTH:
-            warnings.warn(
-                f"\nAUX signal length ({len(aux_raw)}) does not match "
-                f"RAW_SIGNAL length ({EMG_LENGTH}). Truncating to the "
-                "shorter of the two.\n"
-            )
-            min_len = min(len(aux_raw), EMG_LENGTH)
-            aux_raw = aux_raw[:min_len]
             # TODO: If AUX is shorter than RAW_SIGNAL, should you also truncate RAW_SIGNAL and update
             # EMG_LENGTH to min_len so RAW_SIGNAL, REF_SIGNAL, and EMG_LENGTH stay aligned?
             # Same problem in emg_from_rec_bam?
+            # SOLVED : we have removed this part because it was useless, the length of the aux signal is always the same as the length of the raw signal.
 
         REF_SIGNAL = pd.DataFrame(aux_raw, columns=[0])
     else:
@@ -439,7 +424,7 @@ def emg_from_rec_bam(filepath, ied=10.0):
     din = 3.3  # volt
     gain = 1
 
-    SOURCE = "REC"
+    SOURCE = "REC_BAM"
     filepath = Path(filepath)
     FILENAME = filepath.name
 
