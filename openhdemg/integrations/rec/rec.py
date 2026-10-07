@@ -202,16 +202,3 @@ def select_and_load_rec_file(gam_channels=None, ied=None, parent=None):
     )
 
     return emgfile
-
-
-if __name__ == "__main__":  # TODO consider removing this part, as it is not used in the library.
-    # Quick manual run: select the files and print a short summary.
-    emgfile = select_and_load_rec_file()
-
-    if emgfile is not None:
-        print("SOURCE:", emgfile["SOURCE"])
-        print("FILENAME:", emgfile["FILENAME"])
-        print("RAW_SIGNAL shape:", emgfile["RAW_SIGNAL"].shape)
-        print("REF_SIGNAL shape:", emgfile["REF_SIGNAL"].shape)
-    else:
-        print("No file was selected.")
