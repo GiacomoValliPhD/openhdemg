@@ -1,8 +1,12 @@
 """
 Company-maintained integrations for external data formats.
 
-Use direct imports only.
-For example: from openhdemg.integrations.company_a import (
-    xxx, yyy, zzz,
-)
+Import public functions directly from each company's integration package.
+For example (replace the placeholders with an available company and its
+function names):
+
+    from openhdemg.integrations.company_name import (
+        load_file,
+        select_and_load_file,
+    )
 """

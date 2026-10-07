@@ -74,8 +74,8 @@ def emg_from_rec(filepath, gam_filepath=None, gam_channels=None, ied=10.0):
 
     Examples
     --------
-    >>> import openhdemg.library as emg
-    >>> emgfile = emg.emg_from_rec(
+    >>> from openhdemg.integrations.rec import emg_from_rec
+    >>> emgfile = emg_from_rec(
     ...     filepath="path/Dy14042025_180733_M02CF1_EMG_raw.sig",
     ...     gam_filepath="path/Dy14042025_180733_G01AA3_AUX_raw.sig",
     ...     gam_channels=[4],
@@ -131,7 +131,6 @@ def emg_from_rec(filepath, gam_filepath=None, gam_channels=None, ied=10.0):
             gam_df = aux_from_rec_gam(
                 gam_filepath=gam_filepath,
                 gam_channels=gam_channels,
-                emg_length=emgfile["EMG_LENGTH"],
             )
 
             # If the GAM signal and the rest of the emgfile do not have
@@ -177,7 +176,7 @@ def emg_from_rec(filepath, gam_filepath=None, gam_channels=None, ied=10.0):
     return emgfile
 
 
-def aux_from_rec_gam(gam_filepath, gam_channels, emg_length):
+def aux_from_rec_gam(gam_filepath, gam_channels):
     """
     Read one or more channels from a ReC GAM auxiliary file.
 
@@ -189,13 +188,6 @@ def aux_from_rec_gam(gam_filepath, gam_channels, emg_length):
         "Dy14042025_180733_G01AA3_AUX_raw.sig").
     gam_channels : int or list of int
         0-based channel indices to extract from the GAM file.
-    emg_length : int
-        The expected number of samples, typically the EMG_LENGTH of the
-        emgfile the GAM channels will be appended to. If the GAM file
-        contains a different number of samples, a warning is raised;
-        emg_from_rec() then truncates the whole emgfile (RAW_SIGNAL,
-        REF_SIGNAL, EMG_LENGTH) and the GAM channels to the shorter of
-        the two, so that everything stays aligned sample-by-sample.
 
     Returns
     -------
@@ -216,13 +208,10 @@ def aux_from_rec_gam(gam_filepath, gam_channels, emg_length):
 
     Examples
     --------
-    >>> from openhdemg.integrations.rec.rec_sig.openfiles_rec import (
-    ...     aux_from_rec_gam,
-    ... )
+    >>> from openhdemg.integrations.rec import aux_from_rec_gam
     >>> gam_df = aux_from_rec_gam(
     ...     gam_filepath="path/Dy14042025_180733_G01AA3_AUX_raw.sig",
     ...     gam_channels=[4],
-    ...     emg_length=122880,
     ... )
     """
 
@@ -279,7 +268,7 @@ def emg_from_rec_meacs(filepath, ied=10.0):
     -------
     emgfile : dict
         A dictionary containing all the useful variables. RAW_SIGNAL is
-        expressed in microvolts (µV), centered on 0. 
+        expressed in microvolts (µV), centered on 0.
 
     Raises
     ------
@@ -290,7 +279,8 @@ def emg_from_rec_meacs(filepath, ied=10.0):
     Examples
     --------
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.emg_from_rec_meacs(filepath="path/filename.sig")
+    >>> from openhdemg.integrations.rec import emg_from_rec_meacs
+    >>> emgfile = emg_from_rec_meacs(filepath="path/filename.sig")
     >>> info = emg.info()
     >>> info.data(emgfile)
     """
@@ -302,7 +292,7 @@ def emg_from_rec_meacs(filepath, ied=10.0):
     din = 2.4  # volt
     gain = 192
 
-    SOURCE = "REC_MEACS"  
+    SOURCE = "REC_MEACS"
     filepath = Path(filepath)
     FILENAME = filepath.name
 
@@ -401,7 +391,8 @@ def emg_from_rec_bam(filepath, ied=10.0):
     Examples
     --------
     >>> import openhdemg.library as emg
-    >>> emgfile = emg.emg_from_rec_bam(filepath="path/filename.sig")
+    >>> from openhdemg.integrations.rec import emg_from_rec_bam
+    >>> emgfile = emg_from_rec_bam(filepath="path/filename.sig")
     >>> info = emg.info()
     >>> info.data(emgfile)
     """

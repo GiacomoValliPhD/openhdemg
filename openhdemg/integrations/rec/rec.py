@@ -160,7 +160,7 @@ def select_and_load_rec_file(gam_channels=None, ied=None, parent=None):
 
     Examples
     --------
-    >>> from openhdemg.integrations.rec.rec import select_and_load_rec_file
+    >>> from openhdemg.integrations.rec import select_and_load_rec_file
     >>> emgfile = select_and_load_rec_file()
     """
 
@@ -171,7 +171,8 @@ def select_and_load_rec_file(gam_channels=None, ied=None, parent=None):
             ("ReC/MEACS and ReC/BAM EMG files", "*_EMG_raw.sig *_SIG_raw.sig"),
             ("All files", "*.*"),
         ],
-    )  # TODO for GV, parent needed.
+        parent=parent,
+    )
 
     if not filepath:
         return None
@@ -186,7 +187,8 @@ def select_and_load_rec_file(gam_channels=None, ied=None, parent=None):
             ("ReC GAM auxiliary files", "*_AUX_raw.sig"),
             ("All files", "*.*"),
         ],
-    )  # TODO for GV, parent needed.
+        parent=parent,
+    )
 
     if gam_filepath and gam_channels is None:
         gam_channels = _ask_gam_channels(parent=parent)

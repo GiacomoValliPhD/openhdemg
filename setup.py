@@ -34,6 +34,8 @@ PACKAGES = [
     "openhdemg.ui",
     "openhdemg.ui.icons",
     "openhdemg.integrations",
+    "openhdemg.integrations.rec",
+    "openhdemg.integrations.rec.rec_sig",
     "openhdemg.tests",
     "openhdemg.tests.fixtures",
     "openhdemg.tests.integration",
