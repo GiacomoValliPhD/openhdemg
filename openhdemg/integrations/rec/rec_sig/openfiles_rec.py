@@ -258,13 +258,6 @@ def aux_from_rec_gam(gam_filepath, gam_channels, emg_length):
 
     gam_selected = gam_raw[:, gam_channels]
 
-    
-    # TODO why this function raises the warning but does not act?
-    # Would it be better that who raises the warning is also acting to fix it?
-    # Please clarify the intended behaviour.
-    # SOLVED: we agree that the warning here can be useless. The truncation is done in emg_from_rec(), so that all the signals are truncated to the same length. 
-    # If the warning message is necessary it can be moved to emg_from_rec() line 137.
-
     return pd.DataFrame(gam_selected)
 
 
@@ -356,10 +349,6 @@ def emg_from_rec_meacs(filepath, ied=10.0):
         ).astype(np.float64)
 
         aux_raw = (aux_raw / max_lev) * din / gain  # Volts, no *1e6
-            # TODO: If AUX is shorter than RAW_SIGNAL, should you also truncate RAW_SIGNAL and update
-            # EMG_LENGTH to min_len so RAW_SIGNAL, REF_SIGNAL, and EMG_LENGTH stay aligned?
-            # Same problem in emg_from_rec_bam?
-            # SOLVED : we have removed this part because it was useless, the length of the aux signal is always the same as the length of the raw signal.
 
         REF_SIGNAL = pd.DataFrame(aux_raw, columns=[0])
     else:
