@@ -30,3 +30,7 @@ CONTRIBUTORS
 @JABeauchamp (James "Drew" Beauchamp) has provided written authorisation for 
 their copyrightable contributions to openhdemg to be licensed and distributed 
 as part of openhdemg version 0.2 and later under the BSD 3-Clause License.
+
+CONTRIBUTORS": @PaulRitsche (Paul Ritsche) has provided written authorisation for 
+their copyrightable contributions to openhdemg to be licensed and distributed 
+as part of openhdemg version 0.2 and later under the BSD 3-Clause License.
