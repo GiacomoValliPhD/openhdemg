@@ -191,7 +191,6 @@ def compute_svr(
 
                     # If the next discontinuity is the next MU firing, nan fill
                     if curind_nmup >= nextind:
-                        # Edge case NEED TO CHECK THE GREATER THAN CASE>> WHY TODO
                         smoothfit = np.append(smoothfit, np.nan*np.ones(1))
                         newtm = np.append(newtm, np.nan*np.ones(1))
                     else:  # Fit next continuous region of firing
@@ -290,7 +289,7 @@ def compute_deltaf(
         An exclusion criteria corresponding to the necessary modulation of
         control unit discharge rate during test unit firing in Hz.
     clean : bool, default True
-        To remove values that do not meet exclusion criteria. Pairs with fewer  # TODO: Drew, Should it be "To remove values that do not meet inclusion criteria."?
+        To remove values that do not meet inclusion criteria. Pairs with fewer  
         than two firings in either MU, insufficient overlap, or a reporter
         that derecruits before the test unit remain invalid even if False.
     correlation_metric : str {"r", "r_squared"}, default "r"
@@ -355,7 +354,7 @@ def compute_deltaf(
     9  (3, 4)  2.709522
     """
 
-    # TODO: Drew, please check the optional r/r_squared parameter.
+  
     if correlation_metric not in ("r", "r_squared"):
         raise ValueError("correlation_metric must be 'r' or 'r_squared'")
 
@@ -364,7 +363,6 @@ def compute_deltaf(
 
     # If less than 2 MUs, can not quantify deltaF
     if emgfile["NUMBER_OF_MUS"] < 2:
-        # TODO: Drew, please check the zero/one-MU output convention.
         mucombo_ret = np.arange(
             emgfile["NUMBER_OF_MUS"]
             if average_method == "test_unit_average" else 0,
@@ -395,7 +393,6 @@ def compute_deltaf(
         mucombo.append((mu1_id, mu2_id))
 
         # First MU firings, recruitment, and decrecruitment
-        # TODO: Drew, please check rejection of MUs with fewer than two firings.
         if np.size(np.where(emgfile["BINARY_MUS_FIRING"][mu1_id] == 1)) < 2:
             mu1_rcrt, mu1_drcrt = 0, 0
         else:
@@ -416,7 +413,7 @@ def compute_deltaf(
             max(mu1_rcrt, mu2_rcrt), min(mu1_drcrt, mu2_drcrt),
         )
 
-        # TODO: Drew, please check rejection of early reporter derecruitment.
+        
         reporter_stops_early = (
             (mu1_rcrt < mu2_rcrt and mu1_drcrt < mu2_drcrt)
             or (mu2_rcrt < mu1_rcrt and mu2_drcrt < mu1_drcrt)
@@ -548,7 +545,6 @@ def compute_deltaf(
 
     if clean:  # Remove values that dont meet exclusion criteria
         rcrt_diff_bin = rcrt_diff > recruitment_difference_cutoff
-        # TODO: Drew, please check r-squared filtering and positive-r requirement.
         if correlation_metric == "r_squared":
             corr_bin = (r_ret > 0) & (r_ret**2 > corr_cutoff)
         else:
@@ -572,7 +568,6 @@ def compute_deltaf(
             mucombo_ret = np.append(mucombo_ret, int(ii))
     else:  # Return all values and corresponding combinations
         dfret_ret = dfret
-        # TODO: Drew, please check the explicit (reporter, test) labels.
         mucombo_ret = list(zip(controlmu, testmu))
 
     delta_f = pd.DataFrame({'MU': mucombo_ret, 'dF': dfret_ret})
