@@ -238,6 +238,7 @@ def compute_deltaf(
     corr_cutoff=0.7,
     controlunitmodulation_cutoff=0.5,
     clean=True,
+    exclude_early_reporter_derecruitment=False,
     correlation_metric="r",
 ):
     """
@@ -249,9 +250,9 @@ def compute_deltaf(
     https://journals.physiology.org/doi/full/10.1152/jn.00024.2001
 
     !!! warning "Since version 0.2.0b3"
-        DeltaF estimates may differ from earlier releases because pairs whose
-        reporter derecruits before the test unit are now excluded. Pair labels
-        in ``average_method="all"`` now follow (reporter, test) order.
+        DeltaF estimates obtained with ``average_method="test_unit_average"``
+        may differ from earlier releases following the indexing correction in
+        [PR #105](https://github.com/GiacomoValliPhD/openhdemg/pull/105).
 
     Author: James (Drew) Beauchamp
 
@@ -289,9 +290,15 @@ def compute_deltaf(
         An exclusion criteria corresponding to the necessary modulation of
         control unit discharge rate during test unit firing in Hz.
     clean : bool, default True
-        To remove values that do not meet inclusion criteria. Pairs with fewer  
-        than two firings in either MU, insufficient overlap, or a reporter
-        that derecruits before the test unit remain invalid even if False.
+        To remove values that do not meet inclusion criteria. Pairs with fewer
+        than two firings in either MU or insufficient overlap remain invalid
+        even if False.
+    exclude_early_reporter_derecruitment : bool, default False
+        Whether to exclude pairs whose reporter derecruits before the test MU.
+        If False, preserve the original approach: use the reporter's last
+        firing as the endpoint for deltaF and the control-unit modulation
+        window when it stops before the test MU. If True, return NaN for
+        these pairs. This option applies independently of clean.
     correlation_metric : str {"r", "r_squared"}, default "r"
         Use Pearson r or its square when applying corr_cutoff. Both modes
         require positive correlation. Only applied when clean=True.
@@ -354,7 +361,6 @@ def compute_deltaf(
     9  (3, 4)  2.709522
     """
 
-  
     if correlation_metric not in ("r", "r_squared"):
         raise ValueError("correlation_metric must be 'r' or 'r_squared'")
 
@@ -413,21 +419,25 @@ def compute_deltaf(
             max(mu1_rcrt, mu2_rcrt), min(mu1_drcrt, mu2_drcrt),
         )
 
-        
         reporter_stops_early = (
             (mu1_rcrt < mu2_rcrt and mu1_drcrt < mu2_drcrt)
             or (mu2_rcrt < mu1_rcrt and mu2_drcrt < mu1_drcrt)
         )
-        # Reject unavailable deltaF endpoints, preserving pair alignment.
-        if len(muoverlap) < 2 or reporter_stops_early:
+        # Reject insufficient overlap and optionally early reporter
+        # derecruitment.
+        if len(muoverlap) < 2 or (
+            exclude_early_reporter_derecruitment and reporter_stops_early
+        ):
             dfret = np.append(dfret, np.nan)
             r_ret = np.append(r_ret, np.nan)
             rcrt_diff = np.append(rcrt_diff, np.nan)
             ctrl_mod = np.append(ctrl_mod, np.nan)
 
             # Collect which MUs were control vs test
-            if mu1_rcrt < mu2_rcrt or (mu1_rcrt == mu2_rcrt and mu1_drcrt > mu2_drcrt):
-                controlU = 1 
+            if mu1_rcrt < mu2_rcrt or (
+                mu1_rcrt == mu2_rcrt and mu1_drcrt > mu2_drcrt
+            ):
+                controlU = 1
             else:
                 controlU = 2
 
@@ -453,6 +463,10 @@ def compute_deltaf(
         if mu1_rcrt < mu2_rcrt:
             controlU = 1  # MU 1 is control unit, 2 is test unit
 
+            # Preserve the original endpoint when the reporter stops early.
+            if mu1_drcrt < mu2_drcrt:
+                mu2_drcrt = mu1_drcrt
+
             # delta F: change in control MU discharge rate between test
             # unit recruitment and derecruitment.
             df = smoothfits[mu1_id][mu2_rcrt]-smoothfits[mu1_id][mu2_drcrt]
@@ -475,6 +489,11 @@ def compute_deltaf(
 
         elif mu1_rcrt > mu2_rcrt:
             controlU = 2  # MU 2 is control unit, 1 is test unit
+
+            # Preserve the original endpoint when the reporter stops early.
+            if mu2_drcrt < mu1_drcrt:
+                mu1_drcrt = mu2_drcrt
+
             # delta F: change in control MU discharge rate between test
             # unit recruitment and derecruitment.
             df = smoothfits[mu2_id][mu1_rcrt]-smoothfits[mu2_id][mu1_drcrt]
