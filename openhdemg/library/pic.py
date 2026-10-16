@@ -58,9 +58,12 @@ def compute_svr(
 
     Returns
     -------
-    svrfits : pd.DataFrame
-        A pd.DataFrame containing the smooth/continous MU discharge rates and
-        corresponding time vectors.
+    svrfits : dict
+        Lists indexed by MU: ``svrfit`` contains the fitted discharge rates,
+        ``svrtime`` their times in seconds, and ``gensvr`` the fits aligned to
+        all EMG samples. Each entry is a one-dimensional NumPy array.
+        MUs with fewer than two firings retain their entries: ``svrfit`` and
+        ``svrtime`` are empty, and ``gensvr`` contains EMG_LENGTH NaNs.
 
     See also
     --------
@@ -96,11 +99,11 @@ def compute_svr(
     svrtime_acm = []
     gensvr_acm = []
     for mu in range(len(idr)):  # For all MUs
-        # Skip if no data
-        if idr[mu].size==0:
-            svrfit_acm.append([])
-            svrtime_acm.append([])
-            gensvr_acm.append(np.nan*np.ones(emgfile["EMG_LENGTH"]))
+        # At least two firings are needed for one discharge-rate observation.
+        if len(idr[mu]) < 2:
+            svrfit_acm.append(np.empty(0, dtype=float))
+            svrtime_acm.append(np.empty(0, dtype=float))
+            gensvr_acm.append(np.full(emgfile["EMG_LENGTH"], np.nan))
 
         else:            # Train the model on the data.
             # Time vector, removing first element.
@@ -217,7 +220,7 @@ def compute_svr(
 
             # Append fits, new time vect, time aligned fits
             svrfit_acm.append(smoothfit.copy())
-            svrtime_acm.append(np.squeeze(newtm.copy()))
+            svrtime_acm.append(np.atleast_1d(np.squeeze(newtm.copy())))
             gensvr_acm.append(gen_svr.copy())
 
     svrfits = {
