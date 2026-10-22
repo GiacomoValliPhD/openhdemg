@@ -390,6 +390,8 @@ class CustomFileDialog():
     filetypes : list of tuples, default [("openhdemg files", "*.json"), ("All files", "*.*")]
         A list of (description, extension) tuples specifying acceptable file
         types.
+    parent : QWidget or None, default None
+        Optional Qt parent used when embedding the dialog.
 
     Methods
     -------
@@ -407,12 +409,14 @@ class CustomFileDialog():
         mode="open",
         filesource="file",
         filetypes=[("All files", "*.*")],
+        parent=None,
     ):
 
         # Class variables
         self.mode = mode
         self.filesource = filesource
         self.filetypes = filetypes
+        self.parent = parent
 
         # Setup settings to remember the last directory.
         # On Windows, settings registry can be accessed from:
@@ -439,10 +443,12 @@ class CustomFileDialog():
 
         if self.mode == "open":
             file_path, _ = QFileDialog.getOpenFileName(
+                parent=self.parent,
                 caption=caption, dir=last_dir, filter=self._build_filter()
             )
         elif self.mode == "save":
             file_path, _ = QFileDialog.getSaveFileName(
+                parent=self.parent,
                 caption=caption, dir=last_dir, filter=self._build_filter()
             )
         else:
@@ -465,6 +471,7 @@ def run_custom_file_dialog(
     mode="open",
     filesource="openhdemg",
     filetypes=[("openhdemg files", "*.json"), ("All files", "*.*")],
+    parent=None,
 ):
     """
     Opens a custom file dialog for opening or saving a file, remembering the
@@ -489,6 +496,8 @@ def run_custom_file_dialog(
     filetypes : list of tuples, default [("openhdemg files", "*.json"), ("All files", "*.*")]
         A list of (description, extension) tuples specifying acceptable file
         types.
+    parent : QWidget or None, default None
+        Optional Qt parent used when embedding the dialog.
 
     Returns
     -------
@@ -527,6 +536,7 @@ def run_custom_file_dialog(
         mode=mode,
         filesource=filesource,
         filetypes=filetypes,
+        parent=parent,
     )
     filepath = dialog.get_filepath()
 
@@ -548,6 +558,8 @@ class CustomDirectoryDialog():
     ----------
     window_title : str, default "Select a folder"
         Title of the dialog window. This should guide the user.
+    parent : QWidget or None, default None
+        Optional Qt parent used when embedding the dialog.
 
     Methods
     -------
@@ -560,10 +572,11 @@ class CustomDirectoryDialog():
         directory.
     """
 
-    def __init__(self, window_title="Select a folder"):
+    def __init__(self, window_title="Select a folder", parent=None):
 
         # Class variables
         self.window_title = window_title
+        self.parent = parent
 
         # Setup settings to remember the last directory Same as in CustomFileDialog
         self.settings = QSettings("openhdemg", "library_ui")
@@ -598,7 +611,7 @@ class CustomDirectoryDialog():
 
         last_dir = self.settings.value(self.last_dir_key, os.getcwd())
 
-        dialog = QFileDialog()
+        dialog = QFileDialog(self.parent)
         dialog.setWindowTitle(self.window_title)
         dialog.setFileMode(QFileDialog.Directory)
         dialog.setOption(QFileDialog.ShowDirsOnly, True)
@@ -610,29 +623,36 @@ class CustomDirectoryDialog():
         # Set last directory
         dialog.setDirectory(last_dir)
 
-        if dialog.exec():
-            dir_path = dialog.selectedFiles()[0]
+        try:
+            if dialog.exec():
+                dir_path = dialog.selectedFiles()[0]
 
-            # Create directory if it doesn't exist
-            if dir_path and not os.path.exists(dir_path):
-                try:
-                    os.makedirs(dir_path)
-                except Exception as e:
-                    QMessageBox.critical(
-                        None,
-                        "Error",
-                        f"Could not create directory:\n{dir_path}\n\n{str(e)}",
-                    )
-                    return None
+                # Create directory if it doesn't exist
+                if dir_path and not os.path.exists(dir_path):
+                    try:
+                        os.makedirs(dir_path)
+                    except Exception as e:
+                        QMessageBox.critical(
+                            self.parent,
+                            "Error",
+                            f"Could not create directory:\n{dir_path}\n\n{str(e)}",
+                        )
+                        return None
 
-            # Save for next time
-            self.settings.setValue(self.last_dir_key, dir_path)
-            return dir_path
+                # Save for next time
+                self.settings.setValue(self.last_dir_key, dir_path)
+                return dir_path
 
-        return None
+            return None
+        finally:
+            close_and_delete_widget(dialog)
 
 
-def run_custom_directory_dialog(window_title="Select a folder", mode="open"):
+def run_custom_directory_dialog(
+    window_title="Select a folder",
+    mode="open",
+    parent=None,
+):
     """
     Opens a custom dialog for selecting a directory, remembering the last
     accessed directory.
@@ -655,6 +675,8 @@ def run_custom_directory_dialog(window_title="Select a folder", mode="open"):
             The dialog additionally allows the user to type a new directory
             name into the text bar. If the typed directory does not exist, it
             will be created automatically after the user confirms.
+    parent : QWidget or None, default None
+        Optional Qt parent used when embedding the dialog.
 
     Returns
     -------
@@ -682,7 +704,7 @@ def run_custom_directory_dialog(window_title="Select a folder", mode="open"):
     app, app_created, path_to_icon = check_app()
 
     # Execute the CustomDirectoryDialog in open or save mode
-    dialog = CustomDirectoryDialog(window_title=window_title)
+    dialog = CustomDirectoryDialog(window_title=window_title, parent=parent)
     dirpath = dialog.get_directory(mode=mode)
 
     return dirpath

@@ -2072,11 +2072,13 @@ def remove_duplicates_between(
     - norm_twod_xcorr : normalised 2-dimensional cross-correlation of STAs of
         two MUs.
     - tracking : track MUs across two different files.
+    - asksavemodule : Save the resulting emgfiles as openhdemg modules.
 
     Examples
     --------
     Remove duplicated MUs between two OPENHDEMG files and inspect the tracking
-    outcome via a convenient GUI. Then Save the emgfiles without duplicates.
+    outcome via a convenient GUI. Then save the emgfiles without duplicates
+    as openhdemg modules.
     Of the 2 duplicated MUs, the one with the lowest accuracy is removed.
 
     >>> import openhdemg.library as emg
@@ -2094,12 +2096,12 @@ def remove_duplicates_between(
     ...     gui=True,
     ...     which="accuracy",
     ... )
-    >>> emg.asksavefile(emgfile1)
-    >>> emg.asksavefile(emgfile2)
+    >>> emg.asksavemodule(emgfile1)
+    >>> emg.asksavemodule(emgfile2)
 
     Remove duplicated MUs between two OTB files and directly save the emgfiles
-    without duplicates. The duplicates are removed from the file with
-    more MUs.
+    without duplicates as openhdemg modules. The duplicates are removed from
+    the file with more MUs.
 
     >>> import openhdemg.library as emg
     >>> emgfile1 = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
@@ -2120,12 +2122,13 @@ def remove_duplicates_between(
     ...     gui=False,
     ...     which="munumber",
     ... )
-    >>> emg.asksavefile(emgfile1)
-    >>> emg.asksavefile(emgfile2)
+    >>> emg.asksavemodule(emgfile1)
+    >>> emg.asksavemodule(emgfile2)
 
     Remove duplicated MUs between two files where channels are sorted with a
-    custom order and directly save the emgfiles without duplicates. Of the 2
-    duplicated MUs, the one with the lowest accuracy is removed.
+    custom order and directly save the emgfiles without duplicates as
+    openhdemg modules. Of the 2 duplicated MUs, the one with the lowest
+    accuracy is removed.
 
     >>> import openhdemg.library as emg
     >>> import numpy as np
@@ -2155,8 +2158,8 @@ def remove_duplicates_between(
     ...     gui=False,
     ...     which="accuracy",
     ... )
-    >>> emg.asksavefile(emgfile1)
-    >>> emg.asksavefile(emgfile2)
+    >>> emg.asksavemodule(emgfile1)
+    >>> emg.asksavemodule(emgfile2)
     """
 
     # Work on deepcopies
