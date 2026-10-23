@@ -25,7 +25,8 @@ from openhdemg.library.plotemg import (
 )
 from openhdemg.library.electrodes import sort_rawemg
 from openhdemg.library.muap import diff, double_diff, sta, st_muap, xcc_sta
-from openhdemg.library.tools import compute_svr, delete_mus
+from openhdemg.library.tools import delete_mus
+from openhdemg.library.pic import compute_svr
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
