@@ -76,6 +76,7 @@ if __name__ == "__main__":
             "Bug Tracker": "https://github.com/GiacomoValliPhD/openhdemg/issues",
         },
         version=openhdemg.__version__,
+        python_requires=">=3.10",
         install_requires=INSTALL_REQUIRES,
         extras_require=EXTRAS_REQUIRE,
         include_package_data=True,

@@ -1,3 +1,67 @@
+## :octicons-tag-24: 0.2.0-beta.3
+:octicons-clock-24: October 2026
+
+Version 0.2.0-beta.3 introduces company-maintained integrations for external data formats, starting with ReC acquisition systems. It also improves the robustness and flexibility of persistent inward current analyses and the integration of file-selection dialogs with parent interfaces.
+
+### Backward Compatibility
+
+This release remains compatible with the `emgfile` and binary-module structures introduced in v0.2.0-beta.1.
+
+- `compute_svr()` has moved from `openhdemg.library.tools` to `openhdemg.library.pic`. Direct imports from the `tools` module must be updated. The function remains available as `emg.compute_svr()` when using `import openhdemg.library as emg`.
+- `compute_deltaf(..., average_method="all")` now consistently returns MU pairs in `(reporter, test)` order. The order within each pair may differ from earlier releases.
+
+!!! warning "Differences in DeltaF estimates"
+    DeltaF estimates obtained with `average_method="test_unit_average"` may differ from earlier releases because an indexing error affecting MU pairs with insufficient overlap has been corrected.
+
+### Major Achievements
+
+- **New ReC integration** for loading raw EMG recordings and auxiliary signals from ReC acquisition systems.
+- **More robust persistent inward current analyses**, with improved handling of sparse discharge trains, invalid MU pairs, and empty results.
+- **More flexible DeltaF criteria**, including squared-correlation thresholds and optional exclusion of early reporter derecruitment.
+- **Improved interface integration** through parent-aware file and directory dialogs.
+
+### Major Changes
+
+- **New integrations**:
+
+    - New `openhdemg.integrations` package supports company-maintained integrations for external data formats.
+    - New `openhdemg.integrations.rec` package loads binary `.sig` recordings from ReC/MEACS and ReC/BAM acquisition systems.
+    - `emg_from_rec()` automatically selects the appropriate loader from the system code in the filename, accepts a custom interelectrode distance, and standardises the returned `emgfile` data types.
+    - `emg_from_rec_meacs()` and `emg_from_rec_bam()` provide dedicated loaders for 32-channel and 64-channel recordings, respectively. Raw EMG signals are converted to microvolts, and available synchronisation signals are loaded into `REF_SIGNAL`.
+    - `aux_from_rec_gam()` loads selected channels from ReC GAM auxiliary files in Volts. `emg_from_rec()` can append these channels to `REF_SIGNAL` and truncate EMG and GAM data to their shared recording length.
+    - `select_and_load_rec_file()` provides an interactive workflow for selecting the recording, specifying the interelectrode distance, and optionally loading GAM channels.
+    - ReC functions are imported directly from `openhdemg.integrations.rec`.
+
+- **Updated analysis functions**:
+
+    - `compute_svr()` is now part of the `pic` module, grouping discharge-rate smoothing and DeltaF estimation together.
+    - `compute_svr()` now handles MUs with fewer than two firings by returning empty one-dimensional NumPy arrays in `svrfit` and `svrtime`, and an `EMG_LENGTH` array of NaNs in `gensvr`.
+    - `compute_svr()` now keeps `svrtime` entries one-dimensional when only one fitted sample is available.
+    - `compute_deltaf()` now preserves the alignment between MU pairs, reporter/test identifiers, and DeltaF values when pairs have insufficient overlap.
+    - `compute_deltaf()` returns NaN for pairs with fewer than two firings in either MU or insufficient overlap, including when `clean=False`.
+    - `compute_deltaf()` adds `correlation_metric="r_squared"` to apply `corr_cutoff` to squared Pearson correlation when `clean=True`. This option also requires positive correlation.
+    - `compute_deltaf()` adds `exclude_early_reporter_derecruitment=True` to exclude pairs whose reporter derecruits before the test MU, independently of `clean`.
+    - `compute_deltaf()` now returns consistently structured results for files with fewer than two MUs: an empty DataFrame for `average_method="all"`, or one NaN value per MU for `average_method="test_unit_average"`.
+
+- **Updated interface functions and classes**:
+
+    - `askopenfile()`, `asksavefile()`, `asksavemodule()`, and `askloadmodule()` now accept `gui_parent` for embedding their dialogs in an existing Qt interface.
+    - `openhdemg_Collection.asksave()` and `openhdemg_Collection.askload()` also accept `gui_parent`.
+    - `CustomFileDialog`, `CustomDirectoryDialog`, `run_custom_file_dialog()`, and `run_custom_directory_dialog()` now accept `parent`.
+    - `CustomDirectoryDialog` now explicitly closes and deletes its Qt dialog after use.
+
+- **Documentation and project maintenance**:
+
+    - The API reference now includes the [ReC integration](api_rec.md) and documents `compute_svr()` in the [PIC module](api_pic.md).
+    - `remove_duplicates_between()` examples now save the resulting files as binary modules using `asksavemodule()`.
+    - New `LICENSING_HISTORY.txt` records the project's licensing history and contributor authorisations for BSD-3-Clause distribution.
+
+### Known Issues
+
+This remains a beta release. Please report unexpected behaviour through the [openhdemg GitHub issue tracker](https://github.com/GiacomoValliPhD/openhdemg/issues){:target="_blank"}.
+
+<br>
+
 ## :octicons-tag-24: 0.2.0-beta.2
 :octicons-clock-24: August 2026
 
