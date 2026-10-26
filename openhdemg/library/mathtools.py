@@ -89,6 +89,13 @@ def min_max_scaling(data=None, series_or_df=None, col_by_col=False):
             return data
 
     elif isinstance(data, np.ndarray):
+        # Prevent scaled decimals from being cast back to integers or booleans.
+        if (
+            np.issubdtype(data.dtype, np.integer)
+            or np.issubdtype(data.dtype, np.bool_)
+        ):
+            data = data.astype(float)
+
         if col_by_col:
             # Check if data is 1D 2D or nD and act accordingly
             if len(data.shape) == 1:
@@ -655,8 +662,8 @@ def compute_pnr(
     ... )
     """
 
-    # Manage exception of no firings
-    if len(mupulses) == 0:
+    # Manage exception of fewer than two firings
+    if len(mupulses) < 2:
         return np.nan
 
     # Extract the source
@@ -1126,8 +1133,9 @@ def find_mle_teta(sig1, sig2, ied, fsamp):
     # the physiological range) based on which to calculate teta.
     min_cv = 1
     max_cv = 10
-    teta_min = math.floor(ied / max_cv * fsamp)
-    teta_max = math.ceil(ied / min_cv * fsamp)
+    ied_m = ied / 1000
+    teta_min = math.floor(ied_m / max_cv * fsamp)
+    teta_max = math.ceil(ied_m / min_cv * fsamp)
 
     # Verify that the input is a 1D array. If not, it will affect the
     # calculation of corrpos.
@@ -1142,14 +1150,13 @@ def find_mle_teta(sig1, sig2, ied, fsamp):
         sig1_tosum = sig1[:len(sig1)-i]
         sig2_tosum = sig2[i:]
 
-        corrpos[idx-teta_min+1] = np.sum(sig1_tosum * sig2_tosum)
+        corrpos[idx] = np.sum(sig1_tosum * sig2_tosum)
 
-    pos = corrpos.argmax() + 1
-    # +1 is necessary to overcome base 0 and prevent teta from beeing 0
+    pos = corrpos.argmax()
 
-    if pos > 1 and pos < len(delay):
-        x = delay[pos-2: pos+1]
-        y = corrpos[pos-2: pos+1]
+    if pos > 0 and pos < len(delay)-1:
+        x = delay[pos-1: pos+2]
+        y = corrpos[pos-1: pos+2]
 
         coefs = poly.polyfit(x=x, y=y, deg=2)
         # The polyfit function originally returns flipped coefficients
@@ -1158,6 +1165,6 @@ def find_mle_teta(sig1, sig2, ied, fsamp):
         teta = -coefs[1] / (2 * coefs[0])
 
     else:
-        teta = pos
+        teta = delay[pos]
 
     return teta

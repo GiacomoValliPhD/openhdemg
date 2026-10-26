@@ -181,6 +181,7 @@ def showselect(
     title="",
     titlesize=12,
     nclic=2,
+    gui_parent=None,
 ):
     """
     Visually select a part of the recording (X axis).
@@ -218,6 +219,8 @@ def showselect(
     nclic: int, default 2
         The number of clics to be collected. If nclic < 1, all the clicks are
         collected.
+    gui_parent : QWidget or None, default None
+        Optional Qt parent used when embedding the point selector.
 
     Returns
     -------
@@ -274,6 +277,7 @@ def showselect(
         y_label=y_label,
         title=title,
         title_fontsize=titlesize,
+        parent=gui_parent,
     )
 
     points = [round(point[0]) for point in res]
@@ -546,6 +550,12 @@ def resize_emgfile(
             "No RAW_SIGNAL or REF_SIGNAL is present in the emgfile."
         )
 
+    if start_ >= end_:
+        raise ValueError(
+            "The resize area must contain at least one sample and its start "
+            "must precede its end."
+        )
+
     # Resize STANDARD dataframes and identify the first value of the
     # index to resize the mupulses. Then, reset the index.
     first_idx = 0
@@ -635,7 +645,7 @@ def resize_emgfile(
     elif accuracy != "maintain":
         raise ValueError(
             "Accuracy can only be 'recalculate' or 'maintain'."
-            f"{accuracy} was passed instead."
+            f" {accuracy} was passed instead."
         )
 
     # Compute ROA or leave original
@@ -660,7 +670,7 @@ def resize_emgfile(
     elif roa_with_reference_mupulses != "maintain":
         raise ValueError(
             "roa_with_reference_mupulses can only be 'recalculate' or "
-            f"'maintain'. {accuracy} was passed instead."
+            f"'maintain'. {roa_with_reference_mupulses} was passed instead."
         )
 
     # Custom dataframes
@@ -682,7 +692,11 @@ def resize_emgfile(
     return standardise_emgfile_dtypes(rs_emgfile), start_, end_
 
 
-def select_bad_channels(emgfile, manual_offset=0):
+def select_bad_channels(
+    emgfile,
+    manual_offset=0,
+    gui_parent=None,
+):
     """
     Select noisy channels via visual inspection.
 
@@ -699,6 +713,8 @@ def select_bad_channels(emgfile, manual_offset=0):
         This parameter sets the scaling of the channels. If 0 (default), the
         channels' amplitude is scaled automatically to fit the plotting window.
         If > 0, the channels will be scaled based on the specified value.
+    gui_parent : QWidget or None, default None
+        Optional Qt parent used when embedding the channel selector.
 
     Returns
     -------
@@ -722,6 +738,7 @@ def select_bad_channels(emgfile, manual_offset=0):
     edited_emgfile = run_manual_emgchannels_selection_dialog(
         emgfile=emgfile,
         manual_offset=manual_offset,
+        parent=gui_parent,
     )
 
     return edited_emgfile
@@ -1286,6 +1303,11 @@ class EMGFileSectionsIterator:
         if not isinstance(kwargs_list, list):
             raise ValueError("kwargs_list must be a list")
 
+        if len(args_list) == 0:
+            raise ValueError("args_list cannot be empty")
+        if len(kwargs_list) == 0:
+            raise ValueError("kwargs_list cannot be empty")
+
         # Manage multiple functions
         if len(funcs) > 1:
             if len(funcs) != len(self.sections):
@@ -1526,13 +1548,15 @@ class EMGFileSectionsIterator:
                 "All elements in `self.results` must be pd.DataFrames."
             )
 
-        # Optionally fill NaN values
+        # Optionally fill NaN values without changing the stored results
         if fillna is not None:
-            self.results = [df.fillna(fillna) for df in self.results]
+            results = [df.fillna(fillna) for df in self.results]
+        else:
+            results = self.results
 
         # Stack DataFrames along axis=0 for operations like std and cv
         merged_stack = pd.concat(
-            self.results, axis=0, keys=range(len(self.results)),
+            results, axis=0, keys=range(len(results)),
         )
 
         if method == "average":
@@ -1564,10 +1588,10 @@ class EMGFileSectionsIterator:
             # from which DataFrame the results come from.
             merged_df = pd.concat(
                 [
-                    df.reset_index().rename(
-                        columns={"index": "original_idx"}
-                    ).assign(source_idx=i)
-                    for i, df in enumerate(self.results)
+                    df.rename_axis("original_idx").reset_index().assign(
+                        source_idx=i
+                    )
+                    for i, df in enumerate(results)
                 ],
                 ignore_index=True
             )
@@ -1585,7 +1609,7 @@ class EMGFileSectionsIterator:
                 raise ValueError(
                     "When using method='custom', `agg_func` must be provided."
                 )
-            merged_df = agg_func(self.results)
+            merged_df = agg_func(results)
 
         else:
             raise ValueError(f"Unknown method '{method}'")
@@ -1733,10 +1757,37 @@ def delete_mus(
             "set to None."
         )
 
+    # Convert munumber to a list of ordered, unique integers
+    if isinstance(munumber, (int, np.integer)) and not isinstance(
+        munumber, (bool, np.bool_)
+    ):
+        munumber = [int(munumber)]
+    elif isinstance(munumber, list):
+        if not all(
+            isinstance(x, (int, np.integer))
+            and not isinstance(x, (bool, np.bool_))
+            for x in munumber
+        ):
+            raise TypeError("All values in 'munumber' must be integers.")
+        munumber = sorted(set(int(x) for x in munumber))
+    else:
+        raise TypeError(
+            "While calling the 'delete_mus' function, you should pass an "
+            "integer or a list to 'munumber= '."
+        )
+
     # Check if any MU
     if emgfile["NUMBER_OF_MUS"] == 0:
         warnings.warn("The file does not contain any MU.")
         return emgfile
+
+    if any(
+        mu < 0 or mu >= emgfile["NUMBER_OF_MUS"]
+        for mu in munumber
+    ):
+        raise ValueError(
+            "All values in 'munumber' must identify an existing MU."
+        )
 
     # TODO uniform this behaviour in the future
     # Check how to behave in case of a single MU
@@ -1786,18 +1837,6 @@ def delete_mus(
         ==> "ROA_WITH_REFERENCE_MUPULSES" : optional ROA dataframe
     }
     """
-
-    # Convert munumber to a list of int
-    if isinstance(munumber, int):
-        munumber = [munumber]
-    elif not isinstance(munumber, list):
-        raise TypeError(
-            "While calling the 'delete_mus' function, you should pass an "
-            "integer or a list to 'munumber= '."
-        )
-
-    # Make sure that only ordered unique values are contained
-    munumber = sorted(set(int(x) for x in munumber))
 
     # Drop ACCURACY values and reset the index
     if del_emgfile.get("ACCURACY", None) is not None:
@@ -1862,20 +1901,6 @@ def delete_mus(
         del_emgfile["MU_LABELS"] = {
             str(i): v for i, v in enumerate(filtered_values)
         }  # Reindex keys from 0
-
-    # Verify if all the MUs have been removed. In that case, restore column
-    # names in empty pd.DataFrames.
-    if del_emgfile["NUMBER_OF_MUS"] == 0:
-        # pd.DataFrame
-        if del_emgfile.get("IPTS", None) is not None:
-            del_emgfile["IPTS"] = pd.DataFrame(columns=[0])
-        if del_emgfile.get("BINARY_MUS_FIRING", None) is not None:
-            del_emgfile["BINARY_MUS_FIRING"] = pd.DataFrame(columns=[0])
-        if del_emgfile.get("ACCURACY", None) is not None:
-            del_emgfile["ACCURACY"] = pd.DataFrame(columns=[0])
-        # list of ndarray
-        if del_emgfile.get("MUPULSES", None) is not None:
-            del_emgfile["MUPULSES"] = []
 
     if del_emgfile.get("SOURCE", None) is not None:
         if del_emgfile["SOURCE"] == "DELSYS" and delete_delsys_muaps:
@@ -2416,10 +2441,12 @@ def compute_covsteady(
         )
         start_steady, end_steady = points[0], points[1]
 
-    ref = emgfile["REF_SIGNAL"].loc[start_steady:end_steady]
+    ref = emgfile["REF_SIGNAL"].loc[
+        start_steady:end_steady, refsig_channel
+    ]
     covsteady = (ref.std() / ref.mean()) * 100
 
-    return covsteady[0]
+    return float(covsteady)
 
 
 def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
@@ -2923,9 +2950,7 @@ def compute_rfd(
     """
 
     # Check if the startpoint was passed
-    if isinstance(startpoint, int):
-        start_ = startpoint
-    else:
+    if startpoint is None:
         # Otherwise select the starting point for the RFD
         title = (
             "Select the start point to calculate RFD by hovering " +
@@ -2941,14 +2966,32 @@ def compute_rfd(
             nclic=1,
         )
         start_ = points[0]
+    elif isinstance(startpoint, (int, np.integer)) and not isinstance(
+        startpoint, (bool, np.bool_)
+    ):
+        start_ = int(startpoint)
+    else:
+        raise TypeError("startpoint must be None or an integer.")
+
+    force_sig = emgfile["REF_SIGNAL"][refsig_channel]
+    if start_ < 0 or start_ >= len(force_sig):
+        raise ValueError("startpoint must identify a sample in REF_SIGNAL.")
 
     # Create a dict to add the RFD
     rfd_dict = dict.fromkeys(ms, None)
     # Loop through the ms list and calculate the respective rfd.
     for thisms in ms:
         ms_insamples = round((int(thisms) * emgfile["FSAMP"]) / 1000)
+        if ms_insamples < 1:
+            raise ValueError(
+                "All values in ms must correspond to at least one sample."
+            )
 
-        force_sig = emgfile["REF_SIGNAL"][refsig_channel]
+        if start_ + ms_insamples >= len(force_sig):
+            raise ValueError(
+                "The requested RFD interval exceeds the REF_SIGNAL length."
+            )
+
         n_0 = force_sig.iloc[start_]
         n_next = force_sig.iloc[start_ + ms_insamples]
 

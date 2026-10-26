@@ -1,6 +1,6 @@
 Description
 -----------
-This module contains classes (QtWidgets) and functions managing the user interfaces used by openhdemg.library. These classes or functions can be used directly or integrated in larger UIs (e.g., MU tracking and conduction velocity estimation).
+This module contains classes (QtWidgets) and functions managing the user interfaces used by openhdemg.library.
 
 <br/>
 
@@ -61,20 +61,6 @@ This module contains classes (QtWidgets) and functions managing the user interfa
 <br/>
 
 ::: openhdemg.ui.widgets.run_manual_emgchannels_selection_dialog
-    options:
-        show_root_full_path: False
-        show_root_heading: True
-
-<br/>
-
-::: openhdemg.ui.widgets.BSS_MU_Editor
-    options:
-        show_root_full_path: False
-        show_root_heading: True
-
-<br/>
-
-::: openhdemg.ui.widgets.run_bss_mu_editor
     options:
         show_root_full_path: False
         show_root_heading: True

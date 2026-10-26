@@ -827,6 +827,14 @@ def smoothed_dr_pca(
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
+    window_type : str {"hanning", "hamming"}, default "hanning"
+        Type of window used for spectral estimation. Can be:
+
+        ``hanning``
+            A Hann window.
+
+        ``hamming``
+            A Hamming window
     window_duration_seconds : float, default 0.4
         Duration of the Hann window used to smooth binary spike trains.
     filter_highcut : float, default 0.75
@@ -872,8 +880,11 @@ def smoothed_dr_pca(
         - "kmo": the Kaiser-Meyer-Olkin measure of sampling adequacy (float).
         - "method_n_components": the selected method to estimate the number of
         components to retain (str).
-        - "eigenvalues_threshold_pa": the eigenvalue threshold based on
-        parallel analysis (float).
+        - "percentile_eigenvalues_pa": the percentile simulated eigenvalues
+        from parallel analysis (numpy array or None). The array contains one
+        threshold per component and is used when method_n_components is
+        "parallel_analysis". It is None when using the other
+        component-selection methods.
         - "variance_threshold": the variance threshold used if
         method_n_components is "variance_greater_than_threshold" (float).
         - "number_of_components_retained": the number of components retained
@@ -1236,6 +1247,14 @@ def common_drive_index(
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
+    window_type : str {"hanning", "hamming"}, default "hanning"
+        Type of window used for spectral estimation. Can be:
+
+        ``hanning``
+            A Hann window.
+
+        ``hamming``
+            A Hamming window
     window_duration_seconds : float, default 0.4
         Duration of the Hann window used to smooth binary spike trains.
     filter_highcut : float, default 0.75
@@ -2301,6 +2320,14 @@ def smoothed_dr_mutualinformation(
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
+    window_type : str {"hanning", "hamming"}, default "hanning"
+        Type of window used for spectral estimation. Can be:
+
+        ``hanning``
+            A Hann window.
+
+        ``hamming``
+            A Hamming window
     window_duration_seconds : float, default 0.4
         Duration of the Hann window used to smooth binary spike trains.
     filter_highcut : float, default 0.75

@@ -98,6 +98,14 @@ Francesco Negro:
 
 - Francesco Negro is a Full Professor at the Department of Clinical and Experimental Sciences at Universita’ degli Studi di Brescia (IT). His research interests include applied physiology of the human motor system, signal processing of intramuscular and surface electromyography, and modeling of spinal neural networks.
 
+Harald Penasso:
+
+- harald.penasso@hcw.ac.at
+
+- Contribution: &nbsp; :fontawesome-solid-file-code: Code contribution &nbsp; :octicons-codescan-checkmark-24: Accuracy check &nbsp; :fontawesome-solid-bug: Bug fix
+
+- Harald Penasso is a senior lecturer and researcher in the Department of Health Sciences at the University of Applied Sciences Campus Vienna. His research bridges physiotherapy, biomechanics, neuromechanics and medical engineering. He holds a PhD in sport science and has professional experience in clinical gait rehabilitation, motion capture, and biomedical start-up environments. He is currently interested in using movement analysis, electrophysiology, and computational approaches to study neuromuscular function and develop training- and rehabilitation-based strategies.
+
 Gregory EP Pearcey:
 
 - gpearcey@northwestern.edu

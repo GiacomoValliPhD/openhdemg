@@ -20,7 +20,7 @@ WARNING!!! - UNTESTED FUNCTIONS: askopenfile, asksavefile
 import unittest
 from openhdemg.tests.unit.functions_for_unit_test import (
     get_directories as getd, validate_emgfile_content,
-    validate_emg_refsig_content,
+    validate_emg_refsig_content, validate_standard_emgfile_content,
 )
 from openhdemg.library.openfiles import (
     emg_from_demuse, emg_from_otb, refsig_from_otb, emg_from_delsys,
@@ -55,7 +55,7 @@ class TestOpenFiles(unittest.TestCase):
         # Load decomposed file with multiple MUs (some empty) and reference
         # signal
         demuse_D_R_E_mMU = emg_from_demuse(
-            filepath=getd("library", "demuse", "demuse_D_R_E_mMU.mat"),
+            filepath=getd("library", "demuse", "DEMUSE_D_R_E_mMU.mat"),
             )
         validate_emgfile_content(self, demuse_D_R_E_mMU)
 
@@ -67,6 +67,9 @@ class TestOpenFiles(unittest.TestCase):
         # Load decomposed file with multiple MUs and reference signal
         otb_D_R_mMU = emg_from_otb(
             filepath=getd("library", "otb", "OTB_D_R_mMU.mat"),
+            ext_factor=0,
+            refsig=[True, "subsampled"],
+            version="1.5.3.0",
             )
         validate_emgfile_content(self, otb_D_R_mMU)
 
@@ -77,15 +80,20 @@ class TestOpenFiles(unittest.TestCase):
             )
         validate_emgfile_content(self, otb_D_R_EX_mMU)
 
-        # Load decomposed file with only 1 MU and reference signal
-        otb_D_R_1_MU = emg_from_otb(
-            filepath=getd("library", "otb", "OTB_D_R_1MU.mat"),
-            )
+        # Load decomposed file with only 1 MU without the reference signal
+        with self.assertWarns(UserWarning):
+            otb_D_R_1_MU = emg_from_otb(
+                filepath=getd("library", "otb", "OTB_D_R_1MU.mat"),
+                refsig=[False, "fullsampled"],
+                )
         validate_emgfile_content(self, otb_D_R_1_MU)
+        self.assertTrue(otb_D_R_1_MU["REF_SIGNAL"].empty)
 
         # Load file with only the reference signal
         otb_R = refsig_from_otb(
             filepath=getd("library", "otb", "OTB_R.mat"),
+            refsig="subsampled",
+            version="1.5.3.0",
             )
         validate_emg_refsig_content(self, otb_R)
 
@@ -113,8 +121,15 @@ class TestOpenFiles(unittest.TestCase):
                 ["delsys", "4pin", "DELSYS_D_R_MUAPs_mMU"],
                 "Bicep_Brachii_Motor_Units (Sensor 1)"
             ),
+            emg_sensor_name="Galileo",
+            refsig_sensor_name="Trigno",
+            filename_from="rawemg_file",
         )
         validate_emgfile_content(self, delsys_D_R_MUAPs_mMU)
+        self.assertEqual(
+            delsys_D_R_MUAPs_mMU["FILENAME"],
+            "Raw_EMG_signal_withFakeRef.mat",
+        )
 
         # Load decomposed file with multiple MUs and MUAPs
         delsys_D_MUAPs_mMU = emg_from_delsys(
@@ -141,6 +156,17 @@ class TestOpenFiles(unittest.TestCase):
         )
         validate_emg_refsig_content(self, delsys_R)
 
+        # Load file with only the reference signal using a custom sensor name
+        delsys_R_custom_name = refsig_from_delsys(
+            filepath=getd(
+                "library",
+                ["delsys", "4pin", "DELSYS_D_R_MUAPs_mMU"],
+                "Raw_EMG_signal_withFakeRef.mat",
+            ),
+            refsig_sensor_name="Trigno",
+        )
+        validate_emg_refsig_content(self, delsys_R_custom_name)
+
     def test_from_customcsv(self):
         """
         Test loading various files saved in a custom .csv file.
@@ -149,8 +175,19 @@ class TestOpenFiles(unittest.TestCase):
         # Load decomposed file with multiple MUs, reference signal and EXTRAS
         custom_csv_D_R_EX_mMU = emg_from_customcsv(
             filepath=getd("library", "custom_csv", "C_CSV_D_R_EX_mMU.csv"),
+            ref_signal="REF",
+            raw_signal="RAW",
+            ipts="IPT",
+            mupulses="MUP",
+            binary_mus_firing="BINARY",
+            accuracy="ACC",
+            extras="EXT",
+            fsamp=1000,
+            ied=10,
             )
         validate_emgfile_content(self, custom_csv_D_R_EX_mMU)
+        self.assertEqual(custom_csv_D_R_EX_mMU["FSAMP"], 1000)
+        self.assertEqual(custom_csv_D_R_EX_mMU["IED"], 10)
 
         # Load decomposed file with multiple MUs, reference signal and EXTRAS
         custom_csv_D_R_EX_1MU = emg_from_customcsv(
@@ -164,6 +201,16 @@ class TestOpenFiles(unittest.TestCase):
             )
         validate_emg_refsig_content(self, custom_csv_R_EX)
 
+        # Load file using custom labels and sampling frequency
+        custom_csv_R_EX_custom_labels = refsig_from_customcsv(
+            filepath=getd("library", "custom_csv", "C_CSV_R_EX.csv"),
+            ref_signal="REF",
+            extras="EXT",
+            fsamp=1000,
+            )
+        validate_emg_refsig_content(self, custom_csv_R_EX_custom_labels)
+        self.assertEqual(custom_csv_R_EX_custom_labels["FSAMP"], 1000)
+
     def test_from_samplefile(self):
         """
         Test loading the decomposed sample file.
@@ -171,7 +218,7 @@ class TestOpenFiles(unittest.TestCase):
 
         # Load decomposed file with multiple MUs and reference signal
         emgfile = emg_from_samplefile()
-        validate_emgfile_content(self, emgfile)
+        validate_standard_emgfile_content(self, emgfile)
 
     def test_from_json(self):
         """
@@ -239,7 +286,7 @@ class TestOpenFiles(unittest.TestCase):
         # Load decomposed file with multiple MUs (some empty) and reference
         # signal
         emgfile = emg_from_demuse(
-            filepath=getd("library", "demuse", "demuse_D_R_E_mMU.mat"),
+            filepath=getd("library", "demuse", "DEMUSE_D_R_E_mMU.mat"),
             )
         save_json_emgfile(
             emgfile, filepath=getd("library", "saved", "temp.json")

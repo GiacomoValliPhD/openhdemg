@@ -45,7 +45,9 @@ def get_directories(folder, subfolder, filename):
 
 def validate_emgfile_content(tc, emgfile):
     """
-    Verify the emgfile content (instances and shapes).
+    Verify legacy emgfile content (instances and shapes).
+
+    This validator is retained for backward compatibility in test_openfiles.
 
     Parameters:
     -----------
@@ -126,7 +128,9 @@ def validate_emgfile_content(tc, emgfile):
 
 def validate_emg_refsig_content(tc, emg_refsig):
     """
-    Verify the emg_refsig file content (instances and shapes).
+    Verify legacy emg_refsig content (instances and shapes).
+
+    This validator is retained for backward compatibility in test_openfiles.
 
     Parameters:
     -----------
@@ -149,3 +153,115 @@ def validate_emg_refsig_content(tc, emg_refsig):
     tc.assertTrue(
         emg_refsig["REF_SIGNAL"].shape[0] > emg_refsig["REF_SIGNAL"].shape[1]
     )
+
+
+def validate_standard_emgfile_content(tc, emgfile):
+    """
+    Strictly verify the content and dtypes of a standardised emgfile.
+
+    This validator supports both full emgfiles and reference-only emgfiles.
+
+    Parameters:
+    -----------
+    tc : class
+        The unittest.TestCase instance (this should be "self").
+    emgfile : dict
+        The standardised emgfile to validate.
+    """
+
+    # Verify common content
+    tc.assertIsInstance(emgfile, dict)
+    tc.assertIsInstance(emgfile["SOURCE"], str)
+    tc.assertIsInstance(emgfile["FILENAME"], str)
+    tc.assertIsInstance(emgfile["FSAMP"], np.float64)
+    tc.assertIsInstance(emgfile["REF_SIGNAL"], pd.DataFrame)
+    tc.assertIsInstance(emgfile["EXTRAS"], pd.DataFrame)
+    tc.assertTrue(
+        all(dtype == np.float64 for dtype in emgfile["REF_SIGNAL"].dtypes)
+    )
+
+    # Reference-only emgfile
+    if "RAW_SIGNAL" not in emgfile:
+        required_keys = {
+            "SOURCE", "FILENAME", "FSAMP", "REF_SIGNAL", "EXTRAS",
+        }
+        tc.assertTrue(required_keys.issubset(emgfile))
+        tc.assertTrue(
+            emgfile["REF_SIGNAL"].shape[0]
+            > emgfile["REF_SIGNAL"].shape[1]
+        )
+        return
+
+    # Full emgfile
+    required_keys = {
+        "SOURCE", "FILENAME", "RAW_SIGNAL", "REF_SIGNAL", "ACCURACY",
+        "IPTS", "MUPULSES", "FSAMP", "IED", "EMG_LENGTH",
+        "NUMBER_OF_MUS", "BINARY_MUS_FIRING", "EXTRAS",
+    }
+    tc.assertTrue(required_keys.issubset(emgfile))
+
+    for key in ["RAW_SIGNAL", "ACCURACY", "IPTS"]:
+        tc.assertIsInstance(emgfile[key], pd.DataFrame)
+        tc.assertTrue(
+            all(dtype == np.float64 for dtype in emgfile[key].dtypes)
+        )
+
+    tc.assertIsInstance(emgfile["BINARY_MUS_FIRING"], pd.DataFrame)
+    tc.assertTrue(
+        all(
+            dtype == np.uint8
+            for dtype in emgfile["BINARY_MUS_FIRING"].dtypes
+        )
+    )
+    tc.assertIsInstance(emgfile["MUPULSES"], list)
+    tc.assertEqual(len(emgfile["MUPULSES"]), emgfile["NUMBER_OF_MUS"])
+    for pulses in emgfile["MUPULSES"]:
+        tc.assertIsInstance(pulses, np.ndarray)
+        tc.assertEqual(pulses.ndim, 1)
+        tc.assertEqual(pulses.dtype, np.int64)
+
+    tc.assertIsInstance(emgfile["IED"], np.float64)
+    tc.assertIsInstance(emgfile["EMG_LENGTH"], np.int64)
+    tc.assertIsInstance(emgfile["NUMBER_OF_MUS"], np.int64)
+
+    tc.assertEqual(
+        emgfile["RAW_SIGNAL"].shape[0],
+        emgfile["EMG_LENGTH"],
+    )
+    tc.assertEqual(
+        emgfile["BINARY_MUS_FIRING"].shape,
+        (emgfile["EMG_LENGTH"], emgfile["NUMBER_OF_MUS"]),
+    )
+    if not emgfile["IPTS"].empty:
+        tc.assertEqual(
+            emgfile["IPTS"].shape,
+            (emgfile["EMG_LENGTH"], emgfile["NUMBER_OF_MUS"]),
+        )
+
+    # Verify optional standard content
+    if "REFERENCE_MUPULSES" in emgfile:
+        tc.assertIsInstance(emgfile["REFERENCE_MUPULSES"], list)
+        for pulses in emgfile["REFERENCE_MUPULSES"]:
+            tc.assertIsInstance(pulses, np.ndarray)
+            tc.assertEqual(pulses.ndim, 1)
+            tc.assertEqual(pulses.dtype, np.int64)
+
+    if "ROA_WITH_REFERENCE_MUPULSES" in emgfile:
+        tc.assertIsInstance(
+            emgfile["ROA_WITH_REFERENCE_MUPULSES"],
+            pd.DataFrame,
+        )
+        tc.assertTrue(
+            all(
+                dtype == np.float64
+                for dtype in emgfile[
+                    "ROA_WITH_REFERENCE_MUPULSES"
+                ].dtypes
+            )
+        )
+
+    if "GOOD_CHANNELS" in emgfile:
+        tc.assertIsInstance(emgfile["GOOD_CHANNELS"], dict)
+        for key, value in emgfile["GOOD_CHANNELS"].items():
+            tc.assertIsInstance(key, str)
+            tc.assertIsInstance(value, int)

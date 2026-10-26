@@ -19,6 +19,7 @@ OTBelectrodes_tuple = (
     "HD04MM1305",
     "HD08MM1305",
     "HD10MM0804",
+    "HD05MM0804",
     "HD10MM0808",
 )
 """
@@ -34,6 +35,7 @@ Tuple containing the names of different recording electrodes.
     'HD04MM1305',
     'HD08MM1305',
     'HD10MM0804',
+    'HD05MM0804',
     'HD10MM0808',
 )
 """
@@ -47,6 +49,7 @@ OTBelectrodes_ied = {
     "HD04MM1305": 4,
     "HD08MM1305": 8,
     "HD10MM0804": 10,
+    "HD05MM0804": 5,
     "HD10MM0808": 10,
 }
 """
@@ -63,6 +66,7 @@ matrix in OTBelectrodes_tuple.
     'HD04MM1305': 4,
     'HD08MM1305': 8,
     'HD10MM0804': 10,
+    'HD05MM0804': 5,
     'HD10MM0808': 10,
 }
 """
@@ -75,6 +79,7 @@ OTBelectrodes_Nelectrodes = {
     "GR10MM0808": 64,
     "HD04MM1305": 64,
     "HD08MM1305": 64,
+    "HD05MM0804": 32,
     "HD10MM0804": 32,
     "HD10MM0808": 64,
 }
@@ -91,6 +96,7 @@ matrix in OTBelectrodes_tuple.
     'GR10MM0808': 64,
     'HD04MM1305': 64,
     'HD08MM1305': 64,
+    'HD05MM0804': 32,
     'HD10MM0804': 32,
     'HD10MM0808': 64,
 }
@@ -157,6 +163,11 @@ def sort_rawemg(
         GR08MM1305              (0, 180)
         GR04MM1305              (0, 180)
         GR10MM0808              (0, 180)
+        HD04MM1305              (0, 180)
+        HD08MM1305              (0, 180)
+        HD05MM0804              (0, 180)
+        HD10MM0804              (0, 180)
+        HD10MM0808              (0, 180)
         Trigno Galileo Sensor   (na)
         Custom order            (na)
 
@@ -164,7 +175,7 @@ def sort_rawemg(
     ----------
     emgfile : dict
         The dictionary containing the emgfile.
-    code : str, default "GR08MM1305"
+    code : str or None, default "GR08MM1305"
         The code of the matrix used. It can be one of:
 
         ``GR08MM1305``
@@ -173,14 +184,24 @@ def sort_rawemg(
 
         ``GR10MM0808``
 
+        ``HD04MM1305``
+
+        ``HD08MM1305``
+
+        ``HD05MM0804``
+
+        ``HD10MM0804``
+
+        ``HD10MM0808``
+
         ``Trigno Galileo Sensor``
 
         ``Custom order``
 
-        ``None``
+        ``None`` or ``"None"``
 
-        If "None", the electodes are not sorted but n_rows and n_cols must be
-        specified when dividebycolumn == True.
+        If ``None`` or ``"None"``, the electrodes are not sorted but n_rows
+        and n_cols must be specified when dividebycolumn is ``True``.
         If "Custom order", the electrodes are sorted based on
         custom_sorting_order.
     orientation : int {0, 180}, default 180
@@ -189,17 +210,19 @@ def sort_rawemg(
         the ground (depending on the limb).
         Ignore if using the "Trigno Galileo Sensor". In this case, channels
         will be oriented as in the Delsys Neuromap Explorer software.
-        This Parameter is ignored if code=="Custom order" or code=="None".
+        This parameter is ignored if code is ``"Custom order"``, ``None``,
+        or ``"None"``.
     dividebycolumn = bool, default True
         Whether to return the sorted channels classified by matrix column.
     n_rows : None or int, default None
         The number of rows of the matrix. This parameter is used to divide the
         channels based on the matrix shape. These are inferred by the matrix
-        code and must be specified only if code==None.
+        code and must be specified only if code is ``None`` or ``"None"``.
     n_cols : None or int, default None
         The number of columns of the matrix. This parameter is used to divide
         the channels based on the matrix shape. These are inferred by the
-        matrix code and must be specified only if code==None.
+        matrix code and must be specified only if code is ``None`` or
+        ``"None"``.
     custom_sorting_order : None or list, default None
         If code=="Custom order", custom_sorting_order will be used for
         channels sorting. In this case, custom_sorting_order must be a list of
@@ -225,7 +248,7 @@ def sort_rawemg(
     The returned file is called ``sorted_rawemg`` for convention.
 
     Additional info on how to create the custom sorting order is available at:
-    https://www.giacomovalli.com/openhdemg/gui_settings/#electrodes
+    https://www.giacomovalli.com/openhdemg/tutorials/sorting_orders
 
     Examples
     --------
@@ -302,7 +325,7 @@ def sort_rawemg(
     empty channel in last position.
 
     Additional info on how to create the custom sorting order is available at:
-    https://www.giacomovalli.com/openhdemg/gui_settings/#electrodes
+    https://www.giacomovalli.com/openhdemg/tutorials/sorting_orders
 
     >>> import openhdemg.library as emg
     >>> emgfile = emg.askopenfile(filesource="OTB", otb_ext_factor=8)
@@ -334,12 +357,18 @@ def sort_rawemg(
         "GR08MM1305",
         "GR04MM1305",
         "GR10MM0808",
+        "HD04MM1305",
+        "HD08MM1305",
+        "HD10MM0804",
+        "HD10MM0808",
+        "HD05MM0804",
         "Trigno Galileo Sensor",
+        None,
         "None",
         "Custom order",
     ]
     if code not in valid_codes:
-        return ValueError("Unsupported code in sort_rawemg()")
+        raise ValueError("Unsupported code in sort_rawemg()")
 
     # Work on a copy of the RAW_SIGNAL
     rawemg = copy.deepcopy(emgfile["RAW_SIGNAL"])
@@ -392,7 +421,6 @@ def sort_rawemg(
                 [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,     24],
                 [11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1,  0, np.nan],
             ]
-
         elif orientation == 180:
             """
             Channel Order GR08MM1305
@@ -419,7 +447,7 @@ def sort_rawemg(
                 [51,     52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63],
             ]
 
-    elif code == "GR10MM0808":
+    elif code in ["GR10MM0808", "HD10MM0808"]:
         if orientation == 0:
             """
             Channel Order GR10MM0808
@@ -437,19 +465,18 @@ def sort_rawemg(
                 [56, 57, 58, 59, 60, 61, 62, 63],
                 [48, 49, 50, 51, 52, 53, 54, 55],
                 [40, 41, 42, 43, 44, 45, 46, 47],
-                [33, 33, 34, 35, 36, 37, 38, 39],
+                [32, 33, 34, 35, 36, 37, 38, 39],
                 [24, 25, 26, 27, 28, 29, 30, 31],
                 [16, 17, 18, 19, 20, 21, 22, 23],
                 [8,  9, 10, 11, 12, 13, 14, 15],
                 [0,  1,  2,  3,  4,  5,  6,  7],
             ]
-
         elif orientation == 180:
             """
             Channel Order GR10MM0808
                 0   1   2   3   4   5   6   7
             0   8  16  24  32  40  48  56  64
-            1   7  16  23  31  39  47  55  63
+            1   7  15  23  31  39  47  55  63
             2   6  14  22  30  38  46  54  62
             3   5  13  21  29  37  45  53  61
             4   4  12  20  28  36  44  52  60
@@ -466,6 +493,69 @@ def sort_rawemg(
                 [47, 46, 45, 44, 43, 42, 41, 40],
                 [55, 54, 53, 52, 51, 50, 49, 48],
                 [63, 62, 61, 60, 59, 58, 57, 56],
+            ]
+
+    elif code in ["HD04MM1305", "HD08MM1305"]:
+        if orientation == 0:
+            """
+            Channel Order HD04MM1305 and HD08MM1305
+                0   1   2   3   4
+            0  12  25  38  51  64
+            1  11  24  37  50  63
+            2  10  23  36  49  62
+            3   9  22  35  48  61
+            4   8  21  34  47  60
+            5   7  20  33  46  59
+            6   6  19  32  45  58
+            7   5  18  31  44  57
+            8   4  17  30  43  56
+            9   3  16  29  42  55
+           10   2  15  28  41  54
+           11   1  14  27  40  53
+           12 NaN  13  26  39  52
+           """
+            base0_sorting_order = [
+                [11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1,  0, np.nan],
+                [24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12],
+                [37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25],
+                [50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38],
+                [63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51],
+            ]
+        elif orientation == 180:
+            base0_sorting_order = [
+                [51,     52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63],
+                [38,     39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50],
+                [25,     26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37],
+                [12,     13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
+                [np.nan,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11],
+            ]
+
+    elif code in ["HD05MM0804", "HD10MM0804"]:
+        if orientation == 0:
+            """
+            Channel Order HD05MM0804 and HD10MM0804
+                0   1   2   3
+            0  32  24  16   8
+            1  31  23  15   7
+            2  30  22  14   6
+            3  29  21  13   5
+            4  28  20  12   4
+            5  27  19  11   3
+            6  26  18  10   2
+            7  25  17   9   1
+            """
+            base0_sorting_order = [
+                [31, 30, 29, 28, 27, 26, 25, 24],
+                [23, 22, 21, 20, 19, 18, 17, 16],
+                [15, 14, 13, 12, 11, 10,  9,  8],
+                [7,   6,  5,  4,  3,  2,  1,  0],
+            ]
+        elif orientation == 180:
+            base0_sorting_order = [
+                [0,  1,  2,  3,  4,  5,  6,  7],
+                [8,  9,  10, 11, 12, 13, 14, 15],
+                [16, 17, 18, 19, 20, 21, 22, 23],
+                [24, 25, 26, 27, 28, 29, 30, 31]
             ]
 
     elif code == "Trigno Galileo Sensor":
