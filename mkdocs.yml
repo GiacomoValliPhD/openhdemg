@@ -105,6 +105,8 @@ nav:
     - ui:
       - widgets: api_widgets.md
       - bss_editor: api_bss_editor.md
+    - integrations:
+      - ReC: api_rec.md
     - compatibility: api_compatibility.md
 
 # Extensions
