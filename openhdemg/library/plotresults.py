@@ -8,14 +8,10 @@ the analyses parameters might change the interpretation of the plot.
 
 import numpy as np
 
-import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
 from openhdemg.library.plotemg import _create_figure
-
-matplotlib.use("QtAgg")
-
 
 # TODO consider having the layout manager working also for this module
 
@@ -811,12 +807,7 @@ def plot_common_drive_index(
             confidence_level,
         ])
 
-    min_y_value = min(values_for_ylim)
-
-    if min_y_value < 0:
-        ax1.set_ylim(min_y_value, 1)
-    else:
-        ax1.set_ylim(0, 1)
+    ax1.set_ylim(-1, 1)
 
     ax1.set_xlabel("Lag (s)", fontsize=12, labelpad=6)
     ax1.set_ylabel("Mean cross-correlation", fontsize=12, labelpad=6)
@@ -1244,8 +1235,6 @@ def plot_smoothed_dr_mutualinformation_matrix(
     fig : pyplot `~.figure.Figure`
         The generated mutual-information matrix figure.
 
-    Examples
-    --------
     Examples
     --------
     Plot the thresholded pairwise mutual-information matrix.

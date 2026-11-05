@@ -143,10 +143,3 @@ This module contains the functions that don't properly apply to the plot or anal
         show_root_heading: True
 
 <br/>
-
-::: openhdemg.library.tools.compute_svr
-    options:
-        show_root_full_path: False
-        show_root_heading: True
-
-<br/>

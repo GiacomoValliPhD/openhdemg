@@ -7,14 +7,14 @@ Description
     - [`save_openhdemg_module`](#openhdemg.library.openfiles.save_openhdemg_module)
     - [`asksavemodule`](#openhdemg.library.openfiles.asksavemodule)
     - [`load_openhdemg_module`](#openhdemg.library.openfiles.load_openhdemg_module)
-    - [`askopenmodule`](#openhdemg.library.openfiles.askopenmodule)
+    - [`askloadmodule`](#openhdemg.library.openfiles.askloadmodule)
     - [`openhdemg_Collection`](#openhdemg.library.openfiles.openhdemg_Collection)
 
-This module contains all the functions that are necessary to open or save *openhdemg* binary files for modules and collections, in addition to MATLAB (.mat), text (.txt), JSON (.json) or custom (.csv) files. MATLAB files are used to store data from the DEMUSE, OTBiolab+ and Delsys software while binary and JSON files are used to save and load files from this library.
+This module contains all the functions that are necessary to open or save *openhdemg* binary files for modules and collections, in addition to MATLAB (.mat), text (.txt), JSON (.json) or custom (.csv) files. MATLAB files are used to store data from a number of software including DEMUSE, OTBiolab+ and Delsys, while JSON files are the older format used by the openhdemg library.
 
 **If you are using an *openhdemg* version >= 0.2, it is recommended to use binary data (modules and collections), as these provide the best performance and flexibility** within the *openhdemg* framework, but also for optimal portability across operating systems and storage in private and public repositories. Indeed, our binary structures allow to compress files and check their integrity, if needed.
 
-The content of the loaded emgfile can differ depending on the file type. In general, decomposed files are dictionaries containing at least the following keys:<br>
+The content of the loaded emgfile can differ depending on the file type. In general, decomposed files are dictionaries containing the following keys:<br>
 
 ```python
 "SOURCE" : source of the file (e.g., "OPENHDEMG", "CUSTOMCSV")
@@ -28,7 +28,7 @@ The content of the loaded emgfile can differ depending on the file type. In gene
 "IED" : interelectrode distance
 "EMG_LENGTH" : length of the emg file (in samples)
 "NUMBER_OF_MUS" : total number of MUs
-"BINARY_MUS_FIRING" : binary representation of MUs firings
+"BINARY_MUS_FIRING" : binary representation of MU firings
 "EXTRAS" : additional custom values
 ```
 
@@ -48,7 +48,8 @@ As an example, when files are loaded with just the reference signal:
 
 Additional information can be found in the [info module](api_info.md#openhdemg.library.info.data) and in the function's description.
 
-Furthermore, all the users are encouraged to read the dedicated tutorial [Structure of the emgfile](tutorials/emgfile_structure.md).
+!!! note "Structure of the emgfile"
+    To really understand the official structure of the emgfile, all the users are encouraged to read the dedicated tutorial [Structure of the emgfile](tutorials/emgfile_structure.md).
 
 <br/>
 

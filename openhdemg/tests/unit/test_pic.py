@@ -19,11 +19,8 @@ WARNING!!! - UNTESTED FUNCTIONS: none
 
 import unittest
 from openhdemg.library.openfiles import emg_from_samplefile
-from openhdemg.library.tools import (
-    compute_svr,
-)
 from openhdemg.library.pic import (
-    compute_deltaf,
+    compute_svr, compute_deltaf,
 )
 import numpy as np
 

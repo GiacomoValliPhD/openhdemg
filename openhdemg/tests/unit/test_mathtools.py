@@ -73,6 +73,17 @@ class TestMathTools(unittest.TestCase):
             self.assertAlmostEqual(res[:, col].min(), 0, places=0)
             self.assertAlmostEqual(res[:, col].max(), 1, places=0)
 
+        # Test with a 2D integer array
+        array = np.array([[0, 10], [5, 20], [10, 30]])
+        original_array = array.copy()
+        res = min_max_scaling(array, col_by_col=True)
+        for col in range(res.shape[1]):
+            self.assertAlmostEqual(res[0, col], 0, places=6)
+            self.assertAlmostEqual(res[1, col], 0.5, places=6)
+            self.assertAlmostEqual(res[2, col], 1, places=6)
+        self.assertTrue(np.issubdtype(res.dtype, np.floating))
+        self.assertTrue(np.array_equal(array, original_array))
+
         # Test with a 3D array
         array = np.random.uniform(low=-2, high=5, size=(100, 10, 25))
         res = min_max_scaling(array)
@@ -172,7 +183,7 @@ class TestMathTools(unittest.TestCase):
             mupulses=np.empty(0),
             ignore_negative_ipts=False,
         )
-        self.assertTrue(np.isnan(res))
+        self.assertAlmostEqual(res, 0, places=6)
 
         res = compute_sil(
             ipts=emgfile["IPTS"][0],
@@ -184,6 +195,7 @@ class TestMathTools(unittest.TestCase):
         res = compute_sil(
             ipts=emgfile["IPTS"][0],
             mupulses=np.array([10500, 50000]),
+            compute_on_peaks_only=False,
             ignore_negative_ipts=False,
         )
         self.assertAlmostEqual(res, 0.945, places=2)
@@ -267,8 +279,8 @@ class TestMathTools(unittest.TestCase):
             row=0,
             teta=1,
         )
-        self.assertAlmostEqual(res[0], 380.5292664746554, places=3)
-        self.assertAlmostEqual(res[1], 38211.07196482990, places=3)
+        self.assertAlmostEqual(res[0], 380.52906669115697, places=3)
+        self.assertAlmostEqual(res[1], 38211.06997829802, places=3)
 
     def test_mle_cv_est(self):
         """
@@ -305,7 +317,20 @@ class TestMathTools(unittest.TestCase):
             ied=emgfile["IED"],
             fsamp=emgfile["FSAMP"],
         )
-        self.assertAlmostEqual(res, 1, places=0)
+        self.assertAlmostEqual(res, 12.026160794414398, places=6)
+
+        # Test when the minimum delay is different from 1
+        sig1 = np.zeros(64)
+        sig2 = np.zeros(64)
+        sig1[20] = 1
+        sig2[24] = 1
+        res = find_mle_teta(
+            sig1=sig1,
+            sig2=sig2,
+            ied=10,
+            fsamp=2048,
+        )
+        self.assertAlmostEqual(res, 4, places=6)
 
 
 if __name__ == '__main__':

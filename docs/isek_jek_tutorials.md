@@ -14,12 +14,12 @@ Here you can find the manuscript, published open access and freely available to 
 
 You can download the sample files and the sample scripts [here](https://drive.google.com/drive/folders/1lxXSVTDg7eOntkmapIbGQwAvxrQY96oM?usp=sharing){:target="_blank"}. We hope you find this work useful. If that's the case, please cite it in your research; it will help us continue the development of *openhdemg*.
 
-[Dowload files &nbsp; :fontawesome-solid-download:](https://drive.google.com/drive/folders/1lxXSVTDg7eOntkmapIbGQwAvxrQY96oM?usp=sharing){:target="_blank", .md-button .md-button--primary }
+[Download files &nbsp; :fontawesome-solid-download:](https://drive.google.com/drive/folders/1lxXSVTDg7eOntkmapIbGQwAvxrQY96oM?usp=sharing){:target="_blank", .md-button .md-button--primary }
 
 <br>
 
-<a href="https://www.giacomovalli.com/openhdemg/online_pdfs/valli_et_al_2023_tutorial_jek.pdf" target="_blank" rel="noopener noreferrer">
-  <object data="https://www.giacomovalli.com/openhdemg/online_pdfs/valli_et_al_2023_tutorial_jek.pdf" type="application/pdf" width="100%" height="800px">
+<a href="https://www.giacomovalli.com/openhdemg/online_pdfs/valli_et_al_2024_tutorial_jek.pdf" target="_blank" rel="noopener noreferrer">
+  <object data="https://www.giacomovalli.com/openhdemg/online_pdfs/valli_et_al_2024_tutorial_jek.pdf" type="application/pdf" width="100%" height="800px">
     <p>Your web browser doesn't have a PDF plugin. Instead, you can click here to download the PDF file.</p>
   </object>
 </a>
@@ -42,3 +42,18 @@ The recording of the workshop is available on our [YouTube](https://www.youtube.
 
 [![preliminary_workshop_design](md_graphics/isek_jek_tutorials/preliminary_workshop_design.png)](md_graphics/isek_jek_tutorials/preliminary_workshop_design.png){:target="_blank"}
 
+<br>
+
+## 2026 ISEK Workshop
+
+**From HDsEMG-based motor unit identification to coherence analysis: how to estimate the common synaptic input to spinal motor neurons.**
+
+On the 25th of June 2026, we presented a practical *openhdemg* workshop at the [ISEK congress](https://isek.org/workshops/){:target="_blank"} in Jyväskylä, focused on the estimation of common synaptic input to spinal motor neurons from motor unit spike trains ([see the dedicated page](csi_tutorial.md)).
+
+Below, you can see the fantastic speakers who have participated.
+
+The recording of the workshop is available on our [YouTube](https://www.youtube.com/@openhdemg){:target="_blank"} page. [Watch it now!](https://youtu.be/miCXc7YzLg0){:target="_blank"}
+
+<br>
+
+[![common_synaptic_input_worksop_speakers](md_graphics/csi_tutorial/csi_tutorial_speakers.png)](md_graphics/csi_tutorial/csi_tutorial_speakers.png){:target="_blank"}

@@ -29,6 +29,6 @@ from openhdemg.library.info import *
 from openhdemg.library.pic import *
 from openhdemg.library.commonality import *
 from openhdemg.library.plotresults import *
-
+from openhdemg.library.decomposition import *
 
 # TODO consider direct imports for all the functions instead of *

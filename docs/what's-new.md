@@ -1,3 +1,281 @@
+## :octicons-tag-24: 0.2.0-beta.3
+:octicons-clock-24: October 2026
+
+Version 0.2.0-beta.3 introduces company-maintained integrations for external data formats, starting with ReC acquisition systems. It also improves the robustness and flexibility of persistent inward current analyses and the integration of file-selection dialogs with parent interfaces.
+
+### Backward Compatibility
+
+This release remains compatible with the `emgfile` and binary-module structures introduced in v0.2.0-beta.1.
+
+- `compute_svr()` has moved from `openhdemg.library.tools` to `openhdemg.library.pic`. Direct imports from the `tools` module must be updated. The function remains available as `emg.compute_svr()` when using `import openhdemg.library as emg`.
+- `compute_deltaf(..., average_method="all")` now consistently returns MU pairs in `(reporter, test)` order. The order within each pair may differ from earlier releases.
+
+!!! warning "Differences in DeltaF estimates"
+    DeltaF estimates obtained with `average_method="test_unit_average"` may differ from earlier releases because an indexing error affecting MU pairs with insufficient overlap has been corrected.
+
+### Major Achievements
+
+- **New ReC integration** for loading raw EMG recordings and auxiliary signals from ReC acquisition systems.
+- **More robust persistent inward current analyses**, with improved handling of sparse discharge trains, invalid MU pairs, and empty results.
+- **More flexible DeltaF criteria**, including squared-correlation thresholds and optional exclusion of early reporter derecruitment.
+- **Improved interface integration** through parent-aware file and directory dialogs.
+
+### Major Changes
+
+- **New integrations**:
+
+    - New `openhdemg.integrations` package supports company-maintained integrations for external data formats.
+    - New `openhdemg.integrations.rec` package loads binary `.sig` recordings from ReC/MEACS and ReC/BAM acquisition systems.
+    - `emg_from_rec()` automatically selects the appropriate loader from the system code in the filename, accepts a custom interelectrode distance, and standardises the returned `emgfile` data types.
+    - `emg_from_rec_meacs()` and `emg_from_rec_bam()` provide dedicated loaders for 32-channel and 64-channel recordings, respectively. Raw EMG signals are converted to microvolts, and available synchronisation signals are loaded into `REF_SIGNAL`.
+    - `aux_from_rec_gam()` loads selected channels from ReC GAM auxiliary files in Volts. `emg_from_rec()` can append these channels to `REF_SIGNAL` and truncate EMG and GAM data to their shared recording length.
+    - `select_and_load_rec_file()` provides an interactive workflow for selecting the recording, specifying the interelectrode distance, and optionally loading GAM channels.
+    - ReC functions are imported directly from `openhdemg.integrations.rec`.
+
+- **Updated analysis functions**:
+
+    - `compute_svr()` is now part of the `pic` module, grouping discharge-rate smoothing and DeltaF estimation together.
+    - `compute_svr()` now handles MUs with fewer than two firings by returning empty one-dimensional NumPy arrays in `svrfit` and `svrtime`, and an `EMG_LENGTH` array of NaNs in `gensvr`.
+    - `compute_svr()` now keeps `svrtime` entries one-dimensional when only one fitted sample is available.
+    - `compute_deltaf()` now preserves the alignment between MU pairs, reporter/test identifiers, and DeltaF values when pairs have insufficient overlap.
+    - `compute_deltaf()` returns NaN for pairs with fewer than two firings in either MU or insufficient overlap, including when `clean=False`.
+    - `compute_deltaf()` adds `correlation_metric="r_squared"` to apply `corr_cutoff` to squared Pearson correlation when `clean=True`. This option also requires positive correlation.
+    - `compute_deltaf()` adds `exclude_early_reporter_derecruitment=True` to exclude pairs whose reporter derecruits before the test MU, independently of `clean`.
+    - `compute_deltaf()` now returns consistently structured results for files with fewer than two MUs: an empty DataFrame for `average_method="all"`, or one NaN value per MU for `average_method="test_unit_average"`.
+
+- **Updated interface functions and classes**:
+
+    - `askopenfile()`, `asksavefile()`, `asksavemodule()`, and `askloadmodule()` now accept `gui_parent` for embedding their dialogs in an existing Qt interface.
+    - `openhdemg_Collection.asksave()` and `openhdemg_Collection.askload()` also accept `gui_parent`.
+    - `CustomFileDialog`, `CustomDirectoryDialog`, `run_custom_file_dialog()`, and `run_custom_directory_dialog()` now accept `parent`.
+    - `CustomDirectoryDialog` now explicitly closes and deletes its Qt dialog after use.
+
+- **Documentation and project maintenance**:
+
+    - The API reference now includes the [ReC integration](api_rec.md) and documents `compute_svr()` in the [PIC module](api_pic.md).
+    - `remove_duplicates_between()` examples now save the resulting files as binary modules using `asksavemodule()`.
+    - New `LICENSING_HISTORY.txt` records the project's licensing history and contributor authorisations for BSD-3-Clause distribution.
+
+### Known Issues
+
+This remains a beta release. Please report unexpected behaviour through the [openhdemg GitHub issue tracker](https://github.com/GiacomoValliPhD/openhdemg/issues){:target="_blank"}.
+
+<br>
+
+## :octicons-tag-24: 0.2.0-beta.2
+:octicons-clock-24: August 2026
+
+Version 0.2.0-beta.2 focuses on robustness, numerical accuracy, and better management of edge cases. Analyses and interactive workflows are now more reliable with empty files, incomplete discharge trains, invalid selections, and other complex inputs.
+
+### Backward Compatibility
+
+This release remains compatible with the `emgfile` and binary-module structures introduced in v0.2.0-beta.1.
+
+Some results may differ slightly from v0.2.0-beta.1 because several numerical and indexing issues have been corrected, particularly in edge cases.
+
+!!! warning "Differences in conduction velocity estimates"
+    Maximum-likelihood conduction-velocity estimates may differ slightly for some MUs. This release corrects interelectrode-distance conversion, delay estimation, and MUAP propagation-direction handling.
+
+### Major Achievements
+
+- **More accurate analyses**, including conduction velocity, discharge-rate variability, steady-state analyses, and MUAP alignment.
+- **Stronger edge-case handling** for files with no MUs, incomplete STA windows, and MUs with few or no firings.
+- **Improved memory and worker management** in interactive interfaces and parallel MU tracking.
+
+### Major Changes
+
+- Core MU analyses now return correctly structured empty results when no MUs are available.
+- Steady-state discharge-rate and variability calculations now select inter-discharge intervals more accurately.
+- Invalid MU identifiers, resize intervals, RFD selections, and analysis windows are detected earlier with clearer errors.
+- Parallel MU tracking and interactive interfaces release workers, figures, and retained data more effectively.
+- Plotting modules no longer force the QtAgg backend, improving compatibility across execution environments.
+- Test coverage has been expanded around numerical correctness, empty files, optional data, and invalid inputs.
+
+- **Updated analysis functions**:
+
+    - `compute_thresholds()`, `compute_dr()`, `compute_covisi()`, `compute_drvariability()`, and `basic_mus_properties()` now handle files containing no MUs.
+    - `compute_dr()`, `compute_covisi()`, and `compute_drvariability()` provide more accurate steady-state calculations.
+    - `compute_covsteady()` now consistently uses the selected reference-signal channel.
+    - `compute_rfd()` provides stronger validation of starting points and analysis intervals.
+    - `compute_pnr()` safely handles MUs with fewer than two firings.
+    - `min_max_scaling()` now preserves decimal results when integer or Boolean arrays are provided.
+
+- **Updated MUAP and conduction-velocity functions**:
+
+    - `sta()` now handles MUs without complete spike-triggered windows.
+    - `align_by_xcorr()` provides safer alignment and guarantees the requested output duration.
+    - `find_mle_teta()` and `estimate_cv_via_mle()` provide more accurate delay and conduction-velocity estimates.
+    - `tracking()` improves parallel execution, memory management, and handling of files without MUs.
+    - `remove_duplicates_between()` benefits from the updated tracking interface.
+
+- **Updated file and data-management functions**:
+
+    - `resize_emgfile()` rejects invalid or empty intervals.
+    - `delete_mus()`, `delete_empty_mus()`, and `sort_mus()` are more robust with invalid identifiers, empty MUs, and zero-MU files.
+    - `save_json_emgfile()` more reliably serialises NumPy scalar values.
+    - `emg_from_samplefile()` returns standardised data types.
+    - `askopenfile()` can again load Delsys files correctly.
+
+- **Updated electrode functions**:
+
+    - `sort_rawemg()` adds support for `HD04MM1305`, `HD08MM1305`, `HD05MM0804`, `HD10MM0804`, and `HD10MM0808`.
+    - The `GR10MM0808` sorting order has been corrected.
+    - Unsupported electrode codes and custom sorting orders are handled more consistently.
+
+- **Updated interface functions and classes**:
+
+    - `showselect()` and `select_bad_channels()` provide improved integration with parent interfaces.
+    - `run_xcorr_muaps_tracking_gui()` and `run_mle_mucv_gui()` provide safer transfer of results after closing the interface.
+    - `XCORR_MUAPs_Tracking_gui`, `MLE_MUCV_gui`, and `BSS_MU_Editor` provide improved cleanup of figures, canvases, callbacks, and retained data.
+    - `EMGFileSectionsIterator` validates empty argument lists and avoids modifying stored results when merging DataFrames.
+
+### Tutorials
+
+A new tutorial explains how to [create custom channel sorting orders](tutorials/sorting_orders.md).
+
+### Known Issues
+
+This remains a beta release. Please report unexpected behaviour through the [openhdemg GitHub issue tracker](https://github.com/GiacomoValliPhD/openhdemg/issues){:target="_blank"}.
+
+<br>
+
+## :octicons-tag-24: 0.2.0-beta.1
+:octicons-clock-24: June 2026
+
+This beta release completely redefines the role of *openhdemg*, from a simple library for MU analyses to a complete HDsEMG analysis framework. Version 0.2.0-beta.1 introduces 
+signal preprocessing, MU decomposition using blind source separation, common-input analysis, and a new data structure based on binary modules and collections.
+
+Additionally, it has been restructures using a new PySide6-based UI architecture, opening to the possibility of using the UI components also on Apple silicon chips (in the future), and plotting functions designed to work both in scripts and embedded UIs.
+
+The library is now communicating with the ***[openhdemg software](https://www.giacomovalli.com/openhdemg_software/){:target="_blank"}***, which replaces the previous embedded GUI and provides advanced functionalities for MU cleaning and interactive signal processing. To know more about the software, [click here](https://www.giacomovalli.com/openhdemg_software/){:target="_blank"}!
+
+### Backward Compatibility
+
+This is a beta release and includes intentional changes that may affect existing workflows.
+
+- The legacy Tkinter GUI has been discontinued in favour of the new PySide6-based software interface and UI architecture.
+- `askopenfile()` no longer exposes the old `initialdir="/"` behaviour. The UI remembers the last accessed directory instead.
+- JSON save/load functions are still available, but binary *openhdemg* modules and collections are now the recommended workflow for version 0.2.0 and later.
+- `MUcv_gui` is deprecated. Use `run_mle_mucv_gui()` or the new `MLE_MUCV_gui` implementation.
+- `compute_sil(..., ignore_negative_ipts=...)` keeps a compatibility path, but the parameter is deprecated. Transform `ipts` before calling the function when the old behaviour is required.
+- The `emgfile` structure is now more flexible. It is no longer mandatory for every standard key to be present in every file, but keys that are present must keep the standard names and expected data types.
+
+### Major Achievements
+
+- **New PySide6 software architecture** replacing the legacy GUI.
+- **New persistent binary data structure** with modules for single files and collections for multi-file studies.
+- **More flexible and robust `emgfile` structure** with optional standard keys and explicit dtype standardisation.
+- **New decomposition and cleaning workflow** for raw HDsEMG decomposition, bad-channel selection, power-line harmonic removal, within-file duplicate removal, and manual editing of BSS MU discharge selections.
+- **New common-input and result plotting modules** for pooled intramuscular coherence, smoothed discharge-rate PCA, common drive, PCI, and mutual-information network analysis.
+- **Multiple reference-signal support** across plotting, editing, and analysis functions.
+- **Improved plotting architecture** with object-oriented Matplotlib figure creation through `use_plt=False`.
+- **Smaller dependency footprint** for easier maintenance and broader platform compatibility.
+
+### Major Changes
+
+- **Interface and plotting architecture**:
+  
+    - The legacy GUI has been replaced by a PySide6-based software architecture.
+    - A new `openhdemg.ui` module supports reusable widgets and dialogs used by point selection, bad-channel selection, file and folder selection, tracking inspection, and MLE conduction-velocity estimation.
+    - Plotting functions now expose `use_plt`. Set `use_plt=False` when embedding figures in a GUI or when managing Matplotlib figures manually.
+    - Plotting functions return Matplotlib `Figure` objects and avoid calling `plt.show()` when `use_plt=False`.
+    - Plotting functions are more robust when an `emgfile` contains no motor units.
+
+- **Data structure**:
+  
+    - The `emgfile` data structure is now flexible. Standard keys can be omitted when the corresponding data are not available.
+    - The helper `standardise_emgfile_dtypes()` checks and converts recognised keys to the expected data types.
+    - New optional keys are documented and supported by relevant functions:
+        - `GOOD_CHANNELS`: channel-quality information used by decomposition workflows.
+        - `MU_LABELS`: optional labels that stay aligned when MUs are deleted or sorted.
+        - `REFERENCE_MUPULSES`: reference discharge times, for example from ground truth or an alternative detection method.
+        - `ROA_WITH_REFERENCE_MUPULSES`: rate of agreement between `MUPULSES` and `REFERENCE_MUPULSES`.
+        - `DECOMPOSITION_PARAMETERS`: metadata saved by the decomposition pipeline.
+    - `BINARY_MUS_FIRING` now uses `np.uint8` after standardisation to reduce memory use.
+
+- **Binary files, modules, and collections**:
+  
+    - New `save_openhdemg_module()` and `load_openhdemg_module()` functions save and load one `emgfile` as a structured binary folder.
+    - New `asksavemodule()` and `askloadmodule()` functions provide UI-based module save/load workflows.
+    - New `openhdemg_Collection` class manages several modules together with shared data and participant-level metadata.
+    - Collections support selective loading and saving of individual modules or shared data.
+    - Optional SHA-256 checksums can be stored and verified to support integrity checks in shared folders, archives, and public repositories.
+    - Smaller files and substantial save/load speed improvements compared with the previous JSON-centred workflow.
+
+- **Decomposition and cleaning**:
+  
+    - New `decomposition.py` module with a high-level decomposition workflow.
+    - New `ConvolutiveBSSParams` dataclass stores parameters for convolutive blind source separation.
+    - New `convolutive_bss()` function decomposes HDsEMG signals into motor unit spike trains.
+    - New `EMGDecomposer` class runs a full pipeline including optional band-pass filtering, power-line harmonic removal, bad-channel exclusion, decomposition, and duplicate MU removal.
+    - New `select_bad_channels()` function lets users mark noisy channels and stores the result in `emgfile["GOOD_CHANNELS"]`.
+    - New `remove_powerline_harmonics()` function removes harmonics of the selected power-line frequency.
+    - New `remove_duplicates_within()` removes duplicate MUs inside one file using spike-train timing.
+    - New `run_bss_mu_editor()` function opens a lightweight manual editor for reviewing and editing BSS MU discharge selections.
+
+- **Common input and result plotting**:
+  
+    - New `commonality.py` module adds analysis tools for common synaptic input and MU discharge profiles.
+    - New functions include pooled intramuscular coherence, z-scored coherence, coherence-band summaries, smoothed discharge-rate PCA, common drive index, PCI, and mutual-information based MU network analysis.
+    - New `plotresults.py` module adds dedicated plotting functions for commonality and network-analysis results.
+
+- **Additional new functions**:
+  
+    - `standardise_emgfile_dtypes()`
+    - `select_bad_channels()`
+    - `remove_duplicates_within()`
+    - `remove_powerline_harmonics()`
+    - `discrete_spike_xcorr()`
+    - `compute_pulses_agreement_rate()`
+    - `save_openhdemg_module()`
+    - `asksavemodule()`
+    - `load_openhdemg_module()`
+    - `askloadmodule()`
+    - `convolutive_bss()`
+    - `run_bss_mu_editor()`
+
+- **Updated functions**:
+  
+    - `compute_sil()` now accepts pandas Series and NumPy arrays, computes SIL on IPTS peaks by default, and adds stronger safety checks.
+    - `delete_mus()`, `resize_emgfile()`, and `sort_mus()` now preserve or update `MU_LABELS`, `REFERENCE_MUPULSES`, and `ROA_WITH_REFERENCE_MUPULSES` when those keys are present.
+    - `resize_emgfile()` can recalculate or maintain ROA values after resizing.
+    - `filter_refsig()` and `remove_offset()` can operate on selected reference-signal channels.
+    - `showselect()`, `compute_covsteady()`, `get_mvc()`, `compute_rfd()`, `compute_thresholds()`, `compute_dr()`, `compute_covisi()`, `compute_drvariability()`, and `basic_mus_properties()` now accept a `refsig_channel` argument where relevant.
+    - `basic_mus_properties()` reports `ROA_WITH_REFERENCE_MUPULSES` and average ROA when those data are present.
+    - `plot_emgsig()`, `plot_differentials()`, `plot_refsig()`, `plot_mupulses()`, `plot_ipts()`, `plot_idr()`, `plot_smoothed_dr()`, `plot_muaps()`, `plot_muap()`, and `plot_muaps_for_cv()` support the updated figure-management workflow through `use_plt`.
+    - `plot_ipts()` can show markers at MU discharge times with `show_markers=True`.
+    - `tracking()` and `remove_duplicates_between()` expose reference-signal channel selection for the tracking GUI.
+
+- **New classes**:
+  
+    - `openhdemg_Collection`
+    - `ConvolutiveBSSParams`
+    - `EMGDecomposer`
+    - `MLE_MUCV_gui`
+    - `BSS_MU_Editor`
+
+- **Updated classes**:
+  
+    - `EMGFileSectionsIterator` supports the updated multi-reference-signal workflow and updated resize options.
+    - `MUcv_gui` is deprecated in favour of `run_mle_mucv_gui()` and `MLE_MUCV_gui`.
+
+### Tutorials
+
+New documentation has been added for:
+
+- [Migrating to 0.2.0](tutorials/migrate_to_0_2_0.md).
+- [Understanding the flexible `emgfile` structure](tutorials/emgfile_structure.md).
+- [Saving and loading binary modules](tutorials/binary_modules.md).
+- [Managing collections of multiple `emgfiles`](tutorials/collections.md).
+- [Working with multiple reference signals](tutorials/multiple_reference_signals.md).
+- [Running the new decomposition and cleaning workflow](tutorials/decomposition_and_cleaning.md).
+
+### Known issues
+  
+Be aware that this is a beta release. Some functions may continue to evolve before the next stable release and new issues might be discovered.
+
+<br>
+
 ## :octicons-tag-24: 0.1.2
 :octicons-clock-24: February 2025
 
@@ -252,7 +530,7 @@ This release is mainly addressing the necessity of maximum flexibility and easy 
 
 - **Handling Missing Variables:** Replaced “np.nan” with empty "pd.DataFrame” for missing variables upon import of files. This change ensures consistency and avoids compatibility issues with other functions.
 
-- **File Import Restriction:** Restricted flexibility in the import of files. To import decomposed HD-EMG files, these must contain at least the raw EMG signal and one of the times of discharge of each MU ("MUPULSES") or their binary representation. This change ensures consistency and avoids compatibility issues with other functions.
+- **File Import Restriction:** Restricted flexibility in the import of files. To import decomposed HDsEMG files, these must contain at least the raw EMG signal and one of the times of discharge of each MU ("MUPULSES") or their binary representation. This change ensures consistency and avoids compatibility issues with other functions.
 
 ### Other changes
 

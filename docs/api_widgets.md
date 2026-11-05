@@ -1,6 +1,6 @@
 Description
 -----------
-This module contains classes (QtWidgets) and functions managing the user interfaces used by openhdemg.library. These classes or functions can be used directly or integrated in larger UIs (e.g., MU tracking and conduction velocity estimation).
+This module contains classes (QtWidgets) and functions managing the user interfaces used by openhdemg.library.
 
 <br/>
 

@@ -31,7 +31,6 @@ from openhdemg.library.muap import (
 )
 import numpy as np
 import pandas as pd
-from time import time
 import copy
 
 
@@ -125,7 +124,9 @@ class TestMuap(unittest.TestCase):
         self.assertIsInstance(res, dict)
         self.assertIsInstance(res[0], dict)
         self.assertIsInstance(res[0]["col0"], pd.DataFrame)
-        self.assertAlmostEqual(res[0]["col0"][0][0], -6.154379, places=6)
+        self.assertAlmostEqual(
+            res[0]["col0"][0][0], -6.154378490447998, places=6,
+        )
         self.assertTrue(np.isnan(res[0]["col2"][29][0]))
 
         # Test with an empty MU
@@ -159,6 +160,17 @@ class TestMuap(unittest.TestCase):
         self.assertIsInstance(res, dict)
         self.assertIsInstance(res[1], dict)
         self.assertIsInstance(res[1]["col0"], pd.DataFrame)
+        self.assertAlmostEqual(res[1]["col0"][3][0], 0, places=1)
+        self.assertTrue(np.isnan(res[1]["col2"][29][0]))
+
+        # Test when no complete window is available
+        emgfile["MUPULSES"][1] = np.array([0])
+        res = sta(
+            emgfile,
+            sorted_rawemg=sorted_rawemg,
+            firings="all",
+            timewindow=50,
+        )
         self.assertAlmostEqual(res[1]["col0"][3][0], 0, places=1)
         self.assertTrue(np.isnan(res[1]["col2"][29][0]))
 
@@ -219,7 +231,8 @@ class TestMuap(unittest.TestCase):
 
         self.assertIsInstance(sta_[0], dict)
         self.assertIsInstance(packed_sta, dict)
-        self.assertTrue(sta_[0]["col0"].equals(packed_sta["col0"]))
+        for key in sta_keys:
+            self.assertTrue(sta_[0][key].equals(packed_sta[key]))
 
     def test_align_by_xcorr(self):
         """
@@ -239,8 +252,42 @@ class TestMuap(unittest.TestCase):
             finalduration=0.5,
         )
 
-        self.assertAlmostEqual(res1["col0"][0][0], -36.387123, places=6)
-        self.assertAlmostEqual(res2["col0"][0][0], -36.366776, places=6)
+        self.assertAlmostEqual(
+            res1["col0"][0][0], -36.38712548732757, places=6,
+        )
+        self.assertAlmostEqual(
+            res2["col0"][0][0], -36.36678088545799, places=6,
+        )
+        expected_length = round(len(sta_[0]["col0"]) * 0.5)
+        self.assertTrue(len(res1["col0"]) == expected_length)
+        self.assertTrue(len(res2["col0"]) == expected_length)
+
+        # Test large positive and negative lags
+        signal1 = np.zeros(39)
+        signal1[8:11] = [1, 2, 1]
+        signal2 = np.zeros(39)
+        signal2[23:26] = [1, 2, 1]
+        sta1 = {"col0": pd.DataFrame({0: signal1})}
+        sta2 = {"col0": pd.DataFrame({0: signal2})}
+
+        for first, second in [(sta1, sta2), (sta2, sta1)]:
+            res1, res2 = align_by_xcorr(
+                sta_mu1=first,
+                sta_mu2=second,
+                finalduration=0.5,
+            )
+            self.assertTrue(len(res1["col0"]) == 20)
+            self.assertTrue(len(res2["col0"]) == 20)
+            self.assertTrue(res1["col0"].equals(res2["col0"]))
+
+        # Test invalid final durations
+        for finalduration in [0, 1.1]:
+            with self.assertRaises(ValueError):
+                align_by_xcorr(
+                    sta_mu1=sta1,
+                    sta_mu2=sta2,
+                    finalduration=finalduration,
+                )
 
     def test_tracking(self):
         """
@@ -248,8 +295,7 @@ class TestMuap(unittest.TestCase):
         """
 
         # Check parallel processing
-        t0 = time()
-        res = tracking(
+        res_parallel = tracking(
             emgfile1=self.emgfile,
             emgfile2=self.emgfile,
             firings="all",
@@ -268,10 +314,7 @@ class TestMuap(unittest.TestCase):
             show=False,
             gui=False,
         )
-        time_parallel = time() - t0
-
-        t0 = time()
-        res = tracking(
+        res_serial = tracking(
             emgfile1=self.emgfile,
             emgfile2=self.emgfile,
             firings="all",
@@ -290,9 +333,7 @@ class TestMuap(unittest.TestCase):
             show=False,
             gui=False,
         )
-        time_serial = time() - t0
-
-        self.assertTrue(time_serial > time_parallel)
+        pd.testing.assert_frame_equal(res_parallel, res_serial)
 
         # Test derivations
         for der in ["mono", "sd", "dd"]:
@@ -333,15 +374,17 @@ class TestMuap(unittest.TestCase):
             n_cols=None,
             custom_sorting_order=None,
             custom_muaps=None,
-            exclude_belowthreshold=True,
+            exclude_belowthreshold=False,
             filter=False,
             multiprocessing=True,
             show=False,
             gui=False,
         )
 
-        self.assertTrue(len(res) == 15)
-        self.assertAlmostEqual(res["XCC"][1], 0.623405, places=6)
+        self.assertTrue(len(res) == 25)
+        self.assertAlmostEqual(
+            res["XCC"][1], 0.623404156285386, places=6,
+        )
 
         # Test custom_muaps
         # Load decomposed file with multiple MUs, reference signal and MUAPs
@@ -363,7 +406,7 @@ class TestMuap(unittest.TestCase):
             emgfile1=emgfile,
             emgfile2=emgfile,
             threshold=0.6,
-            custom_muaps=delsys_muaps,
+            custom_muaps=[delsys_muaps, delsys_muaps],
             exclude_belowthreshold=True,
             filter=True,
             multiprocessing=True,
@@ -397,8 +440,27 @@ class TestMuap(unittest.TestCase):
             gui=False,
         )
         self.assertTrue(len(res) == 13)
-        self.assertAlmostEqual(res["XCC"][1], 0.622998, places=6)
+        self.assertAlmostEqual(
+            res["XCC"][1], 0.6229965463306653, places=6,
+        )
         self.assertTrue(1 not in res["MU_file1"].values)
+
+        # Test with no MUs
+        emgfile = delete_mus(
+            emgfile=self.emgfile,
+            munumber=list(range(self.emgfile["NUMBER_OF_MUS"])),
+            if_single_mu="remove",
+        )
+        res = tracking(
+            emgfile1=emgfile,
+            emgfile2=emgfile,
+            custom_muaps=[{}, {}],
+            multiprocessing=False,
+            show=False,
+            gui=False,
+        )
+        self.assertTrue(res.empty)
+        self.assertTrue(list(res.columns) == ["MU_file1", "MU_file2", "XCC"])
 
     def test_remove_duplicates_between(self):
         """
@@ -429,6 +491,25 @@ class TestMuap(unittest.TestCase):
         )
         self.assertTrue(res1["NUMBER_OF_MUS"] == 2)
         self.assertTrue(res2["NUMBER_OF_MUS"] == 3)
+
+        # Test custom tracking results
+        custom_tracking_res = pd.DataFrame({
+            "MU_file1": [0], "MU_file2": [1], "XCC": [1.0],
+        })
+        res1, res2, tracking_res = remove_duplicates_between(
+            emgfile1=self.emgfile,
+            emgfile2=self.emgfile,
+            gui=False,
+            which="munumber",
+            custom_tracking_res=custom_tracking_res,
+        )
+        self.assertTrue(res1["NUMBER_OF_MUS"] == 4)
+        self.assertTrue(res2["NUMBER_OF_MUS"] == 5)
+        self.assertTrue(np.array_equal(
+            res1["MUPULSES"][0], self.emgfile["MUPULSES"][1],
+        ))
+        self.assertTrue(custom_tracking_res.equals(tracking_res))
+        self.assertTrue(self.emgfile["NUMBER_OF_MUS"] == 5)
 
     def test_xcc_sta(self):
         """
@@ -490,7 +571,20 @@ class TestMuap(unittest.TestCase):
         signal = sta_[0]["col2"].loc[:, 32:36]
         res = estimate_cv_via_mle(emgfile=self.emgfile, signal=signal)
 
-        self.assertAlmostEqual(res, 4.3530717224189805, places=6)
+        self.assertAlmostEqual(res, 4.353084255434373, places=6)
+
+        # Test with the signals in the opposite direction
+        reversed_signal = signal.iloc[:, ::-1]
+        res = estimate_cv_via_mle(
+            emgfile=self.emgfile,
+            signal=reversed_signal,
+        )
+        self.assertAlmostEqual(res, 4.353084255434373, places=6)
+
+        # Test with two signals
+        signal = signal.iloc[:, 1:3]
+        res = estimate_cv_via_mle(emgfile=self.emgfile, signal=signal)
+        self.assertAlmostEqual(res, 5.12704257352781, places=6)
 
         # Test with an empty MU
         emgfile = emg_from_samplefile()

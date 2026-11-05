@@ -11,8 +11,6 @@ import warnings
 import numpy as np
 import pandas as pd
 from scipy import signal
-from scipy.stats import iqr
-from sklearn.svm import SVR
 
 from openhdemg.ui.widgets import (
     run_point_selector, run_manual_emgchannels_selection_dialog
@@ -181,6 +179,7 @@ def showselect(
     title="",
     titlesize=12,
     nclic=2,
+    gui_parent=None,
 ):
     """
     Visually select a part of the recording (X axis).
@@ -218,6 +217,8 @@ def showselect(
     nclic: int, default 2
         The number of clics to be collected. If nclic < 1, all the clicks are
         collected.
+    gui_parent : QWidget or None, default None
+        Optional Qt parent used when embedding the point selector.
 
     Returns
     -------
@@ -274,6 +275,7 @@ def showselect(
         y_label=y_label,
         title=title,
         title_fontsize=titlesize,
+        parent=gui_parent,
     )
 
     points = [round(point[0]) for point in res]
@@ -546,6 +548,12 @@ def resize_emgfile(
             "No RAW_SIGNAL or REF_SIGNAL is present in the emgfile."
         )
 
+    if start_ >= end_:
+        raise ValueError(
+            "The resize area must contain at least one sample and its start "
+            "must precede its end."
+        )
+
     # Resize STANDARD dataframes and identify the first value of the
     # index to resize the mupulses. Then, reset the index.
     first_idx = 0
@@ -635,7 +643,7 @@ def resize_emgfile(
     elif accuracy != "maintain":
         raise ValueError(
             "Accuracy can only be 'recalculate' or 'maintain'."
-            f"{accuracy} was passed instead."
+            f" {accuracy} was passed instead."
         )
 
     # Compute ROA or leave original
@@ -660,7 +668,7 @@ def resize_emgfile(
     elif roa_with_reference_mupulses != "maintain":
         raise ValueError(
             "roa_with_reference_mupulses can only be 'recalculate' or "
-            f"'maintain'. {accuracy} was passed instead."
+            f"'maintain'. {roa_with_reference_mupulses} was passed instead."
         )
 
     # Custom dataframes
@@ -682,7 +690,11 @@ def resize_emgfile(
     return standardise_emgfile_dtypes(rs_emgfile), start_, end_
 
 
-def select_bad_channels(emgfile, manual_offset=0):
+def select_bad_channels(
+    emgfile,
+    manual_offset=0,
+    gui_parent=None,
+):
     """
     Select noisy channels via visual inspection.
 
@@ -699,6 +711,8 @@ def select_bad_channels(emgfile, manual_offset=0):
         This parameter sets the scaling of the channels. If 0 (default), the
         channels' amplitude is scaled automatically to fit the plotting window.
         If > 0, the channels will be scaled based on the specified value.
+    gui_parent : QWidget or None, default None
+        Optional Qt parent used when embedding the channel selector.
 
     Returns
     -------
@@ -722,6 +736,7 @@ def select_bad_channels(emgfile, manual_offset=0):
     edited_emgfile = run_manual_emgchannels_selection_dialog(
         emgfile=emgfile,
         manual_offset=manual_offset,
+        parent=gui_parent,
     )
 
     return edited_emgfile
@@ -1286,6 +1301,11 @@ class EMGFileSectionsIterator:
         if not isinstance(kwargs_list, list):
             raise ValueError("kwargs_list must be a list")
 
+        if len(args_list) == 0:
+            raise ValueError("args_list cannot be empty")
+        if len(kwargs_list) == 0:
+            raise ValueError("kwargs_list cannot be empty")
+
         # Manage multiple functions
         if len(funcs) > 1:
             if len(funcs) != len(self.sections):
@@ -1526,13 +1546,15 @@ class EMGFileSectionsIterator:
                 "All elements in `self.results` must be pd.DataFrames."
             )
 
-        # Optionally fill NaN values
+        # Optionally fill NaN values without changing the stored results
         if fillna is not None:
-            self.results = [df.fillna(fillna) for df in self.results]
+            results = [df.fillna(fillna) for df in self.results]
+        else:
+            results = self.results
 
         # Stack DataFrames along axis=0 for operations like std and cv
         merged_stack = pd.concat(
-            self.results, axis=0, keys=range(len(self.results)),
+            results, axis=0, keys=range(len(results)),
         )
 
         if method == "average":
@@ -1564,10 +1586,10 @@ class EMGFileSectionsIterator:
             # from which DataFrame the results come from.
             merged_df = pd.concat(
                 [
-                    df.reset_index().rename(
-                        columns={"index": "original_idx"}
-                    ).assign(source_idx=i)
-                    for i, df in enumerate(self.results)
+                    df.rename_axis("original_idx").reset_index().assign(
+                        source_idx=i
+                    )
+                    for i, df in enumerate(results)
                 ],
                 ignore_index=True
             )
@@ -1585,7 +1607,7 @@ class EMGFileSectionsIterator:
                 raise ValueError(
                     "When using method='custom', `agg_func` must be provided."
                 )
-            merged_df = agg_func(self.results)
+            merged_df = agg_func(results)
 
         else:
             raise ValueError(f"Unknown method '{method}'")
@@ -1733,10 +1755,37 @@ def delete_mus(
             "set to None."
         )
 
+    # Convert munumber to a list of ordered, unique integers
+    if isinstance(munumber, (int, np.integer)) and not isinstance(
+        munumber, (bool, np.bool_)
+    ):
+        munumber = [int(munumber)]
+    elif isinstance(munumber, list):
+        if not all(
+            isinstance(x, (int, np.integer))
+            and not isinstance(x, (bool, np.bool_))
+            for x in munumber
+        ):
+            raise TypeError("All values in 'munumber' must be integers.")
+        munumber = sorted(set(int(x) for x in munumber))
+    else:
+        raise TypeError(
+            "While calling the 'delete_mus' function, you should pass an "
+            "integer or a list to 'munumber= '."
+        )
+
     # Check if any MU
     if emgfile["NUMBER_OF_MUS"] == 0:
         warnings.warn("The file does not contain any MU.")
         return emgfile
+
+    if any(
+        mu < 0 or mu >= emgfile["NUMBER_OF_MUS"]
+        for mu in munumber
+    ):
+        raise ValueError(
+            "All values in 'munumber' must identify an existing MU."
+        )
 
     # TODO uniform this behaviour in the future
     # Check how to behave in case of a single MU
@@ -1786,18 +1835,6 @@ def delete_mus(
         ==> "ROA_WITH_REFERENCE_MUPULSES" : optional ROA dataframe
     }
     """
-
-    # Convert munumber to a list of int
-    if isinstance(munumber, int):
-        munumber = [munumber]
-    elif not isinstance(munumber, list):
-        raise TypeError(
-            "While calling the 'delete_mus' function, you should pass an "
-            "integer or a list to 'munumber= '."
-        )
-
-    # Make sure that only ordered unique values are contained
-    munumber = sorted(set(int(x) for x in munumber))
 
     # Drop ACCURACY values and reset the index
     if del_emgfile.get("ACCURACY", None) is not None:
@@ -1862,20 +1899,6 @@ def delete_mus(
         del_emgfile["MU_LABELS"] = {
             str(i): v for i, v in enumerate(filtered_values)
         }  # Reindex keys from 0
-
-    # Verify if all the MUs have been removed. In that case, restore column
-    # names in empty pd.DataFrames.
-    if del_emgfile["NUMBER_OF_MUS"] == 0:
-        # pd.DataFrame
-        if del_emgfile.get("IPTS", None) is not None:
-            del_emgfile["IPTS"] = pd.DataFrame(columns=[0])
-        if del_emgfile.get("BINARY_MUS_FIRING", None) is not None:
-            del_emgfile["BINARY_MUS_FIRING"] = pd.DataFrame(columns=[0])
-        if del_emgfile.get("ACCURACY", None) is not None:
-            del_emgfile["ACCURACY"] = pd.DataFrame(columns=[0])
-        # list of ndarray
-        if del_emgfile.get("MUPULSES", None) is not None:
-            del_emgfile["MUPULSES"] = []
 
     if del_emgfile.get("SOURCE", None) is not None:
         if del_emgfile["SOURCE"] == "DELSYS" and delete_delsys_muaps:
@@ -2416,10 +2439,12 @@ def compute_covsteady(
         )
         start_steady, end_steady = points[0], points[1]
 
-    ref = emgfile["REF_SIGNAL"].loc[start_steady:end_steady]
+    ref = emgfile["REF_SIGNAL"].loc[
+        start_steady:end_steady, refsig_channel
+    ]
     covsteady = (ref.std() / ref.mean()) * 100
 
-    return covsteady[0]
+    return float(covsteady)
 
 
 def filter_rawemg(emgfile, order=2, lowcut=20, highcut=500):
@@ -2923,9 +2948,7 @@ def compute_rfd(
     """
 
     # Check if the startpoint was passed
-    if isinstance(startpoint, int):
-        start_ = startpoint
-    else:
+    if startpoint is None:
         # Otherwise select the starting point for the RFD
         title = (
             "Select the start point to calculate RFD by hovering " +
@@ -2941,14 +2964,32 @@ def compute_rfd(
             nclic=1,
         )
         start_ = points[0]
+    elif isinstance(startpoint, (int, np.integer)) and not isinstance(
+        startpoint, (bool, np.bool_)
+    ):
+        start_ = int(startpoint)
+    else:
+        raise TypeError("startpoint must be None or an integer.")
+
+    force_sig = emgfile["REF_SIGNAL"][refsig_channel]
+    if start_ < 0 or start_ >= len(force_sig):
+        raise ValueError("startpoint must identify a sample in REF_SIGNAL.")
 
     # Create a dict to add the RFD
     rfd_dict = dict.fromkeys(ms, None)
     # Loop through the ms list and calculate the respective rfd.
     for thisms in ms:
         ms_insamples = round((int(thisms) * emgfile["FSAMP"]) / 1000)
+        if ms_insamples < 1:
+            raise ValueError(
+                "All values in ms must correspond to at least one sample."
+            )
 
-        force_sig = emgfile["REF_SIGNAL"][refsig_channel]
+        if start_ + ms_insamples >= len(force_sig):
+            raise ValueError(
+                "The requested RFD interval exceeds the REF_SIGNAL length."
+            )
+
         n_0 = force_sig.iloc[start_]
         n_next = force_sig.iloc[start_ + ms_insamples]
 
@@ -2963,218 +3004,3 @@ def compute_rfd(
         rfd = rfd * conversion_val
 
     return rfd
-
-
-def compute_svr(
-    emgfile,
-    gammain=1/1.6,
-    regparam=1/0.370,
-    endpointweights_numpulses=5,
-    endpointweights_magnitude=5,
-    discontfiring_dur=1.0,
-):
-    """
-    Fit MU discharge rates with Support Vector Regression, nonlinear
-    regression.
-
-    Provides smooth and continous estimates of discharge rate useful for
-    quantification and visualisation. Suggested hyperparameters and framework
-    from Beauchamp et. al., 2022
-    https://doi.org/10.1088/1741-2552/ac4594
-
-    Author: James (Drew) Beauchamp
-
-    Parameters
-    ----------
-    emgfile : dict
-        The dictionary containing the emgfile.
-    gammain : float,  default 1/1.6
-        The kernel coefficient.
-    regparam : float,  default 1/0.370
-        The regularization parameter, must be positive.
-    endpointweights_numpulses : int, default 5
-        Number of discharge instances at the start and end of MU firing to
-        apply a weighting coefficient.
-    endpointweights_magnitude : int, default 5
-        The scaling factor applied to the number of pulses provided by
-        endpointweights_numpulses.
-        The scaling is applied to the regularization parameter, per sample.
-        Larger values force the classifier to put more emphasis on the number
-        of discharge instances at the start and end of firing provided by
-        endpointweights_numpulses.
-    discontfiring_dur : int, default 1
-        Duration of time in seconds that defines an instnance of discontinuous
-        firing. SVR fits will not be returned at points of discontinuity.
-
-    Returns
-    -------
-    svrfits : pd.DataFrame
-        A pd.DataFrame containing the smooth/continous MU discharge rates and
-        corresponding time vectors.
-
-    See also
-    --------
-    - compute_deltaf : quantify delta F via paired motor unit analysis.
-
-    Examples
-    --------
-    Quantify svr fits.
-
-    >>> import openhdemg.library as emg
-    >>> import pandas as pd
-    >>> emgfile = emg.emg_from_samplefile()
-    >>> emgfile = emg.sort_mus(emgfile=emgfile)
-    >>> svrfits = emg.compute_svr(emgfile)
-
-    Quick plot showing the results.
-
-    >>> smoothfits = pd.DataFrame(svrfits["gensvr"]).transpose()
-    >>> emg.plot_smoothed_dr(
-    >>>     emgfile,
-    >>>     smoothfits=smoothfits,
-    >>>     munumber="all",
-    >>>     addidr=False,
-    >>>     stack=True,
-    >>>     addrefsig=True,
-    >>> )
-    """
-
-    # TODO input checking and edge cases
-    idr = compute_idr(emgfile)  # Calc IDR
-
-    svrfit_acm = []
-    svrtime_acm = []
-    gensvr_acm = []
-    for mu in range(len(idr)):  # For all MUs
-        # Skip if no data
-        if idr[mu].size==0:
-            svrfit_acm.append([])
-            svrtime_acm.append([])
-            gensvr_acm.append(np.nan*np.ones(emgfile["EMG_LENGTH"]))
-
-        else:            # Train the model on the data.
-            # Time vector, removing first element.
-            xtmp = np.transpose([idr[mu].timesec[1:]])
-            # Discharge rates, removing first element, since DR has been assigned
-            # to second pulse.
-            ytmp = idr[mu].idr[1:].to_numpy()
-            # Time between discharges, will use for discontinuity calc
-            xdiff = idr[mu].diff_mupulses[2:].values
-            # Motor unit pulses, samples
-            mup = np.array(idr[mu].mupulses[1:].values)
-
-            # Defining weight vector. A scaling applied to the regularization
-            # parameter, per sample.
-            smpwht = np.ones(len(ytmp))
-            smpwht[0:endpointweights_numpulses-1] = endpointweights_magnitude
-            smpwht[(len(ytmp)-(endpointweights_numpulses-1)):len(ytmp)] = endpointweights_magnitude
-
-            # Create an SVR model with a gausian kernel and supplied hyperparams.
-            # Origional hyperparameters from Beauchamp et. al., 2022:
-            # https://doi.org/10.1088/1741-2552/ac4594
-            svr = SVR(
-                kernel='rbf', gamma=gammain, C=np.abs(regparam),
-                epsilon=iqr(ytmp)/11,
-            )
-            svr.fit(xtmp, ytmp, sample_weight=smpwht)
-
-            # Defining prediction vector
-            # TODO need to add custom range.
-            # From the second firing to the end of firing, in samples.
-            predind = np.arange(mup[0], mup[-1]+1)
-            predtime = (predind/emgfile["FSAMP"]).reshape(-1, 1)  # In time (s)
-            newtm = []
-            # Initialise nan vector for tracking fits aligned in time. Usefull for
-            # later quant metrics.
-            gen_svr = np.nan*np.ones(emgfile["EMG_LENGTH"])
-
-            # Check for discontinous firing
-            bkpnt = mup[
-                np.where((xdiff > (discontfiring_dur * emgfile["FSAMP"])))[0]
-            ]
-            bkpnt = bkpnt[np.where(bkpnt != mup[-1])]
-
-            if len(bkpnt) == 1:
-                if bkpnt[0] == mup[0]:  # When first firing is the only discontinuity
-                    bkpnt = []
-                    predind = np.arange(mup[1], mup[-1]+1)
-                    predtime = (predind/emgfile["FSAMP"]).reshape(-1, 1)
-
-            # Make predictions on the data
-            if len(bkpnt) > 0:  # If there is a point of discontinuity
-                if bkpnt[0] == mup[0]:  # When first firing is discontinuity
-                    smoothfit = np.nan*np.ones(1)
-                    newtm = np.nan*np.ones(1)
-                    bkpnt = bkpnt[1:]
-
-                tmptm = predtime[
-                    0: np.where(
-                        (bkpnt[0] >= predind[0:-1]) & (bkpnt[0] < predind[1:])
-                    )[0][0],
-                ]  # Break up time vector for first continous range of firing
-                smoothfit = svr.predict(tmptm)  # Predict with svr model
-                newtm = np.append(newtm,tmptm,)  # Track new time vector
-
-                tmpind = predind[
-                    0: np.where(
-                        (bkpnt[0] >= predind[0:-1]) & (bkpnt[0] < predind[1:])
-                    )[0][0]
-                ]  # Sample vector of first continous range of firing
-                
-                # Fill corresponding sample indices with svr fit
-                gen_svr[tmpind.astype(np.int64)] = smoothfit
-                # Add last firing as discontinuity
-                bkpnt = np.append(bkpnt, mup[-1])
-                for ii in range(len(bkpnt)-1):  # All instances of discontinuity
-                    curind = np.where(
-                        (bkpnt[ii] > predind[0:-1]) & (bkpnt[ii] <= predind[1:])
-                    )[0][0]  # Current index of discontinuity
-                    nextind = np.where(
-                        (bkpnt[ii+1] > predind[0:-1]) & (bkpnt[ii+1] <= predind[1:])
-                    )[0][0]  # Next index of discontinuity
-
-                    # MU firing before discontinuity
-                    curmup = np.where(mup == bkpnt[ii])[0][0]
-                    curind_nmup = np.where(
-                        (mup[curmup+1] > predind[0:-1]) & (mup[curmup+1] <= predind[1:])
-                    )[0][0]  # MU firing after discontinuity
-
-                    # If the next discontinuity is the next MU firing, nan fill
-                    if curind_nmup >= nextind:
-                        # Edge case NEED TO CHECK THE GREATER THAN CASE>> WHY TODO
-                        smoothfit = np.append(smoothfit, np.nan*np.ones(1))
-                        newtm = np.append(newtm, np.nan*np.ones(1))
-                    else:  # Fit next continuous region of firing
-                        smoothfit = np.append(
-                            smoothfit,
-                            np.nan*np.ones(len(predtime[curind:curind_nmup])-2),
-                        )
-                        smoothfit = np.append(
-                            smoothfit, svr.predict(predtime[curind_nmup:nextind]),
-                        )
-                        newtm = np.append(
-                            newtm,
-                            np.nan*np.ones(len(predtime[curind:curind_nmup])-2),
-                        )
-                        newtm = np.append(newtm, predtime[curind_nmup:nextind],)
-                        gen_svr[predind[curind_nmup:nextind]] = svr.predict(
-                            predtime[curind_nmup:nextind]
-                        )
-            else:
-                smoothfit = svr.predict(predtime)
-                newtm = predtime
-                gen_svr[predind] = smoothfit
-
-
-            # Append fits, new time vect, time aligned fits
-            svrfit_acm.append(smoothfit.copy())
-            svrtime_acm.append(np.squeeze(newtm.copy()))
-            gensvr_acm.append(gen_svr.copy())
-
-    svrfits = {
-        "svrfit": svrfit_acm,
-        "svrtime": svrtime_acm,
-        "gensvr": gensvr_acm,
-    }
-
-    return svrfits

@@ -13,7 +13,7 @@ This category is for individuals who want to contribute to the openhdemg project
 
 :fontawesome-solid-brain: &nbsp; Knowledge sharing
 
-In the knowledge sharing category, we invite individuals with specialised expertise to contribute their valuable insights and knowledge to the *openhdemg* project. By sharing your expertise, you can help others in the community gain a deeper understanding of advanced analysis techniques, coding practices, and best practices in the field of HD-EMG. Your contribution will empower others to make the most out of *openhdemg* and accelerate the progress of HD-EMG research. Knowledge sharing is crucial for the growth and advancement of the *openhdemg* community.
+In the knowledge sharing category, we invite individuals with specialised expertise to contribute their valuable insights and knowledge to the *openhdemg* project. By sharing your expertise, you can help others in the community gain a deeper understanding of advanced analysis techniques, coding practices, and best practices in the field of HDsEMG. Your contribution will empower others to make the most out of *openhdemg* and accelerate the progress of HDsEMG research. Knowledge sharing is crucial for the growth and advancement of the *openhdemg* community.
 
 :fontawesome-solid-file-code: &nbsp; Code sharing
 
@@ -51,7 +51,7 @@ By following these guidelines, you can ensure that your code contributions align
 8. Communicate and Collaborate: Join the [*openhdemg* community discussion section](https://github.com/GiacomoValliPhD/openhdemg/discussions){:target="_blank"} to connect with other developers and maintain open communication channels. Collaborate with the community by sharing ideas, seeking help, or contributing to ongoing discussions.
 9. Respect Licensing and Intellectual Property: Ensure that your code contributions comply with the project's chosen license. Respect intellectual property rights and avoid incorporating copyrighted code or resources without proper authorization or licensing.
 
-By following these guidelines, you can contribute effectively to the *openhdemg* project and help advance the field of HD-EMG analysis. Your code contributions will play a vital role in improving the framework, expanding its functionality, and enabling new research possibilities. Thank you for being a valuable member of our code development community!
+By following these guidelines, you can contribute effectively to the *openhdemg* project and help advance the field of HDsEMG analysis. Your code contributions will play a vital role in improving the framework, expanding its functionality, and enabling new research possibilities. Thank you for being a valuable member of our code development community!
 
 ## Specific guidelines for code developers
 

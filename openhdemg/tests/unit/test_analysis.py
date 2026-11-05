@@ -23,6 +23,7 @@ from openhdemg.library.analysis import (
     compute_thresholds, compute_dr, basic_mus_properties, compute_covisi,
     compute_drvariability,
 )
+from openhdemg.library.tools import delete_mus
 import numpy as np
 
 
@@ -96,6 +97,18 @@ class TestAnalysis(unittest.TestCase):
             res["rel_RT"][0], 13.843, places=2,
         )
 
+        # Test a file with no MUs
+        emgfile = delete_mus(
+            emgfile,
+            munumber=list(range(emgfile["NUMBER_OF_MUS"])),
+        )
+        res = compute_thresholds(emgfile=emgfile, mvc=1234)
+        self.assertTrue(res.empty)
+        self.assertEqual(
+            res.columns.tolist(),
+            ["abs_RT", "abs_DERT", "rel_RT", "rel_DERT"],
+        )
+
     def test_compute_dr(self):
         """
         Test the compute_dr function with the samplefile.
@@ -127,7 +140,7 @@ class TestAnalysis(unittest.TestCase):
             res["DR_start_steady"][2], 8.793, places=2,
         )
         self.assertAlmostEqual(
-            res["DR_end_steady"][3], 10.718, places=2,
+            res["DR_end_steady"][3], 10.828, places=2,
         )
         self.assertAlmostEqual(
             res["DR_all_steady"][4], 10.693, places=2,
@@ -179,7 +192,7 @@ class TestAnalysis(unittest.TestCase):
             res["DR_start_steady"][0], 9.971, places=2,
         )
         self.assertAlmostEqual(
-            res["DR_end_steady"][1], 6.806, places=2,
+            res["DR_end_steady"][1], 6.799, places=2,
         )
 
         res = compute_dr(
@@ -195,7 +208,7 @@ class TestAnalysis(unittest.TestCase):
             res["DR_start_steady"][0], 7.474, places=2,
         )
         self.assertAlmostEqual(
-            res["DR_end_steady"][1], 7.062, places=2,
+            res["DR_end_steady"][1], 6.502, places=2,
         )
 
         # Change idr_range
@@ -214,6 +227,25 @@ class TestAnalysis(unittest.TestCase):
             res["DR_all"][1], 7.644, places=2,
         )
 
+        # Test a file with no MUs
+        emgfile = delete_mus(
+            emgfile,
+            munumber=list(range(emgfile["NUMBER_OF_MUS"])),
+        )
+        res = compute_dr(
+            emgfile=emgfile,
+            start_steady=0 + t_ramps,
+            end_steady=emgfile["EMG_LENGTH"] - t_ramps,
+        )
+        self.assertTrue(res.empty)
+        self.assertEqual(
+            res.columns.tolist(),
+            [
+                "DR_rec", "DR_derec", "DR_start_steady",
+                "DR_end_steady", "DR_all_steady", "DR_all",
+            ],
+        )
+
     def test_basic_mus_properties(self):
         """
         Test the basic_mus_properties function with the samplefile.
@@ -224,6 +256,11 @@ class TestAnalysis(unittest.TestCase):
 
         # Ramps duration
         t_ramps = 10 * emgfile["FSAMP"]
+
+        # Add optional accuracy results and preserve the original inputs
+        emgfile["ROA_WITH_REFERENCE_MUPULSES"] = emgfile["ACCURACY"].copy()
+        accuracy = emgfile["ACCURACY"].copy()
+        roa = emgfile["ROA_WITH_REFERENCE_MUPULSES"].copy()
 
         # Default parameters
         res = basic_mus_properties(
@@ -250,6 +287,10 @@ class TestAnalysis(unittest.TestCase):
         )
         self.assertAlmostEqual(
             res["COV_steady"][0], 1.316, places=2,
+        )
+        self.assertTrue(emgfile["ACCURACY"].equals(accuracy))
+        self.assertTrue(
+            emgfile["ROA_WITH_REFERENCE_MUPULSES"].equals(roa)
         )
 
         # Change accuracy estimation
@@ -319,7 +360,31 @@ class TestAnalysis(unittest.TestCase):
             res["DR_all"][1], 7.644, places=2,
         )
         self.assertAlmostEqual(
-            res["COVisi_steady"][2], 7.677, places=2,
+            res["COVisi_steady"][2], 7.626, places=2,
+        )
+
+        # Test a file with no MUs
+        zero_emgfile = emg_from_samplefile()
+        zero_emgfile = delete_mus(
+            zero_emgfile,
+            munumber=list(range(zero_emgfile["NUMBER_OF_MUS"])),
+        )
+        res = basic_mus_properties(
+            emgfile=zero_emgfile,
+            start_steady=0 + t_ramps,
+            end_steady=zero_emgfile["EMG_LENGTH"] - t_ramps,
+            mvc=1234,
+        )
+        self.assertTrue(res.empty)
+        self.assertEqual(
+            res.columns.tolist(),
+            [
+                "MVC", "MU_number", "Accuracy", "avg_Accuracy",
+                "abs_RT", "abs_DERT", "rel_RT", "rel_DERT",
+                "DR_rec", "DR_derec", "DR_start_steady",
+                "DR_end_steady", "DR_all_steady", "DR_all",
+                "COVisi_steady", "COVisi_all", "COV_steady",
+            ],
         )
 
     def test_compute_covisi(self):
@@ -350,13 +415,14 @@ class TestAnalysis(unittest.TestCase):
             res["COVisi_derec"][1], 24.007, places=2,
         )
         self.assertAlmostEqual(
-            res["COVisi_steady"][2], 8.700, places=2,
+            res["COVisi_steady"][2], 8.655, places=2,
         )
         self.assertAlmostEqual(
             res["COVisi_all"][3], 19.104, places=2,
         )
 
         # Change n_firings_RecDerec and event_
+        idr_range = [7, 10]
         res = compute_covisi(
             emgfile=emgfile,
             n_firings_RecDerec=1,
@@ -390,13 +456,33 @@ class TestAnalysis(unittest.TestCase):
             start_steady=0 + t_ramps,
             end_steady=emgfile["EMG_LENGTH"] - t_ramps,
             event_="rec_derec_steady",
-            idr_range=[7, 10],
+            idr_range=idr_range,
             single_mu_number=-1,
         )
 
         self.assertTrue(np.isnan(res["COVisi_rec"][0]))
         self.assertAlmostEqual(
-            res["COVisi_steady"][2], 7.677, places=2,
+            res["COVisi_steady"][2], 7.626, places=2,
+        )
+        self.assertEqual(idr_range, [7, 10])
+
+        # Test a file with no MUs
+        emgfile = delete_mus(
+            emgfile,
+            munumber=list(range(emgfile["NUMBER_OF_MUS"])),
+        )
+        res = compute_covisi(
+            emgfile=emgfile,
+            start_steady=0 + t_ramps,
+            end_steady=emgfile["EMG_LENGTH"] - t_ramps,
+        )
+        self.assertTrue(res.empty)
+        self.assertEqual(
+            res.columns.tolist(),
+            [
+                "COVisi_rec", "COVisi_derec",
+                "COVisi_steady", "COVisi_all",
+            ],
         )
 
     def test_compute_drvariability(self):
@@ -426,7 +512,7 @@ class TestAnalysis(unittest.TestCase):
             res["DRvar_derec"][1], 21.662, places=2,
         )
         self.assertAlmostEqual(
-            res["DRvar_steady"][2], 8.840, places=2,
+            res["DRvar_steady"][2], 8.809, places=2,
         )
         self.assertAlmostEqual(
             res["DRvar_all"][3], 12.803, places=2,
@@ -457,6 +543,33 @@ class TestAnalysis(unittest.TestCase):
         self.assertTrue(np.isnan(res["DRvar_rec"][0]))
         self.assertAlmostEqual(
             res["DRvar_all"][1], 6.466, places=2,
+        )
+
+        # Test invalid n_firings_RecDerec
+        with self.assertRaises(TypeError):
+            compute_drvariability(
+                emgfile=emgfile,
+                n_firings_RecDerec=1.5,
+                event_="rec",
+            )
+
+        # Test a file with no MUs
+        emgfile = delete_mus(
+            emgfile,
+            munumber=list(range(emgfile["NUMBER_OF_MUS"])),
+        )
+        res = compute_drvariability(
+            emgfile=emgfile,
+            start_steady=0 + t_ramps,
+            end_steady=emgfile["EMG_LENGTH"] - t_ramps,
+        )
+        self.assertTrue(res.empty)
+        self.assertEqual(
+            res.columns.tolist(),
+            [
+                "DRvar_rec", "DRvar_derec",
+                "DRvar_steady", "DRvar_all",
+            ],
         )
 
 

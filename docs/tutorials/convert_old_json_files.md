@@ -9,6 +9,39 @@ Why should you convert your files to the newer *openhdemg* versions?
 - Optimized Functionality: Newer *openhdemg* versions come with optimized functions, enhancing performance and providing a more efficient user experience.
 - Compatibility: Ensure your data remains compatible with the latest features and improvements introduced in *openhdemg*.
 
+## From v0.1.x JSON files to v0.2.0 modules
+
+Version 0.2.0 keeps the JSON loading functions for compatibility, but the recommended save/load workflow is now based on binary modules and collections.
+
+If your old JSON file can be loaded directly with `emg_from_json()`, you can migrate it to the new module format without using the compatibility converter:
+
+```Python
+import openhdemg.library as emg
+
+old_emgfile = emg.emg_from_json(
+    filepath="C:/Users/.../Desktop/old_file.json",
+)
+
+old_emgfile = emg.standardise_emgfile_dtypes(old_emgfile)
+
+emg.save_openhdemg_module(
+    emgfile=old_emgfile,
+    path="C:/Users/.../Desktop/openhdemg_modules",
+    module_name="old_file_converted",
+)
+```
+
+You can then load it with:
+
+```Python
+converted = emg.load_openhdemg_module(
+    path="C:/Users/.../Desktop/openhdemg_modules",
+    module_name="old_file_converted",
+)
+```
+
+Use the compatibility converter below only when a file was saved with an older data structure that cannot be opened directly by the current loaders.
+
 ## From 0.1.0-b2 to 0.1.0-b3
 
 The *openhdemg* version 0.1.0-beta.3 introduced noticeable [changes and improvements](../what's-new.md#010-beta3), particularly regarding the speed of saving and loading of .json files. Furthermore, these files are efficiently compressed, so that they occupy less space in your storage. However, to achieve this goal, it was necessary to optimise the default data structure used by *openhdemg* and, as a consequence, the newer *openhdemg* version is not compatible with the files saved from previous *openhdemg* versions.

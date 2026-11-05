@@ -7,68 +7,27 @@ velocity estimation).
 
 import os
 import gc
-import sys
 import copy
-import warnings
 
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt, QSettings
 from PySide6.QtWidgets import (
-    QApplication, QDialog, QVBoxLayout, QHBoxLayout, QMessageBox, QFileDialog,
-    QLabel, QPushButton, QDialogButtonBox, QSizePolicy, QWidget
+    QDialog, QVBoxLayout, QHBoxLayout, QMessageBox, QFileDialog, QLabel,
+    QPushButton, QDialogButtonBox, QSizePolicy, QWidget,
 )
 
 import numpy as np
-import matplotlib
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import (
     FigureCanvasQTAgg, NavigationToolbar2QT,
 )
 
-matplotlib.use("QtAgg")
-
-
-def check_app():
-    """
-    Check if a QApplication instance already exists and return needed objects.
-
-    Ensures that a `QApplication` is available before launching any Qt-based
-    GUI. If no instance exists, a new one is created with the 'Fusion' style
-    applied. This is useful for ensuring compatibility in environments where a
-    QApplication may already be running (e.g., Qt apps).
-
-    Check the implementation of ``run_point_selector()`` to see how it can be
-    used.
-
-    Returns
-    -------
-    app : QApplication
-        The active or newly created QApplication instance.
-    app_created : bool
-        True if a new QApplication was created, False if one already existed.
-    path_to_icon : str
-        Path to the openhdemg icon.
-    """
-
-    master_path = os.path.dirname(os.path.abspath(__file__))
-    path_to_icon = os.path.normpath(
-            os.path.join(
-                master_path,
-                "icons",
-                "Icon_transp.ico",
-            )
-        )
-
-    app = QApplication.instance()
-
-    if app is None:
-        app = QApplication(sys.argv)
-        app.setStyle('Fusion')
-        app_created = True
-    else:
-        app_created = False
-
-    return app, app_created, path_to_icon
+from openhdemg.ui.qt_matplotlib import (
+    check_app,
+    close_and_delete_widget,
+    disconnect_navigation_toolbar,
+    release_canvas_figure,
+)
 
 
 class PointSelectorDialog(QDialog):
@@ -110,6 +69,8 @@ class PointSelectorDialog(QDialog):
     path_to_icon : None or str, default None
         The path to the window icon. Use none if this widget inherits from a
         parent.
+    parent : QWidget or None, default None
+        Optional parent used when embedding the dialog.
 
     Attributes
     ----------
@@ -132,9 +93,12 @@ class PointSelectorDialog(QDialog):
         title_fontsize=10,
         title_fontweight="bold",
         path_to_icon=None,
+        parent=None,
     ):
 
-        super().__init__()
+        super().__init__(parent)
+        self._cleaned_up = False
+        self._mpl_connection_ids = []
 
         # Enable maximise and close buttons
         self.setWindowFlags(
@@ -182,8 +146,16 @@ class PointSelectorDialog(QDialog):
         self.canvas.setFocus()
 
         # Event connections
-        self.canvas.mpl_connect("motion_notify_event", self.on_mouse_move)
-        self.canvas.mpl_connect("key_press_event", self.on_key_press)
+        self._mpl_connection_ids.extend([
+            self.canvas.mpl_connect(
+                "motion_notify_event",
+                self.on_mouse_move,
+            ),
+            self.canvas.mpl_connect(
+                "key_press_event",
+                self.on_key_press,
+            ),
+        ])
 
     def on_mouse_move(self, event):
         """
@@ -222,6 +194,54 @@ class PointSelectorDialog(QDialog):
             self.markers.append(marker)
         self.canvas.draw_idle()
 
+    def cleanup(self):
+        """Release all memory-intensive Matplotlib and Qt references."""
+
+        if self._cleaned_up:
+            return
+        self._cleaned_up = True
+
+        canvas = getattr(self, "canvas", None)
+        toolbar = getattr(self, "toolbar", None)
+        layout = getattr(self, "v_layout", None)
+
+        if canvas is not None:
+            for callback_id in self._mpl_connection_ids:
+                try:
+                    canvas.mpl_disconnect(callback_id)
+                except (AttributeError, RuntimeError):
+                    pass
+
+        if getattr(self, "signal_line", None) is not None:
+            try:
+                self.signal_line.set_data([], [])
+            except (AttributeError, RuntimeError):
+                pass
+
+        for marker in getattr(self, "markers", []):
+            try:
+                marker.remove()
+            except (AttributeError, RuntimeError, ValueError):
+                pass
+
+        disconnect_navigation_toolbar(toolbar)
+        release_canvas_figure(canvas)
+        close_and_delete_widget(toolbar, layout)
+        close_and_delete_widget(canvas, layout)
+
+        self._mpl_connection_ids = []
+        self.signal_line = None
+        self.markers = []
+        self.ax = None
+        self.fig = None
+        self.canvas = None
+        self.toolbar = None
+        self.v_layout = None
+        self.data = None
+        self.last_mouse_pos = None
+
+        gc.collect()
+
     def closeEvent(self, event):
         # Ask user whether to exit if the number of selected points is
         # not correct.
@@ -241,24 +261,7 @@ class PointSelectorDialog(QDialog):
                 event.ignore()
                 return
 
-        # Before exit, clear memory
-        # Iteratively clean the 2 levels of the central widget
-        layout = self.v_layout
-        while layout.count():
-            item = layout.takeAt(0)
-            widget = item.widget()
-            widget.setParent(None)
-            widget.close()
-            widget.deleteLater()
-            del widget
-            del item
-        self.fig = None
-        self.data = None
-
-        # Force garbage collection to fasten memory cleanup
-        gc.collect()
-
-        # Always call the base method to ensure normal closing behavior
+        self.cleanup()
         super().closeEvent(event)
 
 
@@ -269,6 +272,7 @@ def run_point_selector(
     title="A to select, D to delete, Enter to continue",
     title_fontsize=10,
     title_fontweight="bold",
+    parent=None,
 ):
     """
     Run the point selector dialog and return the selected points.
@@ -303,6 +307,8 @@ def run_point_selector(
     title_fontweight : str, default "bold"
         Font weight of the title text. This will be passed to
         matplotlib.text.Text.set_fontweight.
+    parent : QWidget or None, default None
+        Optional Qt parent used when embedding the dialog.
 
     Returns
     -------
@@ -334,7 +340,7 @@ def run_point_selector(
 
     # Check if the PointSelectorDialog is called from an existing application.
     # If not, create an app and retrieve an icon path for it.
-    app, app_created, path_to_icon = check_app()
+    _app, _, path_to_icon = check_app()
 
     # Execute PointSelectorDialog in blocking mode
     dialog = PointSelectorDialog(
@@ -345,11 +351,16 @@ def run_point_selector(
         title_fontsize=title_fontsize,
         title_fontweight=title_fontweight,
         path_to_icon=path_to_icon,
+        parent=parent,
     )
-    dialog.exec()
-    points = dialog.points
-
-    return points
+    try:
+        dialog.exec()
+        return list(dialog.points)
+    finally:
+        dialog.cleanup()
+        dialog.setParent(None)
+        dialog.deleteLater()
+        gc.collect()
 
 
 class CustomFileDialog():
@@ -379,6 +390,8 @@ class CustomFileDialog():
     filetypes : list of tuples, default [("openhdemg files", "*.json"), ("All files", "*.*")]
         A list of (description, extension) tuples specifying acceptable file
         types.
+    parent : QWidget or None, default None
+        Optional Qt parent used when embedding the dialog.
 
     Methods
     -------
@@ -396,12 +409,14 @@ class CustomFileDialog():
         mode="open",
         filesource="file",
         filetypes=[("All files", "*.*")],
+        parent=None,
     ):
 
         # Class variables
         self.mode = mode
         self.filesource = filesource
         self.filetypes = filetypes
+        self.parent = parent
 
         # Setup settings to remember the last directory.
         # On Windows, settings registry can be accessed from:
@@ -428,10 +443,12 @@ class CustomFileDialog():
 
         if self.mode == "open":
             file_path, _ = QFileDialog.getOpenFileName(
+                parent=self.parent,
                 caption=caption, dir=last_dir, filter=self._build_filter()
             )
         elif self.mode == "save":
             file_path, _ = QFileDialog.getSaveFileName(
+                parent=self.parent,
                 caption=caption, dir=last_dir, filter=self._build_filter()
             )
         else:
@@ -454,6 +471,7 @@ def run_custom_file_dialog(
     mode="open",
     filesource="openhdemg",
     filetypes=[("openhdemg files", "*.json"), ("All files", "*.*")],
+    parent=None,
 ):
     """
     Opens a custom file dialog for opening or saving a file, remembering the
@@ -478,6 +496,8 @@ def run_custom_file_dialog(
     filetypes : list of tuples, default [("openhdemg files", "*.json"), ("All files", "*.*")]
         A list of (description, extension) tuples specifying acceptable file
         types.
+    parent : QWidget or None, default None
+        Optional Qt parent used when embedding the dialog.
 
     Returns
     -------
@@ -516,6 +536,7 @@ def run_custom_file_dialog(
         mode=mode,
         filesource=filesource,
         filetypes=filetypes,
+        parent=parent,
     )
     filepath = dialog.get_filepath()
 
@@ -537,6 +558,8 @@ class CustomDirectoryDialog():
     ----------
     window_title : str, default "Select a folder"
         Title of the dialog window. This should guide the user.
+    parent : QWidget or None, default None
+        Optional Qt parent used when embedding the dialog.
 
     Methods
     -------
@@ -549,10 +572,11 @@ class CustomDirectoryDialog():
         directory.
     """
 
-    def __init__(self, window_title="Select a folder"):
+    def __init__(self, window_title="Select a folder", parent=None):
 
         # Class variables
         self.window_title = window_title
+        self.parent = parent
 
         # Setup settings to remember the last directory Same as in CustomFileDialog
         self.settings = QSettings("openhdemg", "library_ui")
@@ -587,7 +611,7 @@ class CustomDirectoryDialog():
 
         last_dir = self.settings.value(self.last_dir_key, os.getcwd())
 
-        dialog = QFileDialog()
+        dialog = QFileDialog(self.parent)
         dialog.setWindowTitle(self.window_title)
         dialog.setFileMode(QFileDialog.Directory)
         dialog.setOption(QFileDialog.ShowDirsOnly, True)
@@ -599,29 +623,36 @@ class CustomDirectoryDialog():
         # Set last directory
         dialog.setDirectory(last_dir)
 
-        if dialog.exec():
-            dir_path = dialog.selectedFiles()[0]
+        try:
+            if dialog.exec():
+                dir_path = dialog.selectedFiles()[0]
 
-            # Create directory if it doesn't exist
-            if dir_path and not os.path.exists(dir_path):
-                try:
-                    os.makedirs(dir_path)
-                except Exception as e:
-                    QMessageBox.critical(
-                        None,
-                        "Error",
-                        f"Could not create directory:\n{dir_path}\n\n{str(e)}",
-                    )
-                    return None
+                # Create directory if it doesn't exist
+                if dir_path and not os.path.exists(dir_path):
+                    try:
+                        os.makedirs(dir_path)
+                    except Exception as e:
+                        QMessageBox.critical(
+                            self.parent,
+                            "Error",
+                            f"Could not create directory:\n{dir_path}\n\n{str(e)}",
+                        )
+                        return None
 
-            # Save for next time
-            self.settings.setValue(self.last_dir_key, dir_path)
-            return dir_path
+                # Save for next time
+                self.settings.setValue(self.last_dir_key, dir_path)
+                return dir_path
 
-        return None
+            return None
+        finally:
+            close_and_delete_widget(dialog)
 
 
-def run_custom_directory_dialog(window_title="Select a folder", mode="open"):
+def run_custom_directory_dialog(
+    window_title="Select a folder",
+    mode="open",
+    parent=None,
+):
     """
     Opens a custom dialog for selecting a directory, remembering the last
     accessed directory.
@@ -644,6 +675,8 @@ def run_custom_directory_dialog(window_title="Select a folder", mode="open"):
             The dialog additionally allows the user to type a new directory
             name into the text bar. If the typed directory does not exist, it
             will be created automatically after the user confirms.
+    parent : QWidget or None, default None
+        Optional Qt parent used when embedding the dialog.
 
     Returns
     -------
@@ -671,7 +704,7 @@ def run_custom_directory_dialog(window_title="Select a folder", mode="open"):
     app, app_created, path_to_icon = check_app()
 
     # Execute the CustomDirectoryDialog in open or save mode
-    dialog = CustomDirectoryDialog(window_title=window_title)
+    dialog = CustomDirectoryDialog(window_title=window_title, parent=parent)
     dirpath = dialog.get_directory(mode=mode)
 
     return dirpath
@@ -732,6 +765,8 @@ class Manual_EMGChannels_Selection_Dialog(QDialog):
         parent=None,
     ):
         super().__init__(parent)
+        self._cleaned_up = False
+        self._result_ready = False
 
         # Setup window
         self.setWindowTitle("Select EMG Channels")
@@ -1010,56 +1045,97 @@ class Manual_EMGChannels_Selection_Dialog(QDialog):
     # -----------------------
     # Output
     # -----------------------
+    def _prepare_result(self):
+        """Store channel selections before releasing the plotting state."""
+
+        if self.emgfile is None or self.good_channels is None:
+            return
+
+        self.emgfile["GOOD_CHANNELS"] = {
+            str(k): bool(v) for k, v in self.good_channels.items()
+        }
+        self._result_ready = True
+
     def get_emgfile_with_good_channels(self):
         """
-        Return a deepcopy the EMG file with updated GOOD_CHANNELS metadata.
+        Return the EMG file with updated GOOD_CHANNELS metadata.
 
         Channel indices are stored as strings for saving compatibility.
         """
-        str_good_chs = {
-            str(k): bool(v) for k, v in self.good_channels.items()
-        }
-        self.emgfile["GOOD_CHANNELS"] = str_good_chs
+
+        if self.emgfile is None:
+            raise RuntimeError(
+                "The selected EMG file is unavailable or was already retrieved."
+            )
+
+        if not self._result_ready:
+            self._prepare_result()
 
         return self.emgfile
 
     # -----------------------
     # Cleanup
     # -----------------------
-    def closeEvent(self, event):
+    def cleanup(self, preserve_emgfile=False):
+        """Release all memory-intensive Matplotlib, Qt, and EMG references."""
+
+        if self._cleaned_up:
+            if not preserve_emgfile:
+                self.emgfile = None
+            return
+        self._cleaned_up = True
+
+        canvas = getattr(self, "canvas", None)
+        toolbar = getattr(self, "toolbar", None)
+        plot_layout = getattr(self, "plot_layout", None)
+        plot_widget = getattr(self, "plot_widget", None)
+
+        for line in getattr(self, "lines", []) or []:
+            try:
+                line.set_data([], [])
+            except (AttributeError, RuntimeError):
+                pass
+
+        disconnect_navigation_toolbar(toolbar)
+        release_canvas_figure(canvas)
+        close_and_delete_widget(toolbar, plot_layout)
+        close_and_delete_widget(canvas, plot_layout)
+        close_and_delete_widget(plot_widget)
+
+        self.lines = None
+        self.ax = None
+        self.figure = None
+        self.canvas = None
+        self.toolbar = None
+        self.plot_layout = None
+        self.plot_widget = None
+        self.raw_emg = None
+        self.x = None
+        self.good_channels = None
+
+        if not preserve_emgfile:
+            self.emgfile = None
+
+        gc.collect()
+
+    def done(self, result):
+        """Handle every QDialog exit path through one cleanup path."""
+
+        accepted = result == QDialog.Accepted
+        if accepted and not self._result_ready:
+            self._prepare_result()
+
         try:
-            if self.canvas is not None:
-                self.canvas.setParent(None)
-                self.canvas.close()
-                self.canvas.deleteLater()
-                del self.canvas
-
-            if self.toolbar is not None:
-                self.toolbar.setParent(None)
-                self.toolbar.close()
-                self.toolbar.deleteLater()
-                del self.toolbar
-
-            if self.figure is not None:
-                self.figure.clear()
-
-            del self.plot_layout
-            del self.plot_widget
-
-            # Drop refs
-            self.lines = None
-            self.ax = None
-            self.figure = None
-            self.canvas = None
-            self.toolbar = None
-            self.good_channels = None
-            self.raw_emg = None
+            super().done(result)
         finally:
-            gc.collect()
-            super().closeEvent(event)
+            self.cleanup(preserve_emgfile=accepted)
 
 
-def run_manual_emgchannels_selection_dialog(emgfile, manual_offset=0):
+def run_manual_emgchannels_selection_dialog(
+    emgfile,
+    manual_offset=0,
+    parent=None,
+):
     """
     Select noisy channels via visual inspection.
 
@@ -1080,13 +1156,15 @@ def run_manual_emgchannels_selection_dialog(emgfile, manual_offset=0):
         This parameter sets the scaling of the channels. If 0 (default), the
         channels' amplitude is scaled automatically to fit the plotting window.
         If > 0, the channels will be scaled based on the specified value.
+    parent : QWidget or None, default None
+        Optional Qt parent used when embedding the dialog.
 
     Returns
     -------
     edited_emgfile : dict or None
         The EMG file dictionary with an updated ``"GOOD_CHANNELS"`` entry
         (mapping channel indices as strings to booleans) if the user
-        confirms the selection.  
+        confirms the selection.
         Returns ``None`` if the dialog is cancelled.
 
     Examples
@@ -1096,20 +1174,23 @@ def run_manual_emgchannels_selection_dialog(emgfile, manual_offset=0):
 
     # Check if the Dialog is called from an existing application.
     # If not, create an app and retrieve an icon path for it.
-    app, app_created, path_to_icon = check_app()
+    _app, _, path_to_icon = check_app()
 
     dlg = Manual_EMGChannels_Selection_Dialog(
         emgfile=emgfile,
         manual_offset=manual_offset,
         path_to_icon=path_to_icon,
-        parent=None,
+        parent=parent,
     )
-    if dlg.exec() == QDialog.Accepted:
-        emgfile = dlg.get_emgfile_with_good_channels()
-        return emgfile
-    else:
+    try:
+        if dlg.exec() == QDialog.Accepted:
+            return dlg.get_emgfile_with_good_channels()
         return None
-
+    finally:
+        dlg.cleanup()
+        dlg.setParent(None)
+        dlg.deleteLater()
+        gc.collect()
 
 
 # TODO How to test this module?
