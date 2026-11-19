@@ -365,6 +365,7 @@ def resize_emgfile(
     accuracy="recalculate",
     compute_on_peaks_only=True,
     roa_with_reference_mupulses="recalculate",
+    roa_tolerance=1,
     custom_dataframes=None,
     ignore_negative_ipts=None,
 ):
@@ -447,6 +448,10 @@ def resize_emgfile(
         ``maintain``
             The original ROA measure already contained in the emgfile is
             returned without any computation.
+    roa_tolerance : int, default 1
+        Maximum accepted absolute sample difference between an estimatedand
+        reference discharge for them to be counted as a match. A value of 0
+        means exact sample matching. tolerance=n allows +/-n samples of shift.
     custom_dataframes : list or None, default None
         A list of strings pointing to the additional dataframes to resize. The
         strings should match the emgfile keys associated to the pd.DataFrames.
@@ -566,14 +571,17 @@ def resize_emgfile(
             drop=True,
         )
 
-        # EMG length
-        rs_emgfile["EMG_LENGTH"] = int(rs_emgfile["RAW_SIGNAL"].shape[0])
-
     # Ref signal
     if _has_ref_signal is True:
         rs_emgfile["REF_SIGNAL"] = rs_emgfile["REF_SIGNAL"].iloc[
             start_:end_
         ].reset_index(drop=True)
+
+    # EMG length
+    if _has_raw_signal is True:
+        rs_emgfile["EMG_LENGTH"] = int(rs_emgfile["RAW_SIGNAL"].shape[0])
+    elif "EMG_LENGTH" in rs_emgfile:
+        rs_emgfile["EMG_LENGTH"] = int(rs_emgfile["REF_SIGNAL"].shape[0])
 
     # IPTS
     if _has_ipts is True:
@@ -661,6 +669,7 @@ def resize_emgfile(
                     res = compute_pulses_agreement_rate(
                         estimated_pulses=rs_emgfile["MUPULSES"][mu],
                         reference_pulses=rs_emgfile["REFERENCE_MUPULSES"][mu],
+                        tolerance=roa_tolerance,
                         method="dice_coefficient",
                     )
                     rs_emgfile["ROA_WITH_REFERENCE_MUPULSES"].iloc[mu] = res
@@ -1139,6 +1148,7 @@ class EMGFileSectionsIterator:
         accuracy="recalculate",
         compute_on_peaks_only=True,
         roa_with_reference_mupulses="recalculate",
+        roa_tolerance=1,
         custom_dataframes=None,
         ignore_negative_ipts=None,
     ):
@@ -1175,6 +1185,11 @@ class EMGFileSectionsIterator:
             ``maintain``
                 The original ROA measure already contained in the emgfile is
                 returned without any computation.
+        roa_tolerance : int, default 1
+            Maximum accepted absolute sample difference between an estimated
+            and reference discharge for them to be counted as a match. A value
+            of 0 means exact sample matching. tolerance=n allows +/-n samples
+            of shift.
         custom_dataframes : list or None, default None
             A list of strings pointing to the additional dataframes to resize.
             The strings should match the emgfile keys associated to the
@@ -1209,6 +1224,7 @@ class EMGFileSectionsIterator:
                 accuracy=accuracy,
                 compute_on_peaks_only=compute_on_peaks_only,
                 roa_with_reference_mupulses=roa_with_reference_mupulses,
+                roa_tolerance=roa_tolerance,
                 custom_dataframes=custom_dataframes,
                 ignore_negative_ipts=ignore_negative_ipts,  # TODO deprecated, remove later
             )
@@ -1865,23 +1881,14 @@ def delete_mus(
             del_emgfile["BINARY_MUS_FIRING"].shape[1]
         )
 
-    # Delete all the content in the del_emgfile["MUPULSES"] and append
-    # only the MUs that we want to retain (exclude deleted MUs).
-    # This is a workaround to directly deleting, for safer implementation.
-    if del_emgfile.get("MUPULSES", None) is not None:
-        del_emgfile["MUPULSES"] = []
-        for mu in range(emgfile["NUMBER_OF_MUS"]):
-            if mu not in munumber:
-                del_emgfile["MUPULSES"].append(emgfile["MUPULSES"][mu])
-
-    # Delete REFERENCE_MUPULSES as for MUPULSES
-    if del_emgfile.get("REFERENCE_MUPULSES", None) is not None:
-        del_emgfile["REFERENCE_MUPULSES"] = []
-        for mu in range(emgfile["NUMBER_OF_MUS"]):
-            if mu not in munumber:
-                del_emgfile["REFERENCE_MUPULSES"].append(
-                    emgfile["REFERENCE_MUPULSES"][mu]
-                )
+    # Keep the copied pulse arrays for the remaining MUs.
+    for key in ("MUPULSES", "REFERENCE_MUPULSES"):
+        if del_emgfile.get(key) is not None:
+            del_emgfile[key] = [
+                del_emgfile[key][mu]
+                for mu in range(emgfile["NUMBER_OF_MUS"])
+                if mu not in munumber
+            ]
 
     # Subrtact the number of deleted MUs to the total number
     del_emgfile["NUMBER_OF_MUS"] = del_emgfile["NUMBER_OF_MUS"] - len(munumber)
@@ -2323,19 +2330,12 @@ def sort_mus(emgfile):
         return pulses[0] if len(pulses) > 0 else np.inf
     sorting_order = sorted(range(n_mus), key=_first_pulse)
 
-    # Sort MUPULSES and REFERENCE_MUPULSES (list of arrays).
-    # Also MU_LABELS (dict{str: str}).
-    for origpos, newpos in enumerate(sorting_order):
-        if "MUPULSES" in sorted_emgfile:
-            # Preferable to use the sorting_order as a double-check in
-            # alternative to: sorted_emgfile["MUPULSES"] = sorted(
-            #   sorted_emgfile["MUPULSES"], key=min, reverse=False))
-            sorted_emgfile["MUPULSES"][origpos] = emgfile["MUPULSES"][newpos]
-
-        if "REFERENCE_MUPULSES" in sorted_emgfile:
-            sorted_emgfile["REFERENCE_MUPULSES"][
-                origpos
-            ] = emgfile["REFERENCE_MUPULSES"][newpos]
+    # Reorder the copied pulse arrays.
+    for key in ("MUPULSES", "REFERENCE_MUPULSES"):
+        if key in sorted_emgfile:
+            sorted_emgfile[key] = [
+                sorted_emgfile[key][mu] for mu in sorting_order
+            ]
 
     if "MU_LABELS" in sorted_emgfile:
         new_labels = {}
