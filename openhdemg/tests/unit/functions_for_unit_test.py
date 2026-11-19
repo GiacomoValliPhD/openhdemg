@@ -1,4 +1,7 @@
 import os
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from zipfile import ZipFile
 import pandas as pd
 import numpy as np
 
@@ -41,6 +44,20 @@ def get_directories(folder, subfolder, filename):
     )
 
     return filepath
+
+
+def get_module_fixture():
+    """Return the module folder, extracting its sibling ZIP on first use."""
+    module = Path(get_directories(
+        "library", "openhdemg", "Module_24mus_REFERENCE_MUPULSES_checksum",
+    ))
+    if not module.is_dir():
+        with ZipFile(module.with_suffix(".zip")) as archive:
+            # Publish the folder only after extraction succeeds.
+            with TemporaryDirectory(dir=module.parent) as staging:
+                archive.extractall(staging)
+                (Path(staging) / module.name).rename(module)
+    return module
 
 
 def validate_emgfile_content(tc, emgfile):
