@@ -12,18 +12,19 @@ WARNING!!! Since the library's functions perform complex tasks and return
 complex data structures, these tests can verify that no critical errors occur,
 but the accuracy of each function must be assessed independently upon creation,
 or at each revision of the code.
-
-WARNING!!! - UNTESTED FUNCTIONS: showselect
 """
 
 
 import unittest
+import warnings
 from unittest.mock import patch
 from openhdemg.tests.unit.functions_for_unit_test import (
-    get_directories as getd, validate_standard_emgfile_content,
+    get_directories as getd, get_module_fixture,
+    validate_standard_emgfile_content,
 )
 from openhdemg.library.openfiles import (
     emg_from_samplefile, refsig_from_otb, emg_from_delsys,
+    load_openhdemg_module,
 )
 from openhdemg.library.analysis import compute_dr
 from openhdemg.library.tools import (
@@ -31,6 +32,8 @@ from openhdemg.library.tools import (
     mupulses_from_binary, resize_emgfile, EMGFileSectionsIterator, compute_idr,
     delete_mus, delete_empty_mus, sort_mus, compute_covsteady, filter_rawemg,
     filter_refsig, remove_offset, get_mvc, compute_rfd,
+    find_duplicates_within, remove_duplicates_within,
+    remove_powerline_harmonics, select_bad_channels,
 )
 from openhdemg.library.pic import compute_svr
 import pandas as pd
@@ -53,6 +56,145 @@ class TestTools(unittest.TestCase):
 
         # Load the decomposed samplefile
         self.emgfile = emg_from_samplefile()
+
+    def test_standardise_emgfile_dtypes(self):
+        """Test dtype conversion and preservation of values and labels."""
+
+        emgfile = {
+            "SOURCE": np.str_("OTB"),
+            "FILENAME": np.str_("example.mat"),
+            "RAW_SIGNAL": pd.DataFrame(
+                [[1.0, 2.0], [2.0, 3.0], [3.0, 4.0]], dtype=np.float32,
+            ),
+            "REF_SIGNAL": pd.DataFrame(
+                {"force": [0.0, 0.5, 1.0]},
+                index=pd.RangeIndex(3, name="sample"), dtype=np.float32,
+            ),
+            "ACCURACY": pd.DataFrame([0.75], dtype=np.float32),
+            "IPTS": pd.DataFrame([1.0, 0.0, 1.0], dtype=np.float32),
+            "BINARY_MUS_FIRING": pd.DataFrame([1, 0, 1], dtype=np.int16),
+            "MUPULSES": [np.array([0, 2], dtype=np.int32)],
+            "REFERENCE_MUPULSES": [np.array([1, 2], dtype=np.int32)],
+            "ROA_WITH_REFERENCE_MUPULSES": pd.DataFrame(
+                [75.0], dtype=np.float32,
+            ),
+            "FSAMP": np.float32(1000.0),
+            "IED": np.float32(8.0),
+            "EMG_LENGTH": np.int32(3),
+            "NUMBER_OF_MUS": np.int32(1),
+            "GOOD_CHANNELS": {0: True, 1: False},
+            "EXTRAS": pd.DataFrame({"accepted": [True]}),
+        }
+        original = copy.deepcopy(emgfile)
+
+        result = standardise_emgfile_dtypes(emgfile)
+
+        validate_standard_emgfile_content(self, result)
+        self.assertEqual(result.keys(), original.keys())
+        for key in (
+            "RAW_SIGNAL", "REF_SIGNAL", "ACCURACY", "IPTS",
+            "BINARY_MUS_FIRING", "ROA_WITH_REFERENCE_MUPULSES", "EXTRAS",
+        ):
+            with self.subTest(field=key):
+                pd.testing.assert_frame_equal(
+                    result[key], original[key], check_dtype=(key == "EXTRAS"),
+                )
+                pd.testing.assert_frame_equal(emgfile[key], original[key])
+
+        for key in ("MUPULSES", "REFERENCE_MUPULSES"):
+            with self.subTest(field=key):
+                np.testing.assert_array_equal(result[key][0], original[key][0])
+                self.assertEqual(emgfile[key][0].dtype, np.int32)
+                np.testing.assert_array_equal(
+                    emgfile[key][0], original[key][0],
+                )
+
+        for key in (
+            "SOURCE", "FILENAME", "FSAMP", "IED", "EMG_LENGTH", "NUMBER_OF_MUS",
+        ):
+            with self.subTest(field=key):
+                self.assertEqual(result[key], original[key])
+                self.assertIs(type(emgfile[key]), type(original[key]))
+        self.assertIs(type(result["SOURCE"]), str)
+        self.assertIs(type(result["FILENAME"]), str)
+        self.assertEqual(result["GOOD_CHANNELS"], {"0": 1, "1": 0})
+        for value in result["GOOD_CHANNELS"].values():
+            self.assertIs(type(value), int)
+        self.assertEqual(emgfile["GOOD_CHANNELS"], original["GOOD_CHANNELS"])
+
+        result["EXTRAS"].iat[0, 0] = False
+        pd.testing.assert_frame_equal(emgfile["EXTRAS"], original["EXTRAS"])
+
+    def test_standardise_emgfile_dtypes_flattens_pulses(self):
+        """Test the warning and conversion of legacy column arrays."""
+
+        for key in ("MUPULSES", "REFERENCE_MUPULSES"):
+            with self.subTest(field=key):
+                pulses = np.array([[1], [3]], dtype=np.int32)
+                with self.assertWarnsRegex(UserWarning, rf"{key}.*not 1D"):
+                    result = standardise_emgfile_dtypes({key: [pulses]})
+                self.assertEqual(set(result), {key})
+                self.assertEqual(result[key][0].dtype, np.int64)
+                np.testing.assert_array_equal(result[key][0], [1, 3])
+                self.assertEqual(pulses.shape, (2, 1))
+
+    def test_standardise_emgfile_dtypes_rejects_invalid_fields(self):
+        """Test the required containers for signal frames and pulse arrays."""
+
+        with self.assertRaisesRegex(
+            TypeError, "REF_SIGNAL must be a pandas DataFrame",
+        ):
+            standardise_emgfile_dtypes({"REF_SIGNAL": [1.0, 2.0]})
+        with self.assertRaisesRegex(
+            TypeError, "MUPULSES must be a list of numpy arrays",
+        ):
+            standardise_emgfile_dtypes({"MUPULSES": [[1, 3]]})
+
+    def test_showselect(self):
+        """Test the plotted data and the returned sample positions."""
+
+        emgfile = {
+            "REF_SIGNAL": pd.DataFrame({
+                "other": [10.0, 11.0, 12.0, 13.0],
+                "force": [1.0, 2.0, 3.0, 4.0],
+            }),
+            "RAW_SIGNAL": pd.DataFrame({
+                0: [1.0, 3.0, 5.0, 7.0],
+                1: [3.0, 5.0, 7.0, 9.0],
+            }),
+        }
+        for how, expected_data, label in (
+            ("ref_signal", [1.0, 2.0, 3.0, 4.0], "Reference signal"),
+            ("mean_emg", [2.0, 4.0, 6.0, 8.0], "Mean EMG signal"),
+        ):
+            with self.subTest(how=how), patch(
+                "openhdemg.library.tools.run_point_selector",
+                return_value=[(2.8, 10.0), (0.2, 20.0)],
+            ) as mocked_selector:
+                points = showselect(emgfile, how=how, refsig_channel="force")
+                self.assertEqual(points, [0, 3])
+                mocked_selector.assert_called_once()
+                kwargs = mocked_selector.call_args.kwargs
+                np.testing.assert_array_equal(kwargs["data"], expected_data)
+                self.assertEqual(kwargs["y_label"], label)
+
+    def test_select_bad_channels(self):
+        """Test the results of accepting and cancelling channel selection."""
+
+        emgfile = {"RAW_SIGNAL": pd.DataFrame([[0.0, 1.0]])}
+        good_channels = {"0": True, "1": False}
+        with patch(
+            "openhdemg.library.tools.run_manual_emgchannels_selection_dialog",
+            return_value={**emgfile, "GOOD_CHANNELS": good_channels},
+        ) as mocked_dialog:
+            result = select_bad_channels(emgfile, manual_offset=10)
+            self.assertEqual(result["GOOD_CHANNELS"], good_channels)
+            mocked_dialog.assert_called_once_with(
+                emgfile=emgfile, manual_offset=10, parent=None,
+            )
+
+            mocked_dialog.return_value = None
+            self.assertIsNone(select_bad_channels(emgfile))
 
     def test_create_binary_firings(self):
         """
@@ -208,12 +350,9 @@ class TestTools(unittest.TestCase):
         self.assertEqual(rs_emgfile["CUSTOM"].shape[0], 20000)
 
         # Test REFERENCE_MUPULSES and ROA_WITH_REFERENCE_MUPULSES
-        reference_emgfile = copy.deepcopy(self.emgfile)
-        reference_emgfile["REFERENCE_MUPULSES"] = [
-            pulses.copy() for pulses in self.emgfile["MUPULSES"]
-        ]
-        reference_emgfile["ROA_WITH_REFERENCE_MUPULSES"] = pd.DataFrame(
-            np.zeros((self.emgfile["NUMBER_OF_MUS"], 1), dtype=np.float64)
+        module = get_module_fixture()
+        reference_emgfile = load_openhdemg_module(
+            module.parent, module.name,
         )
         recalculated, _, _ = resize_emgfile(
             reference_emgfile,
@@ -227,8 +366,14 @@ class TestTools(unittest.TestCase):
             accuracy="maintain",
             roa_with_reference_mupulses="maintain",
         )
-        self.assertTrue(
-            (recalculated["ROA_WITH_REFERENCE_MUPULSES"] == 100).all().all()
+        # MU 0 fires at sample 10098 and its pulse trains match in this crop.
+        self.assertEqual(recalculated["MUPULSES"][0][0], 98)
+        np.testing.assert_array_equal(
+            recalculated["REFERENCE_MUPULSES"][0],
+            recalculated["MUPULSES"][0],
+        )
+        self.assertEqual(
+            recalculated["ROA_WITH_REFERENCE_MUPULSES"].iat[0, 0], 100,
         )
         pd.testing.assert_frame_equal(
             maintained["ROA_WITH_REFERENCE_MUPULSES"],
@@ -294,6 +439,36 @@ class TestTools(unittest.TestCase):
                 )
 
         validate_standard_emgfile_content(self, rs_emgfile)
+
+    def test_roa_tolerance(self):
+        """Test ROA tolerance when resizing and splitting an emgfile."""
+
+        emgfile = {
+            "RAW_SIGNAL": pd.DataFrame(np.zeros(30, dtype=np.float64)),
+            "NUMBER_OF_MUS": np.int64(1),
+            "MUPULSES": [np.array([10, 20], dtype=np.int64)],
+            "REFERENCE_MUPULSES": [np.array([11, 20], dtype=np.int64)],
+            "ROA_WITH_REFERENCE_MUPULSES": pd.DataFrame([0.0]),
+        }
+        area = [5, 25]
+        iterator = EMGFileSectionsIterator(emgfile)
+        iterator.set_split_points_by_list(area)
+
+        # One pair matches exactly, and the other is one sample apart.
+        for tolerance, expected in ((0, 50.0), (1, 100.0)):
+            with self.subTest(tolerance=tolerance):
+                cropped, _, _ = resize_emgfile(
+                    emgfile, area=area, roa_tolerance=tolerance,
+                )
+                iterator.split(roa_tolerance=tolerance)
+                self.assertEqual(
+                    cropped["ROA_WITH_REFERENCE_MUPULSES"].iat[0, 0],
+                    expected,
+                )
+                self.assertEqual(
+                    iterator.sections[0]["ROA_WITH_REFERENCE_MUPULSES"].iat[0, 0],
+                    expected,
+                )
 
     def test_EMGFileSectionsIterator(self):
         """
@@ -601,6 +776,42 @@ class TestTools(unittest.TestCase):
         with self.assertRaises(ValueError):
             iterator.merge_dataframes(method="invalid")
 
+    def test_merge_dataframes_average_by_mu_index(self):
+        """Test that averaging aligns MUs and fills only existing NaNs."""
+
+        sections = [
+            pd.DataFrame(
+                {"value": [10.0, 20.0, np.nan]},
+                index=pd.Index([0, 1, 2], name="mu"),
+            ),
+            pd.DataFrame(
+                {"value": [40.0, 60.0, 80.0]},
+                index=pd.Index([1, 2, 3], name="mu"),
+            ),
+        ]
+        iterator = EMGFileSectionsIterator(self.emgfile)
+        iterator.results = [frame.copy() for frame in sections]
+
+        mu_index = pd.Index([0, 1, 2, 3], name="mu")
+        expected = pd.DataFrame(
+            {"value": [10.0, 30.0, 60.0, 80.0]}, index=mu_index,
+        )
+        expected_filled = pd.DataFrame(
+            {"value": [10.0, 30.0, 30.0, 80.0]}, index=mu_index,
+        )
+        pd.testing.assert_frame_equal(
+            iterator.merge_dataframes(method="average"),
+            expected, check_exact=True,
+        )
+        pd.testing.assert_frame_equal(
+            iterator.merge_dataframes(method="average", fillna=0),
+            expected_filled, check_exact=True,
+        )
+
+        self.assertEqual(len(iterator.results), len(sections))
+        for actual, original in zip(iterator.results, sections):
+            pd.testing.assert_frame_equal(actual, original, check_exact=True)
+
     def test_compute_idr(self):
         """
         Test the compute_idr function.
@@ -839,6 +1050,66 @@ class TestTools(unittest.TestCase):
         res = delete_empty_mus(res)
         self.assertEqual(res["NUMBER_OF_MUS"], 0)
         validate_standard_emgfile_content(self, res)
+
+    def test_find_and_remove_duplicates_within(self):
+        """Test duplicate selection and alignment of the surviving MUs."""
+
+        # MUs 0 and 1 fire together. MU 0 has higher accuracy, while MU 1
+        # has perfectly regular intervals. MU 2 fires later on its own.
+        pulses = [
+            np.array([100, 200, 300, 402, 501], dtype=np.int64),
+            np.array([100, 200, 300, 400, 500], dtype=np.int64),
+            np.array([650, 780, 920, 1080, 1210], dtype=np.int64),
+        ]
+        emg_length = 1250
+        emgfile = {
+            "FSAMP": np.float64(1000),
+            "EMG_LENGTH": np.int64(emg_length),
+            "NUMBER_OF_MUS": np.int64(3),
+            "MUPULSES": pulses,
+            "BINARY_MUS_FIRING": create_binary_firings(
+                emg_length, 3, pulses,
+            ),
+            "ACCURACY": pd.DataFrame([0.95, 0.55, 0.8]),
+            "IPTS": pd.DataFrame(np.tile([1.0, 2.0, 3.0], (emg_length, 1))),
+            "REFERENCE_MUPULSES": [train + 1 for train in pulses],
+            "ROA_WITH_REFERENCE_MUPULSES": pd.DataFrame([90.0, 80.0, 70.0]),
+            "MU_LABELS": {"0": "first", "1": "second", "2": "third"},
+        }
+
+        for which, removed_mu, survivors in (
+            ("accuracy", 1, [0, 2]),
+            ("covisi", 0, [1, 2]),
+        ):
+            with self.subTest(which=which):
+                duplicates, info = find_duplicates_within(
+                    emgfile, which=which,
+                )
+                self.assertEqual(duplicates, [removed_mu])
+                self.assertEqual([item["pair"] for item in info], [(0, 1)])
+
+                result = remove_duplicates_within(emgfile, which=which)
+                self.assertEqual(result["NUMBER_OF_MUS"], 2)
+                self.assertEqual(result["MU_LABELS"], {
+                    "0": emgfile["MU_LABELS"][str(survivors[0])],
+                    "1": "third",
+                })
+                for key in ("MUPULSES", "REFERENCE_MUPULSES"):
+                    self.assertEqual(len(result[key]), 2)
+                    for new_mu, original_mu in enumerate(survivors):
+                        np.testing.assert_array_equal(
+                            result[key][new_mu], emgfile[key][original_mu],
+                        )
+                for key in ("BINARY_MUS_FIRING", "IPTS"):
+                    expected = emgfile[key][survivors].set_axis(
+                        range(2), axis=1,
+                    )
+                    pd.testing.assert_frame_equal(result[key], expected)
+                for key in ("ACCURACY", "ROA_WITH_REFERENCE_MUPULSES"):
+                    expected = emgfile[key].iloc[survivors].reset_index(
+                        drop=True,
+                    )
+                    pd.testing.assert_frame_equal(result[key], expected)
 
     def test_sort_mus(self):
         """
@@ -1080,6 +1351,47 @@ class TestTools(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             filter_refsig(emgfile, refsig_channels=(0, "target"))
+
+    def test_filter_refsig_float32_otb(self):
+        """Test filtering a reference signal directly after OTB import."""
+
+        emgfile = refsig_from_otb(
+            filepath=getd("library", "otb", "OTB_R.mat"),
+            refsig="subsampled",
+            version="1.5.3.0",
+        )
+        original = emgfile["REF_SIGNAL"].copy()
+        self.assertEqual(original[0].dtype, np.float32)
+
+        # OTB can import float32 signals, while filtering computes float64.
+        # Assigning that result into a float32 column raised a FutureWarning.
+        # Exercise the direct import-to-filter path for the pandas upgrade.
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", FutureWarning)
+            expected = filter_refsig(standardise_emgfile_dtypes(emgfile))
+            res = filter_refsig(emgfile)
+
+        self.assertEqual(res["REF_SIGNAL"][0].dtype, np.float64)
+        pd.testing.assert_frame_equal(
+            res["REF_SIGNAL"], expected["REF_SIGNAL"],
+        )
+        pd.testing.assert_frame_equal(emgfile["REF_SIGNAL"], original)
+
+    def test_remove_powerline_harmonics(self):
+        """Test suppression of 50 Hz and 100 Hz on two channels."""
+
+        fsamp = 1000
+        # One second places each component exactly on its own FFT bin.
+        time = np.arange(fsamp) / fsamp
+        preserved = np.stack([
+            np.sin(2 * np.pi * 17 * time),
+            np.cos(2 * np.pi * 17 * time),
+        ])
+        mains = np.sin(2 * np.pi * 50 * time) + np.sin(2 * np.pi * 100 * time)
+
+        result = remove_powerline_harmonics(preserved + mains, fsamp)
+
+        np.testing.assert_allclose(result, preserved, rtol=0, atol=1e-12)
 
     def test_remove_offset(self):
         """
