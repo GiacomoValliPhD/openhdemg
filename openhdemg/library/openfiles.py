@@ -692,7 +692,7 @@ def load_openhdemg_module(
 
         # pd.DataFrame
         if info["data_type"] == "pd.DataFrame":
-            file_path = root / info["data_file_path"]
+            file_path = root / info["data_file_path"].replace("\\", "/")
             # Verify checksum
             if verify_checksum and info.get("checksum") is not None:
                 hash_val = sha256_file(file_path)
@@ -742,7 +742,7 @@ def load_openhdemg_module(
 
         # Load list of 1D arrays (MUPULSES)
         if info["data_type"] == "list_of_1D_np.ndarray":
-            file_path = root / info["data_file_path"]
+            file_path = root / info["data_file_path"].replace("\\", "/")
             # Verify checksum
             if verify_checksum and info.get("checksum") is not None:
                 hash_val = sha256_file(file_path)
@@ -1357,6 +1357,8 @@ class openhdemg_Collection():
                 "data_type": "dict",
                 "value": self.participant_info,
             }
+        else:
+            self.manifest["participant_info"] = None
 
         # Update the manifest _metadata
         self.manifest["_metadata"]["edited"] = datetime.now(
@@ -1442,9 +1444,12 @@ class openhdemg_Collection():
             )
 
         # Save shared_dataframe and update manifest
+        self.manifest["shared_dataframe"] = None
         if self.shared_dataframe is not None:
             self.save_shared_dataframe(
-                compresslevel=compresslevel, add_checksum=add_checksum,
+                compresslevel=compresslevel,
+                add_checksum=add_checksum,
+                save_updated_manifest=False,  # Saved below
             )
 
         # Save the updated manifest file (including participant info)
@@ -1499,6 +1504,8 @@ class openhdemg_Collection():
             ),
             parent=gui_parent,
         )
+        if root is None:
+            return
         self.set_root(root=root)
 
         print("\n-----------------\nSaving collection\n")
@@ -1514,7 +1521,7 @@ class openhdemg_Collection():
 
     def load_manifest(self):
         """
-        Load the manifest file (manifest.json) and update internal metadata.
+        Load the manifest file and restore participant information.
 
         Returns
         -------
@@ -1545,6 +1552,12 @@ class openhdemg_Collection():
 
         # Load the manifest
         self.manifest = json.loads(self.manifest_path.read_text())
+
+        info = self.manifest.get("participant_info")
+        if info is None:
+            self.reset_participant_info()
+        else:
+            self.set_participant_info(info["value"])
 
         return copy.deepcopy(self.manifest)
 
@@ -1665,10 +1678,11 @@ class openhdemg_Collection():
             )
         # Check if the shared_dataframe was saved and needs to be loaded
         if info is None:
+            self.reset_shared_dataframe()
             warnings.warn("No 'shared_dataframe' detected.")
             return None
 
-        file_path = self.root / info["data_file_path"]
+        file_path = self.root / info["data_file_path"].replace("\\", "/")
 
         # Verify checksum
         if verify_checksum and info.get("checksum") is not None:
@@ -1709,8 +1723,8 @@ class openhdemg_Collection():
         """
         Load the entire openhdemg collection from disk.
 
-        This method loads the manifest and reconstructs all modules and the
-        shared DataFrame into memory. Use ``load_module`` or
+        This method loads the manifest, participant information, all modules
+        and the shared DataFrame into memory. Use ``load_module`` or
         ``load_shared_dataframe`` instead for selective loading.
 
         Parameters
@@ -1750,10 +1764,11 @@ class openhdemg_Collection():
                 f"Manifest file not found at: {self.manifest_path}"
             )
 
-        # Load the manifest
-        self.manifest = json.loads(self.manifest_path.read_text())
+        # Load the manifest and participant information
+        self.load_manifest()
 
         # Load the modules
+        self.modules.clear()
         for module in self.manifest["modules"]:
             self.load_module(
                 module_name=module,
@@ -1795,6 +1810,8 @@ class openhdemg_Collection():
             window_title="Select the collection folder to load",
             parent=gui_parent,
         )
+        if root is None:
+            return
         self.set_root(root=root)
 
         self.load(verify_checksum=verify_checksum)
