@@ -614,7 +614,8 @@ def pack_sta(df_sta, keys):
 
     # Pack the sta accordingly
     packed_sta = {
-        k: df_sta.iloc[:, slice*p:slice*(p+1)] for p, k in enumerate(keys)
+        k: df_sta.iloc[:, slice*p:slice*(p+1)].copy()
+        for p, k in enumerate(keys)
     }
 
     # packed_sta = {
@@ -792,9 +793,9 @@ def _tracking_parallel_worker(
 
         # Second, compute 2d cross-correlation
         df1, _ = unpack_sta(aligned_sta1)
-        df1.dropna(axis=1, inplace=True)
+        df1 = df1.dropna(axis=1)
         df2, _ = unpack_sta(aligned_sta2)
-        df2.dropna(axis=1, inplace=True)
+        df2 = df2.dropna(axis=1)
         _, normxcorr_max = norm_twod_xcorr(df1, df2, mode="full")
 
         # Third, fill the tracking_res
@@ -1166,7 +1167,7 @@ def tracking(
             # Check for empty df
             if tracking_res.empty and not new_tracking_res.empty:
                 tracking_res = new_tracking_res
-            if not tracking_res.empty and not new_tracking_res.empty:
+            elif not new_tracking_res.empty:
                 tracking_res = pd.concat([tracking_res, new_tracking_res])
     tracking_res.reset_index(drop=True, inplace=True)
 
