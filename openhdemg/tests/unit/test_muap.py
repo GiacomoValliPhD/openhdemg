@@ -18,6 +18,7 @@ WARNING!!! - UNTESTED FUNCTIONS: Tracking_gui, MUcv_gui
 
 
 import unittest
+from unittest.mock import patch
 from openhdemg.tests.unit.functions_for_unit_test import (
     get_directories as getd,
 )
@@ -32,6 +33,72 @@ from openhdemg.library.muap import (
 import numpy as np
 import pandas as pd
 import copy
+
+
+class TestTracking(unittest.TestCase):
+    """
+    Test tracking with synthetic XCC scores to avoid loading the sample
+    recording.
+    """
+
+    @staticmethod
+    def track_scores(scores, **options):
+        """Run tracking with a known XCC for each source and target MU pair."""
+        scores = np.asarray(scores)
+        # Each MUAP carries its MU number for the score lookup.
+        muaps = [
+            {mu: {"col0": pd.DataFrame([[mu]])} for mu in range(count)}
+            for count in scores.shape
+        ]
+
+        def xcorr(first, second, mode):
+            return None, scores[first.iat[0, 0], second.iat[0, 0]]
+
+        with patch("openhdemg.library.muap.norm_twod_xcorr", new=xcorr):
+            return tracking(
+                emgfile1={"NUMBER_OF_MUS": len(muaps[0])},
+                emgfile2={"NUMBER_OF_MUS": len(muaps[1])},
+                custom_muaps=muaps,
+                multiprocessing=False,
+                gui=False,
+                **options,
+            )
+
+    def test_competing_matches_and_order(self):
+        scores = [
+            [0.30, 0.94, 0.20],
+            [0.84, 0.90, 0.40],
+            [0.50, 0.60, 0.98],
+        ]
+        # Sources 0 and 1 both prefer target 1. Source 0 wins the match,
+        # leaving source 1's eligible second choice (target 0) unused.
+        for filtered, expected in (
+            (False, [(0, 1, 0.94), (1, 1, 0.90), (1, 0, 0.84), (2, 2, 0.98)]),
+            (True, [(0, 1, 0.94), (2, 2, 0.98)]),
+        ):
+            with self.subTest(filter=filtered):
+                result = self.track_scores(
+                    scores, threshold=0.80, filter=filtered,
+                )
+                rows = list(result.itertuples(index=False, name=None))
+                self.assertEqual(rows, expected)
+
+    def test_inclusive_xcc_threshold(self):
+        threshold = 0.80
+        below = np.nextafter(threshold, -np.inf)
+        above = np.nextafter(threshold, np.inf)
+        scores = [[below, threshold, above]]
+        for exclude, expected in (
+            (True, [(0, 2, above), (0, 1, threshold)]),
+            (False, [(0, 2, above), (0, 1, threshold), (0, 0, below)]),
+        ):
+            with self.subTest(exclude_belowthreshold=exclude):
+                result = self.track_scores(
+                    scores, threshold=threshold, filter=False,
+                    exclude_belowthreshold=exclude,
+                )
+                rows = list(result.itertuples(index=False, name=None))
+                self.assertEqual(rows, expected)
 
 
 class TestMuap(unittest.TestCase):
@@ -248,7 +315,7 @@ class TestMuap(unittest.TestCase):
 
         res1, res2 = align_by_xcorr(
             sta_mu1=sta_[0],
-            sta_mu2=sta_[0], 
+            sta_mu2=sta_[0],
             finalduration=0.5,
         )
 
@@ -467,6 +534,26 @@ class TestMuap(unittest.TestCase):
         Test the remove_duplicates_between function.
         """
 
+        def assert_survivors(result, original, mu_ids):
+            self.assertEqual(result["NUMBER_OF_MUS"], len(mu_ids))
+            self.assertEqual(len(result["MUPULSES"]), len(mu_ids))
+            for new_mu, original_mu in enumerate(mu_ids):
+                np.testing.assert_array_equal(
+                    result["MUPULSES"][new_mu],
+                    original["MUPULSES"][original_mu],
+                )
+            accuracy = original["ACCURACY"].iloc[mu_ids].reset_index(drop=True)
+            pd.testing.assert_frame_equal(
+                result["ACCURACY"], accuracy, check_exact=True,
+            )
+            for key in ("IPTS", "BINARY_MUS_FIRING"):
+                expected = original[key][mu_ids].set_axis(
+                    range(len(mu_ids)), axis=1,
+                )
+                pd.testing.assert_frame_equal(
+                    result[key], expected, check_exact=True,
+                )
+
         # Prepare different emgfiles
         emgfile1_less_mus = delete_mus(self.emgfile, munumber=0)
         emgfile2_noisy = copy.deepcopy(self.emgfile)
@@ -480,8 +567,8 @@ class TestMuap(unittest.TestCase):
             gui=False,
             which="munumber",
         )
-        self.assertTrue(res1["NUMBER_OF_MUS"] == 4)
-        self.assertTrue(res2["NUMBER_OF_MUS"] == 1)
+        assert_survivors(res1, self.emgfile, [1, 2, 3, 4])
+        assert_survivors(res2, self.emgfile, [0])
 
         res1, res2, tracking_res = remove_duplicates_between(
             emgfile1=self.emgfile,
@@ -489,8 +576,8 @@ class TestMuap(unittest.TestCase):
             gui=False,
             which="accuracy",
         )
-        self.assertTrue(res1["NUMBER_OF_MUS"] == 2)
-        self.assertTrue(res2["NUMBER_OF_MUS"] == 3)
+        assert_survivors(res1, self.emgfile, [0, 1])
+        assert_survivors(res2, emgfile2_noisy, [2, 3, 4])
 
         # Test custom tracking results
         custom_tracking_res = pd.DataFrame({
