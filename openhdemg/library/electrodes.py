@@ -382,6 +382,14 @@ def sort_rawemg(
                 "lists when code=='Custom order'"
             )
 
+        # Check that all grid columns are non-empty and have the same length
+        row_counts = {len(column) for column in custom_sorting_order}
+        if len(row_counts) != 1 or 0 in row_counts:
+            raise ValueError(
+                "custom_sorting_order must contain non-empty columns of "
+                "equal length."
+            )
+
         # Get custom sorting order
         base0_sorting_order = custom_sorting_order
 
