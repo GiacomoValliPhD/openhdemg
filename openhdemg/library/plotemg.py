@@ -14,6 +14,7 @@ from matplotlib.figure import Figure
 from openhdemg.library.tools import compute_idr
 from openhdemg.library.mathtools import min_max_scaling
 
+
 class Figure_Layout_Manager():
     """
     Class managing custom layout and custom settings for 2D plots.
@@ -802,18 +803,15 @@ def get_unique_fig_name(base_name):
         new_name == base_name.
     """
 
-    existing_titles = [
-        plt.figure(num).canvas.manager.get_window_title(
-        ) for num in plt.get_fignums()
-    ]
+    existing_labels = set(plt.get_figlabels())
 
-    if base_name not in existing_titles:
+    if base_name not in existing_labels:
         return base_name  # Name is unique
 
     # If the name exists, append a number to make it unique
     counter = 1
     new_name = f"{base_name} ({counter})"
-    while new_name in existing_titles:
+    while new_name in existing_labels:
         counter += 1
         new_name = f"{base_name} ({counter})"
 
@@ -893,8 +891,9 @@ def _create_figure_with_subplots(
     -------
     fig : matplotlib.figure.Figure
         The created figure object.
-    axes : np.ndarray of matplotlib.axes.Axes
-        A NumPy array of subplot Axes.
+    axes : matplotlib.axes.Axes or np.ndarray
+        A single Axes for a 1-by-1 grid, a 1D array for a single row or
+        column with multiple subplots, or a 2D array for a larger grid.
     """
 
     figsize = (figsize[0], figsize[1])
@@ -907,11 +906,7 @@ def _create_figure_with_subplots(
             fig, axes = plt.subplots(rows, cols, figsize=figsize)
     else:
         fig = Figure(figsize=figsize)
-        axes = np.empty((rows, cols), dtype=object)
-        for i in range(rows):
-            for j in range(cols):
-                index = i * cols + j + 1
-                axes[i, j] = fig.add_subplot(rows, cols, index)
+        axes = fig.subplots(nrows=rows, ncols=cols)
 
     return fig, axes
 
