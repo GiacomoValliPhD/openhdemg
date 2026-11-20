@@ -18,13 +18,15 @@ WARNING!!! - UNTESTED FUNCTIONS: none
 
 
 import unittest
-from openhdemg.library.openfiles import emg_from_samplefile
+from openhdemg.library.openfiles import emg_from_samplefile, load_openhdemg_module
 from openhdemg.library.analysis import (
     compute_thresholds, compute_dr, basic_mus_properties, compute_covisi,
     compute_drvariability,
 )
 from openhdemg.library.tools import delete_mus
+from openhdemg.tests.unit.functions_for_unit_test import get_module_fixture
 import numpy as np
+import pandas as pd
 
 
 class TestAnalysis(unittest.TestCase):
@@ -108,6 +110,36 @@ class TestAnalysis(unittest.TestCase):
             res.columns.tolist(),
             ["abs_RT", "abs_DERT", "rel_RT", "rel_DERT"],
         )
+
+    def test_named_reference_channel_for_thresholds_and_steadiness(self):
+        """Check that both analyses use the selected force channel."""
+
+        emgfile = emg_from_samplefile()
+        first, last = emgfile["MUPULSES"][0][[0, -1]]
+        start_steady = (first + last) // 2
+        end_steady = start_steady + 2
+
+        ref_signal = emgfile["REF_SIGNAL"]
+        ref_signal[0] = 10.0
+        ref_signal["force"] = 0.0
+        ref_signal.loc[[first, last], "force"] = [20.0, 30.0]
+        ref_signal.loc[start_steady:end_steady, "force"] = [40.0, 50.0, 60.0]
+
+        thresholds = compute_thresholds(
+            emgfile, refsig_channel="force", n_firings=1, mvc=200,
+        )
+        properties = basic_mus_properties(
+            emgfile, refsig_channel="force", n_firings_rt_dert=1, mvc=200,
+            start_steady=start_steady, end_steady=end_steady,
+        )
+        expected = {
+            "rel_RT": 20.0, "rel_DERT": 30.0, "abs_RT": 40.0, "abs_DERT": 60.0,
+        }
+        self.assertEqual(thresholds.loc[0].to_dict(), expected)
+        self.assertEqual(properties.loc[0, list(expected)].to_dict(), expected)
+        # Force has sample SD 10 and mean 50. The constant channel has zero
+        # CoV.
+        self.assertAlmostEqual(properties.at[0, "COV_steady"], 20.0)
 
     def test_compute_dr(self):
         """
@@ -386,6 +418,30 @@ class TestAnalysis(unittest.TestCase):
                 "COVisi_steady", "COVisi_all", "COV_steady",
             ],
         )
+
+    def test_basic_mus_properties_reports_reference_agreement(self):
+        """Check the stored accuracy and reference agreement for every MU."""
+
+        module = get_module_fixture()
+        emgfile = load_openhdemg_module(module.parent, module.name)
+        roa_column = "ROA with reference MUPULSES"
+        expected = pd.DataFrame({
+            "Accuracy": emgfile["ACCURACY"].iloc[:, 0],
+            roa_column: emgfile["ROA_WITH_REFERENCE_MUPULSES"].iloc[:, 0],
+        }).rename_axis("MU_number")
+
+        ramp_samples = int(10 * emgfile["FSAMP"])
+        properties = basic_mus_properties(
+            emgfile, accuracy="default", mvc=200,
+            start_steady=ramp_samples,
+            end_steady=emgfile["EMG_LENGTH"] - ramp_samples,
+        )
+        scores = properties.set_index("MU_number")[["Accuracy", roa_column]]
+        pd.testing.assert_frame_equal(scores, expected, check_exact=True)
+        self.assertAlmostEqual(
+            properties.at[0, "avg_ROA"], expected[roa_column].mean(),
+        )
+        self.assertTrue(properties["avg_ROA"].iloc[1:].isna().all())
 
     def test_compute_covisi(self):
         """
