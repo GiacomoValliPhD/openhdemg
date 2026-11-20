@@ -778,7 +778,7 @@ def compute_pulses_agreement_rate(
         reference discharge for them to be counted as a match. A value of 0
         means exact sample matching. tolerance=n allows +/-n samples of shift.
     method : str, optional
-        The metric used to calculate agreement. Currently only supports 
+        The metric used to calculate agreement. Currently only supports
         "dice_coefficient" (default), which calculates ROA as:
         (2 * TP) / (2 * TP + FP + FN) * 100.
 

@@ -18,9 +18,11 @@ WARNING!!! - UNTESTED FUNCTIONS: none
 
 
 import unittest
+import warnings
 from openhdemg.library.openfiles import emg_from_samplefile
 from openhdemg.library.mathtools import (
-    min_max_scaling, norm_xcorr, norm_twod_xcorr, compute_sil, compute_pnr,
+    min_max_scaling, norm_xcorr, norm_twod_xcorr, discrete_spike_xcorr,
+    compute_sil, compute_pnr, compute_pulses_agreement_rate,
     derivatives_beamforming, mle_cv_est, find_mle_teta,
 )
 import numpy as np
@@ -90,6 +92,41 @@ class TestMathTools(unittest.TestCase):
         self.assertAlmostEqual(res.min(), 0, places=0)
         self.assertAlmostEqual(res.max(), 1, places=0)
 
+    def test_min_max_scaling_dataframe(self):
+        index = pd.Index([10, 20, 30], name="sample")
+        frame = pd.DataFrame({"A": [0, 2, 4], "B": [4, 6, 8]}, index=index)
+        original = frame.copy()
+        for col_by_col, expected in (
+            (False, {"A": [0.0, 0.25, 0.5], "B": [0.5, 0.75, 1.0]}),
+            (True, {"A": [0.0, 0.5, 1.0], "B": [0.0, 0.5, 1.0]}),
+        ):
+            with self.subTest(col_by_col=col_by_col):
+                scaled = min_max_scaling(frame, col_by_col=col_by_col)
+                pd.testing.assert_frame_equal(
+                    scaled, pd.DataFrame(expected, index=index),
+                    check_exact=True,
+                )
+                pd.testing.assert_frame_equal(frame, original)
+
+    def test_min_max_scaling_missing_values_and_constant_column(self):
+        frame = pd.DataFrame({"A": [0.0, np.nan, 4.0], "B": [2, 2, 2]})
+        for col_by_col, expected_b in (
+            (False, [0.5, 0.5, 0.5]), (True, [np.nan, np.nan, np.nan]),
+        ):
+            with self.subTest(col_by_col=col_by_col):
+                expected = pd.DataFrame(
+                    {"A": [0.0, np.nan, 1.0], "B": expected_b}
+                )
+                scaled = min_max_scaling(frame, col_by_col=col_by_col)
+                pd.testing.assert_frame_equal(scaled, expected)
+
+    def test_min_max_scaling_deprecated_series_or_df(self):
+        series = pd.Series([1, 3, 5], index=[10, 20, 30], name="signal")
+        expected = min_max_scaling(data=series)
+        with self.assertWarnsRegex(DeprecationWarning, "series_or_df"):
+            scaled = min_max_scaling(series_or_df=series)
+        pd.testing.assert_series_equal(scaled, expected)
+
     def test_norm_xcorr(self):
         """
         Test the norm_xcorr function.
@@ -112,6 +149,15 @@ class TestMathTools(unittest.TestCase):
             out="max",
         )
         self.assertAlmostEqual(res, 0.986, places=2)
+
+    def test_norm_xcorr_signed_peak_and_zero_energy(self):
+        impulse = np.array([0.0, 2.0, 0.0])
+        for signal in (impulse, pd.Series(impulse)):
+            with self.subTest(input_type=type(signal).__name__):
+                self.assertEqual(norm_xcorr(signal, -signal, out="both"), -1.0)
+                self.assertEqual(norm_xcorr(signal, -signal, out="max"), 0.0)
+                self.assertEqual(norm_xcorr(signal * 0, signal), 0.0)
+                self.assertEqual(norm_xcorr(signal, signal * 0), 0.0)
 
     def test_norm_twod_xcorr(self):
         """
@@ -154,6 +200,62 @@ class TestMathTools(unittest.TestCase):
         self.assertAlmostEqual(res[1], 0.975, places=2)
         self.assertEqual(res[0].shape, arr.shape)
 
+    def test_norm_twod_xcorr_shifted_impulse(self):
+        first = np.zeros((3, 3))
+        second = np.zeros((3, 3))
+        first[1, 1] = 2.0
+        second[0, 2] = 3.0
+
+        # Zero lag is at (2, 2) in the full result. The offset is (+1, -1).
+        full = np.zeros((5, 5))
+        full[3, 1] = 1.0
+        for sig1, sig2 in (
+            (first, second), (pd.DataFrame(first), pd.DataFrame(second)),
+        ):
+            for mode, expected in (
+                ("full", full),
+                ("same", full[1:4, 1:4]),
+                ("valid", full[2:3, 2:3]),
+            ):
+                with self.subTest(input_type=type(sig1).__name__, mode=mode):
+                    corr, peak = norm_twod_xcorr(sig1, sig2, mode=mode)
+                    self.assertIsInstance(corr, type(sig1))
+                    np.testing.assert_array_equal(corr, expected)
+                    self.assertEqual(peak, expected.max())
+
+    def test_norm_twod_xcorr_zero_energy(self):
+        for signal in (np.ones((2, 2)), pd.DataFrame(np.ones((2, 2)))):
+            with self.subTest(input_type=type(signal).__name__):
+                corr, peak = norm_twod_xcorr(signal, signal * 0)
+                np.testing.assert_array_equal(corr, np.zeros((3, 3)))
+                self.assertEqual(peak, 0.0)
+
+    def test_norm_twod_xcorr_deprecated_dataframe_arguments(self):
+        first = pd.DataFrame([[1.0, 0.0], [0.0, 0.0]])
+        second = pd.DataFrame([[0.0, 1.0], [0.0, 0.0]])
+        expected, expected_peak = norm_twod_xcorr(sig1=first, sig2=second)
+        for alias, arguments in (
+            ("df1", {"df1": first, "sig2": second}),
+            ("df2", {"sig1": first, "df2": second}),
+        ):
+            with self.subTest(alias=alias):
+                with self.assertWarnsRegex(DeprecationWarning, alias):
+                    corr, peak = norm_twod_xcorr(**arguments)
+                pd.testing.assert_frame_equal(corr, expected)
+                self.assertEqual(peak, expected_peak)
+
+    def test_discrete_spike_xcorr(self):
+        # Shifting the second train back one sample aligns both pulses.
+        for first, second, max_lag, expected in (
+            ([10, 20], [11, 21], 1, [2, 0, 0]),
+            ([10, 20], [11, 20], 0, [1]),
+            ([], [10], 1, [0, 0, 0]),
+            ([10], [], 1, [0, 0, 0]),
+        ):
+            with self.subTest(first=first, second=second, max_lag=max_lag):
+                counts = discrete_spike_xcorr(first, second, max_lag)
+                np.testing.assert_array_equal(counts, expected)
+
     def test_compute_sil(self):
         """
         Test the compute_sil function.
@@ -162,43 +264,46 @@ class TestMathTools(unittest.TestCase):
         # Load the decomposed samplefile
         emgfile = emg_from_samplefile()
 
-        # Change ignore_negative_ipts
-        res = compute_sil(
-            ipts=emgfile["IPTS"][0],
-            mupulses=emgfile["MUPULSES"][0],
-            ignore_negative_ipts=False,
-        )
+        ipts = emgfile["IPTS"][0]
+        mupulses = emgfile["MUPULSES"][0]
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            res = compute_sil(ipts=ipts, mupulses=mupulses)
         self.assertAlmostEqual(res, 0.879, places=2)
 
-        res = compute_sil(
-            ipts=emgfile["IPTS"][0],
-            mupulses=emgfile["MUPULSES"][0],
-            ignore_negative_ipts=True,
-        )
+        res = compute_sil(ipts=ipts * np.abs(ipts), mupulses=mupulses)
         self.assertAlmostEqual(res, 0.525, places=2)
 
-        # Thest failure with no or few firings
-        res = compute_sil(
-            ipts=emgfile["IPTS"][0],
-            mupulses=np.empty(0),
-            ignore_negative_ipts=False,
-        )
+        # Test with no or few firings
+        res = compute_sil(ipts=ipts, mupulses=np.empty(0))
         self.assertAlmostEqual(res, 0, places=6)
 
-        res = compute_sil(
-            ipts=emgfile["IPTS"][0],
-            mupulses=np.array([10500]),
-            ignore_negative_ipts=False,
-        )
+        res = compute_sil(ipts=ipts, mupulses=np.array([10500]))
         self.assertAlmostEqual(res, 1, places=0)
 
         res = compute_sil(
-            ipts=emgfile["IPTS"][0],
+            ipts=ipts,
             mupulses=np.array([10500, 50000]),
             compute_on_peaks_only=False,
-            ignore_negative_ipts=False,
         )
         self.assertAlmostEqual(res, 0.945, places=2)
+
+    def test_compute_sil_deprecated_ignore_negative_ipts(self):
+        ipts = pd.Series([-4.0, -1.0, -4.0, 2.0, -3.0, 1.0, -3.0, 4.0, -2.0])
+        mupulses = np.array([1, 3, 7])
+        for ignore_negative, source in (
+            (False, ipts), (True, ipts * np.abs(ipts)),
+        ):
+            with self.subTest(ignore_negative_ipts=ignore_negative):
+                expected = compute_sil(ipts=source, mupulses=mupulses)
+                with self.assertWarnsRegex(
+                    DeprecationWarning, "ignore_negative_ipts",
+                ):
+                    score = compute_sil(
+                        ipts=ipts, mupulses=mupulses,
+                        ignore_negative_ipts=ignore_negative,
+                    )
+                self.assertAlmostEqual(score, expected)
 
     def test_compute_pnr(self):
         """
@@ -264,6 +369,34 @@ class TestMathTools(unittest.TestCase):
             separate_paired_firings=True,
         )
         self.assertAlmostEqual(res, -7.475, places=2)
+
+    def test_compute_pulses_agreement_rate(self):
+        for estimated, reference, tolerance, expected in (
+            ([10, 20], [10, 30], 0, 50.0),
+            ([9, 11], [10], 0, 0.0),
+            ([9, 11], [10], 1, 200 / 3),  # Only one can match the reference.
+            ([21, 9], [10, 20], 1, 100.0),  # Both ends of the tolerance window.
+            ([40, 19, 19, 3], [20, 8, 20], 1, 40.0),
+            ([], [], 1, 0.0),
+            ([10], [], 1, 0.0),
+            ([], [10], 1, 0.0),
+        ):
+            with self.subTest(
+                estimated=estimated, reference=reference, tolerance=tolerance,
+            ):
+                rate = compute_pulses_agreement_rate(
+                    estimated_pulses=np.array(estimated, dtype=np.int64),
+                    reference_pulses=np.array(reference, dtype=np.int64),
+                    tolerance=tolerance,
+                )
+                self.assertAlmostEqual(rate, expected)
+
+    def test_compute_pulses_agreement_rate_invalid_options(self):
+        pulses = np.array([10, 20])
+        with self.assertRaisesRegex(ValueError, "tolerance"):
+            compute_pulses_agreement_rate(pulses, pulses, tolerance=-1)
+        with self.assertRaisesRegex(NotImplementedError, "unsupported"):
+            compute_pulses_agreement_rate(pulses, pulses, method="unsupported")
 
     def test_derivatives_beamforming(self):
         """
@@ -331,6 +464,27 @@ class TestMathTools(unittest.TestCase):
             fsamp=2048,
         )
         self.assertAlmostEqual(res, 4, places=6)
+
+    def test_find_mle_teta_at_delay_limits(self):
+        # At 10 mm and 2000 Hz the search covers lags from 2 to 20 samples.
+        sig1 = np.zeros(64)
+        sig1[20] = 1.0
+        for delay in (2, 20):
+            with self.subTest(delay=delay):
+                sig2 = np.zeros(64)
+                sig2[20 + delay] = 1.0
+                result = find_mle_teta(sig1, sig2, ied=10, fsamp=2000)
+                self.assertEqual(result, delay)
+
+    def test_find_mle_teta_rejects_non_1d_signals(self):
+        signal = np.zeros(64)
+        row = signal.reshape(1, -1)
+        for name, first, second in (
+            ("sig1", row, signal), ("sig2", signal, row),
+        ):
+            with self.subTest(name=name):
+                with self.assertRaisesRegex(ValueError, name):
+                    find_mle_teta(first, second, ied=10, fsamp=2000)
 
 
 if __name__ == '__main__':
